@@ -25,32 +25,32 @@
             if (empty($brands_ids)) { $brands_ids = [0]; } // Tránh lỗi SQL nếu không có chi nhánh
 
             // === BƯỚC 2: TRUY VẤN TỔNG HỢP TẤT CẢ KPI TRONG 1 LẦN ===
-            $kpi_conditions = [ "deleted" => 0, "brands" => $brands_ids ];
+            // $kpi_conditions = [ "deleted" => 0, "brands" => $brands_ids ];
             
-            $kpis = $app->get("invoices", [
-                "tongdoanhso"         => App::raw("SUM(CASE WHEN status IN (1,2,20) AND date_start BETWEEN :today_start AND :today_end THEN total ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-                "tongdoanhthu"        => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-                "khachmoithang"       => App::raw("SUM(CASE WHEN status IN (2,20) AND date_start BETWEEN :today_start AND :today_end THEN amount ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-                "doanhthuhomnay"      => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-                "ghinoihomnay"        => App::raw("SUM(CASE WHEN status = 20 AND date_start BETWEEN :today_start AND :today_end THEN payments - total_pay ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-                "bookinghomnaydanhan" => App::raw("COUNT(CASE WHEN status IN (1,2,20) AND process IN (2,200,100) AND date_start BETWEEN :today_start AND :today_end THEN id ELSE NULL END)")
-            ], $kpi_conditions);
+            // $kpis = $app->get("invoices", [
+            //     "tongdoanhso"         => App::raw("SUM(CASE WHEN status IN (1,2,20) AND date_start BETWEEN :today_start AND :today_end THEN total ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
+            //     "tongdoanhthu"        => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
+            //     "khachmoithang"       => App::raw("SUM(CASE WHEN status IN (2,20) AND date_start BETWEEN :today_start AND :today_end THEN amount ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
+            //     "doanhthuhomnay"      => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
+            //     "ghinoihomnay"        => App::raw("SUM(CASE WHEN status = 20 AND date_start BETWEEN :today_start AND :today_end THEN payments - total_pay ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
+            //     "bookinghomnaydanhan" => App::raw("COUNT(CASE WHEN status IN (1,2,20) AND process IN (2,200,100) AND date_start BETWEEN :today_start AND :today_end THEN id ELSE NULL END)")
+            // ], $kpi_conditions);
             
-            $vars = array_merge($vars, $kpis ?? []);
+            // $vars = array_merge($vars, $kpis ?? []);
 
-            // (Giữ nguyên các truy vấn cho Đề xuất và Kho hàng)
-            $proposal_kpis = $app->get("proposals", [
-                "cho_duyet" => App::raw("COUNT(CASE WHEN status = 1 THEN id ELSE NULL END)"),
-                "da_duyet_thang" => App::raw("COUNT(CASE WHEN status = 2 AND `date` BETWEEN :month_start AND :month_end THEN id ELSE NULL END)", [':month_start' => $month_start, ':month_end' => $month_end])
-            ], ["deleted" => 0]);
-            $vars = array_merge($vars, $proposal_kpis ?? []);
+            // // (Giữ nguyên các truy vấn cho Đề xuất và Kho hàng)
+            // $proposal_kpis = $app->get("proposals", [
+            //     "cho_duyet" => App::raw("COUNT(CASE WHEN status = 1 THEN id ELSE NULL END)"),
+            //     "da_duyet_thang" => App::raw("COUNT(CASE WHEN status = 2 AND `date` BETWEEN :month_start AND :month_end THEN id ELSE NULL END)", [':month_start' => $month_start, ':month_end' => $month_end])
+            // ], ["deleted" => 0]);
+            // $vars = array_merge($vars, $proposal_kpis ?? []);
 
-            $warehouse_kpis = $app->get("warehouses_summary", [
-                "tong_gia_tri_ton" => App::raw("SUM(total)")
-            ], ["brands" => $brands_ids]);
-            $date_30_days = date('Y-m-d', strtotime('+30 days'));
-            $vars['sap_het_han'] = $app->count("warehouses_inventory", ["expiry[<=]" => $date_30_days, "brands" => $brands_ids]);
-            $vars = array_merge($vars, $warehouse_kpis ?? []);
+            // $warehouse_kpis = $app->get("warehouses_summary", [
+            //     "tong_gia_tri_ton" => App::raw("SUM(total)")
+            // ], ["brands" => $brands_ids]);
+            // $date_30_days = date('Y-m-d', strtotime('+30 days'));
+            // $vars['sap_het_han'] = $app->count("warehouses_inventory", ["expiry[<=]" => $date_30_days, "brands" => $brands_ids]);
+            // $vars = array_merge($vars, $warehouse_kpis ?? []);
 
             // === BƯỚC 3: LẤY DỮ LIỆU LỊCH & BOOKING HÔM NAY ===
             // Lấy dữ liệu đã được gom nhóm sẵn cho lịch
