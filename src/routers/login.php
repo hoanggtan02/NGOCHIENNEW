@@ -59,17 +59,49 @@
                     }
                     $app->setSession('accounts',[
                         "id" => $data['id'],
+                        "name" => $data['name'],
                         "agent" => $payload['agent'],
                         "token" => $payload['token'],
                         "active" => $data['active'],
                     ]);
+
+                    // Thêm logic gán $_SESSION['stores']
+                    // $ListStoreCount = $app->count("stores", "id", ["deleted" => 0, "status" => 'A']);
+                    // if ($ListStoreCount > 1) {
+                    //     if ($data['stores'] == "" || count(unserialize($data['stores'])) > 1) {
+                    //         $app->setSession('stores', 0);
+                    //     } else {
+                    //         $app->setSession('stores', unserialize($data['stores'])[0]);
+                    //     }
+                    // } else {
+                    //     $app->setSession('stores', $app->get("stores", "id", ["deleted" => 0, "status" => 'A']));
+                    // }
+                    // $stores ="";
+                    $ListStoreCount = $app->count("stores", "id", ["deleted" => 0, "status" => 'A']);
+                    if ($ListStoreCount > 1) {
+                        if ($data['stores'] == "") {
+                            $stores = $app->select("stores", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => 'A']);
+                        }else if(count(unserialize($data['stores'])) > 1){
+                            $store_id = unserialize($data['stores']);
+                            $stores = $app->select("stores", ["id(value)", "name(text)", "code"], ["id" => $store_id, "deleted" => 0, "status" => 'A']);
+                        }
+                         else {
+                            $store_id = unserialize($data['stores'])[0];
+                            $stores = [$app->get("stores", ["id(value)", "name(text)", "code"], ["id" => $store_id, "deleted" => 0, "status" => 'A'])];
+                        }
+                    } else {
+                        $stores = [$app->get("stores", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => 'A'])];
+                    }
+                    // Lưu stores vào cookie dưới dạng JSON
+                    $stores_json = json_encode($stores);
+                    $app->setCookie('stores', $stores_json, time() + $setting['cookie'], '/');
+
                     if($app->xss($_POST['remember'] ?? '' )){
                         $app->setCookie('token', $token,time()+$setting['cookie'],'/');
                     }
                     echo json_encode(['status' => 'success','content' => $jatbi->lang('Đăng nhập thành công')]);
                     $payload['did'] = $app->getCookie('did');
                     $jatbi->logs('accounts','login',$payload);
-                    $app->doHook('after_login_success');
                 }
                 else {
                     echo json_encode(['status' => 'error','content' => $jatbi->lang('Tài khoản hoặc mật khẩu không đúng')]);
@@ -79,6 +111,112 @@
                 echo json_encode(['status' => 'error','content' => $jatbi->lang('Vui lòng không để trống')]);
             }
         });
+        $app->router('/change-stores/{id}', 'GET', function($vars) use ($app, $jatbi, $setting) {
+            // Lấy ID cửa hàng từ vars
+            $id = $vars['id'] ?? '0';
+
+            // Lấy thông tin tài khoản
+            $account = $app->get("accounts", "*", [
+                "id" => $app->getSession("accounts")['id'] ?? 0,
+                "deleted" => 0,
+                "status" => "A",
+            ]);
+
+            // Lấy danh sách cửa hàng hợp lệ
+            if ($account['stores'] == "") {
+                $List_Stores = $app->select("stores", ["id", "name", "code"], ["deleted" => 0, "status" => 'A']);
+            } else {
+                $store_ids = unserialize($account['stores']);
+                $List_Stores = $app->select("stores", ["id", "name", "code"], ["id" => $store_ids, "deleted" => 0, "status" => 'A']);
+            }
+            
+
+            // Kiểm tra ID cửa hàng có hợp lệ
+            $is_valid = ($id == '0');
+            foreach ($List_Stores as $store) {
+                if ($store['id'] == $id) {
+                    $is_valid = true;
+                    break;
+                }
+            }
+
+            if ($is_valid) {
+                // Lưu ID cửa hàng được chọn vào cookie
+                $app->setCookie('selected_store', $id, time() + $setting['cookie'], '/');
+
+                // Cập nhật danh sách cửa hàng trong cookie
+                if ($id == '0') {
+                    // Chọn "Tất cả cửa hàng"
+                    if ($account['stores'] == "") {
+                        $stores = $app->select("stores", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => 'A']);
+                    } else {
+                        $store_ids = unserialize($account['stores']);
+                        $stores = $app->select("stores", ["id(value)", "name(text)", "code"], ["id" => $store_ids, "deleted" => 0, "status" => 'A']);
+                    }
+                } else {
+                    // Chọn một cửa hàng cụ thể
+                    $stores = [$app->get("stores", ["id(value)", "name(text)", "code"], ["id" => $id, "deleted" => 0, "status" => 'A'])];
+                }
+
+                // Lưu stores vào cookie dưới dạng JSON
+                $stores_json = json_encode($stores);
+                $app->setCookie('stores', $stores_json, time() + $setting['cookie'], '/');
+                // Chuyển hướng về trang trước
+                $referer = $_SERVER['HTTP_REFERER'] ?? '/';
+                $parsedUrl = parse_url($referer);
+                $path = $parsedUrl['path'] ?? '/';
+                $app->redirect($path);
+                
+            } else {
+                // Trả về lỗi 404 nếu ID không hợp lệ
+                $app->response(404);
+                die();
+            }
+        });
+        $app->router('/select-store-modal', ['GET'], function ($vars) use ($app, $jatbi, $setting) {
+            $vars['title'] = $jatbi->lang("Chọn cửa hàng");
+
+            // Lấy thông tin tài khoản
+            $vars['account'] = $app->get("accounts", "*", [
+                "id" => $app->getSession("accounts")['id'] ?? 0,
+                "deleted" => 0,
+                "status" => "A",
+            ]);
+
+            // Lấy danh sách cửa hàng hợp lệ
+            if ($vars['account']['stores'] == "") {
+                $vars['stores'] = $app->select("stores", ["id", "name", "code"], ["deleted" => 0, "status" => 'A']);
+            } else {
+                $store_ids = unserialize($vars['account']['stores']);
+                $vars['stores'] = $app->select("stores", ["id", "name", "code"], ["id" => $store_ids, "deleted" => 0, "status" => 'A']);
+            }
+
+            // Lấy cửa hàng đang chọn từ cookie
+            $vars['selected_store'] = $app->getCookie('selected_store') ?? '0';
+
+            // Render nội dung modal
+            echo $app->render($setting['template'] . '/components/select-store-modal.html', $vars, $jatbi->ajax());
+        });
+
+        $app->router('/stores1', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $value = $app->xss($_POST['value']);
+            $data = $app->get("stores","*",["id"=>$value,"status"=>'A',"deleted"=>0]);
+            if ($data) { // Sửa lỗi $data>1 thành $data
+                $Getstore = $app->select("branch",["id(value)","name(text)","code"],["stores"=>$data['id'],"status"=>'A',"deleted"=>0]);
+                // Lưu $Getstore vào session
+                $_SESSION['branch_receive_options'] = $Getstore;
+                // Trả về status để báo thành công
+                echo json_encode(['status' => 'success']);
+            }
+            if(empty($value)){
+                unset($_SESSION['branch_receive_options']);
+                echo json_encode(['status' => 'success']);
+            }
+        });
+
         $app->router("/logout", 'GET', function($vars) use ($app,$setting) {
             $app->deleteSession('accounts');
             $app->deleteCookie('token');
@@ -315,6 +453,23 @@
             }
         });
     });
+    function setStoreCookie($app, $data, $cookieTime = 2592000) {
+        // Đếm số lượng cửa hàng đang hoạt động
+        $storeCount = $app->count("stores", "id", ["deleted" => 0, "status" => 'A']);
+
+        if ($storeCount > 1) {
+            if (empty($data['stores']) || count(unserialize($data['stores'])) > 1) {
+                $app->setCookie('stores', 0, time() + $cookieTime, '/');
+            } else {
+                $storeList = unserialize($data['stores']);
+                $app->setCookie('stores', $storeList[0], time() + $cookieTime, '/');
+            }
+        } else {
+            $storeId = $app->get("stores", "id", ["deleted" => 0, "status" => 'A']);
+            $app->setCookie('stores', $storeId, time() + $cookieTime, '/');
+        }
+    }
+
     // $app->router("/build-assets", 'GET', function($vars) use ($app, $jatbi,$setting) {
     //     $commonJs = $app->getValueData('commonJs');
     //     $commonCss = $app->getValueData('commonCss');

@@ -1,0 +1,445 @@
+<div class="container-fluid py-2">
+    <div class="row g-3">
+        <div class="col-lg-12">
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="row g-3">
+                        <div class="col-lg-12">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="fw-500">Doanh thu <?=$jatbi->lang("Tháng")?>
+                                                <?=$month?>/
+                                                <?=$year?>
+                                            </span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">
+                                                <span class="fw-bold text-eclo">
+                                                    <?=number_format($stats['this_month']['payment'] ?? 0)?>
+                                                </span>
+                                            </h4>
+
+                                            <span class="fw-500">Số đơn <?=$jatbi->lang("Tháng")?>
+                                                <?=$month?>/
+                                                <?=$year?>
+                                            </span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">
+                                                <span class="fw-bold text-success">
+                                                    <?=number_format($stats['this_month']['count'] ?? 0)?>
+                                                </span>
+                                            </h4>
+                                            <a class="btn btn-eclo rounded-pill p-2 px-3 fw-bold"
+                                                href="/reports/revenue" data-pjax>Xem thêm</a>
+                                        </div>
+                                        <div class="mobile-right-img"><img class="w-100"
+                                                src="/assets/img/Revenue-bro.svg" alt="Doanh thu"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div>
+                                            <span class="f-w-500 f-light">Doanh thu hôm nay</span>
+                                            <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-success">
+                                                    <?=number_format($stats['today']['payment'] ?? 0)?>
+                                                </span></h4>
+                                        </div>
+                                        <div><i
+                                                class="ti ti-brand-cashapp shadow fs-3 card border p-3 rounded-4 border-0 text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div>
+                                            <span class="f-w-500 f-light">Số hóa đơn hôm nay</span>
+                                            <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-warning">
+                                                    <?=number_format($stats['today']['count'] ?? 0)?>
+                                                </span></h4>
+                                        </div>
+                                        <div><i
+                                                class="ti ti-checkup-list shadow fs-3 card border p-3 rounded-4 border-0 text-warning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div>
+                                            <span class="f-w-500 f-light">Đơn hàng trong tuần</span>
+                                            <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-primary">
+                                                    <?=number_format($stats['this_week']['count'] ?? 0)?>
+                                                </span></h4>
+                                        </div>
+                                        <div><i
+                                                class="ti ti-checkup-list shadow fs-3 card border p-3 rounded-4 border-0 text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div>
+                                            <span class="f-w-500 f-light">Đơn hàng trong tháng</span>
+                                            <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-eclo">
+                                                    <?=number_format($stats['this_month']['count'] ?? 0)?>
+                                                </span></h4>
+                                        </div>
+                                        <div><i
+                                                class="ti ti-checkup-list shadow fs-3 card border p-3 rounded-4 border-0 text-eclo"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card bg-body bg-opacity-50 rounded-5 shadow border-0 p-3 calendar h-100">
+                        <h6 class="fw-bold mb-3">Lịch
+                            <?=$month?>/
+                            <?=$year?>
+                        </h6>
+                        <div class="calendar-header">
+                            <?php foreach ($weeks as $week){ ?>
+                            <div class="bg-eclo bg-opacity-75 text-white rounded-3 m-1 p-2 fw-bold">
+                                <?=$week?>
+                            </div>
+                            <?php } ?>
+                        </div>
+                        <div class="calendar-body">
+                            <?php for ($i = 1; $i < $startDay; $i++) { ?>
+                            <div class="bg-transparent m-1"></div>
+                            <?php } ?>
+                            <?php for ($day = 1; $day <= $dayLastMonth; $day++) {
+                                $today_class = (date('m') == $month && date('d') == $day && date('Y') == $year) ? 'bg-info bg-opacity-25' : 'bg-body-secondary bg-opacity-50';
+                            ?>
+                            <div class="<?=$today_class?> rounded-3 m-1 position-relative" style="min-height:50px">
+                                <div class="d-flex align-items-center justify-content-between w-100 p-1">
+                                    <div class="rounded-1 p-1 d-flex align-items-center justify-content-center"
+                                        style="width:20px;height:20px;">
+                                        <?=$day?>
+                                    </div>
+                                    <small class="fw-bold text-primary">
+                                        <?=$stats['chart'][$day] ?? 0?>
+                                    </small>
+                                </div>
+                            </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="GET" class="search-form">
+                    <div class="filter-search mb-3">
+                        <div class="d-flex align-items-center justify-content-end">
+                            <!-- Nút mở bộ lọc chi tiết -->
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                                    type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                    data-bs-auto-close="outside">
+                                    <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur p-3"
+                                    style="--blur:10px;--min-width:500px;">
+                                    <div class="fw-semibold mb-2"><?=$jatbi->lang("Lọc theo điều kiện")?></div>
+
+                                    <!-- Lựa chọn giữa Sản phẩm và Nguyên liệu -->
+                                    <?=$app->component('select', [
+                                        'name' => 'filter_type', 
+                                        'placeholder' => 'Lọc theo',
+                                        'id' => 'dashboard-filter-type',
+                                        'options' => [
+                                            ['value' => '', 'text' => '--- Chọn loại lọc ---'], 
+                                            ['value' => 'sp', 'text' => 'Thành Phẩm / Hàng Hóa'],
+                                            ['value' => 'nl', 'text' => 'Nguyên Liệu']
+                                        ],
+                                        'selected' => $_GET['filter_type'] ?? ''
+                                    ])?>
+
+                                    <!-- Bộ lọc cho Thành phẩm (Mặc định hiện) -->
+                                    <div class="row g-2 mt-2" data-show-on-type="sp">
+                                        <div class="col-6">
+
+                                            <?=$app->component('select', [
+                                "name" => 'stores',
+                                "placeholder" => $jatbi->lang('Cửa hàng'),
+                                "class" => "filter-name",
+                                "options" => $stores,
+                                "selected" => $_GET['stores'] ?? '',
+                                "id" => "stores",
+                            ])?>
+                                        </div>
+                                        <div class="col-6">
+
+                                            <?=$app->component('select',[
+                                "name"=>'branchss',
+                                "placeholder" => $jatbi->lang("Quầy hàng"), 
+                                "selected" =>($data['branchss'] ?? ''),
+                                "class" => "filter-name",
+                                "attr" => 'data-width="100%" data-parent="#stores" 
+                                data-load="true" 
+                                data-url="/api/branch" 
+                                data-method="POST" 
+                                data-keyword="keyword" 
+                                data-max-length="1" ',
+                                "id" => "branch",                                                
+                            ])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'units', 'placeholder' => "Đơn vị", 'options' => $units ?? [], 'selected' => $_GET['units'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'categorys', 'placeholder' => "Danh mục", 'options' => $categorys ?? [], 'selected' => $_GET['categorys'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'groups', 'placeholder' => "Nhóm sản phẩm", 'options' => $groups ?? [], 'selected' => $_GET['groups'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select-status', ["name" => "statuss", "value" => $_GET['statuss'] ?? 'A'])?>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bộ lọc cho Nguyên liệu (Mặc định ẩn) -->
+                                    <div class="row g-2 mt-2" data-show-on-type="nl" style="display:none;">
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'type', 'placeholder' => 'Loại nguyên liệu', 'options' => [['value' => 1, 'text' => 'Dây'],['value' => 2, 'text' => 'Ngọc'],['value' => 3, 'text' => 'Khác']], 'selected' => $_GET['type'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'pearl', 'placeholder' => 'Loại ngọc', 'options' => $pearls ?? [], 'selected' => $_GET['pearl'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'sizes', 'placeholder' => 'Li ngọc', 'options' => $sizes ?? [], 'selected' => $_GET['sizes'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                        <div class="col-6">
+                                            <?=$app->component('select', ['name' => 'colors', 'placeholder' => 'Màu sắc', 'options' => $colors ?? [], 'selected' => $_GET['colors'] ?? '', 'class' => 'filter-name'])?>
+                                        </div>
+                                    </div>
+
+                                    <hr class="border-secondary border-opacity-50 my-2">
+                                    <div class="text-end w-100">
+                                        <a href="/"
+                                            class="btn btn-light px-3 py-2 rounded-pill pjax-load"><?=$jatbi->lang("Làm mới")?></a>
+                                        <button type="submit"
+                                            class="btn btn-eclo px-3 py-2 rounded-pill"><?=$jatbi->lang("Áp dụng")?></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+
+                <div class="col-lg-12 mt-3">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">1. Thành Phẩm/Hàng Hóa</h6>
+                            <div class="row g-3">
+                                <!-- Thống kê Thành phẩm: Tồn kho cao -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/products?sosanh=>&amount=10&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Thành phẩm còn nhiều trên 10pcs</span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-success">
+                                                            <?=number_format($inventory_stats['products']['high_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-package shadow fs-3 card border p-3 rounded-4 border-0 text-success"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- Thống kê Thành phẩm: Tồn kho thấp -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/products?sosanh=<>&amount_to=5&amount_from=10&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Thành phẩm tồn từ 5pcs tới
+                                                        10pcs</span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-warning">
+                                                            <?=number_format($inventory_stats['products']['medium_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-package shadow fs-3 card border p-3 rounded-4 border-0 text-warning"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- Thống kê Nguyên liệu: Sắp hết hàng -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/products?sosanh=<&amount=5&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Thành phẩm sắp hết tồn dưới
+                                                        5pcs</span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-danger">
+                                                            <?=number_format($inventory_stats['products']['low_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-flask shadow fs-3 card border p-3 rounded-4 border-0 text-danger"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Bắt đầu khối Thống kê Nguyên liệu -->
+                <div class="col-lg-12 mt-3">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">2. Nguyên Liệu </h6>
+                            <div class="row g-3">
+
+                                <!-- Thống kê: Tồn kho cao -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/ingredient?sosanh=>&amount=10&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100 text-decoration-none pjax-load">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Nguyên liệu tồn trên 10pcs</span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-success">
+                                                            <?=number_format($inventory_stats['ingredients']['high_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-flask shadow fs-3 card border p-3 rounded-4 border-0 text-success"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Thống kê: Tồn kho thấp -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/ingredient?sosanh=<>&amount_to=5&amount_from=10&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100 text-decoration-none pjax-load">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Nguyên liệu tồn từ 5pcs tới
+                                                        10pcs</span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-warning">
+                                                            <?=number_format($inventory_stats['ingredients']['medium_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-flask shadow fs-3 card border p-3 rounded-4 border-0 text-warning"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Thống kê: Sắp hết hàng -->
+                                <div class="col-lg-4">
+                                    <a href="/warehouses/ingredient?sosanh=<&amount=5&<?= http_build_query($_GET) ?>"
+                                        class="card shadow-sm border-0 bg-body rounded-4 h-100 text-decoration-none pjax-load">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between w-100">
+                                                <div>
+                                                    <span class="f-w-500 f-light">Nguyên liệu tồn dưới 5pcs </span>
+                                                    <h4 class="mb-0 mt-1 fs-5"><span class="fw-bold text-danger">
+                                                            <?=number_format($inventory_stats['ingredients']['low_stock'] ?? 0)?>
+                                                        </span></h4>
+                                                </div>
+                                                <div><i
+                                                        class="ti ti-flask shadow fs-3 card border p-3 rounded-4 border-0 text-danger"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Kết thúc khối Thống kê Nguyên liệu -->
+
+
+                <div class="col-lg-12">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-3 h-100">
+                        <h6 class="fw-bold mb-3">Thống kê đơn hàng trong tháng
+                            <?=$month?>/
+                            <?=$year?>
+                        </h6>
+                        <canvas data-chart data-type="bar" data-labels='<?= json_encode($chartdate) ?>'
+                            data-datasets='[
+                    {
+                        "label": "Đơn hàng", 
+                        "data": <?=json_encode(array_values($stats['chart']))?>,
+                            "backgroundColor": "rgba(13,110,253,1)",
+                            "borderColor": "rgba(13,110,253,1)"
+                            }
+                            ]'>
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        function toggleFilters() {
+            const selectedType = $('#dashboard-filter-type').val();
+            const $filterGroups = $('[data-show-on-type]');
+
+            if (!selectedType) {
+                $filterGroups.hide();
+                return;
+            }
+
+            $filterGroups.each(function () {
+                const $element = $(this);
+                if ($element.data('show-on-type') === selectedType) {
+                    $element.show();
+                } else {
+                    $element.hide();
+                }
+            });
+        }
+
+        $(document).on('change', '#dashboard-filter-type', toggleFilters);
+
+        toggleFilters();
+    });
+</script>

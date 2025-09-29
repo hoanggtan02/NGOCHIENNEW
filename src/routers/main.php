@@ -1,131 +1,420 @@
 <?php
-	if (!defined('ECLO')) die("Hacking attempt");
-    use ECLO\App;
-	$app->group($setting['manager'],function($app) use ($jatbi,$setting,$common){
-        $app->router(($setting['manager']==''?'/':''),'GET', function($vars) use ($app,$setting,$common,$jatbi) {
-            $vars['title'] = $jatbi->lang("Trang chủ");
-    
-            // === BƯỚC 1: CHUẨN BỊ CÁC BIẾN CẦN THIẾT ===
+if (!defined('ECLO'))
+    die("Hacking attempt");
+
+$stores_json = $app->getCookie('stores') ?? json_encode([]);
+$stores = json_decode($stores_json, true);
+$session = $app->getSession("accounts");
+$accStore = [];
+if (isset($session['id'])) {
+    $account = $app->get("accounts", "*", [
+        "id" => $session['id'],
+        "deleted" => 0,
+        "status" => "A",
+    ]);
+    if ($account['stores'] == '') {
+        $accStore[0] = "0"; // chỉ thêm 1 lần
+    }
+
+    foreach ($stores as $itemStore) {
+        $accStore[$itemStore['value']] = $itemStore['value'];
+    }
+}
+
+
+$app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common, $stores, $accStore) {
+    // $app->router(($setting['manager'] == '' ? '/' : ''), 'GET', function ($vars) use ($app, $setting, $common) {
+    //     $account_id = $app->getSession("accounts")['id'] ?? null;
+    //     $account = $account_id ? $app->get("accounts", "*", ["id" => $account_id]) : [];
+    //     $month = isset($_GET['month']) ? (int) $_GET['month'] : date('m');
+    //     $year = isset($_GET['year']) ? (int) $_GET['year'] : date('Y');
+    //     $firstDayOfMonth = strtotime($year . '-' . $month . '-01');
+    //     $dayLastMonth = date('t', $firstDayOfMonth);
+    //     $startDay = date('w', $firstDayOfMonth);
+    //     $startDay = $startDay == 0 ? 7 : $startDay;
+    //     $date_start = date("Y-m-01 00:00:00", strtotime($year . '-' . $month . '-01'));
+    //     $date_end = date("Y-m-t 23:59:59", strtotime($year . '-' . $month . '-01'));
+    //     $weeks = $common['weeks'];
+    //     $vars = [
+    //         "weeks" => $weeks,
+    //         "startDay" => $startDay,
+    //         "month" => $month,
+    //         "year" => $year,
+    //         "dayLastMonth" => $dayLastMonth,
+    //         "account" => $account,
+    //         "date_start" => $date_start,
+    //         "date_end" => $date_end,
+    //     ];
+
+    //     echo $app->render($setting['template'] . '/pages/home.html', $vars);
+    // });
+
+
+    $app->router('/', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $common, $accStore, $stores) {
+        $filters = ($app->method() === 'POST') ? $_POST : $_GET;
+        $month = $filters['month'] ?? date('m');
+        $year = $filters['year'] ?? date('Y');
+
+
+        if ($app->method() === 'GET') {
             $account_id = $app->getSession("accounts")['id'] ?? null;
-            $vars['account'] = $account_id ? $app->get("accounts", "*", ["id" => $account_id]) : [];
-
-            // Lấy thông tin tháng/năm và tính toán các mốc thời gian
-            $month = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
-            $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
-            
-            $current_date = new DateTime("$year-$month-01");
-            $month_start = $current_date->format('Y-m-01 00:00:00');
-            $month_end = $current_date->format('Y-m-t 23:59:59');
-            // $today_start = date('Y-m-d 00:00:00');
-            // $today_end = date('Y-m-d 23:59:59');
-
-            [$today_start, $today_end] = $jatbi->parseDateRange();
-            
-            $brands_ids = $jatbi->brands('array_id');
-            if (empty($brands_ids)) { $brands_ids = [0]; } // Tránh lỗi SQL nếu không có chi nhánh
-
-            // === BƯỚC 2: TRUY VẤN TỔNG HỢP TẤT CẢ KPI TRONG 1 LẦN ===
-            // $kpi_conditions = [ "deleted" => 0, "brands" => $brands_ids ];
-            
-            // $kpis = $app->get("invoices", [
-            //     "tongdoanhso"         => App::raw("SUM(CASE WHEN status IN (1,2,20) AND date_start BETWEEN :today_start AND :today_end THEN total ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-            //     "tongdoanhthu"        => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-            //     "khachmoithang"       => App::raw("SUM(CASE WHEN status IN (2,20) AND date_start BETWEEN :today_start AND :today_end THEN amount ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-            //     "doanhthuhomnay"      => App::raw("SUM(CASE WHEN status = 2 AND date_start BETWEEN :today_start AND :today_end THEN payments ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-            //     "ghinoihomnay"        => App::raw("SUM(CASE WHEN status = 20 AND date_start BETWEEN :today_start AND :today_end THEN payments - total_pay ELSE 0 END)", [':today_start' => $today_start, ':today_end' => $today_end]),
-            //     "bookinghomnaydanhan" => App::raw("COUNT(CASE WHEN status IN (1,2,20) AND process IN (2,200,100) AND date_start BETWEEN :today_start AND :today_end THEN id ELSE NULL END)")
-            // ], $kpi_conditions);
-            
-            // $vars = array_merge($vars, $kpis ?? []);
-
-            // // (Giữ nguyên các truy vấn cho Đề xuất và Kho hàng)
-            // $proposal_kpis = $app->get("proposals", [
-            //     "cho_duyet" => App::raw("COUNT(CASE WHEN status = 1 THEN id ELSE NULL END)"),
-            //     "da_duyet_thang" => App::raw("COUNT(CASE WHEN status = 2 AND `date` BETWEEN :month_start AND :month_end THEN id ELSE NULL END)", [':month_start' => $month_start, ':month_end' => $month_end])
-            // ], ["deleted" => 0]);
-            // $vars = array_merge($vars, $proposal_kpis ?? []);
-
-            // $warehouse_kpis = $app->get("warehouses_summary", [
-            //     "tong_gia_tri_ton" => App::raw("SUM(total)")
-            // ], ["brands" => $brands_ids]);
-            // $date_30_days = date('Y-m-d', strtotime('+30 days'));
-            // $vars['sap_het_han'] = $app->count("warehouses_inventory", ["expiry[<=]" => $date_30_days, "brands" => $brands_ids]);
-            // $vars = array_merge($vars, $warehouse_kpis ?? []);
-
-            // === BƯỚC 3: LẤY DỮ LIỆU LỊCH & BOOKING HÔM NAY ===
-            // Lấy dữ liệu đã được gom nhóm sẵn cho lịch
-            $calendar_data = $app->select("invoices", [
-                "day" => App::raw("DATE(date_start)"),
-                "total" => App::raw("COUNT(id)"),
-                "payment" => App::raw("COUNT(CASE WHEN status = 2 THEN 1 ELSE NULL END)"),
-                "cancel" => App::raw("COUNT(CASE WHEN status = 3 THEN 1 ELSE NULL END)"),
-                "primary" => App::raw("COUNT(CASE WHEN process = 2 THEN 1 ELSE NULL END)"),
-                "payments" => App::raw("SUM(CASE WHEN status = 2 THEN payments ELSE 0 END)")
-            ], [
-                "deleted" => 0,
-                "brands" => $brands_ids,
-                "date_start[<>]" => [$month_start, $month_end],
-                "GROUP" => App::raw("DATE(date_start)")
-            ]);
-
-            $count = ['month' => []];
-            foreach($calendar_data as $row) {
-                $count['month'][$row['day']] = $row;
+            $account = $account_id ? $app->get("accounts", "*", ["id" => $account_id]) : [];
+            if (($account['type'] ?? null) == 10) {
+                echo $app->render($setting['template'] . '/pages/home_driver.html', $vars);
+                return;
             }
-            $vars['count'] = $count;
+        }
 
-            // Lấy danh sách booking đang hoạt động của hôm nay
-            $bookings_raw = $app->select("invoices", ["[>]customers" => ["customers" => 'id'], "[>]rooms" => ["room" => 'id'], "[>]accounts" => ["booking" => 'id']], ["invoices.total", "invoices.code", "invoices.status", "invoices.active", "invoices.payments", "invoices.date", "invoices.date (date_invoices)", "invoices.date_start (date_start)", "invoices.process", "rooms.active (rooms)", "customers.name (name)", "accounts.name (bookings)"], ["invoices.deleted"=>0, "invoices.date_start[<>]" => [$today_start, $today_end], "invoices.brands" => $brands_ids, "invoices.status" => [1,20], "invoices.process" => [1,2], "ORDER" => ["invoices.process"=>"ASC", "invoices.date"=>"DESC"]]);
-            
-            $bookings = [];
-            foreach($bookings_raw as $data){
-                $countdown_params = [];
-                if ($data['process'] == 1) { // Chờ nhận phòng
-                    $countdown_params = ["countdown_start" => $data['date_invoices'], "countdown_end" => $data['date_invoices'], "countdown_downcolor" => 'text-warning', "countdown_upcolor" => 'text-danger', "countdown_timedown" => 10*60, "countdown_timeup" => 1];
-                } elseif ($data['process'] == 2) { // Đang phục vụ
-                    $countdown_params = ["countdown_start" => $data['date_start'], "countdown_end" => $data['date_start'], "countdown_downcolor" => 'text-primary', "countdown_upcolor" => 'text-primary', "countdown_timedown" => 1, "countdown_timeup" => 1];
-                }
-                $bookings[] = array_merge($data, $countdown_params, ['color' => $data['status'] == 2 ? 'bg-success' : $common['process'][$data['process']]['color']]);
+        $all_option = [['value' => '', 'text' => $jatbi->lang('Tất cả')]];
+
+        $vars['stores'] = array_merge($all_option, $stores);
+        $vars['units'] = array_merge($all_option, $app->select("units", ["id(value)", "name(text)"], ["deleted" => 0]));
+        $vars['categorys'] = array_merge($all_option, $app->select("categorys", ["id(value)", "name(text)"], ["deleted" => 0]));
+        $vars['groups'] = array_merge($all_option, $app->select("products_group", ["id(value)", "name(text)"], ["deleted" => 0]));
+        $vars['pearls'] = array_merge($all_option, $app->select("pearl", ["id(value)", "name(text)"], ["deleted" => 0]));
+        $vars['sizes'] = array_merge($all_option, $app->select("sizes", ["id(value)", "name(text)"], ["deleted" => 0]));
+        $vars['colors'] = array_merge($all_option, $app->select("colors", ["id(value)", "name(text)"], ["deleted" => 0]));
+
+        $firstDayOfMonth = strtotime($year . '-' . $month . '-01');
+        $date_from = date('Y-m-d 00:00:00', $firstDayOfMonth);
+        $date_to = date('Y-m-t 23:59:59', $firstDayOfMonth);
+        $prev_month_from = date('Y-m-d 00:00:00', strtotime($date_from . ' -1 month'));
+        
+        $vars['dayLastMonth'] = date('t', $firstDayOfMonth);
+        $startDay = date('w', $firstDayOfMonth);
+        $vars['chartdate'] = range(1, $vars['dayLastMonth']);
+
+
+        $where = ["AND" => ["type" => [1, 2], "deleted" => 0, "returns" => null, "date[<>]" => [$prev_month_from, $date_to]]];
+        if (!empty($accStore)) {
+            $where['AND']['stores'] = $accStore;
+        }
+
+        $getOrders = $app->select("invoices", ["id", "date", "payments"], $where);
+
+        $stats = [
+            'today' => ['count' => 0, 'payment' => 0],
+            'yesterday' => ['count' => 0, 'payment' => 0],
+            'this_week' => ['count' => 0, 'payment' => 0],
+            'this_month' => ['count' => 0, 'payment' => 0],
+            'last_month' => ['count' => 0, 'payment' => 0],
+            'chart' => array_fill(1, date('t', $firstDayOfMonth), 0)
+        ];
+
+        $today_start = strtotime('today 00:00:00');
+        $today_end = strtotime('today 23:59:59');
+        $yesterday_start = strtotime('yesterday 00:00:00');
+        $yesterday_end = strtotime('yesterday 23:59:59');
+        $week_start = strtotime('monday this week 00:00:00');
+
+        foreach ($getOrders as $order) {
+            $order_time = strtotime($order['date']);
+            if ($order_time >= $today_start && $order_time <= $today_end) {
+                $stats['today']['count']++;
+                $stats['today']['payment'] += $order['payments'];
             }
-            $vars['bookings'] = $bookings;
+            if ($order_time >= $yesterday_start && $order_time <= $yesterday_end) {
+                $stats['yesterday']['count']++;
+                $stats['yesterday']['payment'] += $order['payments'];
+            }
+            if ($order_time >= $week_start) {
+                $stats['this_week']['count']++;
+                $stats['this_week']['payment'] += $order['payments'];
+            }
+            if ($order_time >= $firstDayOfMonth) {
+                $stats['this_month']['count']++;
+                $stats['this_month']['payment'] += $order['payments'];
+                $stats['chart'][(int) date('j', $order_time)]++;
+            } else {
+                $stats['last_month']['count']++;
+                $stats['last_month']['payment'] += $order['payments'];
+            }
+        }
 
-            // === BƯỚC 4: LẤY CÁC DANH SÁCH TOP ===
-            $top_where = ["GROUP" => "customers", "ORDER" => ["total_payment" => "DESC"], "LIMIT" => 5, "invoices.status" => 2, "invoices.deleted" => 0, "invoices.date_start[<>]" => [$month_start,$month_end], "invoices.brands"=>$brands_ids];
-            $vars['top_customers'] = $app->select("invoices", ["[>]customers" => ["customers" => "id"]], ["customers.name", "customers.date", "total_payment" => App::raw("SUM(invoices.payments)")], $top_where);
-            
-            // (Các truy vấn top khác giữ nguyên vì đã tối ưu)
-            $vars['top_new_customers'] = $app->select("invoices", ["[>]customers" => ["customers" => "id"]], ["customers.id", "customers.name", "customers.date", "invoice_count" => App::raw("COUNT(invoices.id)"), "total_payment" => App::raw("SUM(invoices.payments)")], ["GROUP" => "customers.id", "ORDER" => ["invoice_count" => "DESC"], "LIMIT" => 5, "invoices.status" => 2, "invoices.deleted" => 0, "customers.status" => 'A', "invoices.date_start[<>]" =>[$month_start,$month_end], "customers.deleted" => 0, "invoices.brands"=>$brands_ids]);
-            $vars['top_customers_month'] = $vars['top_customers']; // Tận dụng lại vì logic giống nhau
+        $filter_stores = $filters['stores'] ?? ($accStore ?? null);
+        $products_inventory_where = ['deleted' => 0];
+        if (!empty($filter_stores))
+            $products_inventory_where['stores'] = $filter_stores;
+        if (!empty($filters['branch']))
+            $products_inventory_where['branch'] = $filters['branch'];
+        if (!empty($filters['units']))
+            $products_inventory_where['units'] = $filters['units'];
+        if (!empty($filters['categorys']))
+            $products_inventory_where['categorys'] = $filters['categorys'];
+        if (!empty($filters['groups']))
+            $products_inventory_where['group'] = $filters['groups'];
+        if (!empty($filters['statuss'])) {
+            $products_inventory_where['status'] = $filters['statuss'];
+        } else {
+            $products_inventory_where['status'] = ['A', 'D'];
+        }
 
-            // === BƯỚC 5: CHUẨN BỊ BIẾN CHO VIEW & RENDER ===
-            $vars['month'] = $current_date->format('m');
-            $vars['year'] = $current_date->format('Y');
-            
-            $prev_date = (clone $current_date)->modify('-1 month');
-            $prev_month = $prev_date->format('m');
-            $prev_year = $prev_date->format('Y');
+        $ingredients_inventory_where = ['deleted' => 0];
+        if (!empty($filters['type']))
+            $ingredients_inventory_where['type'] = $filters['type'];
+        if (!empty($filters['pearl']))
+            $ingredients_inventory_where['pearl'] = $filters['pearl'];
+        if (!empty($filters['sizes']))
+            $ingredients_inventory_where['sizes'] = $filters['sizes'];
+        if (!empty($filters['colors']))
+            $ingredients_inventory_where['colors'] = $filters['colors'];
+        if (!empty($filters['status'])) {
+            $ingredients_inventory_where['status'] = $filters['status'];
+        } else {
+            $ingredients_inventory_where['status'] = ['A', 'D'];
+        }
 
-            $next_date = (clone $current_date)->modify('+1 month');
-            $next_month = $next_date->format('m');
-            $next_year = $next_date->format('Y');
-            
-            $vars['dayLastMonth'] = $current_date->format('t');
-            $startDay = (int)$current_date->format('w');
-            $vars['startDay'] = $startDay == 0 ? 7 : $startDay;
+        $inventory_stats = [
+            'products' => [
+                'low_stock' => $app->count("products", array_merge($products_inventory_where, ["amount[<]" => 5])),
+                'medium_stock' => $app->count("products", array_merge($products_inventory_where, ["amount[<>]" => [5, 10]])),
+                'high_stock' => $app->count("products", array_merge($products_inventory_where, ["amount[>]" => 10])),
+            ],
+            'ingredients' => [
+                'low_stock' => $app->count("ingredient", array_merge($ingredients_inventory_where, ["amount[<]" => 5])),
+                'medium_stock' => $app->count("ingredient", array_merge($ingredients_inventory_where, ["amount[<>]" => [5, 10]])),
+                'high_stock' => $app->count("ingredient", array_merge($ingredients_inventory_where, ["amount[>]" => 10])),
+            ]
+        ];
+
+        if ($app->method() === 'GET') {
+            $vars['stats'] = $stats;
+            $vars['inventory_stats'] = $inventory_stats;
+            $vars['title'] = $jatbi->lang("Trang chủ");
+            $vars['dayLastMonth'] = date('t', $firstDayOfMonth);
+            $startDay = date('w', $firstDayOfMonth);
+            $vars['startDay'] = ($startDay == 0) ? 7 : $startDay;
+            $vars['month'] = $month;
+            $vars['year'] = $year;
             $vars['weeks'] = $common['weeks'];
+            echo $app->render($setting['template'] . '/pages/home1.html', $vars);
 
-            $queryStringPrevMonth = '?month=' . $prev_month . '&year=' . $prev_year;
-            $queryStringNextMonth = '?month=' . $next_month . '&year=' . $next_year;
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+            echo json_encode([
+                'stats' => $stats,
+                'inventory_stats' => $inventory_stats
+            ]);
+        }
+    });
 
-            $vars["nextMonth"] = $queryStringNextMonth;
-            $vars["prevMonth"] = $queryStringPrevMonth;
-            echo $app->render($setting['template'].'/pages/home.html', $vars);
-        });
-    })->middleware('login');
-    $app->router("::404",'GET', function($vars) use ($app,$jatbi,$setting) {
-        echo $app->render($setting['template'].'/pages/error.html', $vars, $jatbi->ajax());
+    $app->router('/list-driver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $jatbi->permission('drivers.view');
+        $vars['title'] = $jatbi->lang("Danh sách khai báo");
+
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/drivers/list-driver.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $filter_date = $_POST['date'] ?? '';
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "drivers.car[~]" => $searchValue,
+                        "drivers.number_car[~]" => $searchValue,
+                        "drivers.code[~]" => $searchValue
+                    ],
+                    "drivers.deleted" => 0,
+                    "drivers.user" => $app->getSession("accounts")['id'] ?? 0
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+            ];
+
+
+            if (!empty($filter_date)) {
+                $dates = explode(' - ', $filter_date);
+                if (count($dates) === 2) {
+                    $date_from = date('Y-m-d', strtotime(str_replace('/', '-', trim($dates[0]))));
+                    $date_to = date('Y-m-d', strtotime(str_replace('/', '-', trim($dates[1]))));
+                    $where["AND"]["drivers.date[<>]"] = [$date_from, $date_to];
+                }
+            }
+
+            $count = $app->count("drivers", $where);
+            $app->select(
+                "drivers",
+                "*",
+                $where,
+                function ($data) use (&$datas, $jatbi, $app) {
+                    $status_html = $data['status'] == 0
+                        ? '<span class="badge bg-danger">' . $jatbi->lang('Chưa thanh toán') . '</span>'
+                        : '<span class="badge bg-success">' . $jatbi->lang('Đã thanh toán') . '</span>';
+                    $datas[] = [
+                        "checkbox" => $app->component("box", ["data" => $data['id']]),
+                        "date" => date('d/m/Y', strtotime($data['date'])),
+                        "number_car" => $data['number_car'],
+                        "car" => $data['car'],
+                        "count" => $data['count'],
+                        "amount" => $data['amount'],
+                        "code" => $data['code'],
+                        "status" => $status_html,
+                        "user" => $app->getSession("accounts")['name'] ?? 0,
+                    ];
+                }
+            );
+
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas ?? [],
+            ]);
+        }
     });
-    $app->router('::500', 'GET', function() use ($app) {
-        echo '<h1>ACCESS DENIED FOR ADMIN AREA</h1>';
+
+    $app->router('/add-driver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores) {
+        $vars['title'] = $jatbi->lang("Khai báo thông tin");
+
+        if ($app->method() === 'GET') {
+            $account_id = $app->getSession("accounts")['id'] ?? 0;
+            $account = $app->get("accounts", "*", ["id" => $account_id]);
+            $vars['account'] = $account;
+
+
+            if (($account['type'] ?? null) != 10) {
+                $accounts_data = $app->select("accounts", ["id", "name", "phone"], ["deleted" => 0, "status" => 'A', "type" => 10]); // Chỉ lấy các tài khoản có type=10
+                $vars['user'] = array_map(function ($acc) {
+                    return [
+                        'value' => $acc['id'],
+                        'text' => $acc['name'] . ' - ' . $acc['phone']
+                    ];
+                }, $accounts_data);
+            }
+
+            // Lấy danh sách cửa hàng
+            $vars['stores'] = $stores;
+
+            // --- BƯỚC 3: RENDER GIAO DIỆN ---
+            echo $app->render($setting['template'] . '/drivers/add-driver.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+            $post = array_map([$app, 'xss'], $_POST);
+
+            // Validation...
+            $required_fields = ['number_car', 'car', 'count', 'amount', 'code', 'date', 'stores'];
+            foreach ($required_fields as $field) {
+                if (empty($post[$field])) {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng điền đủ thông tin')]);
+                    return;
+                }
+            }
+
+            $insert = [
+                "user" => $post['user'],
+                "number_car" => $post['number_car'],
+                "car" => $post['car'],
+                "count" => $post['count'],
+                "amount" => $post['amount'],
+                "code" => $post['code'],
+                "status" => $post['status'] ?? 0,
+                "notes" => $post['notes'],
+                "date" => $post['date'],
+                "date_poster" => date("Y-m-d H:i:s"),
+                "stores" => $post['stores'],
+                "accounts" => $app->getSession("accounts")['id'] ?? 0,
+
+            ];
+            $app->insert("drivers", $insert);
+            $jatbi->logs('drivers', 'add', $insert);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Khai báo thành công')]);
+        }
     });
+
+    $app->router('/list-driver-payment', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $jatbi->permission('drivers.payment.view');
+        $vars['title'] = $jatbi->lang("Lịch sử thanh toán");
+
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/drivers/list-driver-payment.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+            $draw = intval($_POST['draw'] ?? 0);
+            $start = intval($_POST['start'] ?? 0);
+            $length = intval($_POST['length'] ?? 10);
+            $searchValue = $_POST['search']['value'] ?? '';
+            $orderName = $_POST['columns'][intval($_POST['order'][0]['column'] ?? 0)]['name'] ?? 'dp.id';
+            $orderDir = $_POST['order'][0]['dir'] ?? 'DESC';
+            $filter_date = $_POST['date'] ?? '';
+
+            $where = ["AND" => ["dp.deleted" => 0, "dp.user" => $app->getSession("accounts")['id'] ?? 0]];
+
+            if (!empty($searchValue))
+                $where['AND']['dp.code[~]'] = $searchValue;
+            if (!empty($filter_date)) {
+                $dates = explode(' - ', $filter_date);
+                if (count($dates) === 2) {
+                    $date_from = date('Y-m-d', strtotime(str_replace('/', '-', trim($dates[0]))));
+                    $date_to = date('Y-m-d', strtotime(str_replace('/', '-', trim($dates[1]))));
+                    $where["AND"]["dp.date[<>]"] = [$date_from, $date_to];
+                }
+            }
+
+            $joins = [
+                "[<]drivers(d)" => ["drivers" => "id"],
+                "[<]accounts(a)" => ["accounts" => "id"],
+            ];
+
+            $totalRecords = $app->count("drivers_payment", ["deleted" => 0, "user" => $app->getSession("accounts")['id'] ?? 0]);
+            $filteredRecords = $app->count("drivers_payment(dp)", $joins, "dp.id", $where);
+
+            $where["ORDER"] = [$orderName => strtoupper($orderDir)];
+            $where["LIMIT"] = [$start, $length];
+
+            $columns = [
+                "dp.id",
+                "dp.code",
+                "dp.date",
+                "dp.total",
+                "dp.type",
+                "d.number_car",
+                "d.car",
+                "d.count",
+                "d.amount(driver_amount)",
+                "d.code(driver_code)",
+                "a.name(approver_name)"
+            ];
+            $datas = $app->select("drivers_payment(dp)", $joins, $columns, $where);
+
+            $resultData = [];
+            foreach ($datas as $data) {
+                $resultData[] = [
+                    "code" => '<a data-action="modal" data-url="/drivers/payment-views/' . $data['id'] . '/">#' . $data['code'] . '</a>',
+                    "date" => date('d/m/Y', strtotime($data['date'])),
+                    "number_car" => $data['number_car'],
+                    "car" => $data['car'],
+                    "count" => $data['count'],
+                    "driver_amount" => $data['driver_amount'],
+                    "code_group" => $data['code_group'],
+                    "commission" => ($data['type'] == 1) ? number_format($data['total']) : '',
+                    "payment" => ($data['type'] == 0) ? number_format($data['total']) : '',
+                    "approver" => $data['approver_name'],
+                    "action" => $app->component("action", [
+                        "button" => [
+                            ['type' => 'button', 'name' => 'Xem', 'icon' => '<i class="ti ti-eye me-2"></i>', 'action' => ['data-url' => '/drivers/payment-views/' . $data['id'], 'data-action' => 'modal']]
+                        ]
+                    ])
+                ];
+            }
+
+            echo json_encode(["draw" => $draw, "recordsTotal" => $totalRecords, "recordsFiltered" => $filteredRecords, "data" => $resultData]);
+        }
+    });
+
+})->middleware('login');
+
+
+$app->router("::404", 'GET', function ($vars) use ($app, $jatbi, $setting) {
+    echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+});
 ?>
