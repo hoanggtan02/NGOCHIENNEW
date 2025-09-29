@@ -1,0 +1,77 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog pt-standalone">
+        <div class="modal-content rounded-5">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên trang"),
+                                "value" => $data['name'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'email',
+                                "placeholder"=>$jatbi->lang("Email"),
+                                "value" => $data['email'] ?? '',
+                                "type" => 'email'
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'phone',
+                                "placeholder"=>$jatbi->lang("Điện thoại"),
+                                "value" => $data['phone'] ?? '',
+                                "type" => 'tel'
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'address',
+                                "placeholder"=>$jatbi->lang("Địa chỉ"),
+                                "value" => $data['address'] ?? '',
+                            ])?>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Định dạng ngày"),
+                                "value" => $data['date'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'time',
+                                "placeholder"=>$jatbi->lang("Định dang giờ"),
+                                "value" => $data['time'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'page',
+                                "placeholder"=>$jatbi->lang("Số trang"),
+                                "value" => $data['page'] ?? '',
+                                "type" => 'tel'
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'url',
+                                "placeholder"=>$jatbi->lang("Đường dẫn"),
+                                "value" => $data['url'] ?? '',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <?=$app->component('upload-images',[
+                                "name"=>'logo',
+                                "placeholder"=>$jatbi->lang("Logo"),
+                                "value" => $data['logo'],
+                                "router" => '/upload-images',
+                                "choices" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12 mt-3">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

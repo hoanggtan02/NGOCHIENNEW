@@ -1,0 +1,23 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog pt-standalone modal-fullscreen">
+		<div class="modal-content">
+			<div class="modal-header p-2 align-items-center d-flex">
+				<h5 class="fw-bold text-body mb-0 col-8 text-truncate"><?=$title?></h5>
+				<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+					<button type="button" class="btn btn-eclo z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:40px;--height:40px;">
+						<i class="ti ti-x fs-4"></i>
+					</button>
+				</div>
+			</div>
+			<div class="modal-body p-0 text-center">
+				<?=$views?>
+			</div>
+			<div class="modal-footer d-flex justify-content-between align-items-center border-0">
+				<h5 class="fw-bold text-body mb-0 col-8 text-truncate"><?=$title?></h5>
+	            <a href="<?=$jatbi->url('/files/files-download/'.$data['active'])?>" class="btn btn-eclo rounded-pill py-2" download="true" target="_blank" rel="noopener noreferrer">
+	            	<i class="ti ti-download me-2"></i> <?=$jatbi->lang("Tải về")?>
+	            </a>
+	         </div>
+		</div>
+	</div>
+</div>

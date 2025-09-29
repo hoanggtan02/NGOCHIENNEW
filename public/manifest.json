@@ -1,0 +1,64 @@
+{
+  "name": "ECLO",
+  "short_name": "ECLO",
+  "description": "ECLO",
+  "lang": "vi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assest-src/128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/assest-src/144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/assest-src/152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/assest-src/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assest-src/256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/assest-src/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "scope": "/",
+  "orientation": "any",
+  "id": "io.eclo.erp",
+  "categories": [
+    "business"
+  ],
+  "display_override": [
+    "browser",
+    "window-controls-overlay"
+  ],
+  "shortcuts": [
+    {
+      "name": "Dữ liệu",
+      "url": "/files",
+      "description": "Dữ liệu"
+    },
+    {
+      "name": "Khách hàng",
+      "url": "/customers",
+      "description": "Khách hàng"
+    }
+  ]
+}

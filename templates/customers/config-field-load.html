@@ -1,0 +1,43 @@
+<?php if(count($common['options'])>0){ ?>
+<div class="mb-3">
+	<strong><?=$jatbi->lang("Tùy chọn")?></strong>
+	<div class=" border border-eclo rounded-4 p-3 mt-2">
+		<?php if($common['options']['default_value']) { ?>
+			<?=$app->component("input", [
+				"placeholder"=>$jatbi->lang("Giá trị mặc định"),
+				"type"=>$type,
+				"name"=>'default_value',
+				"value"=>$data['default_value'] ?? ''
+			])?>
+		<?php } else { ?>
+			<?=$app->component("select", [
+				"placeholder"=>$jatbi->lang("Kiểu Dữ liệu"),
+				"name" => 'source',
+				"attr" => 'data-action="change-load" data-url="'.$jatbi->url('/customers/config/field-load-option/'.($data['active'] ?? 'add')).'" data-target=".data-choices"',
+				"options"=>[
+					[
+						"value"=>'',
+						"attr" => ($data['source']==''?'disabled selected':''),
+						"text"=>$jatbi->lang("Vui lòng chọn")
+					],
+					[
+						"value"=>'choices',
+						"attr" => ($data['source']=='choices'?'selected':''),
+						"text"=>$jatbi->lang("Tự nhập")
+					],
+					[
+						"value"=>'connect',
+						"attr" => ($data['source']=='connect'?'selected':''),
+						"text"=>$jatbi->lang("Kết nối dữ liệu")
+					],
+				]
+			])?>
+			<?php if(isset($data['active'])){ ?>
+				<div class="data-choices border-top border-eclo pt-3" data-action="load" data-url="<?=$jatbi->url('/customers/config/field-load-option/'.$data['active'])?>" data-target=".data-choices"></div>
+			<?php } else { ?>
+				<div class="data-choices border-top border-eclo pt-3"></div>
+			<?php } ?>
+		<?php }?>
+	</div>
+</div>
+<?php } ?>

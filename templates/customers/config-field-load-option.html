@@ -1,0 +1,52 @@
+<div class="">
+	<?php if($source=='choices'){ ?>
+	<div class="d-flex align-items-center justify-content-between mb-3">
+		<label><?=$jatbi->lang("Thêm dữ liệu")?></label>
+		<button type="button" class="btn btn-eclo p-1 px-2" data-action="clone" data-target=".data-choices-items" data-clone=".choices-items">
+			<i class="ti ti-plus"></i>
+		</button>
+	</div>
+	<div class="data-choices-items">
+		<?php if($options){ ?>
+			<?php foreach ($options as $key => $value) { ?>
+				<div class="row g-1 choices-items align-items-end mb-2">
+					<div class="col-10">
+						<?=$app->component('input',[
+	                        "name"=>'options['.$value['active'].']',
+	                        "placeholder"=>$jatbi->lang("Tên"),
+	                        "value" => $value['name'] ?? '',
+	                    ])?>
+					</div>
+					<div class="col-2 text-center">
+						<button type="button" class="btn btn-sm p-1 text-danger"  data-action="deleted-clone" data-target="this" data-closest=".choices-items" data-target="this" data-remove="remove"><i class="ti ti-trash fs-5"></i></button>
+					</div>
+				</div>
+			<?php } ?>
+		<?php } else { ?>
+		<div class="row g-1 choices-items align-items-center mb-2">
+			<div class="col-10">
+				<?=$app->component('input',[
+                    "name"=>'options[]',
+                    "placeholder"=>$jatbi->lang("Tên"),
+                    "value" => $value['name'] ?? '',
+                ])?>
+			</div>
+			<div class="col-2 text-center">
+				<button type="button" class="btn btn-sm p-1 text-danger" data-action="deleted-clone" data-target="this" data-closest=".choices-items" data-remove="remove"><i class="ti ti-trash fs-5"></i></button>
+			</div>
+		</div>
+		<?php } ?>
+	</div>
+	<?php } ?>
+	<?php if($source=='connect'){ ?>
+	<div class="data-choices-items">
+		<?=$app->component("select", [
+			"placeholder"=>$jatbi->lang("Chọn dữ liệu kết nối"),
+			"name" => 'database',
+			"attr" => '',
+			"options"=> $database,
+			"selected" => $data['database'] ?? '',
+		])?>
+	</div>
+	<?php } ?>
+</div>

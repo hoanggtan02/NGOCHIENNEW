@@ -1,0 +1,464 @@
+<div class="container-fluid py-2">
+    <div class="row g-3">
+        <div class="col-lg-9">
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="row g-3">
+                        <div class="col-lg-12">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="fw-500 ">Doanh thu ước tính hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">
+                                                <span class="fw-bold text-primary"><?=number_format((float) $tongdoanhso ?? 0)?></span>
+                                            </h4>
+                                            <span class="fw-500">Tổng thu hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 f-22">
+                                                <span class="fw-bold text-success"><?=number_format((float) $tongdoanhthu ?? 0)?></span>
+                                            </h4>
+                                            <a class="btn btn-eclo rounded-pill p-2 px-3 fw-bold" href="/reports/revenue" data-pjax>Xem thêm</a>
+                                        </div>
+                                        <div class="mobile-right-img"><img class="w-100" src="/assets/img/Revenue-bro.svg" alt="Doanh thu hôm nay"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="f-w-500 f-light">Doanh thu hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 fs-5">
+                                                <span class="fw-bold text-success"><?=number_format((float)$doanhthuhomnay ?? 0)?></span>
+                                            </h4>
+                                        </div>
+                                        <div class="">
+                                            <i class="ti ti-brand-cashapp shadow fs-3 card border p-3 d-inline-block rounded-4 border-0 text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="f-w-500 f-light">Số khách hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 fs-5">
+                                                <span class="fw-bold"><?=number_format((float)$khachmoithang ?? 0)?></span>
+                                            </h4>
+                                        </div>
+                                        <div class="">
+                                            <i class="ti ti-users-plus shadow fs-3 card border p-3 d-inline-block rounded-4 border-0 "></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="f-w-500 f-light">Ghi Nợ hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 fs-5">
+                                                <span class="fw-bold text-danger"><?=number_format((float)$ghinoihomnay ?? 0)?></span>
+                                            </h4>
+                                        </div>
+                                        <div class="">
+                                            <i class="ti ti-file-invoice shadow fs-3 card border p-3 d-inline-block rounded-4 border-0 text-danger"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between w-100">
+                                        <div class="w-100">
+                                            <span class="f-w-500 f-light">Số hóa đơn hôm nay</span>
+                                            <h4 class="mb-3 mt-1 f-w-500 mb-0 fs-5">
+                                                <span class="fw-bold text-primary"><?=number_format((float)$bookinghomnaydanhan ?? 0)?></span>
+                                            </h4>
+                                        </div>
+                                        <div class="">
+                                            <i class="ti ti-checkup-list shadow fs-3 card border p-3 d-inline-block rounded-4 border-0 text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card bg-body bg-opacity-50 rounded-5 shadow border-0 p-3 calendar h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <a data-pjax href="<?=$prevMonth?>" class="btn bg-body bg-opacity-75 text-body rounded-circle text-nowrap d-flex align-items-center p-1 justify-content-center width height" style="--width:30px;--height:30px;">
+                                <i class="ti ti-chevron-left fs-3"></i> 
+                            </a>
+                            <button class="btn border-0 bg-body bg-opacity-75 text-body fw-semibold p-1 ps-2 py-1 rounded-pill d-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#calendar-search" aria-controls="calendar-search" >
+                                <span class="me-2"><?=$jatbi->lang("Tháng")?> <?=$month?> / <?=$year?></span>
+                                <div type="button" class="width height btn border-0 btn-light p-1 rounded-circle d-flex align-items-center justify-content-center" style="--width:40px;--height:40px;">
+                                    <i class="ti ti-adjustments-alt fs-3"></i>
+                                </div>
+                            </button>
+                            <div class="offcanvas offcanvas-bottom rounded-top-5" style="--bs-offcanvas-height:30vh" tabindex="-1" id="calendar-search" aria-labelledby="offcanvasExampleLabel">
+                                <div class="container">
+                                    <div class="row justify-content-center align-items-center">
+                                        <div class="col-lg-6">
+                                            <div class="offcanvas-header pb-1 pt-0 d-flex justify-content-between">
+                                                <h5 class="offcanvas-title" id="offcanvasExampleLabel"><?=$jatbi->lang("Tìm lịch")?></h5>
+                                                <button type="button" class="btn border-0" data-bs-dismiss="offcanvas" aria-label="Close">
+                                                    <i class="ti ti-x fs-1"></i>
+                                                </button>
+                                              </div>
+                                              <div class="offcanvas-body pb-standalone pt-0">
+                                                <form method="GET" data-pjax class="row mb-4 justify-content-center">
+                                                <div class="row g-3">
+                                                    <div class="col-6">
+                                                        <select name="month" data-select>
+                                                            <?php
+                                                            for ($m = 1; $m <= 12; $m++) {
+                                                                $selected = ($m == $month) ? 'selected' : '';
+                                                                echo "<option value='$m' $selected>" . date('m', mktime(0,0,0,$m,1)) . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <select name="year" data-select>
+                                                            <?php
+                                                            $currentYear = date('Y');
+                                                            for ($y = $currentYear - 5; $y <= $currentYear + 5; $y++) {
+                                                                $selected = ($y == $year) ? 'selected' : '';
+                                                                echo "<option value='$y' $selected>$y</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <button type="submit" class="btn btn-eclo w-100 rounded-pill" data-bs-dismiss="offcanvas"><?=$jatbi->lang("Xem")?></button>
+                                                    </div>
+                                                </div>
+                                                </form>
+                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <a data-pjax href="<?=$nextMonth?>" class="btn bg-body bg-opacity-75 text-body rounded-circle text-nowrap d-flex align-items-center p-1 justify-content-center width height" style="--width:30px;--height:30px;">
+                                 <i class="ti ti-chevron-right fs-3"></i>
+                            </a>
+                        </div>
+                        <div class="calendar-header">
+                            <?php foreach ($weeks as $week){ ?>
+                                <div class="bg-primary bg-opacity-75 text-white rounded-3 m-1 p-2 fw-bold"><?=$week?></div>
+                            <?php } ?>
+                        </div>
+                        <div class="calendar-body">
+                            <?php for ($i = 1; $i < $startDay; $i++) { ?>
+                                <div class="bg-transparent m-1"></div>
+                            <?php } ?>
+                            <?php for ($day = 1; $day <= $dayLastMonth; $day++) {
+                                $today = (date('m') == $month && date('d') == $day && date('Y') == $year) ? 'bg-info bg-opacity-25' : 'bg-body-secondary bg-opacity-50';
+                                $chartdate[] = $day;
+                                $date = date("Y-m-d",strtotime($year.'-'.$month.'-'.$day));
+                                $total[$day] = $count['month'][$date]['total'] ?? 0;
+                                $success[$day] = $count['month'][$date]['payment'] ?? 0;
+                                $primary[$day] = $count['month'][$date]['primary'] ?? 0;
+                                $cancel[$day] = $count['month'][$date]['cancel'] ?? 0;
+                                $payment[$day] = $count['month'][$date]['payments'] ?? 0;
+                                $warning[$day] = $total[$day]-$success[$day];
+                            ?>
+                                <div class="<?=$today?> rounded-3 m-1 position-relative min-height" style="--min-height:50px">
+                                    <div class="d-flex align-items-center justify-content-between w-100 p-1">
+                                        <div class="rounded-1 p-1 width height d-flex align-items-center justify-content-center" style="--width:20px;--height:20px;"><?=$day?></div>
+                                        <?php if(!empty($total[$day])){ ?>
+                                        <div class="bg-primary bg-opacity-100 text-light rounded-1 p-1 width height d-flex align-items-center justify-content-center" style="--width:20px;--height:20px;"><?=$total[$day] ?? 0?></div>
+                                        <?php } ?>
+                                    </div>
+                                    <?php if(!empty($total[$day])){ ?>
+                                    <div class="d-flex align-items-center justify-content-between w-100 p-1">
+                                        <div class="bg-success text-light rounded-1 p-1 width height d-flex align-items-center justify-content-center" style="--width:20px;--height:20px;"><?=$success[$day] ?? 0?></div>
+                                        <div class="bg-warning text-dark rounded-1 p-1 width height d-flex align-items-center justify-content-center" style="--width:20px;--height:20px;"><?=$warning[$day] ?? 0?></div>
+                                    </div>
+                                    <?php } ?>
+                                </div>
+                            <?php } ?>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col mb-2 d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-100 text-light rounded-1 p-1 me-1 width height d-flex align-items-center justify-content-center" style="--width:15px;--height:15px;"></div>
+                                <div class="small"><?=$jatbi->lang("Tổng booking")?></div>
+                            </div>
+                            <div class="col mb-2 d-flex align-items-center">
+                                <div class="bg-success text-light rounded-1 p-1 me-1 width height d-flex align-items-center justify-content-center" style="--width:15px;--height:15px;"></div>
+                                <div class="small"><?=$jatbi->lang("Đã thanh toán")?></div>
+                            </div>
+                            <div class="col mb-2 d-flex align-items-center">
+                                <div class="bg-warning text-dark rounded-1 p-1 me-1 width height d-flex align-items-center justify-content-center" style="--width:15px;--height:15px;"></div>
+                                <div class="small"><?=$jatbi->lang("Còn lại")?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card bg-body bg-opacity-50 rounded-5 shadow border-0 p-3 h-100">
+                        <h6 class="fw-bold mb-3">Booking hôm nay</h6>
+                        <div class="scroll-y max-height min-height"  style="--max-height:500px;--min-height:500px;">
+                            <?php if(count($bookings)==0){ ?>
+                                <div class="p-5 text-center">
+                                    <img src="/assets/img/no-data.svg" class="w-100">
+                                    <div class="fw-bold text-body"><?=$jatbi->lang("Không tìm thấy booking hôm nay")?></div>
+                                </div>
+                            <?php } ?>
+                            <?php foreach($bookings as $booking){ ?>
+                            <div class="w-100">
+                                <a data-pjax href="/pos/<?=$booking['rooms']?>?invoices=<?=$booking['active']?>" class="btn w-100 p-0 text-start border-0">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="d-flex align-items-center text-nowrap">
+                                                    <div class="<?=$booking['color']?> p-2 rounded-3 width height" style="--width:30px;--height:30px;"></div>
+                                                    <div class="ms-2">
+                                                        <div class="fw-semibold"><?=$booking['name']?></div>
+                                                        <div class="small">
+                                                            <?=$jatbi->datetime($booking['date'])?>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="fw-semibold"><?=$booking['bookings']?></div>
+                                                <div id="timer"
+                                                        class="fw-bold"
+                                                        data-countdown
+                                                        data-countdown-start="<?=$booking['countdown_start']?>"
+                                                        data-countdown-end="<?=$booking['countdown_end']?>"
+                                                        data-countdown-timedown="<?=$booking['countdown_timedown']?>" 
+                                                        data-countdown-timedown-color=".<?=$booking['countdown_downcolor']?>"
+                                                        data-countdown-timeup="<?=$booking['countdown_timeup']?>"
+                                                        data-countdown-timeup-color=".<?=$booking['countdown_upcolor']?>">
+                                                </div>
+                                            </div>
+                                            <div class="col text-end"><div class="fw-bold text-muted"><?=number_format($booking['total'] ?? 0)?></div></div>
+                                        </div>
+                                        <!-- <div class="d-flex align-items-center justify-content-start">
+                                            <div class="<?=$booking['color']?> p-2 rounded-3 width height" style="--width:30px;--height:30px;"></div>
+                                            <div class="ms-2 w-100">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="fw-semibold"><?=$booking['name']?></div>
+                                                    <div class="fw-semibold"><?=$booking['bookings']?></div>
+                                                    <div class="fw-bold text-muted"><?=number_format($booking['total'] ?? 0)?></div>
+                                                </div>
+                                                <div class="small">
+                                                    <?=$jatbi->datetime($booking['date'])?>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                    </div>
+                                </a>
+                            </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-3 h-100">
+                        <h6 class="fw-bold mb-3">Thống kê số booking  <?=$month?>/<?=$year?></h6>
+                        <canvas data-chart=""
+                                data-type="bar"
+                                data-labels='<?= json_encode($chartdate) ?>'
+                                data-datasets='[
+                                  {"label":"Tổng", "data":<?=json_encode(array_values($total))?>, "backgroundColor":"rgba(13,110,253,1)", "borderColor":"rgba(13,110,253,1)"},
+                                  {"label":"Đã thanh toán", "data":<?=json_encode(array_values($success))?>, "backgroundColor":"rgba(25,135,84,1)", "borderColor":"rgba(25,135,84,1)"},
+                                  {"label":"Còn lại", "data":<?=json_encode(array_values($warning))?>, "backgroundColor":"rgba(255,193,7,1)", "borderColor":"rgba(255,193,7,1)"}
+                                ]'>
+                        </canvas>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-3 h-100">
+                        <h6 class="fw-bold mb-3">Thống kê trạng thái booking</h6>
+                        <canvas data-chart=""
+                                data-type="doughnut"
+                                data-labels='["Đã thanh toán","Còn chờ","Đã hủy","Đã nhận"]'
+                                data-colors='["#4CAF50", "#FFC107","#6c757d", "#2196F3"]'
+                                data-name="Tổng booking"
+                                data-dataset='[<?=array_sum(array_values($success))?>,<?=array_sum(array_values($warning))?>,<?=array_sum(array_values($cancel))?>,<?=array_sum(array_values($primary))?>]'>
+                        </canvas>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-3 max-height min-height h-100">
+                        <h6 class="fw-bold mb-3">Thống kê doanh số  <?=$month?>/<?=$year?></h6>
+                        <canvas data-chart=""
+                                data-type="bar"
+                                data-labels='<?= json_encode($chartdate) ?>'
+                                data-dataset='<?=json_encode(array_values($payment))?>'
+                                data-name="Tổng doanh số"
+                                data-colors='["#4CAF50"]'>
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="card shadow-sm border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ti ti-file-text shadow-sm fs-3 card border p-2 d-inline-block rounded-4 border-0 text-primary me-3"></i>
+                                        <div class="w-100">
+                                            <h6 class="fw-bold mb-0">Tình hình Đề xuất</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Chờ duyệt / Đã duyệt (tháng)</small>
+                                                <a href="/proposal" data-pjax class="fw-bold text-primary"><?=number_format($cho_duyet ?? 0)?> / <?=number_format($da_duyet_thang ?? 0)?></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                             <div class="card shadow-sm border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ti ti-package-import shadow-sm fs-3 card border p-2 d-inline-block rounded-4 border-0 text-info me-3"></i>
+                                        <div class="w-100">
+                                            <h6 class="fw-bold mb-0">Tồn kho</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Tổng giá trị</small>
+                                                <a href="/warehouses/inventorys" data-pjax class="fw-bold text-info"><?=number_format($tong_gia_tri_ton ?? 0)?></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="col-12">
+                             <div class="card shadow-sm border-0 bg-body bg-opacity-50 rounded-4">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ti ti-alert-triangle shadow-sm fs-3 card border p-2 d-inline-block rounded-4 border-0 text-danger me-3"></i>
+                                        <div class="w-100">
+                                            <h6 class="fw-bold mb-0">Cảnh báo HSD</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">Sản phẩm sắp hết hạn</small>
+                                                 <a href="/warehouses/nearing-expiry" data-pjax class="fw-bold text-danger"><?=number_format($sap_het_han ?? 0)?></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+                <div class="col-lg-12">
+                    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                        <div class="card-body">
+                            <div class="d-flex mb-3 align-items-center">
+                                <i class="ti ti-user-dollar shadow fs-3 card border p-2 d-inline-block rounded-4 border-0 text-primary"></i>
+                                <div class=" ms-2">
+                                    <h5 class="fw-bold mb-0">
+                                        <?=$jatbi->lang("Top doanh số khách hàng")?> 
+                                    </h5>
+                                    <div><?=$jatbi->lang("Tháng")?> <?=$month?>/<?=$year?></div>
+                                </div>
+                            </div>
+                            <div class="row py-3">
+                                <div class="col-6 fw-bold">Tên khách hàng</div>
+                                <div class="col-6 text-end text-primary fw-bold">Doanh số</div>
+                            </div>
+                            <?php foreach ($top_customers as $cust): ?>
+                            <div class="py-2 border-bottom">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong><?= htmlspecialchars($cust['name']) ?></strong><br>
+                                            <small class="text-muted">Ngày tạo: <?=$jatbi->date($cust['date']) ?></small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="text-primary fw-bold"><?= number_format($cust['total_payment'], 0, ',', '.') ?> VNĐ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                        <div class="card-body">
+                            <div class="d-flex mb-3 align-items-center">
+                                <i class="ti ti-book-2 shadow fs-3 card border p-2 d-inline-block rounded-4 border-0 text-success"></i>
+                                <div class=" ms-2">
+                                    <h5 class="fw-bold mb-0">
+                                        <?=$jatbi->lang("Top khách đặt")?> 
+                                    </h5>
+                                    <div><?=$jatbi->lang("Tháng")?> <?=$month?>/<?=$year?></div>
+                                </div>
+                            </div>
+                            <div class="row py-3">
+                                <div class="col-6 fw-bold">Tên khách hàng</div>
+                                <div class="col-6 text-end text-success fw-bold">Số lượng</div>
+                            </div>
+                            <?php foreach ($top_new_customers as $customer): ?>
+                                <div class="py-2 border-bottom">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong><?= htmlspecialchars($customer['name']) ?></strong><br>
+                                            <small class="text-muted">Ngày tạo: <?=$jatbi->date($customer['date']) ?></small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="fw-bold"><?= $customer['invoice_count'] ?> hóa đơn</span><br>
+                                            <span class="text-success fw-bold"><?= number_format($customer['total_payment'], 0, ',', '.') ?> VNĐ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                        <div class="card-body">
+                            <div class="d-flex mb-3 align-items-center">
+                                <i class="ti ti-user-dollar shadow fs-3 card border p-2 d-inline-block rounded-4 border-0 text-danger"></i>
+                                <div class=" ms-2">
+                                    <h5 class="fw-bold mb-0">
+                                        <?=$jatbi->lang("Top khách hàng trong tháng")?> 
+                                    </h5>
+                                    <div><?=$jatbi->lang("Tháng")?> <?=$month?>/<?=$year?></div>
+                                </div>
+                            </div>
+                            <div class="row py-3">
+                                <div class="col-6 fw-bold">Tên khách hàng</div>
+                                <div class="col-6 text-end text-danger fw-bold">Doanh số</div>
+                            </div>
+                            <?php foreach ($top_customers_month as $cust): ?>
+                            <div class="py-2 border-bottom">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong><?= htmlspecialchars($cust['name']) ?></strong><br>
+                                            <small class="text-muted">Ngày tạo: <?=$jatbi->date($cust['date']) ?></small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="text-danger fw-bold"><?= number_format($cust['total_payment'], 0, ',', '.') ?> VNĐ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,377 @@
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div>
+            <a  data-bs-toggle="offcanvas" href="#offcanvasFiles" role="button" aria-controls="offcanvasFiles" class="btn btn-sm btn-eclo-light d-lg-none rounded-pill border-0 d-flex align-items-center fw-bold">
+              <i class="ti ti-menu-2 me-2 fs-2"></i>
+              <?=$jatbi->lang("Danh mục")?>
+          </a>
+        </div>
+    </div>
+    <?php if($jatbi->permission(['proposal.deleted']) == 'true' || $jatbi->permission(['proposal.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center " style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="ti ti-menu-2 fs-2" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['proposal.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="/proposal/deleted" style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+            <?php if($jatbi->permission(['proposal.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="click" data-load="true" data-url="/proposal/create" style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="row g-4">
+                <div class="col-lg-12">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h1 class="fw-bold"><?=$total['tongdexuat'] ?? 0?></h1>
+                                <p class="text-muted"><?=$jatbi->lang("Đề xuất")?></p>
+                            </div>
+                            <i class="ti ti-checkup-list shadow fs-3 card border p-3 d-inline-block rounded-4 border-0 text-primary"></i>
+                        </div>
+                        <?php 
+                            $phantramduyet = ($total['tongdexuat'] ?? 0) > 0 ? ($total['tongdaduyet'] * 100) / $total['tongdexuat'] : 0;
+                        ?>
+                        <div class="progress mb-2" role="progressbar" aria-label="Animated striped example" aria-valuenow="<?=$phantramduyet?>" aria-valuemin="0" aria-valuemax="100">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: <?=$phantramduyet?>%"></div>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <p class="mb-0">Đã duyệt <?=$total['tongdaduyet'] ?? 0?></p>
+                            <p class="mb-0"><?=round($phantramduyet)?>%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow border-0 bg-danger text-light rounded-4 p-4">
+                        <div class="">
+                            <h4 class="fw-bold"><?=number_format($total['tongchi'] ?? 0)?></h4>
+                            <p class="mb-0">Tổng đề xuất chi</p>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between my-2">
+                            <div class="border border-light  w-100"></div>
+                            <?php 
+                                $phantramchi = ($total['tongchi'] ?? 0) > 0 ? ($total['duyetchi'] * 100) / $total['tongchi'] : 0;
+                            ?>
+                            <div class="bg-light rounded-2 p-2 text-danger fw-bold"><?=round($phantramchi)?>%</div>
+                        </div>
+                        
+                        <div class="">
+                            <h4 class="fw-bold"><?=number_format($total['duyetchi'] ?? 0)?></h4>
+                            <p class="mb-0">Tổng đề xuất duyệt chi</p>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow border-0 bg-success text-light rounded-4 p-4">
+                        <div class="">
+                            <h4 class="fw-bold"><?=number_format($total['tongthu'] ?? 0)?></h4>
+                            <p class="mb-0">Tổng đề xuất thu</p>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between my-2">
+                            <div class="border border-light  w-100"></div>
+                            <?php 
+                                $phantramthu = ($total['tongthu'] ?? 0) > 0 ? ($total['duyetthu'] * 100) / $total['tongthu'] : 0;
+                            ?>
+                            <div class="bg-light rounded-2 p-2 text-success fw-bold"><?=round($phantramthu)?>%</div>
+                        </div>
+                        <div class="">
+                            <h4 class="fw-bold"><?=number_format($total['duyetthu'] ?? 0)?></h4>
+                            <p class="mb-0">Tổng đề xuất duyệt thu</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4">
+                        <div class="fs-6 fw-bold text-primary mb-5"><?=$jatbi->lang("Trạng thái")?></div>
+                        <div class="">
+                            <?php foreach ($proposal_status as $key => $value) { ?>
+                                <?php if($value['id']>0){?>
+                                <div class="d-flex justify-content-between mb-4">
+                                    <div class="fw-semibold d-flex align-items-center">
+                                        <div class="bg-<?=$value['color']?> p-2 width height rounded-circle me-2" style="--width:20px;--height:20px;"></div>
+                                        <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold"><?=$value['name']?></a>
+                                    </div>
+                                    <div class="d-flex fw-bold"><?=$total['tong-'.$value['id']] ?? 0?></div>
+                                </div>
+                                <?php } ?>
+                            <?php } ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4">
+                        <div class="fs-6 fw-bold text-primary mb-5"><?=$jatbi->lang("Đề xuất chờ duyệt")?></div>
+                        <div class="">
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold">Đã quá 5 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_5'] ?? 0?></div>
+                            </div>
+                            <div class="border-top mb-3"></div>
+
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold">Đã quá 10 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_10'] ?? 0?></div>
+                            </div>
+
+                            <div class="border-top mb-3"></div>
+
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold">Đã quá 15 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_15'] ?? 0?></div>
+                            </div>
+
+                            <div class="border-top mb-3"></div>
+
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold">Đã quá 20 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_20'] ?? 0?></div>
+                            </div>
+
+                            <div class="border-top mb-3"></div>
+
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=" class="btn p-0 fw-semibold">Đã quá 25 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_25'] ?? 0?></div>
+                            </div>
+
+                            <div class="border-top mb-3"></div>
+
+                            <div class=" d-flex justify-content-between mb-3">
+                                <div class="fw-semibold">
+                                    <a href="/proposal/list/all/?code=5049,5050,5051" class="btn p-0 fw-semibold">Đã quá 30 Ngày</a>
+                                </div>
+                                <div class="d-flex fw-bold"><?=$total['over_30'] ?? 0?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="position-sticky top safe-top z-index" style="--top:70px;--safe-top:0;--index:98" >
+                <div class="offcanvas-lg offcanvas-start h-100 bg-body p-3 px-0 bg-opacity-75 p-0 rounded-4 shadow-lg" style="--bs-offcanvas-width:280px;" tabindex="-1" id="offcanvasFiles" aria-labelledby="offcanvasFiles">
+                    <div class="offcanvas-header" style="--height:70px;">
+                        <div class="d-flex justify-content-between align-items-center w-100 ">
+                            <h6 class="mb-0 fw-bold text-nowrap"><?=$jatbi->lang("Dữ liệu")?></h6>
+                            <button type="button" class="btn p-0 d-flex fs-3 align-items-center justify-content-end w-100 border-0 me-3" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasFiles" aria-label="Close">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-standalone" style="--vh-size:60px;">
+                        <h4 class="fw-bold py-3 px-2"><?=$jatbi->lang("Danh mục")?></h4>
+                        <ul class="list-group p-0">
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')==''?'btn-primary-light':''?> ">
+                                    <div><i class="ti ti-list me-2 fs-5"></i> <?=$jatbi->lang("Tất cả")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongdexuat'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=0')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')=='0'?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-contract me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất nháp")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongnhap'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=1')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')=='1'?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-progress-check me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất chờ duyệt")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongcho'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=2')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')=='2'?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-device-tablet-check me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất đã duyệt")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongduyet'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=3')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')=='3'?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-route-x me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất không duyệt")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongkhongduyet'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=4')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '')=='4'?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-receipt-dollar me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất đã bút toán")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongbuttoan'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=10')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '10')==''?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-eye-cancel me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất yêu cầu hủy")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tongyeucauhuy'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?status=20')?>" data-pjax class="d-flex align-items-center btn fw-semibold justify-content-between w-100 text-start border-0 rounded-0 <?=$app->xss($_GET['status'] ?? '20')==''?'btn-primary-light':''?>">
+                                    <div><i class="ti ti-cancel me-2 fs-5"></i> <?=$jatbi->lang("Đề xuất đã hủy")?></div> <span class="p-1 rounded-2 px-2 text-light bg-primary align-items-center small"><?=$total['tonghuy'] ?? 0?></span></a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                              <hr class="border-secondary border-opacity-50">
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?type=1')?>" data-pjax class="d-flex align-items-center btn fw-semibold w-100 text-start border-0 rounded-0"><div class="width height rounded-circle me-2 bg-success" style="--width:20px;--height:20px;"></div> <?=$jatbi->lang("Đề xuất thu")?> </a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?type=2')?>" data-pjax class="d-flex align-items-center btn fw-semibold w-100 text-start border-0 rounded-0"><div class="width height rounded-circle me-2 bg-danger" style="--width:20px;--height:20px;"></div> <?=$jatbi->lang("Đề xuất chi")?> </a>
+                          </li>
+                          <li class="d-flex align-items-center">
+                                <a href="<?=$jatbi->url('/proposal?type=3')?>" data-pjax class="d-flex align-items-center btn fw-semibold w-100 text-start border-0 rounded-0"><div class="width height rounded-circle me-2 bg-primary" style="--width:20px;--height:20px;"></div> <?=$jatbi->lang("Đề xuất nghiệp vụ khác")?> </a>
+                          </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h4 class="mb-0 fw-bold text-body"><?=$jatbi->lang("Danh sách đề xuất")?></h4>
+                </div>
+                <div class="filter-search">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <div class="dropdown">
+                            <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
+                                <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 min-width bg-blur" style="--min-width:300px;--min-width-xs:100vw">
+                                <div class="fw-semibold py-2 px-3">
+                                    <?=$jatbi->lang("Điều kiện lọc")?>
+                                </div>
+                                <hr class="border-secondary border-opacity-50 my-2">
+                                <div class="px-3">
+                                    <?=$app->component('select',[
+                                        "name"=>'status',
+                                        "placeholder"=>$jatbi->lang("Trạng thái"),
+                                        "selected" => $app->xss($_GET['status'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $status ?? [],
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'type',
+                                        "placeholder"=>$jatbi->lang("Loại"),
+                                        "selected" => $app->xss($_GET['type'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $type ?? [],
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'account',
+                                        "placeholder"=>$jatbi->lang("Tài khoản"),
+                                        "selected" => $app->xss($_GET['account'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $accounts ?? [],
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'workflows',
+                                        "placeholder"=>$jatbi->lang("Quy trình"),
+                                        "selected" => $app->xss($_GET['workflows'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $workflows ?? [],
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'form',
+                                        "placeholder"=>$jatbi->lang("Hình thức"),
+                                        "selected" => $app->xss($_GET['form'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $forms ?? [],
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'category',
+                                        "placeholder"=>$jatbi->lang("Hạng mục"),
+                                        "selected" => $app->xss($_GET['category'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                        "options" => $categorys ?? [],
+                                    ])?>
+                                    <?=$app->component('input',[
+                                        "name"=>'date',
+                                        "placeholder"=>$jatbi->lang("Ngày dự kiến"),
+                                        "selected" => $app->xss($_GET['date'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" data-datepicker',
+                                        "value" => $date ?? '',
+                                    ])?>
+                                    <?=$app->component('input',[
+                                        "name"=>'create',
+                                        "placeholder"=>$jatbi->lang("Ngày đề xuất"),
+                                        "selected" => $app->xss($_GET['create'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" data-datepicker',
+                                        "value" => $create ?? ''
+                                    ])?>
+                                </div>
+                                <hr class="border-secondary border-opacity-50 my-2">
+                                <div class="px-3 py-2 text-end w-100">
+                                    <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                                    <button type="button" class="btn btn-eclo px-3 rounded-pill py-2 button-filter" data-bs-toggle="dropdown"><?=$jatbi->lang("Tìm")?></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                   <div class="custom-buttons d-none">
+                        
+                   </div>
+                   <table id="datatable" 
+                            data-table 
+                            class="table align-middle" 
+                            data-type="POST" 
+                            data-server="true" 
+                            data-processing="true" 
+                            data-page-length="10"
+                            data-searching="true"
+                            data-paging="true"
+                            data-state-save='true'
+                            style="width:100%">
+                        <thead>
+                            <tr>
+                                <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" value="" data-checkbox="input.checker"></div></th>
+                                <th data-name="workflows" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Quy trình")?></th>
+                                <th data-name="content" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Nội dung")?></th>
+                                <th data-name="date" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Ngày")?></th>
+                                <th data-name="status" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
+                                <th data-name="accounts" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th>
+                                <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

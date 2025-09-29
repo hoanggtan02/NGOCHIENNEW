@@ -1,0 +1,176 @@
+<div class="container ">
+	<div class="mb-3">
+		<div class="row g-4">
+			<div class="col-lg-2">
+				<div class="position-sticky top safe-top z-index" style="--top:70px;--safe-top:0;--index:98" >
+        			<div class="offcanvas-lg offcanvas-start h-100 px-2 bg-body bg-opacity-50 p-2 rounded-4 shadow-lg" style="--bs-offcanvas-width:280px;" tabindex="-1" id="offcanvasFiles" aria-labelledby="offcanvasFiles">
+        				<div class="offcanvas-header" style="--height:70px;">
+	                        <div class="d-flex justify-content-between align-items-center w-100 ">
+	                            <h6 class="mb-0 fw-bold text-nowrap"><?=$jatbi->lang("Dữ liệu")?></h6>
+	                            <button type="button" class="btn p-0 d-flex fs-3 align-items-center justify-content-end w-100 border-0 me-3" data-bs-dismiss="offcanvas" data-bs-target="#offcanvasFiles" aria-label="Close">
+	                                <i class="ti ti-x"></i>
+	                            </button>
+	                        </div>
+	                    </div>
+	                    <div class="mt-standalone" style="--vh-size:60px;">
+							<div class="dropdown mb-3">
+							  <button class="btn btn-eclo fw-bold w-100 rounded-pill p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+							    <i class="ti ti-plus me-1"></i> <?=$jatbi->lang("Mới")?>
+							  </button>
+							  <ul class="dropdown-menu shadow-lg bg-blur bg-body bg-opacity-25 rounded-4 border-0" style="--blur:10px;">
+							    <li><a class="dropdown-item" href="#" data-action="modal" data-url="<?=$jatbi->url('/files/create-folder/'.($data['active'] ?? 'main'))?>"><?=$jatbi->lang("Thư mục mới")?></a></li>
+							    <li><a class="dropdown-item" href="#" data-action="modal" data-url="<?=$jatbi->url('/files/upload/'.($data['active'] ?? 'main'))?>"><?=$jatbi->lang("Tải tệp lên")?></a></li>
+							  </ul>
+							</div>
+							<ul class="list-group">
+							  <li class="p-2 d-flex align-items-center">
+							  		<a href="<?=$jatbi->url('/files')?>" data-pjax class="d-flex align-items-center link-secondary"><i class="ti ti-server-bolt me-2 fs-5"></i> <?=$jatbi->lang("Dữ liệu của tôi")?></a>
+							  </li>
+							  <li class="p-2 d-flex align-items-center">
+							  		<a href="<?=$jatbi->url('/files/shared-with-me')?>" data-pjax class="d-flex align-items-center link-secondary"><i class="ti ti-users-group me-2 fs-5"></i> <?=$jatbi->lang("Được chia sẽ")?></a>
+							  </li>
+							  <li class="p-2 d-flex align-items-center">
+							  		<a href="<?=$jatbi->url('/files/recent')?>" data-pjax class="d-flex align-items-center link-secondary"><i class="ti ti-clock-hour-3 me-2 fs-5"></i> <?=$jatbi->lang("Gần đây")?></a>
+							  </li>
+							  <li class="p-2 d-flex align-items-center">
+							  		<a href="<?=$jatbi->url('/files/starred')?>" data-pjax class="d-flex align-items-center link-secondary"><i class="ti ti-star me-2 fs-5"></i> <?=$jatbi->lang("Đánh Sao")?></a>
+							  </li>
+							  <li class="p-2 d-flex align-items-center">
+							  		<a href="<?=$jatbi->url('/files/trash')?>" data-pjax class="d-flex align-items-center link-secondary"><i class="ti ti-trash me-2 fs-5"></i> <?=$jatbi->lang("Thùng rác")?></a>
+							  </li>
+							</ul>
+							<div class="py-3 text-muted">
+
+								<span class="small my-1"><?=$jatbi->lang("Dung lượng đã dùng")?> <strong><?=$totalStorage['used_percentage']?>%</strong></span>
+								<div class="progress bg-body" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="height: 10px;">
+								  <div class="progress-bar bg-eclo progress-bar-striped progress-bar-animated" style="width: <?=$totalStorage['used_percentage']?>%"></div>
+								</div>
+								<span class="small my-1"><?=$jatbi->lang("Bạn đã sử dụng")?> <strong><?=$totalStorage['total_size']?> </strong><?=$jatbi->lang("trên tổng số")?> <strong>5Gb</strong></span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-lg-10">
+				<div class="mb-4 d-flex justify-content-between align-items-center">
+			        <div>
+			            <h4 class="mb-0 fw-bold text-body"><?=isset($name)?$name:$title?></h4>
+			            <ul class="breadcrumb small mb-0">
+			                <li class="breadcrumb-item small">
+			                    <a href="<?=$jatbi->url('/')?>" data-pjax class="link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+			                </li>
+			                <li class="breadcrumb-item small text-body" aria-current="page">
+			                	<a href="<?=$jatbi->url('/files')?>" data-pjax class="link-secondary"><?=$title?></a>
+			                </li>
+			                <?php if(isset($subs)){ ?>
+			                	<?php foreach($subs as $sub){ ?>
+					                <li class="breadcrumb-item small text-body" aria-current="page">
+			                			<a href="<?=$jatbi->url('/files/folder/'.$sub['active'])?>" data-pjax class="link-secondary"><?=$sub['name'] ?? ''?></a>
+					                </li>
+					            <?php } ?>
+			                <?php } ?>
+			            </ul>
+			        </div>
+			        <a  data-bs-toggle="offcanvas" href="#offcanvasFiles" role="button" aria-controls="offcanvasFiles" class="btn btn-sm btn-eclo-light d-lg-none rounded-pill border-0 d-flex align-items-center fw-bold">
+				          <i class="ti ti-menu-2 me-2 fs-2"></i>
+				          <?=$jatbi->lang("Mới")?>
+				      </a>
+				</div>
+				<?php if(count($folders)>0){ ?>
+				<h6 class="fw-bold mb-2"><?=$jatbi->lang("Thư mục")?></h6>
+				<div class="row g-2 mb-4">
+					<?php foreach ($folders as $key => $folder) {
+						$star = $app->count("files_stars","id",[
+							"data"=>$folder['id'],
+							"type"=>'folder',
+							"deleted"=>0,
+							"account" => $account['id'],
+						]); 
+					?>
+					<div class="col-lg-3 col-6">
+						<div class="bg-body-tertiary position-relative rounded-3 min-height text-body p-2 d-flex align-items-center justify-content-between" style="--min-height:50px">
+							<div class="d-flex align-items-center col-10 text-truncate  position-relative">
+								<i class="ti ti-folder text-muted fs-4 me-2"></i>
+								<?php if($folder['permission']!=0){ ?>
+								<i class="ti ti-users-group me-1 fs-6 text-danger"></i>
+								<?php } ?>
+								<div class="col-8 text-truncate"><?=$folder['name']?></div>
+								<a href="<?=$jatbi->url('/files/folder/'.$folder['active'])?>" data-pjax class="stretched-link"></a>
+							</div>
+							<div class="dropdown ">
+							  <button class="btn border-0 p-0 w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+							    <i class="ti ti-dots fs-4"></i>
+							  </button>
+							  <ul class="dropdown-menu dropdown-menu-end rounded-4 bg-blur bg-body bg-opacity-25 shadow-lg border-0 min-width" style="--blur:10px;--min-widht:200px">
+							  	<?php if($folder['deleted']==0) { ?>
+								  	<?php if($folder['account']==$account['id']){ ?>
+								    <li><a class="dropdown-item" href="<?=$jatbi->url('/files/folder-download/'.$folder['active'])?>" download="true"><i class="ti ti-download me-2"></i><?=$jatbi->lang("Tải về")?></a></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-name/'.$folder['active'])?>"><i class="ti ti-writing-sign me-2"></i><?=$jatbi->lang("Đổi tên")?></button></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-move/'.$folder['active'])?>" data-pjax-history="false"><i class="ti ti-folder-symlink me-2"></i><?=$jatbi->lang("Di chuyển")?></button></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-copy/'.$folder['active'])?>" data-pjax-history="false"><i class="ti ti-copy me-2"></i><?=$jatbi->lang("Sao chép")?></button></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="click" data-url="<?=$jatbi->url('/files/folder-star/'.$folder['active'])?>" data-alert="true" data-load="this"><i class="ti ti-star<?=$star>0?'-filled text-warning':''?> me-2"></i><?=$jatbi->lang("Đánh Sao")?></button></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-share/'.$folder['active'])?>"><i class="ti ti-user-share me-2"></i><?=$jatbi->lang("Chia sẽ")?></button></li>
+								    <li><button class="dropdown-item" data-action="offcanvas" data-url="<?=$jatbi->url('/files/folder-infomation/'.$folder['active'])?>"><i class="ti ti-info-circle me-2"></i><?=$jatbi->lang("Thông tin")?></button></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-deleted?box='.$folder['active'])?>" data-load="this"><i class="ti ti-trash me-2"></i><?=$jatbi->lang("Xóa")?></button></li>
+								    <?php } else { ?>
+								    <li><a class="dropdown-item" href="<?=$jatbi->url('/files/folder-download/'.$folder['active'])?>" download="true"><i class="ti ti-download me-2"></i><?=$jatbi->lang("Tải về")?></a></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-copy/'.$folder['active'])?>"><i class="ti ti-copy me-2"></i><?=$jatbi->lang("Sao chép")?></button></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="click" data-url="<?=$jatbi->url('/files/folder-star/'.$folder['active'])?>" data-alert="true" data-load="this"><i class="ti ti-star<?=$star>0?'-filled text-warning':''?> me-2"></i><?=$jatbi->lang("Đánh Sao")?></button></li>
+								    <li><button class="dropdown-item" data-action="offcanvas" data-url="<?=$jatbi->url('/files/folder-infomation/'.$folder['active'])?>"><i class="ti ti-info-circle me-2"></i><?=$jatbi->lang("Thông tin")?></button></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-share-deleted?box='.$folder['active'])?>" data-load="this"><i class="ti ti-trash me-2"></i><?=$jatbi->lang("Hủy")?></button></li>
+								    <?php } ?>
+								<?php } else { ?>
+									<li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-restore-deleted?box='.$folder['active'])?>" data-load="this"><i class="ti ti-restore me-2"></i><?=$jatbi->lang("Phục hồi")?></button></li>
+								    <li><hr class="dropdown-divider"></li>
+								    <li><button class="dropdown-item" data-action="modal" data-url="<?=$jatbi->url('/files/folder-erase-deleted?box='.$folder['active'])?>" data-load="this"><i class="ti ti-trash me-2"></i><?=$jatbi->lang("Xóa")?></button></li>
+								<?php } ?>
+							  </ul>
+							</div>
+						</div>
+					</div>
+					<?php } ?>
+				</div>
+				<?php } ?>
+				<h6 class="fw-bold mb-2"><?=$jatbi->lang("Tệp")?></h6>
+				<div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+					<div class="card-body">
+						<div class="custom-buttons d-none">
+							<?php if(isset($type)){ ?>
+			                <a class="btn btn-eclo rounded-pill" data-action="modal" data-checkbox="input.checker" data-url="<?=$jatbi->url('/files/'.$type.'-deleted')?>">
+			                    <i class="ti ti-trash" aria-hidden="true"></i>  <?=$jatbi->lang("Xóa")?>
+			                </a>
+			                <?php } ?>
+			            </div>
+			            <table id="datatable" 
+			                    data-table 
+			                    class="table align-middle" 
+			                    data-type="POST" 
+			                    data-server="true" 
+			                    data-processing="true" 
+			                    data-page-length="10"
+			                    data-searching="true"
+			                    data-paging="true"
+			                    data-state-save='true'
+			                    style="width:100%">
+			                <thead>
+			                    <tr>
+			                        <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" value="" data-checkbox="input.checker"></div></th>
+			                        <th data-name="name" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="w-50"><?=$jatbi->lang("Tên")?></th>
+			                        <th data-name="size" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Dung lượng")?></th>
+			                        <th data-name="date" data-orderable="true" class="text-nowrap " data-visible="true" data-class="text-end text-nowrap"><?=$jatbi->lang("Ngày")?></th>
+			                        <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+			                    </tr>
+			                </thead>
+			            </table>
+			        </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

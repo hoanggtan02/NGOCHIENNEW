@@ -1,0 +1,17 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1">
+	<div class="modal-dialog modal-dialog-centered pt-standalone">
+		<div class="modal-content rounded-5 bg-transparent border-0">
+			<div class="modal-body">
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="py-5 text-center fs-4 fw-bold">
+						<?=$jatbi->lang("Xác nhận gửi đề xuất cho phiếu này?")?>
+					</div>
+					<div class="mb-3 d-flex">
+						<button type="button" class="btn mx-2 btn-light w-100 py-3 rounded-pill fw-bold mb-3" data-bs-dismiss="modal"><?=$jatbi->lang("Đợi")?></button>
+						<button type="submit" class="btn mx-2 btn-success w-100 py-3 rounded-pill fw-bold mb-3" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Xác nhận")?></button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

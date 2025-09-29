@@ -1,0 +1,51 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-fullscreen pt-standalone">
+		<div class="modal-content rounded-5">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:10px;--right:10px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+				<button type="button" data-action="offcanvas" data-url="/proposal/config/workflows-config-add/<?=$data['active']?>" class="btn btn-success position-fixed z-1 rounded-circle d-flex align-items-center justify-content-center width height bottom right" style="--width:70px;--height:70px;--bottom:50px;--right:50px">
+					<i class="ti ti-plus fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body p-0">
+				<div id="workflow-templates" style="display: none;">
+			        <template id="template-approval">
+			            <div class="card rounded-4 shadow-lg">
+			            	<div class="card-header p-0" data-html="header"></div>
+			            	<div class="card-body" data-html="body"></div>
+			            	<div class="card-footer" data-html="footer"></div>
+			            </div>
+			        </template>
+			        <template id="template-start">
+			            <div class="card rounded-4 shadow-lg">
+			            	<div class="card-header p-0" data-html="header"></div>
+			            	<div class="card-body" data-html="body"></div>
+			            	<div class="card-footer" data-html="footer"></div>
+			            </div>
+			        </template>
+			        <template id="template-finish">
+			            <div class="card rounded-4 shadow-lg">
+			            	<div class="card-header p-0" data-html="header"></div>
+			            	<div class="card-body" data-html="body"></div>
+			            	<div class="card-footer" data-html="footer"></div>
+			            </div>
+			        </template>
+			    </div>
+		        	<div id="canvas-viewport" class="height" style="--height:100vh">
+	                    <div class="workflow-canvas" 
+	                         id="my-workflow-canvas"
+	                         data-workflows 
+	                         data-workflow-id="<?=$data['active']?>"
+	                         data-url-load="/proposal/config/workflows-config-update/load"
+	                         data-url-node-update-pos="/proposal/config/workflows-config-update/node-position"
+	                         data-url-node-delete="/proposal/config/workflows-config-update/node-delete"
+	                         data-url-connection-create="/proposal/config/workflows-config-update/connect-create"
+	                         data-url-connection-delete="/proposal/config/workflows-config-update/connect-deleted">
+                    	</div>
+                	</div>
+			</div>
+		</div>
+	</div>
+</div>

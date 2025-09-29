@@ -1,0 +1,153 @@
+<style>
+        /* General Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 1.5rem;
+            background-color: #f4f7f9;
+            color: #333;
+            user-select: none; /* Prevent text selection during drag */
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .instructions {
+            background-color: #eaf2f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .instructions ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        /* Table Styling */
+        #table-container {
+            overflow-x: auto; /* Allow horizontal scroll if needed */
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #fff;
+            table-layout: fixed; /* Crucial for resizing */
+        }
+
+        th, td {
+            border: 1px solid #dfe6e9;
+            padding: 12px 15px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #34495e;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        /* Column Resizer Handle */
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            width: 5px;
+            cursor: col-resize;
+            height: 100%;
+            background: transparent;
+            z-index: 2;
+        }
+        
+        /* Interactive Cell Styling */
+        td[contenteditable="true"] { user-select: text; }
+        td[contenteditable="true"]:focus { outline: 2px solid #3498db; background-color: #f2f8fc;}
+        body.formula-mode-active { cursor: cell; }
+        td.selected { border-color: #3498db; box-shadow: 0 0 0 2px #3498db inset; }
+        .fill-handle { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background-color: #3498db; border: 2px solid white; cursor: crosshair; z-index: 10; }
+        td.fill-selection { background-color: rgba(52, 152, 219, 0.2); }
+
+        /* **NEW**: Locking Styles */
+        td.locked, tr.locked > td, td.col-locked {
+            background-color: #f0f0f0;
+            color: #888;
+        }
+        th.col-locked {
+            background-color: #5a6878;
+        }
+
+
+        /* Context Menu */
+        #context-menu { display: none; position: absolute; background-color: white; border: 1px solid #ccc; box-shadow: 2px 2px 5px rgba(0,0,0,0.15); border-radius: 4px; padding: 5px 0; z-index: 1000; min-width: 220px; }
+        #context-menu div { padding: 8px 15px; cursor: pointer; }
+        #context-menu div:hover { background-color: #3498db; color: white; }
+        .context-menu-separator { height: 1px; background-color: #eee; margin: 4px 0; }
+        .cm-item-hidden { display: none !important; }
+
+        /* Controls */
+        .controls { text-align: center; margin-top: 20px; }
+        button { background-color: #27ae60; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
+        button:hover { background-color: #229954; }
+        #notification { margin-top: 15px; text-align: center; font-weight: bold; height: 20px; }
+    </style>
+<h1>Bảng tính jQuery chuyên nghiệp</h1>
+<div class="instructions">
+    <p><b>Hướng dẫn (Bản nâng cao):</b></p>
+    <ul>
+        <li><b>(MỚI)</b> Chuột phải vào TIÊU ĐỀ CỘT để Định dạng hoặc Khóa/Mở khóa toàn bộ cột.</li>
+        <li><b>(MỚI)</b> Chuột phải vào một Ô để Khóa/Mở khóa ô đó, hoặc khóa toàn bộ hàng.</li>
+        <li>Các tính năng cũ như kéo-thả công thức, thêm hàng/cột vẫn hoạt động.</li>
+    </ul>
+</div>
+<div id="table-container">
+    <table id="smart-table">
+        <colgroup></colgroup>
+        <thead>
+            <tr>
+                <th style="width: 250px;">A (Sản phẩm)</th>
+                <th style="width: 120px;">B (Số lượng)</th>
+                <th style="width: 150px;">C (Đơn giá)</th>
+                <th style="width: 200px;">D (Thành tiền)</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div class="controls">
+        <button id="create-spreadsheet">Tạo Bảng tính mới</button>
+        <button id="save-data">Lưu dữ liệu (Qua AJAX)</button>
+        <div id="notification"></div>
+    </div>
+
+<div id="context-menu">
+    <!-- For Cells -->
+    <div data-action="format-number" class="cm-cell-item">Định dạng ô: Số</div>
+    <div data-action="format-text" class="cm-cell-item">Định dạng ô: Văn bản</div>
+    <div class="context-menu-separator cm-cell-item"></div>
+    <div data-action="lock-cell" class="cm-cell-item">Khóa ô</div>
+    <div data-action="unlock-cell" class="cm-cell-item">Mở khóa ô</div>
+    <div data-action="lock-row" class="cm-cell-item">Khóa hàng</div>
+    <div data-action="unlock-row" class="cm-cell-item">Mở khóa hàng</div>
+    <div class="context-menu-separator"></div>
+    <div data-action="insert-row-above">Chèn hàng lên trên</div>
+    <div data-action="insert-row-below">Chèn hàng xuống dưới</div>
+    <div data-action="delete-row">Xóa hàng</div>
+    <div class="context-menu-separator"></div>
+    <div data-action="insert-col-left">Chèn cột sang trái</div>
+    <div data-action="insert-col-right">Chèn cột sang phải</div>
+    <div data-action="delete-col">Xóa cột</div>
+    <!-- For Headers -->
+    <div data-action="format-col-number" class="cm-header-item">Định dạng cột: Số</div>
+    <div data-action="format-col-text" class="cm-header-item">Định dạng cột: Văn bản</div>
+    <div class="context-menu-separator cm-header-item"></div>
+    <div data-action="lock-col" class="cm-header-item">Khóa Cột</div>
+    <div data-action="unlock-col" class="cm-header-item">Mở khóa Cột</div>
+
+</div>

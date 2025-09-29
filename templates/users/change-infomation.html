@@ -1,0 +1,56 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1">
+	<div class="modal-dialog modal-dialog-centered  pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$jatbi->lang("Thay đổi thông tin")?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<?=$app->component('input',[
+                        "name"=>'name',
+                        "placeholder"=>$jatbi->lang("Tên"),
+                        "value" => $account['name'] ?? '',
+                        "required" => 'true',
+                    ])?>
+					<?=$app->component('input',[
+                        "name"=>'phone',
+                        "placeholder"=>$jatbi->lang("Điện thoại"),
+                        "value" => $account['phone'] ?? '',
+                        "type" => 'tel',
+                        "required" => 'true',
+                    ])?>
+					<?=$app->component('input',[
+                        "name"=>'birthday',
+                        "placeholder"=>$jatbi->lang("Ngày sinh"),
+                        "value" => (isset($account['birthday']) && !empty($account['birthday']) ? $account['birthday'] : ''),
+                        "type" => "date",
+                    ])?>
+                    <?=
+                    $app->component('select',[
+			            "name"=>'gender',
+			            "placeholder"=>$jatbi->lang("Giới tính"),
+			            "selected" => $account['gender'] ?? '',
+			            "attr" => 'data-width="100%"',
+			            "options" => [
+			                ["value"=>"1","text"=>$jatbi->lang("Nam")],
+			                ["value"=>"2","text"=>$jatbi->lang("Nữ")],
+			            ]
+			        ])?>
+					<?=$app->component('upload-images',[
+                        "name"=>'images',
+                        "placeholder"=>$jatbi->lang("Hình ảnh"),
+                        "value" => $account['avatar'],
+                        "router" => '/upload-images',
+                        "choices" => 'true',
+                    ])?>
+					<div class="text-end">
+						<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Thay đổi")?></button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

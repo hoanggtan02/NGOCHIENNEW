@@ -1,0 +1,279 @@
+<div class="container pb-5 mb-5">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="text-body">
+            <div>
+                <strong><?=$jatbi->lang("Người đề xuất")?>:</strong>
+                <?=$data['account']?>   
+            </div>   
+            <div class="small">
+                <strong><?=$jatbi->lang("Ngày tạo")?>:</strong>
+                <small><?=$jatbi->datetime($data['create'])?></small>
+            </div>       
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-9">
+            <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-lg-6 fw-bold text-uppercase"><?=$jatbi->lang("Đề xuất")?>: #<?=$data['id']?></div>
+                        <div class="col-lg-6 text-end">
+                            <button class="btn btn-sm btn-info py-1 rounded-pill fw-bold me-1"><i class="ti ti-printer me-1"></i> <?=$jatbi->lang("In đề xuất")?></button>
+                            <button class="btn btn-sm btn-primary text-light py-1 rounded-pill fw-bold me-1"><i class="ti ti-library me-1"></i> <?=$jatbi->lang("Bút toán")?></button>
+                            <div class="btn-group">
+                              <button type="button" class="btn btn-sm btn-eclo py-1 rounded-pill fw-bold me-1" data-bs-toggle="dropdown" aria-expanded="false">
+                                 <i class="ti ti-bolt me-1"></i> BUZZ
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-end shadow-lg rounded-4 border-0">
+                                <li><a class="dropdown-item" href="#"><?=$jatbi->lang("Lịch sử Buzz")?></a></li>
+                              </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border my-4"></div>
+                    <div class="row g-4">
+                        <div class="col-lg-12">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Nội dung")?>: </label>
+                            <strong><?=$data['content']?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Đề xuất")?>: </label>
+                            <strong><?=$data['type_name']?>: <?=$data['form']?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Quy trình")?>: </label>
+                            <strong><?=$data['workflows']?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Hạng mục")?>: </label>
+                            <strong><?=$data['category']?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Mục tiêu")?>: </label>
+                            <strong><?=$data['target']?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Ngày dự kiến")?>: </label>
+                            <strong><?=$jatbi->date($data['date'])?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block"><?=$jatbi->lang("Số tiền")?>: </label>
+                            <strong><?=number_format($data['total_price'])?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block mb-1"><?=$jatbi->lang("Tiến trình")?>: </label>
+                            <strong><?=$data['process'] ?? ''?></strong>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <label class="fst-italic d-block mb-1"><?=$jatbi->lang("Trạng thái")?>: </label>
+                            <strong><?=$data['status']?></strong>
+                        </div>
+                    </div>
+                    <div class="border my-4"></div>
+                    <div class="">
+                        <strong><?=$jatbi->lang("Đối tượng")?></strong>
+                        <ul>
+                            <?php if($data['customers']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Khách hàng")?>: <?=$app->get("customers","name",["id"=>$data['customers']])?></li>
+                            <?php } ?>
+                            <?php if($data['vendors']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Nhà cung cấp")?>: <?=$app->get("customers","name",["id"=>$data['vendors']])?></li>
+                            <?php } ?>
+                            <?php if($data['accounts']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Tài khoản")?>: <?=$app->get("accounts","name",["id"=>$data['accounts']])?></li>
+                            <?php } ?>
+                            <?php if($data['proposals']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Đề xuất kèm theo")?>: <?=$app->get("proposals","id",["id"=>$data['proposals']])?></li>
+                            <?php } ?>
+                            <?php if($data['accountants']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Chứng từ")?>: <?=$app->get("accountants","id",["id"=>$data['accountants']])?></li>
+                            <?php } ?>
+                            <?php if($data['brands']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Chi nhánh")?>: <?=$app->get("brands","name",["id"=>$data['brands']])?></li>
+                            <?php } ?>
+                        </ul>
+                    </div>
+                    <div class="border my-4"></div>
+                    <div class="">
+                        <strong><?=$jatbi->lang("Chứng từ kèm theo")?></strong>
+                        <div class="row g-4 mt-2">
+                            <?php foreach($files as $file){ ?>
+                                <div class="col-lg-4">
+                                    <div class="btn card p-2 rounded-4 shadow border-0" data-action="modal" data-url="/files/files-views/<?=$file['active']?>">
+                                        <div class=" d-flex justify-content-start align-items-start text-start">
+                                            <span class="file-icon me-2 rounded-3 lazyload" data-bgset="<?=$jatbi->getFileIcon($file['active'])?>" style="--width:50px;--height:50px;"></span>
+                                            <strong class="w-75"><?=$file['name']?></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </div>
+                    <div class="border my-4"></div>
+                    <div class="">
+                        <strong class="mb-3 d-block"><?=$jatbi->lang("Chi tiết thêm")?></strong>
+                        <table id="datatable-details" 
+                            data-table 
+                            class="table align-middle" 
+                            data-type="POST" 
+                            data-server="true" 
+                            data-processing="true" 
+                            data-page-length="10"
+                            data-searching="true"
+                            data-paging="true"
+                            data-state-save='true'
+                            style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th data-name="type" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Loại")?></th>
+                                    <th data-name="content" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Nội dung")?></th>
+                                    <th data-name="price" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="fw-bold text-primary"><?=$jatbi->lang("Đơn giá")?></th>
+                                    <th data-name="amount" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Số lượng")?></th>
+                                    <th data-name="units" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Đơn vị")?></th>
+                                    <th data-name="total" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-success fw-bold"><?=$jatbi->lang("Thành tiền")?></th>
+                                    <th data-name="notes" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Ghi chú")?></th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th data-name="total"></th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="fw-bold text-uppercase"><?=$jatbi->lang("Bình luận")?></div>
+                        <div>
+                            <button class="btn btn-sm btn-eclo py-1 rounded-pill fw-bold" data-action="modal" data-url="/proposal/comments-add/<?=$data['active']?>"><i class="ti ti-message-2 me-1"></i> Thêm bình luận</button>
+                        </div>
+                    </div>
+                    <div class="">
+                        <table id="datatable-comments" 
+                            data-table 
+                            class="table align-middle" 
+                            data-type="POST" 
+                            data-server="true" 
+                            data-processing="true" 
+                            data-page-length="10"
+                            data-searching="true"
+                            data-paging="true"
+                            data-url="/proposal/comments/<?=$data['active']?>"
+                            data-state-save='true'
+                            style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th data-name="content" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Bình luận")?></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 mb-4">
+                <div class="card-body">
+                    <strong class="mb-3 d-block"><?=$jatbi->lang("Tiến trình dề xuất")?></strong>
+                    <?php foreach($process as $key => $proces) {
+                        $getProcess = $app->get("proposal_process","*",["proposal"=>$data['id'],"node"=>$proces['node_id']]);
+                        $node = $app->get("proposal_workflows_nodes","*",["id"=>$proces['node_id']]);
+                        if($key==0){
+                             $user = $app->get("accounts",["name","avatar"],["id"=>$data['account_id'] ]) ?? ["avatar"=>'',"name"=>''];
+                        }
+                        if($proces['approver_account_id']){
+                            $user = $app->get("accounts",["name","avatar"],["id"=>$proces['approver_account_id'] ]) ?? ["avatar"=>'',"name"=>''];
+                        }
+                        
+                    ?>
+                        <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-2 <?=(!empty($getProcess))?'':'opacity-50'?> ">
+                            <div class="w-100">
+                                <div class="mt-2 d-flex justify-content-between align-items-center w-100">
+                                    <div class="d-flex">
+                                        <img data-src="/<?=$user['avatar']?>" class="lazyload width height rounded-2" style="--width:40px;--height:40px;">
+                                        <div class="ms-2">
+                                            <span class="badge " style="background: <?=$node['background']?>; color:<?=$node['color']?>;"><?=$node['name']?></span>
+                                            <strong class="pt-1 d-block"><?=$user['name']?></strong>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <?php if(!empty($getProcess)){ ?>
+                                            <?php if($getProcess['approval']==1){ ?>
+                                            <i class="ti ti-circle-check fs-2 text-success"></i>
+                                            <?php } ?>
+                                            <?php if($getProcess['approval']==2){ ?>
+                                            <i class="ti ti-ban fs-2 text-danger"></i>
+                                            <?php } ?>
+                                        <?php } else { ?>
+                                        <i class="ti ti-circle-dashed fs-2 text-muted"></i>
+                                        <?php } ?>
+                                    </div>
+                                </div>
+                                <?php if(!empty($getProcess)){ ?>
+                                    <div class="card border-0 p-2 rounded-4 mt-2">
+                                        <span class="fst-italic"><?=$getProcess['approval_content']?></span>
+                                        <small><?=$jatbi->datetime($getProcess['date'])?></small>
+                                    </div>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+            <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 ">
+                <div class="card-body">
+                    <strong class="mb-3 d-block"><?=$jatbi->lang("Nhật ký")?></strong>
+                    <?php foreach($proposals_logs as $key => $logs) {
+                        $user = $app->get("accounts",["name","avatar"],["id"=>$logs['account'] ]) ?? ["avatar"=>'',"name"=>''];
+                        
+                    ?>
+                        <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-2 ">
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-start w-100">
+                                    <div class="d-flex align-items-start">
+                                        <img data-src="/<?=$user['avatar']?>" class="lazyload width height rounded-2 mt-2" style="--width:30px;--height:30px;">
+                                        <div class="ms-2">
+                                            <strong class="pt-1 d-block"><?=$user['name']?></strong>
+                                            <small><?=$jatbi->datetime($logs['date'])?></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card border-0 p-2 rounded-4 mt-2">
+                                    <span class="fst-italic small"><?=$logs['content']?></span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+            <pre><?=print_r($process)?></pre>
+        </div>
+    </div>
+    <?php if($active_approval=='true'){ ?>
+    <div class="position-fixed bottom-0 start-0 w-100 bg-body py-2 pb-standalone">
+        <div class="text-center text-md-right">
+            <button class="btn btn-primary text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=1">Tham vấn</button>
+            <button class="btn btn-danger text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=2">Không duyệt</button>
+            <button class="btn btn-success text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=1">Xác nhận</button>
+        </div>
+    </div>
+    <?php } ?>
+</div>

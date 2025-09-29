@@ -1,0 +1,56 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-sm pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-lg-12">
+							<?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "type" => 'tel',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'version',
+                                "placeholder"=>$jatbi->lang("Phiên bản"),
+                                "value" => $data['version'] ?? '',
+                                "type" => 'text',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'author',
+                                "placeholder"=>$jatbi->lang("Tác giả"),
+                                "value" => $data['author'] ?? '',
+                                "type" => 'text',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'position',
+                                "placeholder"=>$jatbi->lang("Vị trí"),
+                                "value" => $data['position'] ?? '',
+                                "type" => 'tel',
+                            ])?>
+							<?=$app->component('textarea',[
+                                "name"=>'description',
+                                "placeholder"=>$jatbi->lang("Miêu tả"),
+                                "value" => $data['description'] ?? '',
+                            ])?>
+							<?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+						</div>
+						<div class="col-lg-12">
+							<?= $jatbi->csrfField() ?>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

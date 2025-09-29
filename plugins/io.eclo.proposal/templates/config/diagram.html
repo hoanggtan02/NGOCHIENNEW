@@ -1,0 +1,73 @@
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$sub_title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$sub_title?></li>
+            </ul>
+        </div>
+    </div>
+    <?php if($jatbi->permission(['proposal.config.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center" style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false" data-action="click" data-workflows-load="true" data-target-canvas="diagram-accounts" data-url="/proposal/config/diagram-add">
+          <i class="ti ti-plus fs-2" aria-hidden="true"></i>
+        </button>
+    </div>
+    <?php } ?>
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <div class="list-group ">
+                        <a href="<?=$jatbi->url('/proposal/config')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-forms me-2 btn btn-sm "></i><?=$jatbi->lang("Hình thức")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/target')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-target me-2 btn btn-sm "></i><?=$jatbi->lang("Hạng mục")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/workflows')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Quy trình")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/diagram')?>" data-pjax class="p-2 d-block bg-transparent list-group-item text-eclo fw-bold">
+                            <i class="ti ti-sitemap me-2 btn btn-sm "></i><?=$jatbi->lang("Sơ đồ tài khoản")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/accountants-code')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-abacus me-2 btn btn-sm "></i><?=$jatbi->lang("Mã tài khoản")?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                   <div id="workflow-templates" style="display: none;">
+                        <template id="template-diagram">
+                            <div class="card rounded-4 shadow-lg">
+                                <div class="card-header p-1 bg-transparent" data-html="header"></div>
+                                <div class="card-body" data-html="body"></div>
+                            </div>
+                        </template>
+                    </div>
+                    <div id="canvas-viewport" class="height" style="--height:80vh">
+                        <div class="workflow-canvas" 
+                             id="diagram-accounts"
+                             data-workflows 
+                             data-allow-multiple-children="true"
+                             data-workflow-id="diagram"
+                             data-url-load="/proposal/config/diagram-update/load"
+                             data-url-node-update-pos="/proposal/config/diagram-update/node-position"
+                             data-url-node-delete="/proposal/config/diagram-update/node-delete"
+                             data-url-connection-create="/proposal/config/diagram-update/connect-create"
+                             data-url-connection-delete="/proposal/config/diagram-update/connect-deleted">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

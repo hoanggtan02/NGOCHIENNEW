@@ -1,0 +1,18 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1">
+	<div class="modal-dialog modal-dialog-centered standalone mw-100 m-0 vh-100">
+		<div class="container">
+			<div class="row justify-content-center align-items-start">
+				<div class="col-lg-6 text-center">
+					<img src="/assets/img/not-found.svg" class="w-100">
+					<h1 class="fw-bold text-eclo">ERROR</h1>
+					<p class="fs-4 text-muted">We couldn't find your request. Or you do not have permission to access this page</p>
+					<a href="/" class="btn btn-eclo fw-bold btn-sm mx-1 rounded-pill" data-pjax>Return to home page</a>
+					<div class="py-3">
+						<small class="d-block py-2 text-body">Contact Email: <a href="mailto:info@eclo.vn" class="text-eclo">info@eclo.vn</a></small>
+						<small class="d-block py-2 text-body">&copy; <?=date("Y")?> Copyright of ECLO Company</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,92 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-lg-6">
+					        <?=$app->doHook('template_account_post_left_before',$data);?>
+							<?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'account',
+                                "placeholder"=>$jatbi->lang("Tài khoản"),
+                                "value" => $data['account'] ?? '',
+                                "required" => 'true',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'email',
+                                "placeholder"=>$jatbi->lang("Email"),
+                                "value" => $data['email'] ?? '',
+                                "type"=>'email',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'phone',
+                                "placeholder"=>$jatbi->lang("Điện thoại"),
+                                "value" => $data['phone'] ?? '',
+                                "type" => 'tel',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'password',
+                                "placeholder"=>$jatbi->lang("Mật khẩu"),
+                                "type" => 'password',
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('select',[
+					            "name"=>'permission',
+					            "placeholder"=>$jatbi->lang("Nhóm quyền"),
+					            "selected" => $data['permission'] ?? '',
+					            "attr" => 'data-width="100%"',
+					            "options" => $permissions,
+                                "required" => 'true',
+					        ])?>
+					        <?=$app->doHook('template_account_post_left_after',$data);?>
+						</div>
+						<div class="col-lg-6">
+					        <?=$app->doHook('template_account_post_right_before',$data);?>
+							<?=$app->component('input',[
+                                "name"=>'birthday',
+                                "placeholder"=>$jatbi->lang("Ngày sinh"),
+                                "value" => (isset($data['birthday']) && !empty($data['birthday']) ? $data['birthday'] : ''),
+                                "type" => "date",
+                            ])?>
+                            <?=$app->component('select',[
+					            "name"=>'gender',
+					            "placeholder"=>$jatbi->lang("Giới tính"),
+					            "selected" => $data['gender'] ?? '',
+					            "attr" => 'data-width="100%"',
+					            "options" => [
+					                ["value"=>"1","text"=>$jatbi->lang("Nam")],
+					                ["value"=>"2","text"=>$jatbi->lang("Nữ")],
+					            ]
+					        ])?>
+							<?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+							<?=$app->component('upload-images',[
+                                "name"=>'avatar',
+                                "placeholder"=>$jatbi->lang("Hình ảnh"),
+                                "value" => $data['avatar'],
+                            ])?>
+					        <?=$app->doHook('template_account_post_right_after',$data);?>
+						</div>
+						<div class="col-lg-12">
+					        <?=$app->doHook('template_account_post_bottom',$data);?>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

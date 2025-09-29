@@ -1,0 +1,77 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>"tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog pt-standalone modal-fullscreen max-width my-0 mx-auto py-3" style="--max-width-xxl:90%;--max-width-xl:90%">
+		<div class="modal-content rounded-5 border-0 shadow-lg"  modal-move-load>
+			<div class="modal-header">
+				<ul class="breadcrumb mb-0 p-2 rounded-pill align-items-center">
+					<li class="breadcrumb-item text-body d-flex align-items-center" aria-current="page">
+						<a href="<?=$url?>folder=<?=$back?>" data-pjax data-pjax-history="false" data-selector="[modal-move-load]"  class="btn btn-light p-0 width height rounded-circle border-0 me-2 d-flex align-items-center justify-content-center" style="--width:40px;--height:40px;"><i class="ti ti-arrow-left me-1 fs-2"></i></a>
+            			<a data-pjax data-pjax-history="false" data-selector="[modal-move-load]" href="<?=$url?>" data-pjax class="link-secondary"><?=$jatbi->lang("Mục chính")?></a>
+	                </li>
+					<?php if(isset($subs)){ ?>
+	                	<?php foreach($subs as $sub){ ?>
+			                <li class="breadcrumb-item text-body" aria-current="page">
+	                			<a data-pjax data-pjax-history="false" data-selector="[modal-move-load]" href="<?=$url?>folder=<?=$sub['active']?>" data-pjax class="link-secondary"><?=$sub['name'] ?? ''?></a>
+			                </li>
+			            <?php } ?>
+	                <?php } ?>
+	            </ul>
+		    </div>
+			<div class="modal-body">
+				<div class="mb-3 h-100">
+					<?php if($datas || $folders){ ?>
+	            		<div class="row g-3">
+							<?php foreach ($folders as $key => $folder) { ?>
+							<div class="col-lg-3 col-xl-2 col-md-3 col-4">
+								<div class="btn rounded-4 shadow btn-outline-eclo card position-relative p-3 max-height min-height d-flex align-items-center justify-content-center" style="--max-height:100px;--min-height:100px;">
+									<div class="text-center">
+										<i class="ti ti-folder fs-1 me-2"></i>
+										<span class="d-block col-12 text-truncate"><?=$folder['name']?></span>
+										<a data-pjax data-pjax-history="false" class="stretched-link" data-selector="[modal-move-load]" href="<?=$url?>folder=<?=$folder['active']?>"></a>
+									</div>
+								</div>
+							</div>
+							<?php } ?>
+							<?php foreach ($datas as $key => $data) { ?>
+							<div class="col-lg-3 col-xl-2 col-md-3 col-4">
+								  <input class="btn-check select-files" type="radio" name="data" value="<?=ltrim($data['files'],'/')?>" id="<?=$data['active']?>">
+								  <label class="btn rounded-4 shadow btn-outline-eclo card position-relative p-3 max-height min-height" style="--max-height:100px;--min-height:100px;" for="<?=$data['active']?>">
+										<div class="text-center">
+											<div class="d-flex align-items-center justify-content-center position-relative">
+												<span class="file-icon me-2 rounded-3 lazyload" data-bgset="<?=$data['files']?>" style="--width:50px;--height:50px;"></span>
+											</div>
+											<span class="d-block col-12 text-truncate"><?=$data['name']?></span>
+										</div>
+								  </label>
+							</div>
+							<?php } ?>
+						</div>
+					<?php } else { ?>
+	            	<div class="row g-3 align-items-center justify-content-start h-100">
+						<div class="col-lg-12 h-100">
+							<div class="w-100 h-100 d-flex justify-content-center align-items-center">
+								<div class="text-center">
+									<img src="/assets/img/no-data.svg" class="w-100">
+									<div class=""><?=$jatbi->lang("Không có dữ liệu")?></div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<?php } ?>
+				</div>
+			</div>
+			<div class="modal-footer">
+		        <button type="button" class="btn btn-success rounded-pill" data-action="modal" data-url="<?=$jatbi->url('/files/upload/'.($getfolder['active'] ?? 'main')) ?>?type=assets" data-multi="upload" data-pjax-history="false" data-load="<?=$url?>folder=<?=$getfolder['active']?>"><?=$jatbi->lang("Tải lên")?></button>
+		        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal" aria-label="Close"><?=$jatbi->lang("Đóng")?></button>
+		        <button 
+		        	type="button" 
+		        	class="btn btn-eclo rounded-pill" 
+		        	data-action="click" 
+		        	data-form='{"data":"input.select-files:checked.val"}' 
+		        	data-function="assets_images()" 
+		        	data-bs-dismiss="modal" 
+		        	aria-label="Close"
+		        ><?=$jatbi->lang("Thêm chọn")?></button>
+		    </div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,117 @@
+<div class="offcanvas offcanvas-end pt-standalone h-100 offcanvas-load bg-blur bg-body bg-opacity-50 border-0 shadow-lg" tabindex="-1" id="offcanvasNotification" aria-labelledby="offcanvasNotificationLabel" style="--blur:10px;">
+	<div class="container">
+		<div class="row justify-content-center align-items-center">
+			<div class="offcanvas-header">
+				<div class="d-flex justify-content-between align-items-center w-100 ">
+					<h6 class="mb-0 fw-bold text-nowrap"><?=$jatbi->lang('Thông tin')?></h6>
+					<button type="button" class="btn p-0 d-flex fs-3 align-items-center justify-content-end w-100 border-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close">
+						<i class="ti ti-x"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="offcanvas-body">
+    	<div class="text-center">
+    		<?php if($type=='folder'){ ?>
+    		<img data-src="/templates/assets/icons/folder.png" class="width lazyload p-2 shadow rounded-4 bg-body" style="--width:200px">
+    		<?php } else { ?>
+    		<img data-src="<?=$jatbi->getFileIcon($data['active'])?>" class="width lazyload p-2 shadow rounded-4 bg-body" style="--width:200px">
+    		<?php } ?>
+        	<div class="fw-bold fs-6 py-3"><?=$data['name']?></div>
+    	</div>
+    	<div class="row py-3 g-1">
+        </div>
+        <?php if($data['account']==$account['id']){ ?>
+        <div class="row g-1">
+        	<div class="col-3">
+        		<div class="dropdown">
+            		<button class="btn border-0 btn-sm rounded-2 py-3 bg-body-tertiary w-100"  type="button" data-bs-toggle="dropdown" aria-expanded="false"  data-bs-dismiss="offcanvas" data-action="modal" data-url="<?=$jatbi->url('/files/'.$type.'-name/'.$data['active'])?>">
+            			<i class="ti ti-writing-sign fs-5"></i>
+            			<div class="small"><?=$jatbi->lang("Đổi tên")?></div>
+            		</button>
+				</div>
+        	</div>
+        	<div class="col-3">
+        		<button class="btn border-0 btn-sm rounded-2 py-3 bg-body-tertiary w-100" data-alert="true" data-action="click" data-url="<?=$jatbi->url('/files/'.$type.'-star/'.$data['active'])?>" data-load="this" data-bs-dismiss="offcanvas">
+        			<i class="ti fs-5 ti-star<?=$star>0?'-filled text-warning':''?>"></i>
+        			<div class="small"><?=$jatbi->lang("Đánh Sao")?></div>
+        		</button>
+        	</div>
+        	<div class="col-3">
+        		<div class="dropdown">
+            		<button class="btn border-0 btn-sm rounded-2 py-3 bg-body-tertiary w-100"  type="button" data-bs-toggle="dropdown" aria-expanded="false" data-action="modal" data-url="<?=$jatbi->url('/files/'.$type.'-share/'.$data['active'])?>">
+            			<i class="ti ti-user-share fs-5"></i>
+            			<div class="small"><?=$jatbi->lang("Chia sẽ")?></div>
+            		</button>
+				</div>
+        	</div>
+        	<div class="col-3">
+        		<div class="dropdown">
+            		<button class="btn border-0 btn-sm rounded-2 py-3 bg-body-tertiary w-100"  type="button" data-bs-toggle="dropdown" aria-expanded="false" data-action="modal" data-url="<?=$jatbi->url('/files/'.$type.'-move/'.$data['active'])?>" data-pjax-history="false">
+            			<i class="ti ti-folder-symlink fs-5"></i>
+            			<div class="small"><?=$jatbi->lang("Di chuyển")?></div>
+            		</button>
+				</div>
+        	</div>
+        </div>
+        <?php } ?>
+        <hr class="border-secondary border-opacity-50">
+        <div class="mb-2 mt-3">
+        	<div class="fw-bold mb-2"><?=$jatbi->lang("Người tạo")?></div>
+        	<div class="text-muted mb-4">
+    			<div class="py-2 d-flex justify-content-between align-items-center"><span><i class="ti ti-brand-pushbullet me-2"></i> <strong><?=$jatbi->lang("Mã")?>:</strong></span> <?=$data['active']?></div>
+    			<div class="py-2 d-flex justify-content-between align-items-center"><span><i class="ti ti-user me-2"></i> <strong><?=$jatbi->lang("Người tạo")?>:</strong></span> <?=$user['name']?></div>
+    			<div class="py-2 d-flex justify-content-between align-items-center"><span><i class="ti ti-calendar-month me-2"></i> <strong><?=$jatbi->lang("Ngày tạo")?>:</strong></span> <?=$data['date']?></div>
+    			<div class="py-2 d-flex justify-content-between align-items-center"><span><i class="ti ti-cylinder me-2"></i> <strong><?=$jatbi->lang("Chỉnh sửa")?>:</strong></span> <?=$data['modify']?></div>
+    		</div>
+    		<?php if($share['id']>0){ ?>
+    		<div class="fw-bold mb-2"><?=$jatbi->lang("Chia sẽ")?></div>
+    		<div class="text-muted mb-4">
+    			<div class="d-flex justify-content-between align-items-center border rounded-pill p-2 mb-3">
+					<div class="d-flex align-items-center justify-content-start">
+						<img data-src="<?=$user['avatar']?>?type=thumb" class="width height rounded-circle me-2 lazyload" style="--width:30px;--height:30px;">
+						<span class="fw-bold"><?=$user['name']?></span>
+					</div>
+					<div class="px-2 text-muted">
+						<?=$jatbi->lang("Chủ sở hữu")?>
+					</div>
+				</div>
+				<div class="mb-3">
+					<?php if($share['permission']==1){ ?>
+					<strong class="d-block mb-3"><?=$jatbi->lang("Chia sẽ tất cả - loại trừ")?></strong>
+					<?php } ?>
+					<?php if($share['permission']==2){ ?>
+					<strong class="d-block mb-3"><?=$jatbi->lang("Chỉ chia sẽ với")?></strong>
+					<?php } ?>
+					<div class="d-flex flex-wrap">
+					<?php if($SelectAccounts){ ?>
+						<?php foreach ($SelectAccounts as $key => $SelectAccount) { ?>
+							<div class="d-flex align-items-center justify-content-start mb-1 rounded-pill bg-body-tertiary p-2 me-2">
+								<img data-src="/<?=$SelectAccount['avatar']?>" class="width height lazyload rounded-circle me-2" style="--width:30px;--height:30px;">
+								<strong><?=$SelectAccount['name']?></strong>
+							</div>
+						<?php } ?>
+					<?php } else { ?>
+						<?php if($share['permission']==1){ ?>
+							<div class="text-center w-100"><?=$jatbi->lang("không có loại trừ")?></div>
+						<?php } ?>
+						<?php if($share['permission']==2){ ?>
+							<div class="text-center w-100"><?=$jatbi->lang("không có tài khoản")?></div>
+						<?php } ?>
+					<?php } ?>
+					</div>
+				</div>
+				<div class="mb-3">
+					<strong class="d-block mb-3"><?=$jatbi->lang("Đường dẫn truy cập")?></strong>
+					<div class="url d-none"><?=$url?></div>
+					<button class="border bg-body w-100 rounded-pill p-3 d-flex justify-content-between align-items-center" data-action="copy" data-target=".url">
+						<?=$jatbi->lang("Copy đường dẫn để gửi đến người bạn chia sẽ")?>
+						<i class="ti ti-link fs-4"></i>
+					</button>
+				</div>
+    		</div>
+    		<?php } ?>
+        </div>
+    </div>
+</div>

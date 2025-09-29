@@ -1,0 +1,102 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-lg-12">
+							<?=$app->component('input',[
+                                "name"=>'code',
+                                "placeholder"=>$jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                                "required" => 'true',
+                            ])?>
+							<?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+                            <div>
+	                            <?=$app->component('select',[
+						            "name"=>'type',
+						            "placeholder"=>$jatbi->lang("Loại"),
+						            "selected" => $data['permission'] ?? '',
+						            "attr" => 'data-width="100%" data-action="change-load" data-url="'.$jatbi->url('/customers/config/field-load/'.($data['active'] ?? 'add')).'" data-target=".field-load"',
+						            "options" => $fields,
+	                                "required" => 'true',
+						        ])?>
+								<?php if(isset($data['active'])){ ?>
+								<div class="field-load"  data-action="load" data-url="<?=$jatbi->url('/customers/config/field-load/'.$data['active'])?>" data-target=".field-load"></div>
+								<?php } else { ?>
+								<div class="field-load"></div>
+								<?php }?>
+                            </div>
+							<div class="row">
+								<div class="col-6">
+									<?=$app->component('input',[
+		                                "name"=>'position',
+		                                "placeholder"=>$jatbi->lang("Vị trí"),
+		                                "value" => $data['position'] ?? '',
+		                                "type" => "number"
+		                            ])?>
+								</div>
+								<div class="col-6">
+									<?=$app->component('select',[
+							            "name"=>'col',
+							            "placeholder"=>$jatbi->lang("Cột"),
+							            "selected" => $data['col'] ?? '',
+							            "attr" => 'data-width="100%"',
+							            "options" => [
+							                ["value"=>"3","text"=>$jatbi->lang("3")],
+							                ["value"=>"4","text"=>$jatbi->lang("4")],
+							                ["value"=>"6","text"=>$jatbi->lang("6")],
+							                ["value"=>"12","text"=>$jatbi->lang("12")],
+							            ]
+							        ])?>
+								</div>
+							</div>
+							<?=$app->component('select',[
+					            "name"=>'required',
+					            "placeholder"=>$jatbi->lang("Bắt buộc"),
+					            "selected" => $data['required'] ?? '',
+					            "attr" => 'data-width="100%"',
+					            "options" => [
+					                ["value"=>"0","text"=>$jatbi->lang("Không kích hoạt")],
+					                ["value"=>"1","text"=>$jatbi->lang("Kích hoạt")],
+					            ]
+					        ])?>
+							<?=$app->component('select',[
+					            "name"=>'show_table',
+					            "placeholder"=>$jatbi->lang("Hiện ra bảng dữ liệu"),
+					            "selected" => $data['show_table'] ?? '',
+					            "attr" => 'data-width="100%"',
+					            "options" => [
+					                ["value"=>"0","text"=>$jatbi->lang("Không kích hoạt")],
+					                ["value"=>"1","text"=>$jatbi->lang("Kích hoạt")],
+					            ]
+					        ])?>
+							<?=$app->component('textarea',[
+                                "name"=>'notes',
+                                "placeholder"=>$jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+							<?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+						</div>
+						<div class="col-lg-12">
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,120 @@
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 min-width bg-blur" style="--min-width:300px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3">
+                            <?=$jatbi->lang("Điều kiện lọc")?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3">
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày dự kiến"),
+                                "selected" => $app->xss($_GET['date'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                                "value" => $date ?? ''
+                            ])?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="submit" class="btn btn-eclo px-3 rounded-pill py-2"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4 mb-4">
+                <div class="table-responsive">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover bg-transparent mb-0 small" style="min-width: 1200px;">
+                            <thead class="bg-transparent">
+                                <tr>
+                                    <th rowspan="2" style="min-width: 100px; position: sticky; left: 0; z-index: 2;">NGÀY</th>
+                                    <?php foreach ($dongtien as $date => $data): ?>
+                                        <th colspan="4" class="text-center text-nowrap small">
+                                            <?= date("d/m/Y", strtotime($date)) ?>
+                                        </th>
+                                    <?php endforeach; ?>
+                                </tr>
+                                <tr class="small">
+                                    <?php foreach ($dongtien as $date => $data): ?>
+                                        <th class="text-nowrap text-body">Kế hoạch</th>
+                                        <th class="text-nowrap text-success">Thực tế</th>
+                                        <th class="text-nowrap text-primary">Chênh lệch</th>
+                                        <th class="text-nowrap text-info">Tỷ lệ</th>
+                                    <?php endforeach; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                    $rows = [
+                                        'dauky'  => ['label' => 'Đầu kỳ', 'class' => 'bg-light-blue'],
+                                        'thu'    => ['label' => 'Thu', 'class' => 'bg-light-green'],
+                                        'chi'    => ['label' => 'Chi', 'class' => 'bg-light-red'],
+                                        'cuoiky' => ['label' => 'Cuối kỳ', 'class' => 'bg-light-yellow']
+                                    ];
+                                ?>
+                                <?php foreach ($rows as $key => $info): ?>
+                                    <tr class="<?= $info['class'] ?>">
+                                        <th scope="row" style="min-width: 100px; position: sticky; left: 0; z-index: 2;"><?= $info['label'] ?></th>
+                                        <?php foreach ($dongtien as $dayData): ?>
+                                            <?php $item = $dayData[$key]; ?>
+                                            <!-- Kế hoạch -->
+                                            <td class="fw-bold"><?=number_format($item['kehoach']) ?></td>
+                                            <!-- Thực thu/chi -->
+                                            <td class="fw-bold"><?=number_format($item['thucthu']) ?></td>
+                                            <!-- Tổng -->
+                                            <td class="fw-bold <?= $item['tong'] < 0 ? 'text-danger' : 'text-primary' ?>">
+                                                <?=number_format($item['tong']) ?>
+                                            </td>
+                                            <!-- Tỷ lệ -->
+                                            <td class="fw-bold <?= $item['tile'] < 100 ? 'text-danger' : 'text-success' ?>">
+                                                <?= $item['tile'] ?>%
+                                            </td>
+                                        <?php endforeach; ?>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4 mb-4">
+                <canvas id="cashFlowChart"
+                        data-chart=""
+                        data-labels='<?= json_encode($chartData['labels']) ?>'
+                        data-datasets='[
+                            {"label": "Kế hoạch thu", "data": <?= json_encode($chartData['thu_kehoach']) ?>, "type": "bar", "backgroundColor": "#009ef7"},
+                            {"label": "Thực thu", "data": <?= json_encode($chartData['thu_thucthu']) ?>, "type": "bar", "backgroundColor": "#7239ea"},
+                            {"label": "Kế hoạch chi", "data": <?= json_encode($chartData['chi_kehoach']) ?>, "type": "bar", "backgroundColor": "#f1416c"},
+                            {"label": "Thực chi", "data": <?= json_encode($chartData['chi_thucthu']) ?>, "type": "bar", "backgroundColor": "#ffc700"},
+                            {"label": "Chênh lệch", "data": <?= json_encode($chartData['cuoiky']) ?>, "type": "line", "borderColor": "#181c32", "stepped": true, "pointRadius": 3, "pointBackgroundColor": "#181c32", "fill": false, "tension": 0}
+                        ]'>
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>

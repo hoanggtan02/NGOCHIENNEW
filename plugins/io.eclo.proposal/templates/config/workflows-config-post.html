@@ -1,0 +1,107 @@
+<div class="offcanvas offcanvas-end pt-standalone h-100 offcanvas-load bg-blur bg-body bg-opacity-50 border-0 shadow-lg width <?=$jatbi->ajax('show')?>" tabindex="-1" id="offcanvasNotification" aria-labelledby="offcanvasNotificationLabel" style="--blur:10px;--width:400px;"">
+	<div class="container">
+		<div class="row justify-content-center align-items-center">
+			<div class="offcanvas-header">
+				<div class="d-flex justify-content-between align-items-center w-100 ">
+					<h6 class="mb-0 fw-bold text-nowrap"><?=$title?></h6>
+					<button type="button" class="btn p-0 d-flex fs-3 align-items-center justify-content-end w-100 border-0 me-3" data-bs-dismiss="offcanvas" aria-label="Close">
+						<i class="ti ti-x"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<form method="POST" class="offcanvas-body p-0" action="<?=$_SERVER['REQUEST_URI']?>">
+		<div class="offcanvas-body">
+			<?=$app->component('select',[
+	            "name"=>'type',
+	            "placeholder"=>$jatbi->lang("Loại"),
+	            "selected" => $data['type'] ?? '',
+	            "attr" => 'data-width="100%"',
+	            "required" => "true",
+	            "id" => "province",
+	            "options" => [
+	            	["value" => 'start',"text"=>$jatbi->lang("Bắt đầu")],
+	            	["value" => 'approval',"text"=>$jatbi->lang("Phê duyệt")],
+	            	["value" => 'finish',"text"=>$jatbi->lang("Kết thúc")],
+	           	],
+	        ])?>
+	        <?=$app->component('input',[
+	            "name"=>'name',
+	            "placeholder"=>$jatbi->lang("Tên"),
+	            "value" => $data['name'] ?? '',
+	            "required" => 'true',
+	        ])?>
+			<?=$app->component('input',[
+	            "name"=>'code',
+	            "placeholder"=>$jatbi->lang("Mã"),
+	            "value" => $data['code'] ?? '',
+	            "required" => 'true',
+	        ])?>
+	        <div class="row">
+	        	<div class="col-6">
+					<?=$app->component('input',[
+			            "name"=>'background',
+			            "class" => 'form-control-color height w-100',
+			            "attr" => 'style="--height:60px;"',
+			            "placeholder"=>$jatbi->lang("Màu nền"),
+			            "value" => $data['background'] ?? '',
+			            "required" => 'true',
+			            "type" => "color"
+			        ])?>
+	        	</div>
+	        	<div class="col-6">
+					<?=$app->component('input',[
+			            "name"=>'color',
+			            "class" => 'form-control-color height w-100',
+			            "attr" => 'style="--height:60px;"',
+			            "placeholder"=>$jatbi->lang("Màu chữ"),
+			            "value" => $data['color'] ?? '',
+			            "required" => 'true',
+			            "type" => "color"
+			        ])?>
+	        	</div>
+	        </div>
+			<?=$app->component('select',[
+	            "name"=>'approval',
+	            "placeholder"=>$jatbi->lang("Loại xét duyệt"),
+	            "selected" => $data['approval'],
+	            "attr" => 'data-width="100%"',
+	            "required" => "true",
+	            "id" => "approval",
+	            "options" => [
+	            	["value" => 1,"text"=>$jatbi->lang("Tài khoản")],
+	            	["value" => 2,"text"=>$jatbi->lang("Cấp quản lý")],
+	            	["value" => 3,"text"=>$jatbi->lang("Không xét duyệt")],
+	           	],
+	        ])?>
+			<?=$app->component('select',[
+	            "name"=>'account',
+	            "placeholder"=>$jatbi->lang("Tài khoản xét duyệt"),
+	            "selected" => $data['account'] ?? '',
+	            "attr" => 'data-width="100%" data-parent="#approval" data-load="true" data-url="/proposal/search/accounts" data-method="POST" data-keyword="keyword" data-max-length="1"',
+	            "id" => "account",
+	            "options" => $accounts ?? [],
+	        ])?>
+			<?=$app->component('select',[
+	            "name"=>'follows[]',
+	            "placeholder"=>$jatbi->lang("Tài khoản theo dõi"),
+	            "selected" => $data['follows'] ?? '',
+	            "attr" => 'data-width="100%" multiple data-parent="#approval" data-load="true" data-url="/proposal/search/accounts" data-method="POST" data-keyword="keyword" data-max-length="1"',
+	            "id" => "follows",
+	            "options" => $follows ?? [],
+	        ])?>
+			<?=$app->component('textarea',[
+	            "name"=>'notes',
+	            "placeholder"=>$jatbi->lang("Ghi chú"),
+	            "value" => $data['notes'] ?? '',
+	        ])?>
+			<?=$app->component('select-status',[
+	            "value" => $data['status'] ?? '',
+	        ])?>
+		</div>
+		<div class="offcanvas-footer text-center">
+			<button type="submit" data-workflows-load="true" data-target-canvas="my-workflow-canvas" class="btn btn-eclo w-100 py-3 rounded-0 fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+		</div>		
+	</form>
+</div>
