@@ -59,12 +59,12 @@
 	            $this->cachedPermissions = [];
 	            return [];
 	        }
-	        $permissionRow = $this->app->get("permissions", ["permissions"], [
+	        $permissionRow = $this->app->get("permission", ["group"], [
 	            "deleted" => 0,
 	            "status" => 'A',
 	            "id" => $user['permission']
 	        ]);
-	        $permissions = !empty($permissionRow['permissions']) ? json_decode($permissionRow['permissions'], true) : [];
+	        $permissions = !empty($permissionRow['group']) ? unserialize($permissionRow['group']) : [];
 	        $this->cachedPermissions = $permissions ?: [];
 	        return $this->cachedPermissions;
 	    }
