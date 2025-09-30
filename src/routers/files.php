@@ -3,6 +3,8 @@ if (!defined('ECLO')) die("Hacking attempt");
 
 use ECLO\App;
 
+$common = $app->getValueData('common');
+$account = $app->getValueData('account');
 $app->group($setting['manager'] . "/files", function ($vars) use ($app, $jatbi, $common, $setting) {
     $account_id = $app->getSession("accounts")['id'] ?? null;
     $account = $account_id ? $app->get("accounts", "*", ["id" => $account_id]) : [];

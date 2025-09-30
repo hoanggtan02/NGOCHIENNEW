@@ -129,7 +129,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
         $vars['title'] = $jatbi->lang("Tài Khoản Đối Tác");
 
         if ($app->method() === 'GET') {
-            $vars['permission'] = $app->select("permission",["id(value)", "name(text)"]);
+            $vars['permission'] = $app->select("permission", ["id(value)", "name(text)"]);
             echo $app->render($setting['template'] . '/users/accounts-partner.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header([
@@ -214,7 +214,6 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                         }
                     }
                 }
-
             }
             $where1 = [
                 "AND" => [
@@ -702,15 +701,14 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                 $error = ['status' => 'error', 'content' => $jatbi->lang('Email không đúng')];
             }
             if (empty($error)) {
-                if(count($stores)>1){
+                if (count($stores) > 1) {
                     $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
                     $input_stores = array_map([$app, 'xss'], $input_stores); // lọc từng phần tử
                     if (empty($input_stores)) {
-                        $input_stores = $app->select("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
+                        $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
                     }
-                }
-                else {
-                    $input_stores = $app->select("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
+                } else {
+                    $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
                 }
                 $insert = [
                     "type" => 0,
@@ -724,7 +722,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                     "password" => password_hash($app->xss($_POST['password']), PASSWORD_DEFAULT),
                     "active" => $jatbi->active(),
                     "date" => date('Y-m-d H:i:s'),
-                    "stores"=> $input_stores,
+                    "stores" => $input_stores,
                     // "login"         => 'create',
                     "status" => $app->xss($_POST['status']),
                     // "lang"          => $_COOKIE['lang'] ?? 'vi',
@@ -823,15 +821,14 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                     $error = ['status' => 'error', 'content' => $jatbi->lang('Email không đúng')];
                 }
                 if (empty($error)) {
-                    if(count($stores)>1){
+                    if (count($stores) > 1) {
                         $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
                         $input_stores = array_map([$app, 'xss'], $input_stores); // lọc từng phần tử
                         if (empty($input_stores)) {
-                            $input_stores = $app->select("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
+                            $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
                         }
-                    }
-                    else {
-                        $input_stores = $app->select("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
+                    } else {
+                        $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
                     }
                     $insert = [
                         "type" => 0,
@@ -846,7 +843,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                         "active" => $data['active'],
                         "date" => date('Y-m-d H:i:s'),
                         "status" => $app->xss($_POST['status']),
-                        "stores"=> $input_stores,
+                        "stores" => $input_stores,
                         // "lang" => $data['lang'] ?? 'vi',
                     ];
                     $app->update("accounts", $insert, ["id" => $data['id']]);
@@ -1280,7 +1277,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
         }
     })->setPermissions(['accounts-partner.add']);
 
-    
+
 
     $app->router('/accounts-partner-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $jatbi->permission('accounts-partner.edit');
@@ -1345,10 +1342,4 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công'), 'url' => 'auto']);
         }
     })->setPermissions(['accounts-partner.edit']);
-
 })->middleware('login');
-
-
-
-
-?> 
