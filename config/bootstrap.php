@@ -16,7 +16,7 @@
             'Sec-WebSocket-Protocol' => 'happy-printer'
         ]
     ]);
-	$app = new App($config['database']);
+	$app = new App($config['db']);
 	$jatbi = new Jatbi($app);
 	$app->JWT($config['app']['secret-key'], 'HS256');
 	$app->setGlobalFile(__DIR__ . '/../src/controllers/global.php');
