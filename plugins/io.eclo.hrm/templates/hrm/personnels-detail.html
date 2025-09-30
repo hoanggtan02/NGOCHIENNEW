@@ -1,0 +1,363 @@
+<div class="container-fluid">
+	<div class="mb-3 d-flex justify-content-between align-items-center">
+		<div>
+			<h4 class="mb-0 fw-bold text-body">
+				<?=$title?>
+			</h4>
+			<ul class="breadcrumb small mb-0">
+				<li class="breadcrumb-item small">
+					<a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+				</li>
+				<li class="breadcrumb-item small text-body" aria-current="page">
+					<?=$title?>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<div class="row g-3">
+		<div class="col-md-3">
+			<div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+				<div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+					<?php if ($jatbi->permission('personnels.edit')): ?>
+
+					<!-- Nút bên trái (đầu) -->
+					<a class="btn btn-sm btn-light border border-2" title="<?=$jatbi->lang('Sửa thông tin')?>"
+						data-action="modal" data-url="/hrm/personnels-edit/<?=$data['id']?>">
+						<i class="ti ti-pencil"></i>
+					</a>
+
+					<!-- Nút bên phải (cuối) -->
+					<a class="btn btn-sm btn-light border border-2 <?=($data['face'] ?? 0) != 0 ? 'text-success' : ''?>"
+						data-action="modal" title="<?=$jatbi->lang('Cập nhật Face ID')?>"
+						data-url="/hrm/personnels-face/<?=$data['id']?>">
+						<i class="ti ti-mood-smile"></i>
+					</a>
+
+					<?php endif; ?>
+				</div>
+				<div class="card-body">
+					<table class="table">
+						<tr>
+							<td colspan="2">
+								<!-- <img src="<?=$setting['site_url'].$upload['images']['personnels']['url'].'thumb/'.$data['images']?>"
+									class="w-100 rounded-circle p-3 border-3 border-white shadow mb-3"> -->
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Họ tên")?></td>
+							<td>
+								<?=$data['name']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Ngày sinh")?></td>
+							<td>
+								<?=date("d/m/Y", strtotime($data['birthday']))?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Giới tính")?></td>
+							<td>
+								<?=$data['gender'] == 1 ? "Nam" : ($data['gender'] == 2 ? "Nữ" : "")?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Điện thoại")?></td>
+							<td>
+								<?=$data['phone']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Email")?></td>
+							<td>
+								<?=$data['email']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Loại giấy tờ")?></td>
+							<td>
+								<?=$data['idtype'] == 1 ? "CMND" : (
+								$data['idtype'] == 2 ? "CCCD" : (
+								$data['idtype'] == 3 ? "CCCD gắn chíp" : (
+								$data['idtype'] == 4 ? "Hộ chiếu" : "")))?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Số giấy tờ")?></td>
+							<td>
+								<?=$data['idcode']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Ngày cấp")?></td>
+							<td>
+								<?=$data['iddate']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Nơi cấp")?></td>
+							<td>
+								<?=$data['idplace']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Quốc tịch")?></td>
+							<td>
+								<?=$data['nationality']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Dân tộc")?></td>
+							<td>
+								<?=$data['nation']?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Địa chỉ liên lạc")?></td>
+							<td>
+
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Địa chỉ thường trú")?></td>
+							<td>
+
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Ghi chú")?></td>
+							<td>
+								<?=$data['name']?>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="col-md-9">
+			<div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mb-3">
+				<div class="card-header bg-white d-flex justify-content-between align-items-center">
+					<h5 class="mb-0"><?=$jatbi->lang("Hợp đồng lao động")?></h5>
+					<div class="">
+						<!-- <a class="btn btn-info" data-action="modal"
+							data-url="<?=$jatbi->url('/hrm/personnels-salary-logs/'.$data['id'])?>"><?=$jatbi->lang("Lịch sử lương")?></a> -->
+						<?php if($jatbi->permission(['contract.deleted']) == 'true'){ ?>
+						<a class="modal-url btn btn-danger ms-1" data-action="modal" data-checkbox="input.checker"
+							data-url="<?=$jatbi->url('/hrm/contract-deleted')?>"><i class="ti ti-trash"
+								aria-hidden="true"></i></a>
+						<?php } ?>
+						<?php if($jatbi->permission(['contract.add']) == 'true'){ ?>
+						<a class="btn btn-primary ms-1" data-action="modal"
+							data-url="/hrm/contract-add/<?=$data['id']?>"><i class="ti ti-plus"></i></a>
+						<?php } ?>
+					</div>
+				</div>
+				<div class="card-body">
+					<table id="datatable" class="table align-middle" data-type="POST" data-server="true"
+						data-processing="true" data-paging="true" data-state-save='true' style="width:100%">
+						<thead>
+							<tr>
+								<th data-name="checkbox" width="1%" data-orderable="false" data-class="text-center">
+									<div class="form-check"><input class="form-check-input checkall" type="checkbox"
+											value="" data-checkbox="input.checker"></div>
+								</th>
+								<th data-name="code" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Loại Hợp đồng")?>
+								</th>
+								<th data-name="office_name" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Số Hợp đồng")?>
+								</th>
+								<th data-name="name" data-orderable="true" data-class="text-nowrap">
+									<?=$jatbi->lang("Công việc")?>
+								</th>
+								<th data-name="phone" data-orderable="false" data-class="text-start">
+									<?=$jatbi->lang("Lương cơ bản")?>
+								</th>
+								<th data-name="email" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Thời hạn Hợp đồng")?>
+								</th>
+								<th data-name="date" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Còn lại")?>
+								</th>
+								<th data-name="store_name" data-orderable="false" class="text-nowrap"
+									data-class="text-start"><?=$jatbi->lang("Ngày làm việc")?></th>
+								<th width="2%"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($contracts as $contract) { ?>
+							<tr>
+								<td><?=$app->component("box", ["data" => $contract['id']])?></td>
+								<td>
+									<?=$contract['type'] == 1 ? "Thử việc" : (
+										$contract['type'] == 2 ? "Chính thức lần 1" : (
+										$contract['type'] == 3 ? "Chính thức lần 2" : (
+										$contract['type'] == 4 ? "Không xác định thời hạn" : "")))?>
+								</td>
+								<td>
+									<?=$contract['code']?>
+								</td>
+								<td>
+									<?=$contract['office_name']?>
+								</td>
+								<td>
+									<?=number_format($contract['salary'])?>
+								</td>
+								<td>
+									<?=$contract['duration']?> <?=$jatbi->lang("Tháng")?>
+								</td>
+								<td> 
+                    				<?=$jatbi->count_date(date("Y-m-d"), date("Y-m-d", strtotime(date("Y-m-d", strtotime($contract['date_contract'])) . " +" . $contract['duration'] . " month"))) ?>
+								</td>
+								<td>
+									<?= date("d/m/Y", timestamp: strtotime(datetime: $contract['workday'])) ?>
+								</td>
+								<td>
+									<?=$app->component("action", [
+											"button" => [
+												[
+													'type' => 'button',
+													'name' => $jatbi->lang("Xem"),
+													'permission' => ['contract'],
+													'action' => ['data-url' => '/hrm/contract-view/' . ($contract['id'] ?? ''), 'data-action' => 'modal']
+												],
+												[
+													'type' => 'button',
+													'name' => $jatbi->lang("Sửa"),
+													'permission' => ['contract.edit'],
+													'action' => ['data-url' => '/hrm/contract-edit/' . ($contract['id'] ?? ''), 'data-action' => 'modal']
+												],
+												[
+													'type' => 'button',
+													'name' => $jatbi->lang("Xóa"),
+													'permission' => ['contract.deleted'],
+													'action' => ['data-url' => '/hrm/contract-deleted?box=' . ($contract['id'] ?? ''), 'data-action' => 'modal']
+												],
+											]
+										])?>
+								</td>
+							</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mb-3">
+				<div class="card-header bg-white d-flex justify-content-between align-items-center">
+					<h5 class="mb-0"><?=$jatbi->lang("Bảo hiểm")?></h5>
+					<div class="">
+						<?php if($jatbi->permission(['insurrance.deleted']) == 'true'){ ?>
+						<a class="modal-url btn btn-danger ms-1" data-action="modal" data-checkbox="input.checker"
+							data-url="<?=$jatbi->url('/hrm/insurrance-deleted')?>"><i class="ti ti-trash"
+								aria-hidden="true"></i></a>
+						<?php } ?>
+						<?php if($jatbi->permission(['insurrance.add']) == 'true'){ ?>
+						<a class="btn btn-primary ms-1" data-action="modal"
+							data-url="/hrm/insurrance-add/<?=$data['id']?>"><i class="ti ti-plus"></i></a>
+						<?php } ?>
+
+					</div>
+				</div>
+				<div class="card-body">
+					<table id="datatable" class="table align-middle" data-type="POST" data-server="true"
+						data-processing="true" data-paging="true" data-state-save='true' style="width:100%">
+						<thead>
+							<tr>
+								<th width="1%" data-name="checkbox" data-orderable="false" data-class="text-center">
+									<div class="form-check"><input class="form-check-input checkall" type="checkbox"
+											value="" data-checkbox="input.checker"></div>
+								</th>
+								<th data-name="code" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Số tiền")?>
+								</th>
+								<th data-name="office_name" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Số BHXH")?>
+								</th>
+								<th data-name="name" data-orderable="true" data-class="text-nowrap">
+									<?=$jatbi->lang("Ngày cấp BHXH")?>
+								</th>
+								<th data-name="phone" data-orderable="false" data-class="text-start">
+									<?=$jatbi->lang("Nơi cấp BHXH")?>
+								</th>
+								<th data-name="email" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Số Y tế")?>
+								</th>
+								<th data-name="date" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Ngày cấp Y tế")?>
+								</th>
+								<th data-name="date" data-orderable="false" data-class="text-nowrap">
+									<?=$jatbi->lang("Nơi cấp Y tế")?>
+								</th>
+								<th data-name="store_name" data-orderable="false" class="text-nowrap"
+									data-class="text-start"><?=$jatbi->lang("Ngày")?></th>
+								<th data-name="store_name" data-orderable="false" class="text-nowrap"
+									data-class="text-start"><?=$jatbi->lang("Trạng thái")?></th>
+								<th width="2%"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($insurrances as $insurrance) { ?>
+							<tr>
+								<td><?=$app->component("box", ["data" => $insurrance['id']])?></td>
+								<td>
+									<?=number_format($insurrance['price'])?>
+								</td>
+								<td>
+									<?=$insurrance['social']?>
+								</td>
+								<td>
+									<?=$insurrance['social_date']?>
+								</td>
+								<td>
+									<?=$insurrance['social_place']?>
+								</td>
+								<td>
+									<?=$insurrance['health']?>
+								</td>
+								<td>
+									<?=$insurrance['health_date']?>
+								</td>
+								<td>
+									<?=$insurrance['health_place']?>
+								</td>
+								<td>
+									<?=date("d/m/Y", strtotime($insurrance['date']))?>
+								</td>
+								<td><?=$app->component("status", [
+									"url" => "/hrm/insurrance-status/" . $insurrance['id'],
+									"data" => $insurrance['status'],
+									"permission" => ['insurrance.edit']
+								])?></td>
+								<td>
+									<?=$app->component("action", [
+										"button" => [
+											[
+												'type' => 'button',
+												'name' => $jatbi->lang("Xem"),
+												'permission' => ['insurrance'],
+												'action' => ['data-url' => '/hrm/insurrance-view/' . ($insurrance['id'] ?? ''), 'data-action' => 'modal']
+											],
+											[
+												'type' => 'button',
+												'name' => $jatbi->lang("Sửa"),
+												'permission' => ['insurrance.edit'],
+												'action' => ['data-url' => '/hrm/insurrance-edit/' . ($insurrance['id'] ?? ''), 'data-action' => 'modal']
+											],
+											[
+												'type' => 'button',
+												'name' => $jatbi->lang("Xóa"),
+												'permission' => ['insurrance.deleted'],
+												'action' => ['data-url' => '/hrm/insurrance-deleted?box=' . ($insurrance['id'] ?? ''), 'data-action' => 'modal']
+											],
+										]
+									])?>
+								</td>
+							</tr>
+							<?php } ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

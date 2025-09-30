@@ -1,0 +1,248 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'code',
+                                "placeholder"=>$jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+                            <div class="row g-3">
+                                <div class="col-lg-6">
+                                    <?=$app->component('input',[
+                                        "name"=>'phone',
+                                        "placeholder"=>$jatbi->lang("Điện thoại"),
+                                        "value" => $data['phone'] ?? '',
+                                        "type" => "tel",
+                                        "required" => 'true',
+                                    ])?>
+                                </div>
+                                <div class="col-lg-6">
+                                    <?=$app->component('input',[
+                                        "name"=>'email',
+                                        "placeholder"=>$jatbi->lang("Email"),
+                                        "value" => $data['email'] ?? '',
+                                        "type" => "email",
+                                    ])?>
+                                </div>
+                            </div>
+                            <?=$app->component('select',[
+                                "name"=>'office',
+                                "options"=>$offices,
+                                "selected" => $data['office'] ?? '',
+                                "placeholder"=>$jatbi->lang("Phòng ban"),
+                            ])?>
+						</div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'birthday',
+                                "placeholder"=>$jatbi->lang("Ngày sinh"),
+                                "value" => $data['birthday'] ?? '',
+                                "type" => "date",
+                            ])?>
+                            <?=$app->component('select',[
+                                "name"=>'gender',
+                                "options"=>$gender,
+                                "selected" => $data['gender'] ?? '',
+                                "placeholder"=>$jatbi->lang("Giới tính"),
+                            ])?>
+							<?=$app->component('select',[
+                                "name"=>'stores',
+                                "options"=>$stores,
+                                "selected" => $data['stores'] ?? '',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+						</div>
+                        <div class="col-lg-12">
+                            <div class="card border-danger rounded-4 ">
+                                <div class="card-header bg-body fs-6 py-3">
+                                    <?=$jatbi->lang("Thông tin thêm")?>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <?=$app->component('select',[
+                                                "name"=>'idtype',
+                                                "options"=>$idtype,
+                                                "selected" => $data['idtype'] ?? '',
+                                                "placeholder"=>$jatbi->lang("Loại giấy tờ"),
+                                            ])?>
+                                            <?=$app->component('input',[
+                                                "name"=>'iddate',
+                                                "placeholder"=>$jatbi->lang("Ngày cấp"),
+                                                "value" => $data['iddate'] ?? '',
+                                                "type" => "date",
+                                            ])?>
+                                            <?=$app->component('input',[
+                                                "name"=>'nationality',
+                                                "placeholder"=>$jatbi->lang("Quốc tịch"),
+                                                "value" => $data['nationality'] ?? '',
+                                            ])?>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <?=$app->component('input',[
+                                                "name"=>'idcode',
+                                                "placeholder"=>$jatbi->lang("Số giấy tờ"),
+                                                "value" => $data['idcode'] ?? '',
+                                            ])?>
+                                            <?=$app->component('input',[
+                                                "name"=>'idplace',
+                                                "placeholder"=>$jatbi->lang("Nơi cấp"),
+                                                "value" => $data['idplace'] ?? '',
+                                            ])?>
+                                            <?=$app->component('input',[
+                                                "name"=>'nation',
+                                                "placeholder"=>$jatbi->lang("Dân tộc"),
+                                                "value" => $data['nation'] ?? '',
+                                            ])?>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <?=$app->component('input',[
+                                                "name"=>'address',
+                                                "placeholder"=>$jatbi->lang("Địa chỉ liên lạc"),
+                                                "value" => $data['address'] ?? '',
+                                            ])?>
+                                        </div>
+                                       <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <?=$app->component('select',[
+                                                        "name"=>'province',
+                                                        "placeholder"=>$jatbi->lang("Tỉnh/Thành phố"),  
+                                                        "selected" => $data['province'] ?? '',
+                                                        "options" => $province ?? [],
+                                                        "id" => "province",
+                                                        ])?>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+
+                                                <?=$app->component('select',[
+                                                        "name"=>'district',
+                                                        "placeholder"=>$jatbi->lang("Quận / Huyện"),    
+                                                        "selected" => $data['district'] ?? '',    
+                                                        "options" => $district ??[],                                    
+                                                        "attr" => 'data-width="100%" data-parent="#province" 
+                                                        data-load="true" 
+                                                        data-url="/api/district" data-method="POST" data-keyword="keyword" data-max-length="1" ',
+                                                        "id" => "district",                                                
+                                                        ])?>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <?=$app->component('select',[
+                                                        "name"=>'ward',
+                                                        "placeholder"=>$jatbi->lang("Phường / Xã"),          
+                                                        "selected" => $data['ward'] ?? '',  
+                                                        "options" => $ward ?? [],                                    
+                                                        "attr" => 'data-width="100%" data-parent="#district" data-load="true" 
+                                                        data-url="/api/ward" data-method="POST" data-keyword="keyword" data-max-length="1" ',
+                                                        "id" => "ward",
+                                                    ])?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="form-check">
+                                <input class="form-check-input permanent-check" id="same_address" type="checkbox" name="same_address" <?=empty($data['same_address']) || $data['same_address']==1?'checked':''?> value="1" >
+                                <label class="form-check-label ps-2 pt-1" for="same_address">
+                                    <?=$jatbi->lang("Địa chỉ thường trú giống địa chỉ hiện tại")?>
+                                </label>
+							</div>
+                        </div>
+                        <div class="permanent" <?=empty($data['same_address']) || $data['same_address']==1?'style="display:none"':''?>>
+							<div class="col-md-12">
+                                <?=$app->component('input',[
+                                    "name"=>'permanent_address',
+                                    "placeholder"=>$jatbi->lang("Địa chỉ thường trú"),
+                                    "value" => $data['permanent_address'] ?? '',
+                                ])?>
+					        </div>
+						    <div class="row select-areas">
+						    	<div class="col-md-4">
+						        	<div class="mb-3">
+						        		<label><?=$jatbi->lang("Tỉnh thành")?></label>
+						        		<select name="permanent_province" class="select2 form-control areas-province" style="width:100%">
+									   		<option><?=$jatbi->lang("Tỉnh thành")?></option>
+						        		<?php foreach ($provinces as $key => $permanent_province) { ?>
+						        			<option value="<?=$permanent_province['id']?>" <?=$data['permanent_province']==$permanent_province['id']?'selected':''?> ><?=$permanent_province['name']?></option>
+						        		<?php } ?>
+									    </select>
+								    </div>
+								</div>
+							    <div class="col-md-4">
+						        	<div class="mb-3">
+						        		<label><?=$jatbi->lang("Quận huyện")?></label>
+									   	<select name="permanent_district" class="select2 form-control areas-district" style="width:100%">
+									   		<option><?=$jatbi->lang("Quận huyện")?></option>
+								
+						        		<?php foreach ($permanent_districts as $key => $permanent_district) { ?>
+						        			<option value="<?=$permanent_district['id']?>" <?=$data['permanent_district']==$permanent_district['id']?'selected':''?>><?=$permanent_district['name']?></option>
+						        		<?php } ?>
+								    	</select>
+							    	</div>
+							    </div>
+							    <div class="col-md-4">
+						        	<div class="mb-3">
+						        		<label><?=$jatbi->lang("Phường xã")?></label>
+									    <select name="permanent_ward" class="select2 form-control areas-ward" style="width:100%">
+									   		<option><?=$jatbi->lang("Phường xã")?></option>
+						
+						        		<?php foreach ($permanent_wards as $key => $permanent_ward) { ?>
+						        			<option value="<?=$permanent_ward['id']?>" <?=$data['permanent_ward']==$permanent_ward['id']?'selected':''?>><?=$permanent_ward['name']?></option>
+						        		<?php } ?>
+								    	</select>
+							    	</div>
+							    </div>
+							</div>
+						</div>
+                        <div class="col-lg-12">
+                            <?=$app->component('textarea',[
+                                "name"=>'notes',
+                                "placeholder"=>$jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                        </div>
+						<div class="col-lg-12">
+							<?= $jatbi->csrfField() ?>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+	$(".permanent-check").on("change",function(){
+		if($(this).prop("checked")){
+    		$(".permanent").hide();
+    	}
+    	else {
+			$(".permanent").show();
+    	}
+	});
+</script>

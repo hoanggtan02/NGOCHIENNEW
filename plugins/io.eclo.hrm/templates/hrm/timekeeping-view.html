@@ -1,0 +1,55 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone" >
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>: <?=$per['name'];?> - <?=date('d/m/Y', strtotime($date))?>
+                </h5>
+                <div class="table-responsive">        
+                    <table class="table table-hover table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th><?=$jatbi->lang("STT")?></th>
+                                <th><?=$jatbi->lang("Loại")?></th>
+                                <th><?=$jatbi->lang("Giờ")?></th>
+                                <th><?=$jatbi->lang("Nội dung")?></th>
+                                <th><?=$jatbi->lang("Ghi chú")?></th>
+                                <th><?=$jatbi->lang("Ngày")?></th>
+                                <th width="1%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $stt=1; 
+                            foreach ($datas ?? [] as $key => $data) { 
+                                $timeLate = $app->get("timekeeping_time_late","*",["timekeeping"=>$data['id'] ?? null,"deleted"=>0]);?>
+                                <tr>
+                                    <td><?=$stt++?></td>
+                                    <td><?=$data['status']=='1'?$jatbi->lang('Đi vào'):$jatbi->lang('Đi ra')?></td>
+                                    <td><?=date('H:i:s',strtotime($data['date']))?></td>
+                                    <td class="text-danger">
+                                        <?php if($timeLate>1){?>
+                                            <?=$timeLate['status']==1?$jatbi->lang('Đi trễ').' '.$timeLate['time'].' '.$jatbi->lang('Phút'):$jatbi->lang('Về sớm').' '.$timeLate['time'].' '.$jatbi->lang('Phút')?> / <?=number_format($timeLate['price'] ?? 0)?>
+                                        <?php } ?>
+                                    </td>
+                                    <td><?=$data['notes'] ?? ""?></td>
+                                   <td><?=date('d/m/Y H:i:s', strtotime($data['date_poster']))?></td>
+                                    <td>
+                                        <button class="btn btn-sm text-danger click-action" data-action="modal"
+                                            data-url="/hrm/timekeeping-deleted/<?=$data['id']?>"><i class="ti ti-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>  
+            </div>
+        </div>
+    </div>
+</div>

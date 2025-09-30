@@ -1,0 +1,247 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">PHIẾU PHỎNG VẤN ỨNG VIÊN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="printable-interview"
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.6;">
+
+                <!-- Header: Logo + công ty -->
+                <div
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0px; padding-bottom: 0px;">
+
+                    <img src="/assets/img/icon/logonh.png" alt="Logo" style="height: 60px; margin-right: 15px;">
+
+                    <div style="text-align: right;">
+                        <p style="font-weight: bold; margin: 0; text-transform: uppercase; font-size: 16px;">
+                            CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC
+                        </p>
+                        <p
+                            style="font-style: italic; margin: 0; text-transform: uppercase; font-size: 12px; color: #555;">
+                            Tổ 1, Ấp Dương Tơ, Xã Dương Tơ, TP Phú Quốc, Tỉnh Kiên Giang
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tiêu đề -->
+                <div style="text-align:center; margin-bottom:20px;">
+                    <h4 style="font-weight:bold; text-transform:uppercase;">PHIẾU PHỎNG VẤN ỨNG VIÊN</h4>
+                </div>
+
+                <!-- I. Thông tin ứng viên -->
+                <p
+                    style="font-weight: bold; text-transform: uppercase; margin: 10px 0 5px 0; font-family: Arial, sans-serif;">
+                    I. THÔNG TIN ỨNG VIÊN</p>
+                <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 40%; border: 1px solid #000; padding: 8px; vertical-align: top;">
+
+                                <b style="display: block; margin-bottom: 2px;">Họ &amp; tên ứng viên:</b>
+                                <span
+                                    style="font-size: 18px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 15px; color: #333;">
+                                    <?= htmlspecialchars($candidate['full_name'] ?? "") ?>
+                                </span>
+
+                                <b style="display: block; margin-bottom: 2px;">Vị trí ứng tuyển:</b>
+                                <span
+                                    style="font-size: 18px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 15px; color: #333;">
+                                    <?= htmlspecialchars($candidate['job_title']?? "") ?>
+                                </span>
+
+                                <b style="display: block; margin-bottom: 2px;">Số điện thoại liên hệ:</b>
+                                <span
+                                    style="font-size: 18px; font-weight: bold; text-transform: uppercase; display: block; color: #333;">
+                                    <?= htmlspecialchars($candidate['phone'] ?? "") ?>
+                                </span>
+
+                            </td>
+
+                            <td style="width: 60%; border: 1px solid #000; padding: 8px; vertical-align: top;">
+
+                                <div style="margin-bottom: 15px;">
+                                    <b>Ngày sinh:</b>
+                                    <div style="border-bottom: 1px dotted #000; margin-top: 2px; height: 1.2em;"></div>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <b>Nơi ở hiện nay:</b>
+                                    <div style="border-bottom: 1px dotted #000; margin-top: 2px; height: 1.2em;"></div>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <b>Trình độ học vấn:</b>
+                                    <div style="border-bottom: 1px dotted #000; margin-top: 2px; height: 1.2em;"></div>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <b>Chuyên môn:</b>
+                                    <div style="border-bottom: 1px dotted #000; margin-top: 2px; height: 1.2em;"></div>
+                                </div>
+
+                                <div>
+                                    <b>Mức lương mong muốn:</b>
+                                    <div style="border-bottom: 1px dotted #000; margin-top: 2px; height: 1.2em;"></div>
+                                </div>
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- II. Đánh giá ứng viên -->
+                <p
+                    style="font-weight: bold; text-transform: uppercase; margin: 10px 0 5px 0; font-family: Arial, sans-serif;">
+                    II. ĐÁNH GIÁ ỨNG VIÊN</p>
+                <table
+                    style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-family: Arial, sans-serif; font-size: 14px;">
+                    <tbody>
+                        <tr>
+                            <td colspan="2"
+                                style="border: 1px solid #000; padding: 8px; font-weight: bold; text-align: center;">
+                                NHẬN XÉT ỨNG VIÊN
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="border: 1px solid #000; padding: 15px; vertical-align: top;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2"
+                                style="border: 1px solid #000; padding: 8px; font-weight: bold; text-align: center;">
+                                CHẾ ĐỘ CÔNG VIỆC
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; width: 200px;"><b>Mức lương dự kiến:</b>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 8px; border-bottom: 1px dotted #000;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px;"><b>Phụ cấp:</b></td>
+                            <td style="border: 1px solid #000; padding: 8px; border-bottom: 1px dotted #000;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px;"><b>Phụ cấp xăng xe:</b></td>
+                            <td style="border: 1px solid #000; padding: 8px; border-bottom: 1px dotted #000;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px;"><b>Ngày đi làm dự kiến:</b></td>
+                            <td style="border: 1px solid #000; padding: 8px; border-bottom: 1px dotted #000;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; vertical-align: top;"><b>Ghi chú:</b></td>
+                            <td style="border: 1px solid #000; padding: 8px; height: 60px;">
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                                <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
+                <div style="margin-top: 40px; font-family: Arial, sans-serif; font-size: 14px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 50%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p>
+                                    Ngày
+                                    <?= date('d') ?> tháng
+                                    <?= date('m') ?> năm
+                                    <?= date('Y') ?>
+                                </p>
+                                <p style="font-weight: bold; margin-bottom: 5px;">HCNS</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+
+                            <td style="width: 50%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p>
+                                    Ngày
+                                    <?= date('d') ?> tháng
+                                    <?= date('m') ?> năm
+                                    <?= date('Y') ?>
+                                </p>
+                                <p style="font-weight: bold; margin-bottom: 5px;">Ban Giám đốc</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            </div>
+
+
+            <!-- Footer -->
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In phiếu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<style>
+    @media print {
+
+        /* Áp dụng cho toàn bộ nội dung khi in */
+        body,
+        #printable-interview {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 11pt !important;
+            line-height: 1.3 !important;
+        }
+
+        /* Đảm bảo modal-body chiếm toàn bộ trang */
+        .modal-body {
+            padding: 1cm !important;
+            /* Tạo lề in an toàn */
+        }
+
+        /* Giảm khoảng cách các bảng và đoạn văn */
+        #printable-interview p,
+        #printable-interview table {
+            margin: 5px 0 !important;
+        }
+
+        /* Giảm padding của các ô trong bảng */
+        #printable-interview td,
+        #printable-interview th {
+            padding: 3px !important;
+        }
+
+        /* Giảm chiều cao các ô trống */
+        .notes-area {
+            height: 80px !important;
+        }
+
+        .signature-box {
+            height: 40px !important;
+        }
+
+        /* Ẩn các tiêu đề không cần thiết khi in */
+        .main-title {
+            margin: 0 0 10px 0 !important;
+        }
+    }
+</style>

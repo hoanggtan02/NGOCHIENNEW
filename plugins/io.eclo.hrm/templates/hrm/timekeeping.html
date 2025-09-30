@@ -1,0 +1,213 @@
+<div class="container-fluid">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                            <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                            style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                            <form data-pjax method="get" action="/hrm/timekeeping">
+                                <div class="fw-semibold py-2 px-3">
+                                    <?=$jatbi->lang("Điều kiện lọc")?>
+                                </div>
+                                <hr class="border-secondary border-opacity-50 my-2">
+                                <div class="px-3">
+                                    <?=$app->component('select',[
+                                        "name"=>'office',
+                                        "class"=>'filter-name',
+                                        "placeholder"=>$jatbi->lang("Phòng ban"),
+                                        "selected" => $app->xss($_GET['office'] ?? ''),
+                                        "options" => $office ?? [],
+                                    ])?>
+                                    <?=$app->component('select', [
+                                        "name" => 'personnel',
+                                        "placeholder" => $jatbi->lang("Nhân viên"),
+                                        "selected" => $app->xss($_GET['personnel'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "options" => $personnels
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'year',
+                                        "class"=>'filter-name',
+                                        "options"=>$years ?? [],
+                                        "selected" => $app->xss($_GET['year'] ?? date('Y')),
+                                        "placeholder"=>$jatbi->lang("Năm"),
+                                    ])?>
+                                    <?=$app->component('select',[
+                                        "name"=>'month',
+                                        "class"=>'filter-name',
+                                        "options"=>$months ?? [],
+                                        "selected" => $app->xss($_GET['month'] ?? date('m')),
+                                        "placeholder"=>$jatbi->lang("Tháng"),
+                                    ])?>
+                                </div>
+                                <hr class="border-secondary border-opacity-50 my-2">
+                                <div class="px-3 py-2 text-end w-100">
+                                    <a href="/hrm/timekeeping" data-pjax
+                                        class="btn btn-light px-3 py-2 rounded-pill"><?=$jatbi->lang("Làm mới")?></a>
+                                    <button type="submit"
+                                        class="btn btn-eclo px-3 py-2 rounded-pill"><?=$jatbi->lang("Tìm")?></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php if($jatbi->permission(['timekeeping.deleted']) == 'true' || $jatbi->permission(['timekeeping.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['timekeeping.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-url="<?=$jatbi->url('/hrm/timekeeping-add')?>"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="custom-button mb-2 d-flex justify-content-end">
+                <a href="/hrm/timekeeping-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>" class="btn btn-eclo">
+                    <?=$jatbi->lang("Xuất excel")?>
+                </a>
+            </div>
+            <table id="datatable" class="table align-middle" data-type="POST" data-server="true" data-processing="true"
+                data-page-length="10" data-searching="true" data-paging="true" data-state-save='true'
+                style="width:100%">
+                <thead>
+                    <tr>
+                        <td class="fw-bold align-middle text-center p-1" rowspan="2"><?=$jatbi->lang('Ngày')?></td>
+                        <?php foreach ($dates as $date) {?>
+                        <td class="text-center align-middle fw-bold small p-1"
+                            style="<?=$date['week']==6?'background: #ffe7ca':''?><?=$date['week']==7?'background: #e1ffca':''?>">
+                            <?=$common['weeks'][$date['week']]?>
+                        </td>
+                        <?php } ?>
+
+                    </tr>
+                    <tr>
+                        <?php foreach ($dates as $date) {?>
+                        <td class="text-center align-middle fw-bold small p-1"
+                            style="<?=$date['week']==6?'background: #ffe7ca':''?><?=$date['week']==7?'background: #e1ffca':''?>">
+                            <?=$date['name']?>
+                        </td>
+                        <?php } ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach (($datas ?? []) as $key => $data) { ?>
+                    <tr>
+                        <td colspan="100" class="fw-bold p-1 text-nowrap">
+                            <?=$data['name']?>
+                        </td>
+                    </tr>
+                    <?php foreach (($data['personnels'] ?? []) as $key => $personnels) {?>
+                    <tr>
+                        <td class="p-1 text-nowrap align-middle">
+                            <?=$personnels['name']?>
+                        </td>
+                        <?php foreach (($personnels['dates'] ?? []) as $key => $date) {?>
+                        <td class="text-nowrap p-1 <?=$date['color']?> modal-url">
+                            <a data-action="modal"
+                                data-url="/hrm/timekeeping-view/<?=$personnels['id']?>/<?=$date['date']?>">
+                                <p class="mb-0 fw-bold">
+                                    <?=$date['timework']['name'] ?? ""?>
+                                </p>
+
+                                <?php if(isset($date['off']['status']) && $date['off']['status'] == 0) { ?>
+                                <p class="mb-0">
+                                    <?php if(!empty($date['checkin']['time'])): ?>
+                                    <span class="<?= $date['checkin']['text'] ?? '' ?>">
+                                        <?= date("H:i", strtotime($date['checkin']['time'])) ?>
+                                    </span>
+                                    <?php endif; ?>
+
+                                    <?php if(!empty($date['checkout']['time'])): ?>
+                                    <br>
+                                    <span class="<?= $date['checkout']['text'] ?? '' ?>">
+                                        <?= date("H:i", strtotime($date['checkout']['time'])) ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </p>
+                                <?php } else { ?>
+                                <p class="mb-0">
+                                    <?=$date['off']['content'] ?? ""?>
+                                </p>
+                                <?php } ?>
+                            </a>
+                        </td>
+                        <?php } ?>
+                    </tr>
+                    <?php } ?>
+                    <?php } ?>
+                </tbody>
+            </table>
+            <div class="mt-4">
+                <div class="row justify-content-start align-items-start">
+                    <div class="col-lg-3">
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-3 bg-danger bg-opacity-10 me-2 border"></div>
+                            <span>Chưa chấm công về</span>
+                        </div>
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-3 bg-warning bg-opacity-10 me-2 border"></div>
+                            <span>Không chấm công trễ ngày</span>
+                        </div>
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-3 bg-success bg-opacity-10 me-2 border"></div>
+                            <span>Chấm công đủ</span>
+                        </div>
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-3 bg-primary bg-opacity-10 me-2 border"></div>
+                            <span>OFF theo ca làm việc</span>
+                        </div>
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-3 bg-primary bg-opacity-25 me-2 border"></div>
+                            <span>OFF có xin phép</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <?php foreach (($furlough_categorys ?? []) as $key => $furlough_category) {?>
+                        <div class="d-flex justify-content-start align-items-center mb-2">
+                            <div class="p-2 bg-primary bg-opacity-25 me-2 border">
+                                <?=$furlough_category['code']?>
+                            </div>
+                            <span>
+                                <?=$furlough_category['name']?>
+                            </span>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

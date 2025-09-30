@@ -1,0 +1,327 @@
+    <div class="modal fade modal-load" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header d-print-none">
+                    <h5 class="modal-title">HỢP ĐỒNG LAO ĐỘNG</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="printable-contract"
+                    style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000;line-height:1.5; text-align:justify;">
+
+
+
+                    <!-- Quốc hiệu, tiêu ngữ -->
+                    <div class="row mb-4" style="margin-bottom:0;">
+                        <div class="col-5" style="text-align:center;">
+                            <p style="font-weight:bold; margin:0;">CN CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</p>
+                            <p style="font-weight:bold; margin:0;">Số:
+                                <?=$data['code']?>/
+                                <?=date('Y')?>/HĐLĐ-NHT
+                            </p>
+                        </div>
+                        <div class="col-7" style="text-align:center;">
+                            <p style="font-weight:bold; margin:0;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                            <p style="margin:0;"><strong>Độc lập – Tự do – Hạnh phúc</strong></p>
+                            <p style="margin:0;"><em>Phú Quốc, ngày
+                                    <?=date('d')?> tháng
+                                    <?=date('m')?> năm
+                                    <?=date('Y')?>
+                                </em></p>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-bottom:0;">
+                        <h5 style="font-weight:bold; margin:0; margin-bottom: 5px;">HỢP ĐỒNG LAO ĐỘNG</h5>
+                    </div>
+
+                    <p style="margin-bottom:0; text-align:justify;">Căn cứ Bộ luật lao động số 45/2019/QH14 ngày 20 tháng 11
+                        năm 2019;</p>
+                    <p style="margin-bottom:0; text-align:justify;">Căn cứ vào nhu cầu của các Bên.</p>
+                    <p style="margin-bottom:0; text-align:justify;">Hôm nay, ngày
+                        <?=date('d/m/Y')?> tại CN Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú Quốc, chúng tôi gồm:
+                    </p>
+
+                    <!-- Bên A -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;">
+                            <span style="text-decoration: underline; font-weight:bold;">Bên A :</span>
+                            <span style="text-decoration: underline; font-weight:bold;">Người sử dụng lao động</span>
+                        </p>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Công ty:</div>
+                            <div class="col-10"><strong>CN CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</strong></div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Địa chỉ:</div>
+                            <div class="col-10">Tổ 1, ấp Rạch Vẹm, Đặc khu Phú Quốc, tỉnh An Giang</div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Điện thoại:</div>
+                            <div class="col-10">0827.221.221</div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Đại diện ông:</div>
+                            <div class="col-2"><strong>Hồ Phi Ca</strong></div>
+                            <div class="col-2">Chức vụ:</div>
+                            <div class="col-2">Giám đốc</div>
+                            <div class="col-2">Quốc tịch:</div>
+                            <div class="col-2">Việt Nam</div>
+                        </div>
+                    </div>
+
+                    <!-- Bên B -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;">
+                            <span style="text-decoration: underline; font-weight:bold;">Bên B :</span>
+                            <span style="text-decoration: underline; font-weight:bold;">Người lao động</span>
+                        </p>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Ông/bà:</div>
+                            <div class="col-4"><strong><?=$data['personnel_name']?></strong></div>
+                            <div class="col-2">Giới tính:</div>
+                            <div class="col-4"><?=$data['gender'] == 1 ? "Nam" : "Nữ"?></div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-2">Ngày sinh:</div>
+                            <div class="col-2"><?=date('d/m/Y', strtotime($data['birthday']))?></div>
+                            <div class="col-2">Dân tộc:</div>
+                            <div class="col-2"><?=$data['nation'] ?? "Kinh"?></div>
+                            <div class="col-2">Quốc tịch:</div>
+                            <div class="col-2">Việt Nam</div>
+                        </div>
+
+                        <div class="row mb-1">
+                            <div class="col-10">Địa chỉ thường trú:<?=$data['address']?></div>
+                        </div>
+
+                    <div class="row mb-1">
+                        <div class="col-2">Số CCCD:</div>
+                        <div class="col-2"><?=$data['idcode'] ?? ""?></div>
+                        
+                        <div class="col-2">Cấp ngày:</div>
+                        <div class="col-2"><?=date('d/m/Y', strtotime($data['iddate']))?></div>
+                        
+                        <div class="col-2">Nơi cấp:</div>
+                        <div class="col-2"><?=$data['idplace'] ?? ""?></div>
+                    </div>
+
+                    </div>
+
+
+                    <p style="margin-top:1rem; margin-bottom:0; text-align:justify; font-style:italic;">
+                        Cùng thoả thuận ký kết Hợp đồng lao động (HĐLĐ) và cam kết làm đúng những điều khoản sau đây:
+                    </p>
+
+
+                    <!-- Điều 1 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 1: Công việc, địa điểm làm việc và thời hạn của Hợp
+                                đồng</strong></p>
+                        <p style="margin-bottom:0;">- Loại hợp đồng:
+                            <?= $setting['personnels_contracts'][$data['type']]['name'] ?? "Xác định thời hạn"?>
+                        </p>
+                        <p style="margin-bottom:0;">- Thời hạn hợp đồng:
+                            <?=$data['duration']?> tháng
+                        </p>
+                        <p style="margin-bottom:0;">
+                            - Từ ngày:
+                            <?=date('d/m/Y', strtotime($data['date_contract']))?>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Đến
+                            ngày:
+                            <?=date('d/m/Y', strtotime($data['date_contract'] . " +" . $data['duration'] . " month"))?>
+                        </p>
+                        <p style="margin-bottom:0;">- Địa điểm làm việc: Tổ 1, ấp Rạch Vẹm, Đặc khu Phú Quốc, tỉnh An Giang
+                        </p>
+                        <p style="margin-bottom:0;">- Bộ phận công tác:</p>
+                        <p style="margin-bottom:0;">+ Phòng:
+                            <?=$data['office_name']?>
+                        </p>
+                        <p style="margin-bottom:0;">+ Chức danh chuyên môn:
+                            <?=$data['position'] ?? ""?>
+                        </p>
+                        <p style="margin-bottom:0;">- Nhiệm vụ công việc như sau:</p>
+                        <p style="margin-bottom:0;">+ Thực hiện công việc theo đúng chức danh chuyên môn của mình dưới sự
+                            quản lý, điều hành của Ban Giám đốc (và các cá nhân được bổ nhiệm hoặc ủy quyền phụ trách).</p>
+                        <p style="margin-bottom:0;">+ Phối hợp cùng với các bộ phận, phòng ban khác trong Người sử dụng lao
+                            động để phát huy tối đa hiệu quả công việc.</p>
+                        <p style="margin-bottom:0;">+ Hoàn thành những công việc khác tùy thuộc theo yêu cầu kinh doanh của
+                            Người sử dụng lao động và theo quyết định của Ban Giám</p>
+                    </div>
+
+                    <!-- Điều 2 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 2: Lương, phụ cấp, các khoản bổ sung khác</strong></p>
+                        <p style="margin-bottom:0;">- Mức lương chính:
+                            <?=number_format($data['salary'])?> đồng/tháng
+                        </p>
+                        <p style="margin-bottom:0;">- Phụ cấp trách nhiệm: ……….. đồng/tháng</p>
+                        <p style="margin-bottom:0;">- Các khoản phụ cấp khác: Theo quy định của Công ty.</p>
+                        <p style="margin-bottom:0;">- Hình thức trả lương: Tiền mặt hoặc chuyển khoản.</p>
+                        <p style="margin-bottom:0;">- Thời hạn trả lương:Từ ngày 01 đến ngày 05 hàng tháng hoặc theo quy
+                            định của Công ty trong từng thời kỳ.</p>
+                        <p style="margin-bottom:0;">- Chế độ nâng bậc, nâng lương: Người lao động được xét nâng bậc, nâng
+                            lương theo kết quả làm việc và theo quy định của Người sử dụng lao động.</p>
+                    </div>
+
+                    <!-- Điều 3 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 3: Thời giờ làm việc, nghỉ ngơi, bảo hộ lao động, BHXH,
+                                BHYT, BHTN</strong></p>
+                        <p style="margin-bottom:0;">- <strong>Thời giờ làm việc:</strong> 08 giờ/ngày, 48 giờ/tuần, Nghỉ
+                            hàng tuần: 01 ngày bất kì trong tuần.</p>
+                        <p style="margin-bottom:0;">- <strong>Từ ngày Thứ Hai đến ngày Chủ nhật hàng tuần:</strong></p>
+                        <p style="margin-bottom:0;">+ Ca 01: Từ 08:00 giờ đến 16:00 giờ (bao gồm 1:30 giờ nghỉ trưa).</p>
+                        <p style="margin-bottom:0;">- <strong>Chế độ nghỉ ngơi các ngày lễ, tết, phép năm:</strong></p>
+                        <p style="margin-bottom:0;">+ Người lao động được nghỉ lễ, tết theo luật định hoặc theo tình hình cụ
+                            thể mà Ban lãnh đạo Công ty sẽ chỉ đạo trực tiếp.</p>
+                        <p style="margin-bottom:0;">+ Người lao động đã ký HĐLĐ chính thức và có thâm niên công tác 12 tháng
+                            thì sẽ được nghỉ phép năm có hưởng lương (01 ngày phép/01 tháng, 12 ngày phép/01 năm); trường
+                            hợp có thâm niên làm việc dưới 12 tháng thì thời gian nghỉ hằng năm được tính theo tỷ lệ tương
+                            ứng với số thời gian làm việc.</p>
+                        <p style="margin-bottom:0;">- <strong>Thiết bị và công cụ làm việc</strong> sẽ được Công ty cấp phát
+                            tùy theo nhu cầu của công việc.</p>
+                        <p style="margin-bottom:0;">- <strong>Điều kiện an toàn và vệ sinh lao động</strong> tại nơi làm
+                            việc theo quy định của pháp luật hiện hành.</p>
+                        <p style="margin-bottom:0;">- <strong>Bảo hiểm xã hội, bảo hiểm y tế và bảo hiểm thất
+                                nghiệp:</strong> Theo quy định của pháp luật.</p>
+                        <p style="margin-bottom:0;">- <strong>Thỏa thuận khác:</strong> Công ty được quyền chấm dứt HĐLĐ
+                            trước thời hạn đối với Người lao động có kết quả đánh giá hiệu suất công việc dưới mức quy định
+                            trong 03 tháng liên tục.</p>
+                    </div>
+
+
+                    <!-- Điều 4 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 4: Đào tạo, bồi dưỡng, các quyền lợi và nghĩa vụ liên quan
+                                của Người lao động</strong></p>
+                        <p style="margin-bottom:0;">- <strong>Đào tạo, bồi dưỡng:</strong> Người lao động được đào tạo, bồi
+                            dưỡng, huấn luyện tại nơi làm việc hoặc được gửi đi đào tạo theo quy định của Công ty và yêu cầu
+                            công việc.</p>
+                        <p style="margin-bottom:0;">- <strong>Khen thưởng:</strong> Người lao động được khuyến khích bằng
+                            vật chất và tinh thần khi có thành tích trong công tác hoặc theo quy định của Công ty.</p>
+                        <p style="margin-bottom:0;">- <strong>Các khoản thỏa thuận khác gồm:</strong> tiền cơm trưa, thưởng
+                            mặc định, hỗ trợ xăng xe, điện thoại, nhà ở, trang phục…, theo quy định của Công ty.</p>
+                        <p style="margin-bottom:0;"><strong>Nghĩa vụ liên quan của Người lao động:</strong></p>
+                        <p style="margin-bottom:0;">+ Tuân thủ hợp đồng lao động.</p>
+                        <p style="margin-bottom:0;">+ Thực hiện công việc với sự tận tâm, tận lực và mẫn cán, đảm bảo hoàn
+                            thành công việc với hiệu quả cao nhất theo sự phân công, điều hành (bằng văn bản hoặc bằng
+                            miệng) của Ban Giám đốc (và các cá nhân được Ban Giám đốc bổ nhiệm hoặc ủy quyền phụ trách).</p>
+                        <p style="margin-bottom:0;">+ Hoàn thành công việc được giao và sẵn sàng chấp nhận mọi sự điều động
+                            khi có yêu cầu.</p>
+                        <p style="margin-bottom:0;">+ Nắm rõ và chấp hành nghiêm túc kỷ luật lao động, an toàn lao động, vệ
+                            sinh lao động, phòng cháy chữa cháy, văn hóa Công ty, nội quy lao động và các chủ trương, chính
+                            sách của Công ty.</p>
+                        <p style="margin-bottom:0;">+ Trong trường hợp được cử đi đào tạo thì nhân viên phải hoàn thành khoá
+                            học đúng thời hạn, phải cam kết sẽ phục vụ lâu dài cho Công ty sau khi kết thúc khoá học và được
+                            hưởng nguyên lương, các quyền lợi khác được hưởng như người đi làm.</p>
+                        <p style="margin-bottom:0;">+ Nếu sau khi kết thúc khóa đào tạo mà nhân viên không tiếp tục hợp tác
+                            với Công ty thì nhân viên phải hoàn trả lại 100% phí đào tạo và các khoản chế độ đã được nhận
+                            trong thời gian đào tạo.</p>
+                        <p style="margin-bottom:0;">+ Bồi thường vi phạm vật chất: Theo quy định nội bộ của Công ty và quy
+                            định của pháp luật hiện hành.</p>
+                        <p style="margin-bottom:0;">+ Có trách nhiệm đề xuất các giải pháp nâng cao hiệu quả công việc, giảm
+                            thiểu các rủi ro. Khuyến khích các đóng góp này được thực hiện bằng văn bản.</p>
+                        <p style="margin-bottom:0;">+ Thuế TNCN, nếu có: do Người lao động đóng. Công ty sẽ tạm khấu trừ
+                            trước khi chi trả cho Người lao động theo quy định.</p>
+                    </div>
+
+                    <!-- Điều 5 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 5: Nghĩa vụ và quyền lợi của Người sử dụng lao
+                                động</strong></p>
+                        <p style="margin-bottom:0;">1. Nghĩa vụ:</p>
+                        <p style="margin-bottom:0;">- Thực hiện đầy đủ những điều kiện cần thiết đã cam kết trong HĐLĐ để
+                            Người lao động đạt hiệu quả công việc cao. Bảo đảm việc làm cho Người lao động theo HĐLĐ đã ký.
+                        </p>
+                        <p style="margin-bottom:0;">- Thanh toán đầy đủ, đúng hạn các chế độ và quyền lợi cho người lao động
+                            theo hợp đồng lao động, thỏa ước lao động tập thể (nếu có);</p>
+                        <p style="margin-bottom:0;">2. Quyền lợi:</p>
+                        <p style="margin-bottom:0;">- Điều hành Người lao động hoàn thành công việc theo HĐLĐ (bố trí, điều
+                            chuyển công việc cho Người lao động theo đúng chức năng chuyên môn).</p>
+                        <p style="margin-bottom:0;">- Có quyền chuyển tạm thời lao động, ngừng việc, thay đổi, tạm hoãn,
+                            chấm dứt HĐLĐ và áp dụng các biện pháp kỷ luật theo quy định của Pháp luật hiện hành và theo nội
+                            quy của Công ty trong thời gian HĐLĐ còn giá trị.</p>
+                        <p style="margin-bottom:0;">- Có quyền đòi bồi thường, khiếu nại với cơ quan liên đới để bảo vệ
+                            quyền lợi của mình nếu Người lao động vi phạm Pháp luật hay các điều khoản của HĐLĐ.</p>
+                    </div>
+
+
+                    <!-- Điều 6 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 6: Những thỏa thuận khác</strong></p>
+                        <p style="margin-bottom:0;">- Trước ngày chấm dứt Hợp đồng này, Người lao động có trách nhiệm thanh
+                            toán các khoản nợ, nghĩa vụ tài chính có liên quan cho Công ty và bàn giao trang thiết bị, công
+                            cụ, dụng cụ lao động, hồ sơ đang lưu trữ, quản lý các công việc đang thực hiện cho cán bộ,nhân
+                            viên được Công ty chỉ định. Người lao động đồng ý cho Công ty trích thu từ các khoản thu nhập
+                            của Người lao động do Công ty chi trả và các khoản tiền khác có trong tài khoản của Người lao
+                            động để khấu trừ các khoản nợ và nghĩa vụ tài chính phát sinh đối với Công ty (nếu có) bằng biên
+                            bản xác nhận bàn giao công việc theo quy định của Công ty.</p>
+                        <p style="margin-bottom:0;">- Trường hợp người lao động làm hư hỏng dụng cụ, thiết bị của Công ty
+                            thì Công ty được quyền khấu trừ tiền lương của người lao động để bồi thường thiệt hại theo quy
+                            định của pháp luật.</p>
+                        <p style="margin-bottom:0;">- Các văn bản điều động, bố trí, phân công nhiệm vụ, bổ nhiệm, miễn
+                            nhiệm, tăng, giảm tiền thưởng, lương,…của người lao động trong quá trình người lao động làm việc
+                            tại công ty được thì được coi như phụ lục của Hợp đồng này.</p>
+                        <p style="margin-bottom:0;">- Trong thời hạn hợp đồng này, Người lao động có trách nhiệm thông báo
+                            kịp thời cho Công ty về bất kỳ thay đổi thông tin nào liên quan đến cá nhân của mình (nhân thân,
+                            địa chỉ thường trú, bằng cấp/chứng chỉ, chứng minh nhân dân,…).</p>
+                    </div>
+
+                    <!-- Điều 7 -->
+                    <div style="margin-top:1rem;">
+                        <p style="margin-bottom:0;"><strong>Điều 7: Điều khoản thi hành</strong></p>
+                        <p style="margin-bottom:0;">- Những vấn đề về lao động không được ghi nhận trong Hợp đồng lao động
+                            này thì điều chỉnh theo phụ lục Hợp đồng, biên bản thỏa thuận giữa Công ty với Người lao động
+                            hoặc áp dụng theo quy định của Nội quy lao động, Thỏa ước lao động tập thể, quy định khác có
+                            liên quan của Công ty và của pháp luật.</p>
+                        <p style="margin-bottom:0;">- Hợp đồng này chịu sự điều chỉnh của pháp luật Việt Nam. Bất kỳ tranh
+                            chấp nào phát sinh từ hợp đồng này phải được chịu sự ưu tiên giải quyết bằng phương pháp thương
+                            lượng hoặc hòa giải. Nếu thương lượng hoặc hòa giải không được giải quyết được mâu thuận giữa
+                            các bên thì tranh chấp sẽ được giải quyết tại Tòa án nhân có thẩm quyền.</p>
+                        <p style="margin-bottom:0;">- Khi ký kết các phụ lục hợp đồng lao động thì nội dung của phụ lục cũng
+                            có giá trị như các nội dung cuả bản hợp đồng này.</p>
+                    </div>
+
+                    <!-- Chữ ký -->
+                    <div style="margin-top:3rem; font-weight:bold; text-align:center; width:100%;">
+                        <table style="width:100%; border:none; border-collapse:collapse; text-align:center;">
+                            <tr>
+                                <td style="width:50%; vertical-align:top;">
+                                    <p style="margin-bottom:0;">NGƯỜI LAO ĐỘNG</p>
+                                </td>
+                                <td style="width:50%; vertical-align:top;">
+                                    <p style="margin-bottom:0;">NGƯỜI SỬ DỤNG LAO ĐỘNG</p>
+                                    <p style="margin-bottom:0;">GIÁM ĐỐC</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="height:100px;"></td>
+                                <td style="height:100px;"></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <p style="margin-bottom:0;">
+                                        <?=$data['personnel_name']?>
+                                    </p>
+                                </td>
+                                <td>
+                                    <p style="margin-bottom:0;">Hồ Phi Ca</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="modal-footer d-print-none mt-4">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-primary btn-print">In hợp đồng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
