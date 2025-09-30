@@ -11,7 +11,6 @@
 				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
 					<div class="row g-3">
 						<div class="col-lg-6">
-					        <?=$app->doHook('template_account_post_left_before',$data);?>
 							<?=$app->component('input',[
                                 "name"=>'name',
                                 "placeholder"=>$jatbi->lang("Tên"),
@@ -29,12 +28,14 @@
                                 "placeholder"=>$jatbi->lang("Email"),
                                 "value" => $data['email'] ?? '',
                                 "type"=>'email',
+                                "required" => 'true',
                             ])?>
 							<?=$app->component('input',[
                                 "name"=>'phone',
                                 "placeholder"=>$jatbi->lang("Điện thoại"),
                                 "value" => $data['phone'] ?? '',
                                 "type" => 'tel',
+                                "required" => 'true',
                             ])?>
 							<?=$app->component('input',[
                                 "name"=>'password',
@@ -50,10 +51,8 @@
 					            "options" => $permissions,
                                 "required" => 'true',
 					        ])?>
-					        <?=$app->doHook('template_account_post_left_after',$data);?>
 						</div>
 						<div class="col-lg-6">
-					        <?=$app->doHook('template_account_post_right_before',$data);?>
 							<?=$app->component('input',[
                                 "name"=>'birthday',
                                 "placeholder"=>$jatbi->lang("Ngày sinh"),
@@ -78,10 +77,18 @@
                                 "placeholder"=>$jatbi->lang("Hình ảnh"),
                                 "value" => $data['avatar'],
                             ])?>
-					        <?=$app->doHook('template_account_post_right_after',$data);?>
 						</div>
 						<div class="col-lg-12">
-					        <?=$app->doHook('template_account_post_bottom',$data);?>
+							<?=$app->component('select',[
+                                "name"=>'stores[]',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $data['stores'] ?? "",   
+                                "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                "required" => "true",
+                                "options" => $stores,
+                            ])?>
+						</div>
+						<div class="col-lg-12">
 							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
 						</div>
 					</div>

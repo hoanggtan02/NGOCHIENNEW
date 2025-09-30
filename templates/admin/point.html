@@ -1,0 +1,123 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                    <button type="button"
+                        class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                        data-bs-dismiss="modal" aria-label="Close "
+                        style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                        <i class="ti ti-x fs-4"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5 class="fw-bold text-body mb-3">
+                        <?=$title?>
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <?=$app->component('select-status', ["value" => $data['status'] ?? 'A'])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('select', [
+                            'name' => 'type', 'placeholder' => $jatbi->lang("Loại"),
+                            'options' => [['value'=>1, 'text'=>'Hóa đơn'], ['value'=>2, 'text'=>'Sản phẩm']],
+                            'selected' => $data['type'] ?? 1
+                        ])?>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label"><?=$jatbi->lang('Tỷ lệ quy đổi điểm')?></label>
+                            <div class="input-group">
+                                <input type="tel" name="point_price" data-number="money" data-currency=""
+                                    data-decimals="0" data-thousands="," data-decimal="."
+                                    class="form-control number p-3 bg-body rounded-start-4"
+                                    value="<?=$data['point_price'] ?? ''?>" placeholder="<?=$jatbi->lang('Số tiền')?>">
+                                <span class="input-group-text p-3 bg-body">=</span>
+                                <input type="text" name="point_point"
+                                    class="form-control number p-3 bg-body rounded-end-4"
+                                    value="<?=$data['point_point'] ?? ''?>" placeholder="<?=$jatbi->lang('Số điểm')?>">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check form-switch py-2">
+                                        <input class="form-check-input" type="checkbox" name="payment" value="1"
+                                            id="payment-checkbox" <?=!empty($data['payment']) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="payment-checkbox">
+                                            Cho phép thanh toán bằng điểm
+                                        </label>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="payment-options-wrapper">
+                                        <label
+                                            class="form-label mt-2"><?=$jatbi->lang('Tỷ lệ quy đổi điểm thành tiền')?></label>
+                                        <div class="input-group mb-3">
+                                            <input type="text" name="payment_point"
+                                                class="form-control number p-3 bg-body rounded-start-4"
+                                                value="<?=$data['payment_point'] ?? ''?>"
+                                                placeholder="<?=$jatbi->lang('Số điểm')?>">
+                                            <span class="input-group-text p-3 bg-body">=</span>
+                                            <input type="tel" name="payment_price" data-number="money" data-currency=""
+                                                data-decimals="0" data-thousands="," data-decimal="."
+                                                class="form-control number p-3 bg-body rounded-end-4"
+                                                value="<?=$data['payment_price'] ?? ''?>"
+                                                placeholder="<?=$jatbi->lang('Số tiền')?>">
+                                        </div>
+                                        <?=$app->component('input', ['name' => 'count_invoices', 'type' => 'number', 'placeholder' => 'Thanh toán bằng điểm sau bao nhiêu lần mua', 'value' => $data['count_invoices'] ?? ''])?>
+                                        <?=$app->component('input', ['name' => 'count_point', 'type' => 'number', 'placeholder' => 'Thanh toán bằng điểm khi tổng điểm bằng', 'value' => $data['count_point'] ?? ''])?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check form-switch py-2">
+                                        <input class="form-check-input" type="checkbox" name="no_discount" value="1"
+                                            id="no_discount_check" <?=!empty($data['no_discount']) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="no_discount_check">
+                                            Không tích điểm hóa đơn giảm giá
+                                        </label>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="form-check form-switch py-2">
+                                        <input class="form-check-input" type="checkbox" name="no_payment" value="1"
+                                            id="no_payment_check" <?=!empty($data['no_payment']) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="no_payment_check">
+                                            Không tích điểm hóa đơn thanh toán bằng điểm
+                                        </label>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="form-check form-switch py-2">
+                                        <input class="form-check-input" type="checkbox" name="no_coupons" value="1"
+                                            id="no_coupons_check" <?=!empty($data['no_coupons']) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="no_coupons_check">
+                                            Không tích điểm hóa đơn có thẻ quà tặng
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <?=$app->component('select', [
+                'name' => 'customers[]', 'placeholder' => 'Áp dụng cho loại khách hàng',
+                'multiple' => true, 'options' => $customers_types ?? [],
+                'selected' => $data['customers'] ?? []
+            ])?>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit"
+                        data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -4,7 +4,7 @@
             <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
             <ul class="breadcrumb small mb-0">
                 <li class="breadcrumb-item small">
-                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
                 </li>
                 <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
             </ul>
@@ -12,7 +12,7 @@
         <div class="filter-search">
             <div class="d-flex align-items-center justify-content-end">
                 <div class="dropdown">
-                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" >
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
                         <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur" style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
@@ -21,36 +21,36 @@
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3">
-                            <?=$app->component('select-status',[
+                           <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">
-                            <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
-                            <button type="button" class="btn btn-primary px-3 rounded-pill py-2 button-filter"><?=$jatbi->lang("Tìm")?></button>
+                            <button type="button" class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <?php if($jatbi->permission(['permission.deleted']) == 'true' || $jatbi->permission(['permission.add']) == 'true'){ ?>
+    <?php if($jatbi->permission(['coupons.deleted']) == 'true' || $jatbi->permission(['coupons.add']) == 'true'){ ?>
     <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
         <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center " style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
           <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
         </button>
         <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
-            <?php if($jatbi->permission(['permission.deleted']) == 'true'){ ?>
+            <?php if($jatbi->permission(['coupons.deleted']) == 'true'){ ?>
             <li class="my-2">
-                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="<?=$jatbi->url('/users/permission-deleted')?>" style="--width:50px;--height:50px;">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="<?=$jatbi->url('/admin/coupons-deleted')?>" style="--width:50px;--height:50px;">
                     <i class="ti ti-trash fs-3" aria-hidden="true"></i>
                 </a>
             </li>
             <?php } ?>
-            <?php if($jatbi->permission(['permission.add']) == 'true'){ ?>
+            <?php if($jatbi->permission(['coupons.add']) == 'true'){ ?>
             <li class="my-2">
-                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-url="<?=$jatbi->url('/users/permission-add')?>" style="--width:50px;--height:50px;">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-url="<?=$jatbi->url('/admin/coupons-add')?>" style="--width:50px;--height:50px;">
                     <i class="ti ti-plus fs-3" aria-hidden="true"></i>
                 </a>
             </li>
@@ -60,7 +60,6 @@
     <?php } ?>
 	<div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
 		<div class="card-body">
-		   <div class="custom-buttons d-none"></div>
             <table id="datatable" 
                     data-table 
                     class="table align-middle" 
@@ -75,7 +74,16 @@
                 <thead>
                     <tr>
                         <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" value="" data-checkbox="input.checker"></div></th>
-                        <th data-name="name" data-orderable="true" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Tên")?></th>
+                        <!-- <th data-name="type" data-orderable="true" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Loại")?></th> -->
+                        <th data-name="name" data-searchable="true" data-orderable="true" class="text-nowrap " data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Tên")?></th>
+                        <th data-name="code" data-orderable="true" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Mã")?></th>
+                        <th data-name="count_used" data-orderable="true" class="text-nowrap " data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Sử dụng")?></th>
+                        <th data-name="dueDate" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-start"><?=$jatbi->lang("Thời hạn")?></th>
+                        <th data-name="discount" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-start"><?=$jatbi->lang("Giảm giá")?></th>
+                        <th data-name="apply" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-start"><?=$jatbi->lang("Chỉ áp dụng")?></th>
+                        <th data-name="notes" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Ghi chú")?></th>
+                        <th data-name="date" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-start"><?=$jatbi->lang("Ngày")?></th>
+                        <th data-name="accounts" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th>
                         <th data-name="status" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
                         <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
                     </tr>

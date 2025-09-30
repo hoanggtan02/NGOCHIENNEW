@@ -1,0 +1,145 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                    <button type="button"
+                        class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                        data-bs-dismiss="modal" aria-label="Close "
+                        style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                        <i class="ti ti-x fs-4"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5 class="fw-bold text-body mb-3">
+                        <?=$title?>
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <?=$app->component('select', [
+                                'name' => 'type', 'placeholder' => $jatbi->lang("Loại"), 'required' => true,
+                                'id' => 'coupon-type-select', 
+                                'options' => [
+                                    ['value' => 1, 'text' => $jatbi->lang('Phần trăm')],
+                                    ['value' => 2, 'text' => $jatbi->lang('Số tiền')],
+                                ],
+                                'selected' => $data['type'] ?? 1
+                            ])?>
+                            <?=$app->component('input', ["name" => 'name', "placeholder" => "Tên", "value" => $data['name'] ?? '', "required" => true])?>
+                            <?=$app->component('input', ["name" => 'code', "placeholder" => "Mã thẻ", "value" => $data['code'] ?? '', "required" => true])?>
+
+                            <div data-show-on-type="1">
+                                <div class="mb-3">
+                                    <label class="form-label">Phần trăm</label>
+                                    <div class="input-group">
+                                        <input placeholder="Phần trăm" type="number" name="percent"
+                                            value="<?=$data['percent'] ?? ''?>"
+                                            class="form-control rounded-start-4 p-3 bg-body" min="0" max="100">
+                                        <span class="input-group-text rounded-end-4 p-3 bg-body">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div data-show-on-type="2" style="display:none;">
+                                <?=$app->component('input', [
+                                    "name" => 'price', 
+                                    'attr' => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+                                    "type"=> "tel" ,
+                                    "placeholder" => "Số tiền", 
+                                    "class" => "number", 
+                                    "value" => $data['price'] ?? ''])?>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', ["name" => 'date_start', "placeholder" => "Ngày bắt đầu", "type" => "date", "value" => $data['date_start'] ?? date("Y-m-d"), "required" => true])?>
+                            <?=$app->component('input', ["name" => 'date_end', "placeholder" => "Ngày kết thúc", "type" => "date", "value" => $data['date_end'] ?? date("Y-m-d"), "required" => true])?>
+                            <?=$app->component('input', ["name" => 'count', "placeholder" => "Số lần sử dụng", "type" => "number", "value" => $data['count'] ?? 1, "required" => true])?>
+                            <?=$app->component('select-status', ["value" => $data['status'] ?? 'A'])?>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="multi" value="1"
+                                    id="multi-checkbox" <?=!empty($data['multi']) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="multi-checkbox">
+                                    Áp dụng cùng các thẻ khác
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header small fw-bold">Chỉ áp dụng cho</div>
+                                <div class="card-body">
+
+                                    <?=$app->component('select', [
+                                        'name' => 'categorys[]',
+                                        'placeholder' => $jatbi->lang("Danh mục"),
+                                        'selected' => $data['categorys'] ?? [],
+                                        'class' => 'filter-name', 
+                                        'options' => $categorys ?? [],
+                                        'attr' => 'multiple'
+                                    ])?>
+                   
+
+                                    <?=$app->component('select', [
+                                    'name' => 'products[]',
+                                    'placeholder' => $jatbi->lang("Sản phẩm"),
+                                    'selected' => $data['products'] ?? [],
+                                    'class' => 'filter-name', 
+                                    'options' => $products ?? [],  
+                                    'attr' => 'data-url="/api/products" data-method="POST" multiple',
+                                    ])?>
+
+                                    <?=$app->component('select', [
+                                    'name' => 'customers[]',
+                                    'placeholder' => $jatbi->lang("Khách hàng"),
+                                    'selected' => $data['customers'] ?? [],
+                                    'class' => 'filter-name', 
+                                    'attr' => 'data-url="/api/customers" data-method="POST" multiple',
+                                    'options' => $customers ?? [],
+                                    ])?>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <?=$app->component('textarea', ["name" => 'notes', "placeholder" => "Ghi chú", "rows" => 3, "value" => $data['notes'] ?? ''])?>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <div class="col-lg-12">
+                        <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit"
+                            data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        // Hàm để xử lý việc ẩn/hiện
+        function handleCouponTypeChange() {
+            const selectedType = $('#coupon-type-select').val();
+
+            // Tìm tất cả các div có thuộc tính data-show-on-type
+            $('[data-show-on-type]').each(function () {
+                const $element = $(this);
+                // Lấy giá trị của thuộc tính (đảm bảo so sánh chuỗi với chuỗi)
+                const showOnValue = $element.data('show-on-type').toString();
+
+                if (showOnValue === selectedType) {
+                    $element.show(); // Hiện ra nếu khớp
+                } else {
+                    $element.hide(); // Ẩn đi nếu không khớp
+                }
+            });
+        }
+
+
+        $(document).on('change', '#coupon-type-select', handleCouponTypeChange);
+
+        handleCouponTypeChange();
+    });
+</script>

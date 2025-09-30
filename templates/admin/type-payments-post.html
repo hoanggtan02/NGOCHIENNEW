@@ -1,0 +1,76 @@
+
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                 <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-lg-6">
+                            <?=$app->component('input', [
+                                "name" => 'code',
+                                "placeholder" => $jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'name',
+                                "placeholder" => $jatbi->lang("Tên hình thức thanh toán"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+                             <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang("Loại thanh toán"),
+                                "selected" => $data['type'] ?? '',
+                                "options" => $payment_type_options, 
+                                "required" => 'true',
+                                 "first_option" => $jatbi->lang("Loại thanh toán"),
+                            ])?>
+                            <?=$app->component('select', [
+                                "name" => 'main',
+                                "placeholder" => $jatbi->lang("Mục chính"),
+                                "selected" => $data['main'] ?? '0',
+                                "options" => $type_payments_options, // Sử dụng biến đã định dạng
+                                "first_option" => $jatbi->lang("Hình thức chính"),
+                            ])?>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('select', [
+                                "name" => 'debt',
+                                "placeholder" => $jatbi->lang("Tài khoản nợ"),
+                                "selected" => $data['debt'] ?? '',
+                                "options" => $accountants_options, // Sử dụng biến đã định dạng
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('select', [
+                                "name" => 'has',
+                                "placeholder" => $jatbi->lang("Tài khoản có"),
+                                "selected" => $data['has'] ?? '',
+                                "options" => $accountants_options, // Sử dụng biến đã định dạng
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('select-status', [
+                                "value" => $data['status'] ?? 'A',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <?=$app->component('textarea', [
+                                "name" => 'notes',
+                                "placeholder" => $jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

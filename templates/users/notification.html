@@ -19,7 +19,7 @@
 						<div class="row">
 							<div class="col-6 text-truncate fw-bold">
 								<div class="width height bg-<?=$data['views']>0?'secondary':'danger'?> rounded-circle d-inline-block me-2" style="--width:10px;--height:10px"></div>
-								<a <?=$data['template']=='url'?'href="/users/notification/'.$data['active'].'"':'data-action="modal" data-url="/users/notification/'.$data['active'].'"'?> class="btn p-0 border-0 bg-transparent stretched-link text-capitalize" <?=$data['template']=='url'?'data-pjax':''?>>
+								<a <?=$data['template']=='url'?'href="/admin/notification/'.$data['active'].'"':'data-action="modal" data-url="/admin/notification/'.$data['active'].'"'?> class="btn p-0 border-0 bg-transparent stretched-link text-capitalize" <?=$data['template']=='url'?'data-pjax':''?>>
 									<span class="text-body fw-bold"><?=$jatbi->lang($data['title'])?></span></a>
 							</div>
 							<div class="col-6 text-end">

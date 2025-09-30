@@ -21,6 +21,7 @@
 						<div class="col-lg-6">
 							<?=$app->component('select-status',[
                                 "value" => $data['status'] ?? '',
+								"class" => 'filter-namee',
                             ])?>
 						</div>
 						<div class="col-lg-12">
@@ -40,7 +41,7 @@
 											<?php foreach ($value['permissions'] as $pkey => $pdata) { ?>
 												<div class="col-sm-3 mb-2">
 													<div class="form-check">
-													  <input class="form-check-input permission-item" id="<?=$pkey;?>" type="checkbox" name="permissions[<?=$pkey;?>]" value="<?=$pkey;?>" <?=$checkper[$pkey]??''==$pkey?'checked':''?>>
+													  <input class="form-check-input permission-item" id="<?=$pkey;?>" type="checkbox" name="permissions[<?=$pkey;?>]" value="<?=$pkey;?>" <?= isset($checkper[$pkey]) ? 'checked' : '' ?>>
 													  <label class="form-check-label ps-2 pt-1" for="<?=$pkey;?>">
 													  	<?=$pdata;?>
 													  </label>
