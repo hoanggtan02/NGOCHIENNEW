@@ -1,0 +1,85 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-md-12">
+		  
+			    <div class="card rounded-0 border-0 border-bottom">
+			    	<div class="card-header p-2">
+			    		<label><?=$jatbi->lang("Ngày áp dụng")?> :</label>
+						<strong><?=$dataSalary['salary_date'] ?? ''?></strong>
+			    	</div>
+			    	<div class="card-body row p-2">
+					    <div class="mb-3 col-md-12">
+			        		<label><?=$jatbi->lang("Nội dung")?> :</label>
+						    <strong><?=$dataSalary['content'] ?? ''?></strong>
+					    </div>
+					    <div class="col-md-12">
+					    	<div class="table-responsive">
+								<?php count($salarys);?>
+					    		<table class="table table-striped table-hover table-bordered align-middle">
+					    			<thead>
+					    				<tr>
+					    					<th colspan="4" class="p-1"><?=$jatbi->lang("Tiền lương")?></th>
+					    				</tr>
+					    				<tr>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Nội dung")?></th>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Số tiền")?></th>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Ghi chú")?></th>
+					    				</tr>
+					    			</thead>
+					    			<tbody>
+					    				<?php foreach ($salarys as $salary) { ?>
+					    				<tr>
+					    					<td class="p-1"><?=$salary['content']?></td>
+					    					<td class="p-1"><?=$salary['price']?> / <?=$salary['price']?></td>
+					    					<td class="p-1"><?=$salary['notes']?></td>
+					    				</tr>
+					    				<?php } ?>
+					    			</tbody>
+					    		</table>
+					    	</div>
+					    </div>
+					    <div class="col-md-12">
+					    	<div class="table-responsive">
+					    		<table class="table table-striped table-hover table-bordered align-middle">
+					    			<thead>
+					    				<tr>
+					    					<th colspan="4" class="p-1"><?=$jatbi->lang("Tiền trợ cấp")?></th>
+					    				</tr>
+					    				<tr>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Nội dung")?></th>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Số tiền")?></th>
+					    					<th class="p-1 align-middle"><?=$jatbi->lang("Ghi chú")?></th>
+					    				</tr>
+					    			</thead>
+					    			<tbody class="allowance-list">
+					    				<?php foreach ($allowances as $key => $allowance) {?>
+											<tr>
+												<td class="p-1"><?=$allowance['content']?></td>
+												<td class="p-1"><?=$allowance['price']?> / <?=$allowance['price']?></td>
+												<td class="p-1"><?=$allowance['notes']?></td>
+											</tr>
+					    				<?php } ?>
+					    			</tbody>
+					    		</table>
+					    	</div>
+					    </div>
+			    	</div>
+			    </div>
+		
+			</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

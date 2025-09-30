@@ -1,0 +1,116 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close "
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-lg-12">
+                            <?=$app->component('select',[
+                                "name"=>'personnels',
+                                "options"=>$personnels,
+                                "selected" => $data['personnels'] ?? '',
+                                "placeholder"=>$jatbi->lang("Nhân viên"),
+                                "required" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'social',
+                                "placeholder"=>$jatbi->lang("Số BHXH"),
+                                "value" => $data['social'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'social_date',
+                                "placeholder"=>$jatbi->lang("Ngày cấp BHXH"),
+                                "value" => $data['social_date'] ?? '',
+                                "type" => "date",
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'social_place',
+                                "placeholder"=>$jatbi->lang("Nơi cấp BHXH"),
+                                "value" => $data['social_place'] ?? '',
+                            ])?>
+                            <div class="mb-3">
+                                <label class="form-label"><?=$jatbi->lang("Tiền bảo hiểm")?></label>
+                                <div class="input-group">
+                                    <input type="tel" name="total" class="form-control rounded-start-4 p-3 bg-body"
+                                        placeholder="<?=$jatbi->lang(" Tiền bảo hiểm")?>"
+                                    value="
+                                    <?=$data['total'] ?? ''?>"
+                                    data-number="money"
+                                    data-currency=""
+                                    data-decimals="0"
+                                    data-thousands=","
+                                    data-decimal=".">
+                                    <span
+                                        class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'health',
+                                "placeholder"=>$jatbi->lang("Sở Y tế"),
+                                "value" => $data['health'] ?? '',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'health_date',
+                                "placeholder"=>$jatbi->lang("Ngày cấp Y tế"),
+                                "value" => $data['health_date'] ?? '',
+                                "type" => "date",
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'health_place',
+                                "placeholder"=>$jatbi->lang("Nơi cấp Y tế"),
+                                "value" => $data['health_place'] ?? '',
+                            ])?>
+                            <div class="mb-3">
+                                <label class="form-label"><?=$jatbi->lang("Tiền nhân viên đóng bảo hiểm")?></label>
+                                <div class="input-group">
+                                    <input type="tel" name="price" class="form-control rounded-start-4 p-3 bg-body"
+                                        placeholder="<?=$jatbi->lang(" Tiền nhân viên đóng bảo hiểm")?>"
+                                    value="
+                                    <?=$data['price'] ?? ''?>"
+                                    data-number="money"
+                                    data-currency=""
+                                    data-decimals="0"
+                                    data-thousands=","
+                                    data-decimal=".">
+                                    <span
+                                        class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+                            <?=$app->component('textarea',[
+                                "name"=>'notes',
+                                "placeholder"=>$jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <?= $jatbi->csrfField() ?>
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

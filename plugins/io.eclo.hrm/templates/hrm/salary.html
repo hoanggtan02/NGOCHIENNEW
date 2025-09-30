@@ -1,0 +1,168 @@
+<div class="container-fluid">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                        <form data-pjax method="get" action="/hrm/salary">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?=$app->component('select',[
+                                    "name"=>'offices',
+                                    "class"=>'filter-name',
+                                    "placeholder"=>$jatbi->lang("Phòng ban"),
+                                    "selected" => $app->xss($_GET['offices'] ?? ''),
+                                    "attr" => 'multiple',
+                                    "options" => $offices ?? [],
+                                ])?>
+                                <?=$app->component('select',[
+                                    "name"=>'year',
+                                    "class"=>'filter-name',
+                                    "options"=>$years ?? [],
+                                    "selected" => $app->xss($_GET['year'] ?? date('Y')),
+                                    "placeholder"=>$jatbi->lang("Năm"),
+                                ])?>
+                                <?=$app->component('select',[
+                                    "name"=>'month',
+                                    "class"=>'filter-name',
+                                    "options"=>$months ?? [],
+                                    "selected" => $app->xss($_GET['month'] ?? date('m')),
+                                    "placeholder"=>$jatbi->lang("Tháng"),
+                                ])?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3 py-2 text-end w-100">
+                                <a href="/hrm/salary" data-pjax
+                                    class="btn btn-light px-3 py-2 rounded-pill"><?=$jatbi->lang("Làm mới")?></a>
+                                <button type="submit"
+                                    class="btn btn-eclo px-3 py-2 rounded-pill"><?=$jatbi->lang("Tìm")?></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <table id="datatable" class="table align-middle" data-type="POST" data-server="true" data-processing="true"
+                data-page-length="10" data-searching="true" data-paging="true" data-state-save='true'
+                style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="align-middle text-center bg-info bg-opacity-10" rowspan="2" width="2%">
+                            <?=$jatbi->lang('STT')?></th>
+                        <th class="align-middle text-center bg-info bg-opacity-10" rowspan="2">
+                            <?=$jatbi->lang('Nhân viên')?></th>
+                        <th class="align-middle text-center bg-info bg-opacity-10" rowspan="2">
+                            <?=$jatbi->lang('Phòng ban')?></th>
+                        <th class="text-center bg-success bg-opacity-10" colspan="<?=count($salary_categorys)+1?>">
+                            <?=$jatbi->lang('Tiền lương')?></th>
+                        <th class="text-center bg-warning bg-opacity-10" colspan="6"><?=$jatbi->lang('Châm công')?></th>
+                        <th class="text-center bg-danger bg-opacity-10" colspan="3">
+                            <?=$jatbi->lang('Khen thưởng kỉ luật')?></th>
+                        <th class="text-center bg-primary bg-opacity-10" colspan="3"><?=$jatbi->lang('Tổng')?></th>
+                    </tr>
+                    <tr>
+                        <?php foreach($salary_categorys as $salary_category){ ?>
+                        <th class="text-center bg-success bg-opacity-10">
+                            <?=$salary_category['name']?>
+                        </th>
+                        <?php } ?>
+                        <th class="text-center bg-success bg-opacity-10"><?=$jatbi->lang("Bảo hiểm")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Ngày công")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Tăng ca")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Nghỉ có lương")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Nghỉ không lương")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Nghỉ không phép")?></th>
+                        <th class="text-center bg-warning bg-opacity-10"><?=$jatbi->lang("Tổng")?></th>
+                        <th class="text-center bg-danger bg-opacity-10"><?=$jatbi->lang("Vi phạm")?></th>
+                        <th class="text-center bg-danger bg-opacity-10"><?=$jatbi->lang("Kỉ luật")?></th>
+                        <th class="text-center bg-danger bg-opacity-10"><?=$jatbi->lang("Khen thưởng")?></th>
+                        <th class="text-center bg-primary bg-opacity-10"><?=$jatbi->lang("Ứng lương")?></th>
+                        <th class="text-center bg-primary bg-opacity-10"><?=$jatbi->lang("Thực lãnh")?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($datas as $key => $data) { ?>
+                    <tr>
+                        <td class="text-nowrap align-middle bg-info bg-opacity-10">
+                            <?=$key+1?>
+                        </td>
+                        <td class="text-nowrap align-middle bg-info bg-opacity-10">
+                            <?=$data['personnel_name']?>
+                        </td>
+                        <td class="text-nowrap align-middle bg-info bg-opacity-10">
+                            <?=$data['offices_name']?>
+                        </td>
+                        <?php foreach($salary_categorys as $salary_category){ ?>
+                        <td class="text-center align-middle bg-success bg-opacity-10">
+                            <?=$data['salary'][$salary_category['id']] ?? '0'?>
+                        </td>
+                        <?php } ?>
+                        <td class="text-center align-middle bg-success bg-opacity-10">
+                            <?=$data['personnel_id']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['working_days']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['timework']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['paid_leave_days']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['unpaid_leave_days']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['unapproved_leave']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-warning bg-opacity-10">
+                            <?=$data['total_paid_days']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-danger bg-opacity-10">
+                            <?=$data['violation']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-danger bg-opacity-10">
+                            <?=$data['discipline']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-danger bg-opacity-10">
+                            <?=$data['reward']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-primary bg-opacity-10">
+                            <?=$data['salary_advance']?>
+                        </td>
+                        <td class="text-nowrap align-middle text-center bg-primary bg-opacity-10">
+                            <?=$data['total']?>
+                        </td>
+
+                    </tr>
+
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

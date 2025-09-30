@@ -1,0 +1,62 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-body">
+                    <?=$title?> #
+                    <?=$data['code'] ?? ''?> -
+                    <?=$personnel_name ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-lg-12">
+                        <p class="mb-2"><small class="text-muted">Nhân viên:</small> <strong>
+                                <?=$personnel_name ?>
+                            </strong></p>
+                    </div>
+                    <div class="col-lg-6">
+                        <p class="mb-2"><small class="text-muted">Ngày hợp đồng:</small> <strong>
+                                <?=date('d/m/Y', strtotime($data['date_contract']))?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Loại hợp đồng:</small> <strong>
+                                <?=$personnels_contracts ?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Số hợp đồng:</small> <strong>#
+                                <?=$data['code'] ?? ''?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Thời hạn hợp đồng:</small> <strong>
+                                <?=$data['duration'] ?? ''?> tháng
+                            </strong></p>
+                        <p class="mb-0"><small class="text-muted">Công việc:</small> <strong>
+                                <?=$data['office_name'] ?? ''?>
+                            </strong></p>
+                    </div>
+                    <div class="col-lg-6">
+                        <p class="mb-2"><small class="text-muted">Ngày phỏng vấn:</small> <strong>
+                                <?=date('d/m/Y', strtotime($data['interview']))?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Ngày làm việc:</small> <strong>
+                                <?=date('d/m/Y', strtotime($data['workday']))?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Trình độ:</small> <strong>
+                                <?=$data['degree'] ?? ''?>
+                            </strong></p>
+                        <p class="mb-2"><small class="text-muted">Bằng cấp:</small> <strong>
+                                <?=$data['certificate'] ?? ''?>
+                            </strong></p>
+                        <p class="mb-0"><small class="text-muted">Sức khỏe:</small> <strong>
+                                <?=$data['health'] ?? ''?>
+                            </strong></p>
+                    </div>
+                    <div class="col-lg-12">
+                        <p class="mb-0"><small class="text-muted">Ghi chú:</small> <strong>
+                                <?=nl2br(htmlspecialchars($data['notes'] ?? ''))?>
+                            </strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

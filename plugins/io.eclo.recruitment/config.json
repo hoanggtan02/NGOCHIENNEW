@@ -1,0 +1,9 @@
+{
+    "name": "Recruitment",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.recruitment",
+    "author": "ECLO",
+    "description": "Tuyển dụng",
+    "requires": "1.0.0"
+}

@@ -1,0 +1,72 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+                        <div class="col-lg-12">
+                            <?=$app->component('input',[
+                                "name"=>'name',
+                                "placeholder"=>$jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                            ])?>
+                            <?=$app->component('select',[
+                                "name"=>'office',
+                                "options"=>$offices ?? [],
+                                "selected" => $data['office'] ?? '',
+                                "placeholder"=>$jatbi->lang("Phòng ban"),
+                                "required" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'date_from',
+                                "placeholder"=>$jatbi->lang("Từ ngày"),
+                                "value" => $data['date_from'] ?? '',
+                                "type" =>'date',
+                                "required" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-lg-6">
+                            <?=$app->component('input',[
+                                "name"=>'date_to',
+                                "placeholder"=>$jatbi->lang("Đến ngày"),
+                                "value" => $data['date_to'] ?? '',
+                                "type" =>'date',
+                                "required" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label><?=$jatbi->lang("Hệ số lương")?> <small class="text-danger">*</small></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">x</span>
+                                    <input placeholder="<?=$jatbi->lang("Hệ số lương")?>" type="text" name="salary" class="form-control p-3" value="<?=$data['salary'] ?? 0?>">
+                                    <span class="input-group-text"><?=$jatbi->lang("Ngày lương")?></span>
+                                </div>
+				            </div>
+                            <?=$app->component('select-status',[
+                                "value" => $data['status'] ?? '',
+                            ])?>
+                            <?=$app->component('textarea',[
+                                "name"=>'notes',
+                                "placeholder"=>$jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                        </div>
+						<div class="col-lg-12">
+							<?= $jatbi->csrfField() ?>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

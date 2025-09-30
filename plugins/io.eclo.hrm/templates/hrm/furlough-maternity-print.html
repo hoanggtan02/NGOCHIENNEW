@@ -1,0 +1,162 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">ĐƠN XIN NGHỈ THAI SẢN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" id="printable-maternity"
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.6; text-align:justify;">
+
+                <!-- Header Công ty + Quốc hiệu -->
+                <div class="row mb-4">
+                    <div class="col-6 text-center">
+                        <div style="display:inline-flex; align-items:center; text-align:center;">
+                            <img src="/assets/img/icon/logonh.png" alt="Logo" style="height:60px; margin-right:10px;">
+                            <div style="text-align:center;">
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">CÔNG TY TNHH MTV NGỌC
+                                    TRAI</p>
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">NGỌC HIỀN PHÚ QUỐC</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <p style="font-weight:bold; margin:0;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p style="margin:0;"><strong>Độc lập – Tự do – Hạnh phúc</strong></p>
+                        <p style="margin:0;">-----------o0o-----------</p>
+                        <p style="margin:0;"><em>Phú Quốc, ngày
+                                <?=date('d')?> tháng
+                                <?=date('m')?> năm
+                                <?=date('Y')?>
+                            </em></p>
+                    </div>
+                </div>
+
+                <!-- Tiêu đề -->
+                <div class="text-center mb-4">
+                    <h4 style="font-weight:bold; text-transform: uppercase;">ĐƠN XIN NGHỈ THAI SẢN</h4>
+                </div>
+
+                <!-- Nội dung -->
+                <div class="section">
+                    <p><b>Kính gửi:</b> - <b>Ban Giám đốc Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú Quốc</b><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        - Phòng Hành chính Nhân sự</p>
+
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <p class="mb-0"><b>Tên tôi là:</b>
+                                <?= $data['personnel_name'] ?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <p class="mb-0"><b>Sinh ngày:</b>
+                                <?= $data['date_of_birth'] ?? "..............................................................." ?>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-0"><b>Tại:</b>
+                                <?= $data['birth_place'] ?? ".........................................................................." ?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <p class="mb-0"><b>Hộ khẩu thường trú tại:</b>
+                                <?= $data['address'] ?? "................................................................................................................................" ?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <p class="mb-0">Là nhân viên của: <b>CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</b></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <p class="mb-0"><b>Chức vụ:</b>
+                                <?= $data['position'] ?? ".........................................................." ?>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-0"><b>Thuộc bộ phận:</b>
+                                <?= $data['office_name'] ?>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="section">
+                    <p style="margin-bottom: 0px;">Nay tôi viết đơn này với nguyện vọng và lý do như sau:</p>
+                    <p style="margin-bottom: 0px;">
+                        Hiện nay tôi đang mang thai đến tháng thứ
+                        <?= $data['pregnancy_month'] ?? "...." ?>
+                        và dự sinh ngày ................................................................
+                    </p>
+                    <p style="margin-bottom: 0px;">
+                        Vì vậy, tôi xin được nghỉ trước thời gian dự sinh là
+                        <?= $data['before_due'] ?? "................................................................................" ?>.
+                    </p>
+                    <p style="margin-bottom: 0px;">
+                        Thời gian xin nghỉ từ ngày
+                        <?= date('d/m/Y', strtotime($data['date_from'])) ?>
+                        đến ngày
+                        <?= date('d/m/Y', strtotime($data['date_to'])) ?>.
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p>
+                        Trước khi nghỉ thai sản tôi sẽ bàn giao công việc cho nhân sự thay thế và bàn giao tài sản theo
+                        quy định của Công ty.
+                    </p>
+                    <p>
+                        Tôi xin cam kết sẽ quay trở lại làm việc sau khi kết thúc thời gian nghỉ thai sản theo như quy
+                        định. Tôi xin chân thành cảm ơn!
+                    </p>
+                </div>
+
+                <!-- Chữ ký -->
+                <div class="row text-center mt-4">
+                    <div class="col">
+                        <p><b>Ban Giám đốc</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Phòng HCNS</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Giám sát</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Người làm đơn</b></p>
+                        <div style="height:80px;"></div>
+                        <p>
+                            <?= $data['personnel_name'] ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In đơn</button>
+            </div>
+        </div>
+    </div>
+</div>

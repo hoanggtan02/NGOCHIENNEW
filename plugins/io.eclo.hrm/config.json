@@ -1,0 +1,9 @@
+{
+    "name": "Hrm",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.hrm",
+    "author": "ECLO",
+    "description": "Nhân sự",
+    "requires": "1.0.0"
+}

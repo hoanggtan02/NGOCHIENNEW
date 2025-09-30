@@ -1,0 +1,132 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">ĐƠN XIN NGHỈ BÙ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" id="printable-compensatory-leave"
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.6; text-align:justify;">
+
+                <!-- Header Công ty + Quốc hiệu -->
+                <div class="row mb-4">
+                    <div class="col-6 text-center">
+                        <div style="display:inline-flex; align-items:center; text-align:center;">
+                            <img src="/assets/img/icon/logonh.png" alt="Logo" style="height:60px; margin-right:10px;">
+                            <div style="text-align:center;">
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">CÔNG TY TNHH MTV NGỌC
+                                    TRAI</p>
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">NGỌC HIỀN PHÚ QUỐC</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <p style="font-weight:bold; margin:0;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p style="margin:0;"><strong>Độc lập – Tự do – Hạnh phúc</strong></p>
+                        <p style="margin:0;">-----------o0o-----------</p>
+                        <p style="margin:0;"><em>Phú Quốc, ngày
+                                <?=date('d')?> tháng
+                                <?=date('m')?> năm
+                                <?=date('Y')?>
+                            </em></p>
+                    </div>
+                </div>
+
+                <!-- Tiêu đề -->
+                <div class="text-center mb-4">
+                    <h4 style="font-weight:bold; text-transform: uppercase;">ĐƠN XIN NGHỈ BÙ</h4>
+                </div>
+
+                <!-- Nội dung -->
+                <div class="section">
+                    <p><b>Kính gửi:</b> - <b>Ban Giám đốc Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú Quốc</b><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        - Phòng Hành chính Nhân sự</p>
+
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <p class="mb-0"><b>Tên tôi là:</b>
+                                <?= $data['personnel_name'] ?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <p class="mb-0"><b>Bộ phận:</b>
+                                <?= $data['office_name'] ?>
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-0"><b>Chức vụ:</b>
+                                <?= $data['position'] ?? "......................................" ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <p>
+                        Nay tôi làm đơn này, kính xin Ban Giám đốc cho tôi được nghỉ bù trực Tết Nguyên Đán kể từ ngày
+                        <?= date('d/m/Y', strtotime($data['date_from'])) ?>
+                        đến ngày
+                        <?= date('d/m/Y', strtotime($data['date_to'])) ?>.
+                    </p>
+                    <p><b>Với lý do:</b>
+                        <?= $data['notes'] ?? "..................................................................................." ?>
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p>
+                        Tôi xin cam kết đã bàn giao lại công việc và trở lại làm việc sau đúng thời gian xin nghỉ phép,
+                        nếu không tôi hoàn toàn chịu trách nhiệm trước hình thức kỷ luật của công ty.
+                    </p>
+                </div>
+
+                <!-- Xác nhận -->
+                <div class="section">
+                    <p><b>Xác nhận của Trưởng bộ phận:</b></p>
+                    <p class="signature-line">
+                        ...........................................................................................................................................................................................................................................
+                    </p>
+                    <p class="signature-line">
+                        ...........................................................................................................................................................................................................................................
+                    </p>
+                </div>
+
+                <!-- Chữ ký -->
+                <div class="row text-center mt-4">
+                    <div class="col">
+                        <p><b>Ban Giám đốc</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Phòng HCNS</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Trưởng bộ phận</b></p>
+                        <div style="height:80px;"></div>
+                    </div>
+                    <div class="col">
+                        <p><b>Người đề nghị</b></p>
+                        <div style="height:80px;"></div>
+                        <p>
+                            <?= $data['personnel_name'] ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In đơn</button>
+            </div>
+        </div>
+    </div>
+</div>

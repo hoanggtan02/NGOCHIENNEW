@@ -1,0 +1,181 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+                        <div class="col-lg-12">
+                            <div class="card border-danger rounded-4 ">
+                                <div class="card-header bg-body fs-6 py-3">
+                                    <?=$jatbi->lang("Tiền lương")?>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="mb-3 col-md-12">
+                                            <?=$app->component('input',[
+                                                "name"=>'salary_date',
+                                                "placeholder"=>$jatbi->lang("Ngày tính lương"),
+                                                "value" => $data['salary_date'] ?? '',
+                                                "type" => "date",
+                                            ])?>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="table-responsive">
+                                                <table class="salary-table table table-striped table-hover table-bordered align-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th colspan="4"><?=$jatbi->lang("Tiền lương")?></th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="4"><span class="text-danger">*</span> <?=$jatbi->lang("Tiền lương sẽ được tính bình quân cho các ngày công trong tháng")?></th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th class="align-middle" width="30%"><?=$jatbi->lang("Nội dung")?></th>
+                                                            <th class="align-middle"><?=$jatbi->lang("Số tiền")?></th>
+                                                            <th class="align-middle"><?=$jatbi->lang("Ghi chú")?></th>
+                                                            <th width="5%" class="text-center">
+                                                                <a href="#!" class="btn btn-sm btn-success salary-add"><i class="ti ti-plus fs-5"></i></a>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="salary-list">
+                                                        <?php $i = 0; $data = [];
+                                                        do { ?>
+                                                        <tr class="salary-item <?= $i == 0 ? 'd-none' : '' ?>">
+                                                            <td class="p-0">
+                                                                <input type="hidden" name="salary_id[]" value="<?=$data['id'] ?? ''?>">
+                                                                <?=$app->component('select',[
+                                                                    "name"=>'salary_content[]',
+                                                                    "class"=>'salary-select',
+                                                                    "options"=>$salary_categorys,
+                                                                    "selected" => $data['content'] ?? '',
+                                                                ])?>
+                                                            </td>
+                                                            <td class="p-0">
+                                                                <div class="input-group">
+                                                                    <input placeholder="Số tiền" type="number" name="salary_price[]" value="<?=$data['price'] ?? ''?>" class="form-control p-3 number salary-price">
+                                                                    <span class="input-group-text salary-type">Tháng</span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="p-0">
+                                                                <?=$app->component('input',[
+                                                                    "name"=>'salary_notes[]',
+                                                                    "value" => $data['notes'] ?? '',
+                                                                ])?>
+                                                            </td>
+                                                            <td class="text-center p-0">
+                                                                <input type="hidden" name="salary_deleted[]" value="" class="salary-deleted-value">
+                                                                <a href="#!" class="btn btn-sm btn-danger salary-deleted"><i class="ti ti-trash fs-5"></i></a>
+                                                            </td>
+                                                        </tr>
+                                                        <?php $data = $salarys[$i] ?? ""; $i++;
+                                                        } while (!empty($salarys[$i-1])); ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="table-responsive">
+                                                <table class="salary-table table table-striped table-hover table-bordered align-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th colspan="4"><?=$jatbi->lang("Tiền trợ cấp")?></th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th colspan="4"><span class="text-danger">*</span> <?=$jatbi->lang("Tiền trợ cấp sẽ được tính tổng trên 1 tháng")?></th>
+                                                        </tr>
+                                                        <tr>
+                                                            <th class="align-middle" width="30%"><?=$jatbi->lang("Nội dung")?></th>
+                                                            <th class="align-middle"><?=$jatbi->lang("Số tiền")?></th>
+                                                            <th class="align-middle"><?=$jatbi->lang("Ghi chú")?></th>
+                                                            <th width="5%" class="text-center">
+                                                                <a href="#!" class="btn btn-sm btn-success salary-add"><i class="ti ti-plus fs-5"></i></a>
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="salary-list">
+                                                        <?php $i = 0; $data = [];
+                                                        do { ?>
+                                                        <tr class="salary-item <?= $i == 0 ? 'd-none' : '' ?>">
+                                                            <td class="p-0">
+                                                                <input type="hidden" name="salary_id[]" value="<?=$data['id'] ?? ''?>">
+                                                                <?=$app->component('select',[
+                                                                    "name"=>'salary_content[]',
+                                                                    "class"=>'salary-select',
+                                                                    "options"=>$allowance_categorys,
+                                                                    "selected" => $data['content'] ?? '',
+                                                                ])?>
+                                                            </td>
+                                                            <td class="p-0">
+                                                                <div class="input-group">
+                                                                    <input placeholder="Số tiền" type="number" name="salary_price[]" value="<?=$data['price'] ?? ''?>" class="form-control p-3 number salary-price">
+                                                                    <span class="input-group-text salary-type">Tháng</span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="p-0">
+                                                                <?=$app->component('input',[
+                                                                    "name"=>'salary_notes[]',
+                                                                    "value" => $data['notes'] ?? '',
+                                                                ])?>
+                                                            </td>
+                                                            <td class="text-center p-0">
+                                                                <input type="hidden" name="salary_deleted[]" value="" class="salary-deleted-value">
+                                                                <a href="#!" class="btn btn-sm btn-danger salary-deleted"><i class="ti ti-trash fs-5"></i></a>
+                                                            </td>
+                                                        </tr>
+                                                        <?php $data = $allowances[$i] ?? ""; $i++;
+                                                        } while (!empty($allowances[$i-1])); ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+						<div class="col-lg-12">
+							<?= $jatbi->csrfField() ?>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+
+<!-- Select2 -->
+<!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Cleave.js -->
+<script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+<script type="text/javascript">
+    $('.salary-add').on('click', function () {
+        var $this = $(this).closest(".salary-table");
+        var $sourceRow  = $this.find('.salary-item:first');
+        $sourceRow.find('[data-select]').selectpicker('destroy');
+
+        var $newRow = $sourceRow.clone().removeClass('d-none');
+        $sourceRow.find('[data-select]').selectpicker();
+        $newRow.find('[data-select]').selectpicker();  
+        $this.find('.salary-list').append($newRow);
+    });
+	$(document).on('click','.salary-deleted',function(){ 
+        $(this).parents('.salary-item').hide();      
+	    $(this).parents('.salary-item').find(".salary_deleted").val("1"); 
+	});
+	// $(document).on("change",'.salary-select',function(){
+	//     var $this = $(this);
+	//     $selected = $this.find('option:selected');
+	// 	$this.parents(".salary-item").find(".salary-type").text($selected.attr("data-type"));
+	// 	$this.parents(".salary-item").find(".salary-price").val($selected.attr("data-price"));
+    // });
+</script>
