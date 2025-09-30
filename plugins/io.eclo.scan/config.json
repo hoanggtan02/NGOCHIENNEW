@@ -1,0 +1,9 @@
+{
+    "name": "Scan",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.scan",
+    "author": "ECLO",
+    "description": "Vé",
+    "requires": "1.0.0"
+}

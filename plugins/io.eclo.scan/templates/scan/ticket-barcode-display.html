@@ -1,0 +1,26 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog ticketqr" style="max-width: 900px;">
+        <div class="modal-content bg-transparent border-0 shadow-none">
+            <div class="modal-body p-0 position-relative">
+                <!-- Hình nền vé -->
+                <img src="<?=$data['background_image']?>" class="img-fluid w-100" style="display:block;">
+
+                <!-- QR code nằm trên vé -->
+                <img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=<?=$data['active']?>&choe=UTF-8"
+                    style="position:absolute; top:18%; right:10%; transform:translateY(-50%); width:120px; height:120px;">
+
+                <!-- Mã active nằm trên vé -->
+                <div style="position:absolute; top:42%; right:28%; transform:translate(150%, -50%); 
+                    color:#fff; font-weight:bold; font-size:18px; white-space:nowrap;">
+                    <?=$data['active']?>
+                </div>
+            </div>
+
+            <div class="modal-footer d-print-none justify-content-end">
+                <button class="btn btn-success btn-print">Xuất file</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+

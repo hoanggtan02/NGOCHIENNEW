@@ -1,0 +1,110 @@
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="text-center mb-3">
+                <i class="ti ti-qrcode text-eclo" style="font-size: 70px;"></i>
+                <h3 class="fw-bold mt-2">
+                    <?=$title?>
+                </h3>
+                <p class="text-muted">Quét mã QR hoặc nhập mã vé để xác thực</p>
+            </div>
+
+            <!-- <div class="input-group input-group-lg  mb-4">
+                <input id="ticket-code-input" type="text" name="code"
+                    class="form-control form-control-lg rounded-pill py-3 shadow-sm"
+                    placeholder="Nhập hoặc quét mã vé..." data-action="blur" data-url="/api/ticket-check"
+                    data-alert="true" data-selector="[ticket-result]" data-form='{"code": "#ticket-code-input.val"}'
+                    data-load="this">
+
+
+            </div> -->
+
+            <!-- <div class="w-100 position-relative" data-search="true" data-url="/api/ticket-search">
+                <input type="text" class="form-control form-control-lg rounded-pill py-3 shadow-sm border-0"
+                    placeholder="Tìm kiếm" aria-label="Search tickets">
+
+                <div class="search-results-box dropdown-menu w-100 p-2 mt-1 shadow-lg bg-white border-0"
+                    style="max-height: 300px; overflow-y: auto;">
+                </div>
+                                    <template class="search-item-template">
+                        <div
+                            class="search-item d-flex align-items-center gap-2 p-2 btn text-start border-0 bg-light-hover">
+                            <div data-attr-products="value">
+                                <strong data-name="text" class="fw-bold"></strong><br>
+                                <a data-action="click" data-load="this" data-selector="[ticket-result]"
+                                    data-attr-url="url" class="stretched-link text-decoration-none text-dark"
+                                    href="#!"></a>
+                            </div>
+                        </div>
+                    </template>
+            </div> -->
+
+
+            <div class="w-100 position-relative" data-search="true" data-url="/api/ticket-search">
+                <input type="text" class="form-control form-control-lg rounded-pill py-3 shadow-sm border-0"
+                    placeholder="Tìm kiếm" aria-label="Search tickets">
+                <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3"
+                    style="--max-height:300px;"></div>
+                <template class="search-item-template">
+                    <div class="search-item border-0 py-2 btn text-start position-relative"
+                        style="display: flex; align-items: center; gap: 10px;">
+                        <div data-attr-products="value">
+                            <strong data-name="text"></strong><br>
+                            <a data-action="click" data-alert="true" data-load="this" data-selector="[ticket-result]" data-attr-url="url"
+                                class="stretched-link" href="#!"></a>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mt-4">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold px-2">Lịch sử quét vé</h6>
+                    <div id="ticket-result-container" class="mb-3 px-2" ticket-result>
+                        <?php if($last_ticket): ?>
+                        <div class="alert alert-success d-flex align-items-center border-0">
+                            <i class="ti ti-circle-check fs-2 me-3"></i>
+                            <div>
+                                Check-in thành công mã vé <strong>
+                                    <?=$last_ticket['active']?>
+                                </strong>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small" ticket-result>
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Loại vé</th>
+                                    <th>Mã vé</th>
+                                    <th>Thông tin khách</th>
+                                    <th class="text-end">Giá vé</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if($last_ticket): ?>
+                                <tr>
+                                    <td>
+                                        <?=$last_ticket['type_name']?>
+                                    </td>
+                                    <td><strong>
+                                            <?=$last_ticket['active']?>
+                                        </strong></td>
+                                    <td>
+                                        <?=nl2br($last_ticket['guest_information'])?>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?=number_format($last_ticket['price'])?>
+                                    </td>
+                                </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

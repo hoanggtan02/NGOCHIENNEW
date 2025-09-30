@@ -1,0 +1,118 @@
+<div class="container-fluid mt-4">
+    <div class="pjax-content-load">
+        <nav class="d-flex justify-content-between align-items-center" aria-label="breadcrumb">
+            <div>
+                <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+                <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+                    <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="row justify-content-center align-items-start" data-pos>
+            <div class="container" style="max-width: 50%;">
+                <div class="card card-custom rounded-5">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <?=$app->component('input', [
+                                    "name" => "date", 
+                                    "placeholder" => $jatbi->lang("Ngày"), 
+                                    "type" => "date",
+                                    "value" => $data['date'] ?? date("Y-m-d"), 
+                                    "required" => true,
+                                    "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
+                                            data-url="/drivers/other_commission_costs-update/add/date" data-load="this"'
+                                ])?>
+                            </div>
+                            <div class="col-12">
+                                <?=$app->component('select',[
+                                    "name"=>'driver', 
+                                    "placeholder"=>$jatbi->lang("Tài xế"), 
+                                    'required' => true,
+                                    'options' => $drivers ?? [], 
+                                    'selected' => $data['driver'] ?? '', 
+                                    'attr' => 'data-action="change" data-load="this" data-selector="[data-pos]"
+                                                data-url="/drivers/other_commission_costs-update/add/driver"
+                                                data-form=\'{"value": "this.val"}\''
+                                ])?>
+                            </div>
+                            <div class="col-12">
+                                <?=$app->component('input', [
+                                    "type" => 'tel',
+                                    "name" => "price", 
+                                    "placeholder" => $jatbi->lang("Hoa hồng khác"),
+                                    "class" => "number", 
+                                    "required" => true,
+                                    "value" => $data['price'] ?? '',
+                                    "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="." 
+                                            data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
+                                            data-url="/drivers/other_commission_costs-update/add/price" data-load="this"'
+                                ])?>
+                            </div>
+                            <div class="col-md-6">
+                                <?=$app->component('select', [
+                                    "name" => "debt", 
+                                    "placeholder" => $jatbi->lang("Tài khoản nợ"),
+                                    "options" => $accountants ?? [], 
+                                    "required" => true,
+                                    "selected" => $data['debt'] ?? '',
+                                    "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\'data-selector="[data-pos]"
+                                            data-url="/drivers/other_commission_costs-update/add/debt" data-load="this"'
+                                ])?>
+                            </div>
+                            <div class="col-md-6">
+                                <?=$app->component('select',[
+                                    "name" => 'has', 
+                                    "placeholder" => $jatbi->lang("Tài khoản có"),
+                                    "options" => $accountants ?? [], 
+                                    "required" => true,
+                                    "selected" => $data['has'] ?? '',
+                                    "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\'data-selector="[data-pos]"
+                                        data-url="/drivers/other_commission_costs-update/add/has" data-load="this"'
+                                ])?>
+                            </div>
+                            <div class="col-12">
+                                <?=$app->component('input', [
+                                    "name" => "ballot", 
+                                    "placeholder" => $jatbi->lang("Số phiếu"),
+                                    "value" => $data['ballot'] ?? '',
+                                    "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
+                                        data-url="/drivers/other_commission_costs-update/add/ballot" data-load="this"'
+                                ])?>
+                            </div>
+                            <?php if(count($stores) > 1){?>
+                            <div class="col-12">
+                                <?=$app->component('select', [
+                                    "name" => 'stores', 
+                                    "placeholder" => $jatbi->lang("Cửa hàng"),
+                                    "options" => $stores ?? [], 
+                                    "required" => true,
+                                    "selected" => $data['stores']['id'] ?? '',
+                                    "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
+                                            data-url="/drivers/other_commission_costs-update/add/stores" data-load="this"'
+                                ])?>
+                            </div>
+                            <?php } ?>
+                            <div class="col-12">
+                                <?=$app->component('textarea', [
+                                    "name" => "content", "placeholder" => $jatbi->lang("Nội dung"),
+                                    "value" => $data['content'] ?? '',
+                                    "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
+                                            data-url="/drivers/other_commission_costs-update/add/content" data-load="this"'
+                                ])?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 py-3 text-end">
+                        <button class="btn btn-light rounded-pill px-4 click-update" data-action="modal"
+                            data-url="/drivers/other_commission_costs-update/add/cancel"><?=$jatbi->lang('Hủy')?></button>
+                        <button class="btn btn-eclo rounded-pill px-5 click-update" data-action="modal"
+                            data-load="/drivers/other_commission_costs"
+                            data-url="/drivers/other_commission_costs-update/add/completed"><?=$jatbi->lang('Hoàn tất')?></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

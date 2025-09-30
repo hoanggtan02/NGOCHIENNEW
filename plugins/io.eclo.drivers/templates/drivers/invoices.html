@@ -1,0 +1,152 @@
+<div class="container-fluid">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3">
+                            <?=$jatbi->lang("Điều kiện lọc")?>
+                        </div>
+
+
+                        <div class="px-3">
+                            <?=$app->component('select', [
+                                "name" => 'customers',
+                                "placeholder" => $jatbi->lang('Khách hàng'),
+                                "class" => "filter-name",
+                                "options" => $customers ?? [],
+                                "selected" => $_GET['customers'] ?? ''
+                            ])?>
+
+                            <?=$app->component('select', [
+                                "name" => 'stores',
+                                "placeholder" => $jatbi->lang('Cửa hàng'),
+                                "class" => "filter-name",
+                                "options" => $stores ?? [],
+                                "selected" => $_GET['stores'] ?? ''
+                            ])?>
+
+                            <?=$app->component('select', [
+                                "name" => 'user',
+                                "placeholder" => $jatbi->lang('Tài khoản'),
+                                "class" => "filter-name",
+                                "options" => $accounts ?? [],
+                                "selected" => $_GET['user'] ?? ''
+                            ])?>
+
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "selected" => $app->xss($_GET['date'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
+
+                            <?=$app->component('select-status-cancel',[
+                                "placeholder" => $jatbi->lang('Trạng thái'),
+                                "class" => "filter-name",
+                                "value" => $_GET['status'] ?? '',
+                            ])?>
+                        </div>
+
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button"
+                                class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button"
+                                class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if($jatbi->permission(['invoices.delete']) == 'true' || $jatbi->permission(['invoices.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['invoices.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    href="/invoices/invoices-add" style="--width:50px;--height:50px;" data-pjax>
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="custom-buttons d-none">
+            </div>
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="code_group" data-orderable="false"><?=$jatbi->lang("Mã đoàn")?></th>
+                        <th data-name="code" data-orderable="false"><?=$jatbi->lang("Mã hóa đơn")?></th>
+
+                        <th data-name="type" data-orderable="false"><?=$jatbi->lang("Loại hóa đơn")?></th>
+
+                        <th data-name="details" data-orderable="false"><?=$jatbi->lang("Sản phẩm")?></th>
+                        <th data-name="customer" data-orderable="false"><?=$jatbi->lang("Khách hàng")?></th>
+
+                        <th data-name="total" data-orderable="false"><?=$jatbi->lang("Tổng tiền")?></th>
+                        <th data-name="minus" data-orderable="false"><?=$jatbi->lang("Giảm trừ")?></th>
+                        <th data-name="discount" data-orderable="false"><?=$jatbi->lang("Giảm giá")?></th>
+
+                        <th data-name="surcharge" data-orderable="false"><?=$jatbi->lang("Phụ thu")?></th>
+                        <th data-name="transport" data-orderable="false"><?=$jatbi->lang("Vận chuyển")?></th>
+                        <th data-name="payments" data-orderable="false"><?=$jatbi->lang("Thanh toán")?></th>
+
+                        <th data-name="prepay" data-orderable="false"><?=$jatbi->lang("Đã thanh toán")?></th>
+                        <th data-name="remain" data-orderable="false"><?=$jatbi->lang("Còn lại")?></th>
+                        <th data-name="status" data-orderable="false"><?=$jatbi->lang("Trạng thái")?></th>
+                        <th data-name="notes" data-orderable="false"><?=$jatbi->lang("Ghi chú")?></th>
+                        <th data-name="date_poster" data-orderable="false"><?=$jatbi->lang("Ngày")?></th>
+                        <th data-name="user" data-orderable="false"><?=$jatbi->lang("Tài khoản")?></th>
+                        <th data-name="store" data-orderable="false"><?=$jatbi->lang("Cửa hàng")?></th>
+                        <th data-name="cancel_status" data-orderable="false"></th>
+
+
+                        <th data-name="action" data-orderable="false"><?=$jatbi->lang("Tùy chọn")?></th>
+
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <td colspan="9"></td>
+                        <th class="text-end fw-bold" id="total-crafting">Tổng</td>
+                        <th data-name="sum_prepay" data-orderable="false"></th>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

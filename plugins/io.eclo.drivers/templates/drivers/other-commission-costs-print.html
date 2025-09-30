@@ -1,0 +1,78 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative d-print-none">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="w-100">
+                    <tr>
+                        <td class="text-start align-top">
+                            <h6 class="fw-bold text-uppercase">NGỌC HIỀN PEARL<br><?=htmlspecialchars($data['store_name'] ?? '')?></h6>
+                        </td>
+                        <td class="text-end align-top">
+                            <strong>Mẫu số 02 - TT</strong>
+                            <p class="fst-italic mb-0">(Ban hành theo TT200/2014/TT-BTC)</p>
+                            <p class="mb-0"><strong>Số:</strong> <span class="me-4"><?=htmlspecialchars($data['ballot'] ?? '')?></span></p>
+                            <p class="mb-0"><strong>Nợ:</strong> <span class="me-4 fw-bold"><?=htmlspecialchars($data['debt_code'] ?? '')?></span></p>
+                            <p class="mb-0"><strong>Có:</strong> <span class="me-4 fw-bold"><?=htmlspecialchars($data['has_code'] ?? '')?></span></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-center">
+                            <h3 class="fw-bold text-uppercase"><?=$data['type'] == 1 ? $jatbi->lang('Phiếu thu') : $jatbi->lang('Phiếu chi')?></h3>
+                            <p class="fst-italic">Ngày <?=date("d", strtotime($data['date']))?> Tháng <?=date("m", strtotime($data['date']))?> Năm <?=date("Y", strtotime($data['date']))?></p>
+                        </td>
+                    </tr>
+                </table>
+                <table class="w-100">
+                    <tr>
+                        <td width="15%" class="text-nowrap">Họ tên người nhận tiền:</td>
+                        <td><strong><?=htmlspecialchars($data['recipient_name'] ?? 'N/A')?></strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-nowrap">Lý do chi:</td>
+                        <td><?=htmlspecialchars($data['content'] ?? '')?></td>
+                    </tr>
+                    <tr>
+                        <td class="text-nowrap">Số tiền:</td>
+                        <td><strong><?=number_format(abs($data['price']))?> VNĐ</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-nowrap">Bằng chữ:</td>
+                        <td class="fst-italic"><?=htmlspecialchars($jatbi->DocTienBangChu(abs($data['price'])))?></td>
+                    </tr>
+                </table>
+                <table class="w-100 mt-2">
+                    <tr class="fw-bold">
+                        <td class="text-center" width="20%">Giám đốc</td>
+                        <td class="text-center" width="20%">Kế toán trưởng</td>
+                        <td class="text-center" width="20%">Thủ quỹ</td>
+                        <td class="text-center" width="20%">Người lập phiếu</td>
+                        <td class="text-center" width="20%">Người nhận tiền</td>
+                    </tr>
+                    <tr>
+                        <td class="text-center fst-italic small">(Ký, họ tên)</td>
+                        <td class="text-center fst-italic small">(Ký, họ tên)</td>
+                        <td class="text-center fst-italic small">(Ký, họ tên)</td>
+                        <td class="text-center fst-italic small">(Ký, họ tên)</td>
+                        <td class="text-center fst-italic small">(Ký, họ tên)</td>
+                    </tr>
+                    <tr>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"><strong><?=htmlspecialchars($data['creator_name'] ?? '')?></strong></td>
+                        <td style="height:100px" class="text-center align-bottom"><strong><?=htmlspecialchars($data['recipient_name'] ?? '')?></strong></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-success" onclick="window.print();"><i class="ti ti-printer me-2"></i> <?=$jatbi->lang('In')?></button>
+            </div>
+        </div>
+    </div>
+</div>

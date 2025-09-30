@@ -1,0 +1,21 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="modal-body text-center p-4">
+                <h5 class="fw-bold text-uppercase mb-2"><?=$data['type_name']?></h5>
+                <div>
+                    <img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=<?=$data['active']?>&choe=UTF-8" 
+                         class="img-fluid my-3" alt="QR Code">
+                    <h6 class="fw-bold user-select-all" style="letter-spacing: 1px;"><?=$data['active']?></h6>
+                    <p class="fw-bold fs-5 text-success mb-0"><?=number_format($data['price'])?> VND</p>
+                </div>
+            </div>
+            <div class="modal-footer d-print-none border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal"><?=$jatbi->lang('Đóng')?></button>
+                <button type="button" class="btn btn-eclo btn-print rounded-pill px-4">
+                    <i class="ti ti-printer me-2"></i> <?=$jatbi->lang('In Vé')?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <h5 class="fw-bold"><?=$data['type_name']?></h5>
+                <div>
+                    <img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=<?=$data['active']?>&choe=UTF-8" class="img-fluid my-3">
+                    <h6 class="fw-bold"><?=$data['active']?></h6>
+                    <p class="fw-bold fs-5 text-success"><?=number_format($data['price'])?></p>
+                </div>
+            </div>
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?=$jatbi->lang('Đóng')?></button>
+                <button class="btn btn-success btn-print"><?=$jatbi->lang('In Vé')?></button>
+            </div>
+        </div>
+    </div>
+</div>

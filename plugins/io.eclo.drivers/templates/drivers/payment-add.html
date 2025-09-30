@@ -1,0 +1,66 @@
+<div class="container-fluid">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+        </ul>
+    </div>
+    <div class="row g-3">
+        <div class="col-lg-3">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <?=$app->component('input', ['name' => 'date', 'placeholder' => "Ngày", 'type' => 'date', 'value' => $data['date'] ?? date('Y-m-d'), 'attr' => 'data-action="blur" data-load="this" data-url="/drivers/driver-payment-update/'.$action.'/date" data-form=\'{"value":"this.val"}\''])?>
+                    <?=$app->component('select', ['name' => 'driver', 'placeholder' => "Tài xế", 'options' => $drivers ?? [], 'selected' => $data['driver'] ?? '', 'required' => true, 'attr' => 'data-action="change" data-load="this" data-url="/drivers/driver-payment-update/'.$action.'/driver" data-form=\'{"value":"this.val"}\''])?>
+                    
+                    <div class="row g-2">
+                        <div class="col-6"><?=$app->component('select', ['name' => 'debt', 'placeholder' => "Tài khoản nợ", 'options' => $accountants ?? [], 'selected' => $data['debt'] ?? '' ,'required' => true, 'attr' => 'data-url="/drivers/driver-payment-update/'.$action.'/debt" data-action="change" data-load="this" data-form=\'{"value":"this.val"}\''])?></div>
+                        <div class="col-6"><?=$app->component('select', ['name' => 'has', 'placeholder' => "Tài khoản có", 'options' => $accountants ?? [], 'selected' => $data['has'] ?? '', 'required' => true, 'attr' => 'data-url="/drivers/driver-payment-update/'.$action.'/has" data-action="change" data-load="this" data-form=\'{"value":"this.val"}\''])?></div>
+                    </div>
+                    <?=$app->component('input', ['name' => 'ballot', 'placeholder' => "Số phiếu", 'value' => $data['ballot'] ?? '', 'required' => true, 'attr' => 'data-action="blur" data-url="/drivers/driver-payment-update/'.$action.'/ballot" data-form=\'{"value":"this.val"}\''])?>
+                    <?=$app->component('select', ['name' => 'stores', 'placeholder' => "Cửa hàng", 'options' => $stores ?? [], 'selected' => $data['stores']['id'] ?? '', 'required' => true, 'attr' => 'data-action="change" data-url="/drivers/driver-payment-update/'.$action.'/stores" data-form=\'{"value":"this.val"}\''])?>
+                    <?=$app->component('textarea', ['name' => 'content', 'placeholder' => "Nội dung", 'value' => $data['content'] ?? '', 'rows' => 3, 'attr' => 'data-action="blur" data-url="/drivers/driver-payment-update/'.$action.'/content" data-form=\'{"value":"this.val"}\''])?>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                    <button class="btn btn-eclo-light rounded-pill px-4" data-action="click" data-load="this" data-url="/drivers/driver-payment-update/<?=$action?>/cancel"><?=$jatbi->lang('Hủy')?></button>
+                    <button class="btn btn-eclo rounded-pill px-5 ms-2" data-action="click" data-load="/drivers/driver-payment" data-print="modal" data-url="/drivers/driver-payment-update/<?=$action?>/completed"><?=$jatbi->lang('Hoàn tất')?></button>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã HĐ</th><th>Khách hàng</th><th class="text-end">Thanh toán</th><th>Ghi chú</th><th class="text-end">Doanh thu chi</th><th class="text-center">Tỷ lệ</th><th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($invoices ?? [] as $invoice): ?>
+                                    <tr>
+                                        <td><a class="text-nowrap pjax-load" href="/invoices/invoices-views/<?=$invoice['id']?>/">#<?=$invoice['code'] . $invoice['id']?></a></td>
+                                        <td><?=$invoice['customer_name']?></td>
+                                        <td class="text-end fw-bold text-success"><?=number_format($invoice['total'] - $invoice['discount_price'] - $invoice['minus'])?></td>
+                                        <td><?=htmlspecialchars($invoice['notes'])?></td>
+                                        <td><input type="text" class="form-control form-control-sm text-end number" value="<?=number_format($data['invoices'][$invoice['id']]['payment'] ?? 0)?>" data-load="true" data-action="blur" data-url="/drivers/driver-payment/update/<?=$action?>/invoices/<?=$invoice['id']?>/payment" data-form='{"value":"this.val"}'></td>
+                                        <td><div class="input-group input-group-sm"><input type="text" class="form-control form-control-sm text-center" value="<?=$data['invoices'][$invoice['id']]['rate'] ?? ''?>" data-load="true" data-action="blur" data-url="/drivers/driver-payment/update/<?=$action?>/invoices/<?=$invoice['id']?>/rate" data-form='{"value":"this.val"}'><span class="input-group-text">%</span></div></td>
+                                        <td><input type="text" class="form-control form-control-sm text-end fw-bold number" value="<?=number_format($data['invoices'][$invoice['id']]['price'] ?? 0)?>" data-load="true" data-action="blur" data-url="/drivers/driver-payment/update/<?=$action?>/invoices/<?=$invoice['id']?>/price" data-form='{"value":"this.val"}'></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                             <tfoot>
+                                <tr class="fw-bold table-light">
+                                    <td colspan="6" class="text-end fs-6 py-3"><?=$jatbi->lang('Tổng cộng')?></td>
+                                    <td class="text-end fs-5 py-3"><?=number_format($data['total'] ?? 0)?></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

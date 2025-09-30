@@ -1,0 +1,9 @@
+{
+    "name": "Drivers",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.drivers",
+    "author": "ECLO",
+    "description": "Nội bộ",
+    "requires": "1.0.0"
+}
