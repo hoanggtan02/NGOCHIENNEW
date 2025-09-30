@@ -1,0 +1,9 @@
+{
+    "name": "Stores",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.stores",
+    "author": "ECLO",
+    "description": "Cưa hàng",
+    "requires": "1.0.0"
+}
