@@ -12,18 +12,28 @@
     $app->setComponent('footer', function($vars) use ($app, $setting, $jatbi) {
         require_once($setting['template'].'/components/footer.html');
     }); 
-    $app->setComponent('sidebar', function($vars) use ($app, $setting, $jatbi) {
-        if($app->getSession("accounts")){
+    $app->setComponent('sidebar', function ($vars) use ($app, $setting, $jatbi) {
+        if ($app->getSession("accounts")) {
             $SelectMenu = $app->getValueData('menu');
-            $account = $app->getValueData("account");
-            $getsetting = $app->get("settings","*",["account"=>$account['id']]);
-            $notification = $app->count("notifications","id",["account"=>$account['id'],"views"=>0]);
-            $getRouter = explode("/",$app->getRoute());
+            $account = $app->get("accounts", "*", ["id" => $app->getSession("accounts")['id'], "status" => "A"]);
+            $getsetting = $app->get("settings", "*", ["account" => $account['id']]);
+            $notification = $app->count("notifications", "id", ["account" => $account['id'], "views" => 0]);
+            $account = $app->get("accounts", "*", [
+                "id" => $app->getSession("accounts")['id'] ?? 0,
+                "deleted" => 0,
+                "status" => "A",
+            ]);
+            if ($account['stores'] == "") {
+                $List_Stores = $app->select("stores", ["id", "name", "code"], ["deleted" => 0, "status" => 'A']);
+            } else {
+                $List_Stores = $app->select("stores", ["id", "name", "code"], ["id" => unserialize($account['stores']), "deleted" => 0, "status" => 'A']);
+            }
+            $getRouter = explode("/", $app->getRoute());
             if (isset($getRouter[1]) && $getRouter[1] === trim($setting['manager'], '/')) {
                 array_shift($getRouter);
             }
         }
-        require_once($setting['template'].'/components/sidebar.html');
+        require_once($setting['template'] . '/components/sidebar.html');
     });
     //status Component
     $app->setComponent('status', function($vars) use ($app, $setting, $jatbi) {
