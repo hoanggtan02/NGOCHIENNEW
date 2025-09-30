@@ -1,10 +1,12 @@
 <?php
-    $jatbi = $app->getValueData('jatbi');
-    $setting = $app->getValueData('setting');
-    return [
-        "content" => [
-            "item" => [
-          'stores' => [
+
+$jatbi = $app->getValueData('jatbi');
+$setting = $app->getValueData('setting');
+return [
+    "page" => [
+        "name" => $jatbi->lang("Quản trị"),
+        "item" => [
+            'stores' => [
                 "menu" => $jatbi->lang("Cửa hàng"),
                 "url" => '/stores/',
                 "icon" => '<i class="ti ti-home"></i>',
@@ -41,8 +43,6 @@
                     'stores-types.deleted' => $jatbi->lang("xóa loại cửa hàng"),
                 ]
             ],
-            ],
         ],
-    ];
-
-?>
+    ],
+];
