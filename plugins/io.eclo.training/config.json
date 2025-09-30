@@ -1,0 +1,9 @@
+{
+    "name": "Training",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.training",
+    "author": "ECLO",
+    "description": "Đào tạo",
+    "requires": "1.0.0"
+}

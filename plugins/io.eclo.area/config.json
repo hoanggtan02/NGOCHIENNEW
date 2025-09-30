@@ -1,0 +1,9 @@
+{
+    "name": "Area",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.area",
+    "author": "ECLO",
+    "description": "Khu vực",
+    "requires": "1.0.0"
+}

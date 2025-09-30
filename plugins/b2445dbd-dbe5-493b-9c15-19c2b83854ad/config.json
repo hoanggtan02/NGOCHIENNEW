@@ -1,9 +1,0 @@
-{
-    "name": "Accountants",
-    "version": "1.0.0",
-    "install" : "true",
-    "id": "io.eclo.accountants",
-    "author": "ECLO",
-    "description": "Kế toán",
-    "requires": "1.0.0"
-}

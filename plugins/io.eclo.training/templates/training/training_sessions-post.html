@@ -1,0 +1,48 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close "
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <?=$app->component('select', ['name' => 'course_id', 'placeholder' => "Chọn khóa học", 'options' => $courses ?? [], 'selected' => $data['course_id'] ?? '', 'required' => true])?>
+                        </div>
+                        <div class="col-12">
+                            <?=$app->component('input', ['name' => 'trainer', 'placeholder' => "Giảng viên / Đơn vị đào tạo", 'value' => $data['trainer'] ?? ''])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', ['name' => 'start_date', 'placeholder' => "Ngày bắt đầu", 'type' => 'datetime-local', 'value' => !empty($data['start_date']) ? date('Y-m-d\TH:i', strtotime($data['start_date'])) : '', 'required' => true])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', ['name' => 'end_date', 'placeholder' => "Ngày kết thúc", 'type' => 'datetime-local', 'value' => !empty($data['end_date']) ? date('Y-m-d\TH:i', strtotime($data['end_date'])) : ''])?>
+                        </div>
+                        <div class="col-12">
+                            <?=$app->component('input', ['name' => 'location', 'placeholder' => "Địa điểm", 'value' => $data['location'] ?? ''])?>
+                        </div>
+                        <div class="col-12">
+                            <?=$app->component('select-status',[
+                                "value" => $data['status'] ?? 'A', 
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
