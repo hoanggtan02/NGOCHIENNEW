@@ -1,0 +1,150 @@
+<div class="container-fluid">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                            <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                            style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?php if(count($stores) > 1){ ?>
+                                <?=$app->component('select',[
+                                    "name"=>'stores',
+                                    "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                    "selected" => $app->xss($_GET['stores'] ?? ''),
+                                    "class" => 'filter-name',
+                                    "attr" => 'data-width="100%"',
+                                    "options" => $stores ?? []
+                                ])?>
+                                <?php } ?>
+                                <?=$app->component('select',[
+                                "name" => 'branchss',
+                                "placeholder" => $jatbi->lang("Quầy hàng"),
+                                "selected" => $app->xss($_GET['branchss'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $branchs ?? []
+                            ])?>
+                                <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
+                            </div>
+                            <div class="px-3 py-2 text-end w-100">
+                                <button type="reset"
+                                    class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                                <button type="submit"
+                                    class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="custom-buttons d-none">
+                <a href="/reports/inventory-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>" class="btn btn-eclo">
+                    <?=$jatbi->lang("Xuất excel")?>
+                </a>
+            </div>
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' data-columns='[
+                    {"data":"ma-san-pham","orderable":false},
+                    {"data":"ten","orderable":false},
+                    {"data":"dau-ky","orderable":false},
+                    {"data":"sl-nhap","orderable":false},
+                    {"data":"san-pham-loi","orderable":false},
+                    {"data":"chuyen-hang","orderable":false},
+                    {"data":"ban-hang","orderable":false},
+                    {"data":"cuoi-ky","orderable":false},
+                    {"data":"don-gia","orderable":false},
+                    {"data":"action","orderable":false}
+                ]' style="width:100%">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="text-center text-nowrap"><?=$jatbi->lang('Mã sản phẩm')?></th>
+                        <th rowspan="2" class="text-center text-nowrap"><?=$jatbi->lang('Tên')?></th>
+                        <th colspan="1" class="text-center text-dark fw-bold"><?=$jatbi->lang('Đầu kỳ')?></th>
+                        <th colspan="1" class="text-center text-dark fw-bold"><?=$jatbi->lang('Số lượng nhập')?></th>
+                        <th colspan="3" class="text-center text-dark fw-bold"><?=$jatbi->lang('Số lượng xuất')?></th>
+                        <th colspan="1" class="text-center text-dark fw-bold"><?=$jatbi->lang('Cuối kỳ')?></th>
+                        <th rowspan="2" class="text-center text-dark fw-bold"><?=$jatbi->lang('Đơn giá')?></th>
+                        <th rowspan="2" class="text-center text-dark fw-bold"></th>
+                    </tr>
+                    <tr>
+                        <th data-name="dau-ky" class="bg-primary bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('Số lượng')?>
+                        </th>
+                        <th data-name="sl-nhap" class="bg-success bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('SL nhập')?>
+                        </th>
+                        <th data-name="san-pham-loi" class="bg-warning bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('Sản phẩm lỗi')?>
+                        </th>
+                        <th data-name="chuyen-hang" class="bg-warning bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('Chuyển hàng')?>
+                        </th>
+                        <th data-name="ban-hang" class="bg-warning bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('Bán hàng')?>
+                        </th>
+                        <th data-name="cuoi-ky" class="bg-danger bg-opacity-25 text-center text-dark fw-bold">
+                            <?=$jatbi->lang('Số lượng')?>
+                        </th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th colspan="2" class="text-end text-nowrap"><?=$jatbi->lang('Tổng')?></th>
+                        <th data-name="tong-dauky" class="text-center"></th>
+                        <th data-name="tong-nhap" class="text-center"></th>
+                        <th data-name="tong-sp-loi" class="text-center"></th>
+                        <th data-name="tong-chuyenhang" class="text-center"></th>
+                        <th data-name="tong-banhang" class="text-center"></th>
+                        <th data-name="tong-cuoiky" class="text-center"></th>
+                        <th data-name="tong-price" class="text-center"></th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th colspan="2" class="text-end text-nowrap"><?=$jatbi->lang('Tổng theo điều kiện lọc')?></th>
+                        <th data-name="tong-loc-dauky" class="text-center"></th>
+                        <th data-name="tong-loc-nhap" class="text-center"></th>
+                        <th data-name="tong-loc-sp-loi" class="text-center"></th>
+                        <th data-name="tong-loc-chuyenhang" class="text-center"></th>
+                        <th data-name="tong-loc-banhang" class="text-center"></th>
+                        <th data-name="tong-loc-cuoiky" class="text-center"></th>
+                        <th data-name="tong-loc-price" class="text-center"></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

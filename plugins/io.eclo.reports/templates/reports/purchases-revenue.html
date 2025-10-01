@@ -1,0 +1,160 @@
+<div class="container-fluid">
+	<div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur" style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3">
+                            <?=$jatbi->lang("Điều kiện lọc")?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3">
+                            <?=$app->component('select',[
+                                "name" => 'vendor',
+                                "placeholder" => $jatbi->lang("Nhà cung cấp"),
+                                "selected" => $app->xss($_GET['vendor'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $vendors ?? []
+                            ])?>
+                            <?=$app->component('select',[
+                                "name" => 'status_pay',
+                                "placeholder" => $jatbi->lang("Trạng thái"),
+                                "selected" => $app->xss($_GET['status_pay'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $Status_invoices ?? []
+                            ])?>
+                            <?=$app->component('select',[
+                                "name" => 'status',
+                                "placeholder" => $jatbi->lang("Tiến trình"),
+                                "selected" => $app->xss($_GET['status'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $Status_purchase ?? []
+                            ])?>
+                            <?=$app->component('input',[
+                                "name" => 'date',
+                                "placeholder" => $jatbi->lang("Ngày"),
+                                "value" => $app->xss($_GET['date'] ?? (date('01/m/Y') . ' - ' . date('d/m/Y'))),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
+                        </div>
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button" class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php if($jatbi->permission(['purchases-revenue.deleted']) == 'true' || $jatbi->permission(['purchases-revenue.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center " style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['purchases-revenue.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="<?=$jatbi->url('/customers/customers-deleted')?>" style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+            <?php if($jatbi->permission(['purchases-revenue.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-url="<?=$jatbi->url('/customers/customers-add')?>" style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <table id="datatable" 
+                data-table 
+                class="table align-middle" 
+                data-type="POST" 
+                data-server="true" 
+                data-processing="true" 
+                data-page-length="10"
+                data-searching="true"
+                data-paging="true"
+                data-state-save='true'
+                data-columns='[
+                    {"data":"ma-don-hang","orderable":false},
+                    {"data":"nha-cung-cap","orderable":false},
+                    {"data":"tong-tien","orderable":false},
+                    {"data":"giam-tru","orderable":false},
+                    {"data":"giam-gia","orderable":false},
+                    {"data":"phu-thu","orderable":false},
+                    {"data":"thanh-toan","orderable":false},
+                    {"data":"da-thanh-toan","orderable":false},
+                    {"data":"con-lai","orderable":false},
+                    {"data":"trang-thai","orderable":false},
+                    {"data":"ngay","orderable":true},
+                    {"data":"tai-khoan","orderable":false},
+                    {"data":"action-view","orderable":false}
+                ]'
+                style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="ma-don-hang" data-dt-column="0" data-searchable="false" class="text-center text-nowrap"><?=$jatbi->lang("MÃ ĐƠN HÀNG")?></th>
+                        <th data-name="nha-cung-cap" data-dt-column="1" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("NHÀ CUNG CẤP")?></th>
+                        <th data-name="tong-tien" data-dt-column="2" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("TỔNG TIỀN")?></th>
+                        <th data-name="giam-tru" data-dt-column="3" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("GIẢM TRỪ")?></th>
+                        <th data-name="giam-gia" data-dt-column="4" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("GIẢM GIÁ")?></th>
+                        <th data-name="phu-thu" data-dt-column="5" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("PHỤ THU")?></th>
+                        <th data-name="thanh-toan" data-dt-column="6" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("THANH TOÁN")?></th>
+                        <th data-name="da-thanh-toan" data-dt-column="7" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("ĐÃ THANH TOÁN")?></th>
+                        <th data-name="con-lai" data-dt-column="8" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("CÒN LẠI")?></th>
+                        <th data-name="trang-thai" data-dt-column="9" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("TRẠNG THÁI")?></th>
+                        <th data-name="ngay" data-dt-column="10" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("NGÀY")?></th>
+                        <th data-name="tai-khoan" data-dt-column="11" data-orderable="false" class="text-center text-nowrap"><?=$jatbi->lang("TÀI KHOẢN")?></th>
+                        <th data-name="action-view" data-dt-column="12" data-orderable="false" class="text-center text-nowrap"></th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr class="bg-success bg-opacity-25">
+                        <th colspan="2" class="text-end fw-bold"><?=$jatbi->lang("TỔNG CỘNG")?></th>
+                        <th data-name="tong-tien" class="text-end fw-bold text-primary"></th>
+                        <th data-name="giam-tru" class="text-end fw-bold text-info"></th>
+                        <th data-name="giam-gia" class="text-end fw-bold text-info"></th>
+                        <th data-name="phu-thu" class="text-end fw-bold text-info"></th>
+                        <th data-name="thanh-toan" class="text-end fw-bold text-success"></th>
+                        <th data-name="da-thanh-toan" class="text-end fw-bold text-warning"></th>
+                        <th data-name="con-lai" class="text-end fw-bold text-danger"></th>
+                        <th colspan="4"></th>
+                    </tr>
+                    <tr class="bg-warning bg-opacity-25">
+                        <th colspan="2" class="text-end fw-bold"><?=$jatbi->lang("ĐẦU KỲ")?></th>
+                        <th data-name="tong-tien-dau-ky" class="text-end fw-bold text-primary"></th>
+                        <th data-name="giam-tru-dau-ky" class="text-end fw-bold text-info"></th>
+                        <th data-name="giam-gia-dau-ky" class="text-end fw-bold text-info"></th>
+                        <th data-name="phu-thu-dau-ky" class="text-end fw-bold text-info"></th>
+                        <th data-name="thanh-toan-dau-ky" class="text-end fw-bold text-success"></th>
+                        <th data-name="da-thanh-toan-dau-ky" class="text-end fw-bold text-warning"></th>
+                        <th data-name="con-lai-dau-ky" class="text-end fw-bold text-danger"></th>
+                        <th colspan="4"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

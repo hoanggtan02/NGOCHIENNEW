@@ -1,0 +1,112 @@
+<div class="container-fluid mt-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:320px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3"><?=$jatbi->lang("Điều kiện lọc")?></div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3">
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => $app->xss($_GET['date'] ?? (date('01/m/Y') . ' - ' . date('d/m/Y'))),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="reset"
+                                class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="submit"
+                                class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mt-4">
+        <div class="card-body">
+            <div class="custom-buttons d-none">
+                <a href="/reports/revenue_personnels-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>"
+                    class="btn btn-eclo">
+                    <?=$jatbi->lang("Xuất excel")?>
+                </a>
+            </div>
+
+
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="25" data-searching="true" data-paging="true"
+                data-state-save="true" style="width:100%">
+                <thead>
+                    <tr>
+
+
+                        <th data-name="code" data-searchable="true" data-orderable="true" class="text-nowrap"
+                            data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Mã nhân viên")?></th>
+                        <th data-name="name" data-searchable="true" data-orderable="true" data-visible="true">
+                            <?=$jatbi->lang("Tên nhân viên")?>
+                        </th>
+                        <th data-name="doanh_so_ban" class="text-end" data-searchable="false" data-orderable="false"
+                            class="text-nowrap" data-visible="true" data-class="text-nowrap">
+                            <?=$jatbi->lang("Doanh số bán")?>
+                        </th>
+                        <th data-name="chiet_khau" class="text-end" data-searchable="false" data-orderable="false"
+                            class="text-nowrap" data-visible="true" data-class="text-nowrap">
+                            <?=$jatbi->lang("Chiết khấu")?>
+                        </th>
+                        <th data-name="gia_tri_tra_lai" class="text-end" data-searchable="false" data-orderable="false"
+                            class="text-nowrap" data-visible="true" data-class="text-nowrap">
+                            <?=$jatbi->lang("Giá trị trả lại")?>
+                        </th>
+                        <th data-name="gia_tri_giam_gia" class="text-end" data-searchable="false" data-orderable="false"
+                            class="text-nowrap" data-visible="true" data-class="text-nowrap">
+                            <?=$jatbi->lang("Giá trị giảm giá")?>
+                        </th>
+                        <th data-name="doanh_thu_thuan" class="text-end" data-searchable="false" data-orderable="false"
+                            class="text-nowrap" data-visible="true" data-class="text-nowrap">
+                            <?=$jatbi->lang("Doanh thu thuần")?>
+                        </th>
+                        <th data-name="cua_hang" data-searchable="false" data-orderable="true" data-visible="true">
+                            <?=$jatbi->lang("Cửa hàng")?>
+                        </th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr class="bg-warning bg-opacity-25">
+                        <th colspan="2" class="text-end fw-bold fs-7"><?=$jatbi->lang('Tổng')?></th>
+                        <th data-name="total_doanhthu_page" class="text-end fw-bold fs-7 text-primary"></th>
+                        <th data-name="total_chietkhau_page" class="text-end fw-bold fs-7 text-success"></th>
+                        <th data-name="total_tralai_page" class="text-end fw-bold fs-7 text-success"></th>
+                        <th></th>
+                        <th data-name="total_doanhthuthuan_page" class="text-end fw-bold fs-7 text-success"></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

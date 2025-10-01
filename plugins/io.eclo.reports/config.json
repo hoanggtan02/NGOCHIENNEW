@@ -1,0 +1,9 @@
+{
+    "name": "Reports",
+    "version": "1.0.0",
+    "install": "true",
+    "id": "io.eclo.reports",
+    "author": "ECLO",
+    "description": "Báo cáo",
+    "requires": "1.0.0"
+}

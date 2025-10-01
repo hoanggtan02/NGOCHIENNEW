@@ -1,0 +1,40 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone" >
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <div class="row g-3">
+                    <div class="col-sm-12">
+                        <div class="mb-3">
+                            <label class="form-label"><?=$jatbi->lang("Phần trăm")?></label>
+                            <div class="input-group">
+                                <input type="tel" 
+                                    name="precent" 
+                                    class="form-control rounded-4 p-3 bg-body"
+                                    required
+                                    value="<?=$data ?? ''?>"
+                                    placeholder="<?=$jatbi->lang("Phần trăm")?>"
+                                    data-number="money" 
+                                    data-currency="" 
+                                    data-decimals="0" 
+                                    data-thousands="," 
+                                    data-decimal="." 
+                                    data-action="blur" 
+                                    data-form='{"value": "this.val"}' 
+                                    data-selector="[data-pos-payment]"
+                                    data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/discount/add" 
+                                    data-load="this">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,9 @@
+{
+    "name": "Invoice-sale",
+    "version": "1.0.0",
+    "install": "true",
+    "id": "io.eclo.invoice-sale",
+    "author": "ECLO",
+    "description": "Bán hàng",
+    "requires": "1.0.0"
+}
