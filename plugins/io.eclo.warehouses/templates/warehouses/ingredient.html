@@ -1,0 +1,499 @@
+<!-- <div class="container-fluid mt-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="filter-search">
+             <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:500px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3">
+                            <?=$jatbi->lang("Điều kiện lọc")?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="p-3">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Loại')?></label>
+                                    <select name="type" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <option value="1"><?=$jatbi->lang('Đai')?></option>
+                                        <option value="2"><?=$jatbi->lang('Ngọc')?></option>
+                                        <option value="3"><?=$jatbi->lang('Khác')?></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Loại ngọc')?></label>
+                                    <select name="pearl" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($pearls as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Li ngọc')?></label>
+                                    <select name="sizes" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($sizess as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Màu sắc')?></label>
+                                    <select name="colors" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($colors as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Nhóm sản phẩm')?></label>
+                                    <select name="group" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($groups as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Danh mục')?></label>
+                                    <select name="categorys" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($categorys as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Đơn vị')?></label>
+                                    <select name="units" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($units as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><?=$jatbi->lang('Cửa hàng')?></label>
+                                    <select name="stores" class="form-select filter-name">
+                                        <option value=""><?=$jatbi->lang('Tất cả')?></option>
+                                        <?php foreach ($stores as $item): ?>
+                                            <option value="<?=$item['id']?>"><?=$item['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                     <?=$app->component('select-status',["value" => $app->xss($_GET['status'] ?? '')])?>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button" class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if($jatbi->permission(['ingredient.deleted']) == 'true' || $jatbi->permission(['ingredient.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center"
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['ingredient.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal-confirm" data-checkbox="input.checker" data-url="<?=$jatbi->url($setting['manager'].'/warehouses/ingredient-deleted')?>"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+            <?php if($jatbi->permission(['ingredient.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-url="<?=$jatbi->url($setting['manager'].'/warehouses/ingredient-add')?>" style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-url="<?=$jatbi->url($setting['manager'].'/warehouses/ingredient')?>" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="checkbox" data-orderable="false" class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" data-checkbox="input.checker"></div></th>
+                        <th data-name="type"><?=$jatbi->lang("Loại")?></th>
+                        <th data-name="code"><?=$jatbi->lang("Mã")?></th>
+                        <th data-name="name_ingredient"><?=$jatbi->lang("Tên")?></th>
+                        <th data-name="thuoc_tinh_1" data-orderable="false"><?=$jatbi->lang("Loại ngọc")?></th>
+                        <th data-name="thuoc_tinh_2" data-orderable="false"><?=$jatbi->lang("Li ngọc")?></th>
+                        <th data-name="thuoc_tinh_3" data-orderable="false"><?=$jatbi->lang("Màu sắc")?></th>
+                        <th data-name="amount" class="text-end"><?=$jatbi->lang("Số lượng")?></th>
+                        <th data-name="units"><?=$jatbi->lang("Đơn vị")?></th>
+                        <th data-name="price" class="text-end"><?=$jatbi->lang("Giá tiền")?></th>
+                        <th data-name="status" class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
+                        <th data-name="action" data-orderable="false" class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                    </tr>
+                </thead>
+                 <tfoot>
+                    <tr>
+                        <th colspan="7" class="text-end fw-bold">Tổng cộng:</th>
+                        <th data-name="totalAmount" class="text-end fw-bold"></th>
+                        <td colspan="4"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div> -->
+
+
+
+
+<div class="container-fluid mt-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+
+        <div class="filter-search">
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:500px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3">
+                            <?=$jatbi->lang("Điều kiện lọc")?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="p-3">
+                            <div class="row">
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang('Tất cả'),
+                                "class" => "filter-name",
+                                "options" => $type_options,
+                                "selected" => $_GET['type'] ?? '',
+                                ])?>
+                                </div>
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'pearl',
+                                "placeholder" => $jatbi->lang('Loại ngọc'),
+                                "class" => "filter-name",
+                                "options" => $pearl ?? [],
+                                "selected" => $_GET['pearl'] ?? ''
+                            ])?>
+                                </div>
+                                <div class="col-md-6">
+                                    <?=$app->component('select', [
+                                "name" => 'sizes',
+                                "placeholder" => $jatbi->lang('Li ngọc'),
+                                "class" => "filter-name",
+                                "options" => $sizess ?? [],
+                                "selected" => $_GET['sizes'] ?? ''
+                            ])?>
+                                </div>
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'colors',
+                                "placeholder" => $jatbi->lang('Màu sắc'),
+                                "class" => "filter-name",
+                                "options" => $colors ?? [],
+                                "selected" => $_GET['colors'] ?? ''
+                            ])?>
+                                </div>
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'group',
+                                "placeholder" => $jatbi->lang('Nhóm sản phẩm'),
+                                "class" => "filter-name",
+                                "options" => $groups ?? [],
+                                "selected" => $_GET['group'] ?? ''
+                            ])?>
+                                </div>
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'categorys',
+                                "placeholder" => $jatbi->lang('Danh mục'),
+                                "class" => "filter-name",
+                                "options" => $categorys ?? [],
+                                "selected" => $_GET['categorys'] ?? ''
+                            ])?>
+                                </div>
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select', [
+                                "name" => 'units',
+                                "placeholder" => $jatbi->lang('Đơn vị'),
+                                "class" => "filter-name",
+                                "options" => $units ?? [],
+                                "selected" => $_GET['units'] ?? ''
+                            ])?>
+                                </div>
+                                <!-- <div class="col-md-6 ">
+                               <?php if(count($stores) > 1){ ?>
+                            <?=$app->component('select',[
+                                "name"=>'stores',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $app->xss($_GET['stores'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $stores ?? []
+                            ])?>
+                            <?php } ?>
+                                </div> -->
+                                <div class="col-md-6 ">
+                                    <?=$app->component('select-status',["value" => $app->xss($_GET['status'] ?? '')])?>
+                                </div>
+
+                                <!-- <div class="col-md-4 ">
+                                    <label><?=$jatbi->lang('Khoảng')?></label>
+                                    <select name="sosanh" class="form-select filter-name">
+                                        <option value="">Chọn</option>
+                                        <option value=">">Lớn hơn</option>
+                                        <option value="<">Nhỏ hơn</option>
+                                        <option value="<>">Trong khoảng</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><?=$jatbi->lang('Số lượng / Từ')?></label>
+                                    <input placeholder="Số lượng / Từ" type="text" name="amount_from"
+                                        class="form-control filter-name">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><?=$jatbi->lang('Đến')?></label>
+                                    <input placeholder="Đến" type="text" name="amount_to"
+                                        class="form-control filter-name">
+                                </div> -->
+
+
+
+                                <div class="col-md-4">
+
+                                    <?=$app->component('select', [
+        'name' => 'sosanh',
+        'placeholder' => $jatbi->lang('Chọn'), 
+        'options' => [
+            ['value' => '', 'text' => ''],
+            ['value' => '>', 'text' => 'Lớn hơn'],
+            ['value' => '<', 'text' => 'Nhỏ hơn'],
+            ['value' => '<>', 'text' => 'Trong khoảng']
+        ],
+        'selected' => $_GET['sosanh'] ?? '',
+        'class' => 'filter-name'
+    ])?>
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <?=$app->component('input', [
+        'name' => 'amount_from',
+        'placeholder' => $jatbi->lang('Số lượng / Từ'),
+        'class' => 'filter-name number', // Giả sử bạn có class 'number' để định dạng
+        'value' => $_GET['amount_from'] ?? ''
+    ])?>
+                                </div>
+
+                                <div class="col-md-4">
+
+                                    <?=$app->component('input', [
+        'name' => 'amount_to',
+        'placeholder' => $jatbi->lang('Đến'),
+        'class' => 'filter-name number',
+        'value' => $_GET['amount_to'] ?? ''
+    ])?>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button"
+                                class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button"
+                                class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if($jatbi->permission(['ingredient.deleted']) == 'true' || $jatbi->permission(['ingredient.add']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['ingredient.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-checkbox="input.checker"
+                    data-url="<?=$jatbi->url('/warehouses/ingredient-deleted')?>" style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+            <?php if($jatbi->permission(['ingredient.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-url="<?=$jatbi->url('/warehouses/ingredient-add')?>"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <!-- <div class="custom-buttons d-none">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-eclo dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="ti ti-truck-loading"></i> <?=$jatbi->lang('Nhập hàng')?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 bg-blur shadow-lg rounded-4"
+                        style="--blur:10px;">
+                        <li>
+                          <a class="dropdown-item pjax-load"
+                            href="/warehouses/ingredient-import-history"><?=$jatbi->lang("Lịch sử nhập hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                            href="/warehouses/ingredient-export-history"><?=$jatbi->lang("Lịch sử xuất hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                            href="/warehouses/ingredient-cancel-history"><?=$jatbi->lang("Lịch sử hủy hàng")?></a>
+                        </li>
+                      
+                    </ul>
+                </div>
+            </div> -->
+            <div class="custom-buttons d-none">
+                <button data-action="modal" type="button" class="btn btn-eclo me-2" data-bs-toggle="modal"
+                    data-url="/warehouses/ingredient-excel">
+                    <i class="ti ti-file-import me-1"></i> <?=$jatbi->lang('Import Excel')?>
+                </button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-eclo dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="ti ti-truck-loading"></i> <?=$jatbi->lang('Nhập hàng')?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 bg-blur shadow-lg rounded-4"
+                        style="--blur:10px;">
+                        <li>
+                            <a class="dropdown-item pjax-load" href="/warehouses/ingredient-import" data-pjax-state>Nhập
+                                hàng thủ công</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load" href="/warehouses/ingredient-import-crafting"
+                                data-pjax-state>Nhập hàng từ chế tác</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load" href="/warehouses/ingredient-move" data-pjax-state>Chuyển
+                                qua kho thành phẩm</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load" href="/warehouses/ingredient-export" data-pjax-state>Xuất
+                                kho chế tác</a>
+                        </li>
+                        <hr class="border-secondary border-opacity-50 my-2">
+
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-import-history"><?=$jatbi->lang("Lịch sử nhập hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-export-history"><?=$jatbi->lang("Lịch sử xuất hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-cancel-history"><?=$jatbi->lang("Lịch sử hủy hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load" href="/warehouses/logs_warehouses/ingredient"
+                                data-pjax-state>Nhật ký</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="checkbox" data-orderable="false">
+                            <div class="form-check"><input class="form-check-input checkall" type="checkbox"
+                                    data-checkbox="input.checker"></div>
+                        </th>
+                        <th data-name="type"><?=$jatbi->lang("Loại")?></th>
+                        <th data-name="code"><?=$jatbi->lang("Mã")?></th>
+                        <th data-name="name_ingredient"><?=$jatbi->lang("Tên")?></th>
+                        <th data-name="pearl" data-orderable="false"><?=$jatbi->lang("Loại ngọc")?></th>
+                        <th data-name="sizes" data-orderable="false"><?=$jatbi->lang("Li ngọc")?></th>
+                        <th data-name="colors" data-orderable="false"><?=$jatbi->lang("Màu sắc")?></th>
+                        <th data-name="amount" class="text-end"><?=$jatbi->lang("Số lượng")?></th>
+                        <th data-name="units"><?=$jatbi->lang("Đơn vị")?></th>
+                        <th data-name="price" class="text-end"><?=$jatbi->lang("Giá tiền")?></th>
+                        <th data-name="status"><?=$jatbi->lang("Trạng thái")?></th>
+                        <th data-name="action" data-orderable="false"><?=$jatbi->lang("Tùy chọn")?>
+                        </th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th colspan="7" class="text-end fw-bold"><?=$jatbi->lang('Tổng:')?></th> <!-- từ cột 1 đến 7 -->
+                        <th data-name="totalAmount" class="text-end fw-bold"></th>
+                        <th></th>
+                        <th data-name="totalPrice" class="text-end fw-bold"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

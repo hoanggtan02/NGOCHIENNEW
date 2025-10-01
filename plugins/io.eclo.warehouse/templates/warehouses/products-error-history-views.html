@@ -1,0 +1,119 @@
+
+
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content"  style="background-color: white;">
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; color: #000;">
+                    <div class="font-weight-bold" style="display: inline-block; text-transform: uppercase; width: 60%;">
+                        <h6 class="p-0 m-0">CÔNG TY TNHH MỘT THÀNH VIÊN NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</h6>
+                    </div>
+                    <div class="text-center" style="display: inline-block; width: 40%;">
+                        <strong>Mẫu số 01 - VT</strong><br>
+                        <h6><i>(Ban hành theo Thông tư số 133/2016/TT-BTC Ngày 26/08/2016 của Bộ Tài Chính)</i></h6>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #000;">
+                    <div class="font-weight-bold" style="text-align: center; display: inline-block; text-transform: uppercase; width: 100%;">
+                        <?php if ($data['type'] == 'remove') { ?>
+                            <h4 style="color: #000;">PHIẾU CHUYỂN VỀ CHẾ TÁC</h4>
+                        <?php } elseif ($data['type'] == 'delete') { ?>
+                            <h4 style="color: #000;">PHIẾU HỦY HÀNG</h4>
+                        <?php } elseif ($data['type'] == 'error') { ?>
+                            <h4 style="color: #000;">PHIẾU HÀNG LỖI</h4>
+                        <?php } ?>
+                        <h6><i><?=$jatbi->lang('ngay')?>: <?=date($setting['site_date'] ?? 'd/m/Y', strtotime($data['date']))?></i></h6>
+                    </div>
+                </div>
+                <table style="width: 100%;">
+                    <?php if ($data['type'] == 'remove') { ?>
+                        <tr>
+                            <td style="color: #000;"><?=$jatbi->lang('Mã nhập hàng')?>: #<?=$data['code']?><?=$data['id']?></td>
+                            <td style="color: #000;"><?=$jatbi->lang('Tài khảon')?>: <?=htmlspecialchars($user_name)?></td>
+                        </tr>
+                    <?php } elseif ($data['type'] == 'delete') { ?>
+                        <tr>
+                            <td style="color: #000;"><?=$jatbi->lang('Mã chuyển hàng')?>: #<?=$data['type']?><?=$data['id']?></td>
+                            <td style="color: #000;"><?=$jatbi->lang('Tài khoản')?>: <?=htmlspecialchars($user_name)?></td>
+                        </tr>
+                    <?php } elseif ($data['type'] == 'error') { ?>
+                        <tr>
+                            <td style="color: #000;"><?=$jatbi->lang('Mã hàng lỗi')?>: #<?=$data['code']?><?=$data['id']?></td>
+                            <td style="color: #000;"><?=$jatbi->lang('Tài khoản')?>: <?=htmlspecialchars($user_name)?></td>
+                        </tr>
+                    <?php } ?>
+                    <tr>
+                        <td style="color: #000;"><?=$jatbi->lang('Nội dung')?>: <?=htmlspecialchars($data['content'])?></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div class="table-responsive mt-2">
+                    <table class="table table-hover table-striped table-bordered align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-center"><?=$jatbi->lang('MÃ SẢN PHẨM')?></th>
+                                <th class="text-center"><?=$jatbi->lang('SẢN PHẨM')?></th>
+                                <th class="text-center" width="10%"><?=$jatbi->lang('SỐ LƯỢNG')?></th>
+                                <th class="text-center"><?=$jatbi->lang('ĐƠN VỊ')?></th>
+                                <th class="text-center"><?=$jatbi->lang('ĐƠN GIÁ')?></th>
+                                <th class="text-center"><?=$jatbi->lang('THÀNH TIỀN')?></th>
+                                <th class="text-center" width="10%"><?=$jatbi->lang('GHI CHÚ')?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($details as $detail) { ?>
+                                <tr>
+                                    <td class="text-center"><?=htmlspecialchars($detail['product']['code'])?></td>
+                                    <td class="p-2 pe-2 ps-2"><?=htmlspecialchars($detail['product']['name'])?></td>
+                                    <td class="text-center"><?=number_format($detail['amount'], 1)?></td>
+                                    <td class="text-center"><?=htmlspecialchars($detail['unit_name'])?></td>
+                                    <td class="text-center"><?=number_format($detail['price'])?></td>
+                                    <td class="text-center"><?=number_format($detail['total_price'])?></td>
+                                    <td class="p-2"><?=htmlspecialchars($detail['notes'] ?? '')?></td>
+                                </tr>
+                            <?php } ?>
+                            <tr>
+                                <td></td>
+                                <td class="text-center"><?=$jatbi->lang('Tổng')?></td>
+                                <td class="text-center"><?=number_format($total_amount, 1)?></td>
+                                <td></td>
+                                <td class="text-center"><?=number_format($data['purchase'] ? $total_purchase_price : $total_price)?></td>
+                                <td class="text-center"><?=number_format($data['purchase'] ? $total_purchase_amount : $total)?></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="color: #000;">Tổng số tiền (Viết bằng chữ): </div>
+                    <div style="color: #000;">Số chứng từ gốc kèm theo: ............................................................</div>
+                    <div style="display: flex; justify-content: space-between; color: #000;">
+                        <div class="font-weight-bold" style="display: inline-block; text-transform: uppercase; width: 60%;"></div>
+                        <div class="text-center" style="display: inline-block; width: 40%;">
+                            <p><span class="font-weight-bold font-italic" style="color: #000;"><i>Ngày .... Tháng .... Năm .....</i></span></p>
+                        </div>
+                    </div>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="width: 33%; text-align: center; color: #000;">Người Lập</td>
+                            <td style="width: 33%; text-align: center; color: #000;">Thủ Kho</td>
+                            <td style="width: 33%; text-align: center; color: #000;">Người Nhận</td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; color: #000;"><i>(Ký, họ tên)</i></td>
+                            <td style="text-align: center; color: #000;"><i>(Ký, họ tên)</i></td>
+                            <td style="text-align: center; color: #000;"><i>(Ký, họ tên)</i></td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top: 100px; text-align: center; color: #000;"><?=htmlspecialchars($user_name)?></td>
+                            <td style="padding-top: 100px; text-align: center;"></td>
+                            <td style="padding-top: 100px; text-align: center;"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-success btn-print">IN</button>
+            </div>
+        </div>
+    </div>
+</div>
