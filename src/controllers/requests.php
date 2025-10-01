@@ -114,7 +114,6 @@ $requests = [
                     'permission' => [
                         "name" => $jatbi->lang("Nhóm quyền"),
                         "router" => '/users/permission',
-                        "icon" => '<i class="fas fa-universal-access"></i>',
                     ],
                 ],
                 "main" => 'false',
@@ -123,14 +122,17 @@ $requests = [
                     'accounts.add' => $jatbi->lang("Thêm tài khoản"),
                     'accounts.edit' => $jatbi->lang("Sửa tài khoản"),
                     'accounts.deleted' => $jatbi->lang("Xóa tài khoản"),
+
                     'permission' => $jatbi->lang("Nhóm quyền"),
                     'permission.add' => $jatbi->lang("Thêm Nhóm quyền"),
                     'permission.edit' => $jatbi->lang("Sửa Nhóm quyền"),
                     'permission.deleted' => $jatbi->lang("Xóa Nhóm quyền"),
+
                     'accounts-partner' => $jatbi->lang("Tài khoản đối tác"),
                     'accounts-partner.add' => $jatbi->lang("Thêm Tài khoản đối tác"),
                     'accounts-partner.edit' => $jatbi->lang("Sửa Tài khoản đối tác"),
                     'accounts-partner.deleted' => $jatbi->lang("Xóa Tài khoản đối tác"),
+
                 ]
             ],
             'admin' => [
@@ -230,8 +232,10 @@ $requests = [
                     'type-payments.edit' => $jatbi->lang("Sửa Hình thức thanh toán"),
                     'type-payments.deleted' => $jatbi->lang("Xóa Hình thức thanh toán"),
                     'point' => $jatbi->lang("Tích điểm"),
+                    // 'trash'          => $jatbi->lang("Thùng rác"),
                 ]
             ],
         ],
     ],
 ];
+

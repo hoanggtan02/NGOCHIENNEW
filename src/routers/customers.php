@@ -8,6 +8,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 $common = $app->getValueData('common');
+
 $stores_json = $app->getCookie('stores') ?? json_encode([]);
 $stores_from_cookie = json_decode($stores_json, true);
 $app->group($setting['manager'] . "/customers", function ($app) use ($setting, $jatbi, $common, $stores_from_cookie) {

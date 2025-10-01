@@ -1,4 +1,3 @@
-
 <?php
 if (!defined('ECLO')) die("Hacking attempt");
 use ECLO\App;
