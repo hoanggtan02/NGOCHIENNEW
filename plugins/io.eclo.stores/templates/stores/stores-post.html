@@ -1,0 +1,361 @@
+<!-- <div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-lg-6">
+                            <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang("Loại"),
+                                "selected" => $data['type'] ?? '',
+                                "attr" => 'data-width="100%"',
+                                "options" => $store_types,
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'name',
+                                "placeholder" => $jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'phone',
+                                "placeholder" => $jatbi->lang("Điện thoại"),
+                                "value" => $data['phone'] ?? '',
+                                "type" => "tel",
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'email',
+                                "placeholder" => $jatbi->lang("Email"),
+                                "value" => $data['email'] ?? '',
+                                "type" => "email",
+                            ])?>
+                        </div>
+                     <div class="col-lg-6">
+                            <?=$app->component('input', [
+                                "name" => 'code',
+                                "placeholder" => $jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'mst',
+                                "placeholder" => $jatbi->lang("Mã số thuế"),
+                                "value" => $data['mst'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'name_company',
+                                "placeholder" => $jatbi->lang("Tên công ty"),
+                                "value" => $data['name_company'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'password',
+                                "placeholder" => $jatbi->lang("Mật khẩu viettel"),
+                                "value" => $data['password'] ?? '',
+                                "type" => "password",
+                            ])?>
+                     </div>
+                       <div class="col-lg-6">
+                            <?=$app->component('input', [
+                                "name" => 'invoiceSeries',
+                                "placeholder" => $jatbi->lang("Kí hiệu"),
+                                "value" => $data['invoiceSeries'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'templateCode',
+                                "placeholder" => $jatbi->lang("Mã mẫu hóa đơn"),
+                                "value" => $data['templateCode'] ?? '',
+                            ])?>
+                            <?=$app->component('select-status', [
+                                "value" => $data['status'] ?? '',
+                            ])?>
+                       </div>
+                       <div class="col-lg-6">
+                               <?=$app->component('textarea', [
+                                "name" => 'address',
+                                "placeholder" => $jatbi->lang("Địa chỉ"),
+                                "value" => $data['address'] ?? '',
+                            ])?>
+                            <?=$app->component('textarea', [
+                                "name" => 'notes',
+                                "placeholder" => $jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                       </div>
+                   
+                     </div>
+                        
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<!-- 
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <?=$router['1'] == 'stores-add' ? $jatbi->lang("Thêm") : $jatbi->lang("Sửa")?>
+                    <?=$jatbi->lang("Cửa hàng")?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" autocomplete="off" enctype="multipart/form-data" class="ajax-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang("Loại"),
+                                "selected" => $data['type'] ?? '',
+                                "attr" => 'data-width="100%"',
+                                "options" => $store_types,
+                                "required" => 'true',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'code',
+                                "placeholder" => $jatbi->lang("Mã cửa hàng"),
+                                "value" => $data['code'] ?? '',
+                            ])?>
+                            <?=$app->component('input', [
+                                "name" => 'name',
+                                "placeholder" => $jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'phone',
+                                "placeholder" => $jatbi->lang("Điện thoại"),
+                                "value" => $data['phone'] ?? '',
+                            ])?>
+                            <?=$app->component('select-status', [
+                                "value" => $data['status'] ?? '',
+                            ])?>
+                        </div>
+                    </div>
+                    <div class="card mt-3">
+                        <div class="card-header bg-light p-2">
+                            <?=$jatbi->lang("Thông tin thêm")?>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <?=$app->component('input', [
+                                    "name" => 'name_company',
+                                    "placeholder" => $jatbi->lang("Tên công ty"),
+                                    "value" => $data['name_company'] ?? '',
+                                ])?>
+                                <div class="col-md-6">
+                                    <?=$app->component('input', [
+                                        "name" => 'templateCode',
+                                        "placeholder" => $jatbi->lang("Mã mẫu hóa đơn"),
+                                        "value" => $data['templateCode'] ?? '',
+                                    ])?>
+                                </div>
+                                <div class="col-md-6">
+                                    <?=$app->component('input', [
+                                        "name" => 'invoiceSeries',
+                                        "placeholder" => $jatbi->lang("Kí hiệu"),
+                                        "value" => $data['invoiceSeries'] ?? '',
+                                    ])?>
+                                </div>
+                                <div class="col-md-6">
+                                    <?=$app->component('input', [
+                                        "name" => 'mst',
+                                        "placeholder" => $jatbi->lang("Mã số thuế"),
+                                        "value" => $data['mst'] ?? '',
+                                    ])?>
+                                </div>
+                                <div class="col-md-6">
+                                    <?=$app->component('input', [
+                                        "name" => 'password',
+                                        "placeholder" => $jatbi->lang("Mật khẩu Viettel"),
+                                        "value" => $data['password'] ?? '',
+                                        "type" => "password",
+                                    ])?>
+                                </div>
+                                <?=$app->component('input', [
+                                    "name" => 'email',
+                                    "placeholder" => $jatbi->lang("Email"),
+                                    "value" => $data['email'] ?? '',
+                                    "type" => "email",
+                                ])?>
+                                <div class="col-md-12">
+                                    <?=$app->component('input', [
+                                        "name" => 'address',
+                                        "placeholder" => $jatbi->lang("Địa chỉ"),
+                                        "value" => $data['address'] ?? '',
+                                    ])?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mt-3">
+                        <?=$app->component('textarea', [
+                            "name" => 'notes',
+                            "placeholder" => $jatbi->lang("Ghi chú"),
+                            "value" => $data['notes'] ?? '',
+                        ])?>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="token"
+                        value="<?php echo isset($_SESSION['csrf-token']) ? htmlspecialchars($_SESSION['csrf-token']) : ''; ?>">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal"><?=$jatbi->lang("Hủy")?></button>
+                    <button type="submit" class="btn btn-primary ajax-submit">
+                        <div class="spinner-button" style="display: none">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="me-1"><?=$jatbi->lang("Đang tải")?></span>
+                        </div>
+                        <span class="name-button"><?=$jatbi->lang("Hoàn tất")?></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> -->
+
+
+
+
+
+
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang("Loại"),
+                                "selected" => $data['type'] ?? '',
+                                "attr" => 'data-width="100%"',
+                                "options" => $store_types,
+                                "required" => 'true',
+                            ])?>
+                                <?=$app->component('input', [
+                                "name" => 'code',
+                                "placeholder" => $jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                            ])?>
+                                <?=$app->component('input', [
+                                "name" => 'name',
+                                "placeholder" => $jatbi->lang("Tên"),
+                                "value" => $data['name'] ?? '',
+                                "required" => 'true',
+                            ])?>
+
+                            </div>
+                            <div class="col-md-6">
+                                <?=$app->component('input', [
+                                "name" => 'phone',
+                                "placeholder" => $jatbi->lang("Điện thoại"),
+                                "value" => $data['phone'] ?? '',
+                            ])?>
+                                <?=$app->component('select-status', [
+                                "value" => $data['status'] ?? '',
+                            ])?>
+                            </div>
+                        </div>
+                        <div class="card mt-3">
+                            <div class="card-header bg-light p-2">
+                                <?=$jatbi->lang("Thông tin thêm")?>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <?=$app->component('input', [
+                                    "name" => 'name_company',
+                                    "placeholder" => $jatbi->lang("Tên công ty"),
+                                    "value" => $data['name_company'] ?? '',
+                                ])?>
+                                    <div class="col-md-6">
+                                        <?=$app->component('input', [
+                                        "name" => 'templateCode',
+                                        "placeholder" => $jatbi->lang("Mã mẫu hóa đơn"),
+                                        "value" => $data['templateCode'] ?? '',
+                                    ])?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <?=$app->component('input', [
+                                        "name" => 'invoiceSeries',
+                                        "placeholder" => $jatbi->lang("Kí hiệu"),
+                                        "value" => $data['invoiceSeries'] ?? '',
+                                    ])?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <?=$app->component('input', [
+                                        "name" => 'mst',
+                                        "placeholder" => $jatbi->lang("Mã số thuế"),
+                                        "value" => $data['mst'] ?? '',
+                                    ])?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <?=$app->component('input', [
+                                        "name" => 'password',
+                                        "placeholder" => $jatbi->lang("Mật khẩu Viettel"),
+                                        "value" => $data['password'] ?? '',
+                                        "type" => "password",
+                                    ])?>
+                                    </div>
+                                    <?=$app->component('input', [
+                                    "name" => 'email',
+                                    "placeholder" => $jatbi->lang("Email"),
+                                    "value" => $data['email'] ?? '',
+                                    "type" => "email",
+                                ])?>
+                                    <div class="col-md-12">
+                                        <?=$app->component('input', [
+                                        "name" => 'address',
+                                        "placeholder" => $jatbi->lang("Địa chỉ"),
+                                        "value" => $data['address'] ?? '',
+                                    ])?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <?=$app->component('textarea', [
+                                "name" => 'notes',
+                                "placeholder" => $jatbi->lang("Ghi chú"),
+                                "value" => $data['notes'] ?? '',
+                            ])?>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

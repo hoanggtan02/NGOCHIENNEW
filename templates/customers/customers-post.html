@@ -1,17 +1,22 @@
-<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+<!-- <div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
 	<div class="modal-dialog modal-lg pt-standalone">
 		<div class="modal-content rounded-5 border-0 shadow-lg">
 			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
-				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+				<button type="button"
+					class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+					data-bs-dismiss="modal" aria-label="Close "
+					style="--width:50px;--height:50px;--top:-5px;--right:-5px">
 					<i class="ti ti-x fs-4"></i>
 				</button>
 			</div>
 			<div class="modal-body">
-				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<h5 class="fw-bold text-body mb-3">
+					<?=$title?>
+				</h5>
 				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
 					<div class="row g-3">
 						<div class="col-lg-6">
-                            <?=$app->component('select',[
+							<?=$app->component('select',[
 					            "name"=>'type',
 					            "placeholder"=>$jatbi->lang("Loại"),
 					            "selected" => $data['type'] ?? '',
@@ -25,7 +30,7 @@
                                 "value" => $data['code'] ?? '',
                                 "required" => 'true',
                             ])?>
-                            <?=$app->component('input',[
+							<?=$app->component('input',[
                                 "name"=>'name',
                                 "placeholder"=>$jatbi->lang("Tên"),
                                 "value" => $data['name'] ?? '',
@@ -51,41 +56,6 @@
                                 "value" => $data['status'] ?? '',
                             ])?>
 						</div>
-
-						<div class="col-lg-12">
-							<div class="row select-areas">
-								<div class="col-lg-4">
-		                            <?=$app->component('select',[
-							            "name"=>'province',
-							            "placeholder"=>$jatbi->lang("Tỉnh thành"),
-							            "selected" => $data['province'] ?? '',
-							            "attr" => 'data-width="100%" data-load="true" data-url="/customers/province" data-method="POST" data-keyword="keyword" ',
-							            "id" => "province",
-		                                "required" => 'true',
-							        ])?>
-								</div>
-								<div class="col-lg-4">
-		                            <?=$app->component('select',[
-							            "name"=>'district',
-							            "placeholder"=>$jatbi->lang("Quận / Huyện"),
-							            "selected" => $data['district'] ?? '',
-							            "attr" => 'data-width="100%" data-parent="#province" data-load="true" data-url="/customers/district" data-method="POST" data-keyword="keyword" data-max-length="1" ',
-							            "id" => "district",
-		                                "required" => 'true',
-							        ])?>
-								</div>
-								<div class="col-lg-4">
-		                            <?=$app->component('select',[
-							            "name"=>'ward',
-							            "placeholder"=>$jatbi->lang("Phường / Xã"),
-							            "selected" => $data['ward'] ?? '',
-							            "attr" => 'data-width="100%" data-parent="#district" data-load="true" data-url="/customers/ward" data-method="POST" data-keyword="keyword" data-max-length="1" ',
-							            "id" => "ward",
-		                                "required" => 'true',
-							        ])?>
-								</div>
-							</div>
-						</div>
 						<?php if(count($fields)){ ?>
 						<div class="col-lg-12">
 							<div class="pb-3 fw-bold"><?=$jatbi->lang("Tùy chọn thêm")?></div>
@@ -99,8 +69,8 @@
 											$options = $app->select($field['database'],["id (value)","name (text)"],["status"=>'A',"deleted"=>0]) ?? [];
 										}
 									?>
-										<div class="col-lg-<?=$field['col']?> mt-0">
-											<?=$app->component($common[$field['type']]['type'],[
+									<div class="col-lg-<?=$field['col']?> mt-0">
+										<?=$app->component($common[$field['type']]['type'],[
 											    "type" => $field['type'],
 											    "name" => 'option['.$field['id'].']',
 											    "placeholder" => $field['name'],
@@ -111,24 +81,144 @@
     											"selected" => isset($field_values[$field['id']]) ? $field_values[$field['id']] : [],
 											    "checked" => isset($field_values[$field['id']]) ? $field_values[$field['id']] : [] // Checked values for checkbox
 											])?>
-										</div>
+									</div>
 									<?php } ?>
 								</div>
 							</div>
 						</div>
 						<?php } ?>
 						<div class="col-lg-12">
-							<?php 
-								if($_GET['request'] ?? ''){
-									$add = 'data-load="'.$_GET['load'].'" data-selector="'.$_GET['selector'].'" data-pjax-history="false" data-pjax-scrollTo="false"';
-								}
-								else {
-									$add = ' data-load="this"';
-								}
-							?>
-							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" <?=$add?> ><?=$jatbi->lang("Hoàn thành")?></button>
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+								data-action="submit" data-alert="true"
+								data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
 						</div>
 					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div> -->
+
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone">
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button"
+					class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+					data-bs-dismiss="modal" aria-label="Close"
+					style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3">
+					<?=$title?>
+				</h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row">
+						<div class="col-md-12">
+							<div class="row">
+								<div class="col-md-6">
+									<?=$app->component('select', ["name" => 'type', "placeholder" => "Loại khách hàng", "options" => $types ?? [], "selected" => $data['type'] ?? '', "required" => true])?>
+									<?=$app->component('input', ["name" => 'name', "placeholder" => "Họ & Tên", "value" => $data['name'] ?? '', "required" => true])?>
+									<?=$app->component('input', ["name" => 'phone', "placeholder" => "Số điện thoại", "value" => $data['phone'] ?? ''])?>
+									<?=$app->component('input', ["name" => 'email', "placeholder" => "Email", "type" => "email", "value" => $data['email'] ?? ''])?>
+
+								</div>
+
+								<div class="col-md-6">
+									<?=$app->component('input', ["name" => 'company', "placeholder" => "Tên công ty", "value" => $data['company'] ?? ''])?>
+									<?=$app->component('input', ["name" => 'code', "placeholder" => "Mã số thuế", "value" => $data['code'] ?? ''])?>
+									<div class="row g-3">
+										<div class="col">
+											<?=$app->component('select', ["name" => 'source', "placeholder" => "Nguồn kênh", "options" => $sources ?? [], "selected" => $data['source'] ?? ''])?>
+										</div>
+										<div class="col">
+											<?=$app->component('select-status', ["placeholder" => "Trạng thái", "value" => "A"])?>
+										</div>
+									</div>
+									<?=$app->component('select', ["name" => 'gender', "placeholder" => "Giới tính", "selected" => $data['gender'] ?? '', "options" => [ ['value' => 1, 'text' => 'Nam'], ['value' => 2, 'text' => 'Nữ'], ['value' => 3, 'text' => 'Khác'] ]])?>
+
+
+								</div>
+								<div class="col-md-6">
+									<?=$app->component('input', ["name" => 'number', "placeholder" => "Số tài khoản", "value" => $data['number'] ?? ''])?>
+								</div>
+								<div class="col-md-6">
+									<?=$app->component('input', ["name" => 'payments', "placeholder" => "Hình thức thanh toán", "value" => $data['payments'] ?? ''])?>
+								</div>
+
+								<div class="col-md-12">
+									<hr class="my-2">
+								</div>
+								<div class="col-md-12">
+									<?=$app->component('input', ["name" => 'address', "placeholder" => "Địa chỉ (số nhà, tên đường...)", "value" => $data['address'] ?? ''])?>
+								</div>
+								<div class="col-md-4">
+									<div class="mb-3">
+										<?=$app->component('select',[
+                                                "name"=>'province',
+                                                "placeholder"=>$jatbi->lang("Tỉnh/Thành phố"),  
+												"selected" => $data['province'] ?? '',
+												"options" => $province ?? [],
+                                                "id" => "province",
+                                                ])?>
+									</div>
+								</div>
+								<div class="col-md-4">
+									<div class="mb-3">
+
+										<?=$app->component('select',[
+                                                "name"=>'district',
+                                                "placeholder"=>$jatbi->lang("Quận / Huyện"),    
+												"selected" => $data['district'] ?? '',    
+												"options" => $district ??[],                                    
+												"attr" => 'data-width="100%" data-parent="#province" 
+                                                data-load="true" 
+                                                data-url="/api/district" data-method="POST" data-keyword="keyword" data-max-length="1" ',
+                                                "id" => "district",                                                
+                                                ])?>
+									</div>
+								</div>
+								<div class="col-md-4">
+									<div class="mb-3">
+										<?=$app->component('select',[
+                                                "name"=>'ward',
+                                                "placeholder"=>$jatbi->lang("Phường / Xã"),          
+												"selected" => $data['ward'] ?? '',  
+												"options" => $ward ?? [],                                    
+												"attr" => 'data-width="100%" data-parent="#district" data-load="true" 
+                                                data-url="/api/ward" data-method="POST" data-keyword="keyword" data-max-length="1" ',
+                                                "id" => "ward",
+                                            ])?>
+									</div>
+								</div>
+								<div class="col-md-12">
+									<?=$app->component('textarea', ["name" => 'notes', "placeholder" => "Ghi chú"])?>
+								</div>
+								<?php if (count($stores ?? []) >1): ?>
+								<div class="col-md-12">
+									<?=$app->component('select', [
+										"name" => 'stores', 
+										"placeholder" => "Cửa hàng", 
+										"options" => $stores ?? [], 
+										"selected" => $data['stores'] ?? '',
+										"required" => true
+									])?>
+								</div>
+								<?php endif; ?>
+
+								<div class="col-md-12">
+									<hr class="my-2">
+								</div>
+
+								<div class="modal-footer border-0">
+									<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+										data-action="submit" data-alert="true"
+										data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+								</div>
+							</div>
+						</div>
 				</form>
 			</div>
 		</div>
