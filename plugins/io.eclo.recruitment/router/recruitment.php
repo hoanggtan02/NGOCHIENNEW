@@ -1011,7 +1011,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
 
 
     // Route: Danh sách phỏng vấn
-    $app->router("/interviews", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
+    $app->router("/interviews", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template, $accStore) {
         $vars['title'] = $jatbi->lang("Lịch phỏng vấn");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
