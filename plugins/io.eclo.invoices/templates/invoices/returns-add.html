@@ -1,0 +1,510 @@
+<div class="container-fluid">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body">
+            <?=$title?>
+        </h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/invoices/invoices')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Trả hàng")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page">
+                <?=$title?>
+            </li>
+        </ul>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="card card-custom mb-4">
+                        <div class="card-header">
+							<div class="d-flex justify-content-between align-items-center">
+								<label class="col-form-label"><?=$jatbi->lang("Đơn hàng")?></label>
+							</div>
+						</div>
+                        <div class="card-body">
+                            <div class="table-responsive flex-grow-1">
+                                <table class="table align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%"><?=$jatbi->lang('Sản phẩm')?></th>
+                                            <th width="10%"><?=$jatbi->lang('Đơn vị')?></th>
+                                            <th width="10%" class="text-center"><?=$jatbi->lang('Số lượng')?></th>
+                                            <th width="10%" class="text-end"><?=$jatbi->lang('Đơn giá')?></th>
+                                            <th width="10%" class="text-end"><?=$jatbi->lang('Thành tiền')?></th>
+                                            <th width="1%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody data-pos-sales>
+                                        <?php 
+                                        $total_price = 0;
+                                        $total_amount = 0;
+                                        $total = 0;
+                                        foreach (($SelectProducts ?? []) as $key => $SelectProduct) {  
+                                            $getPro = $app->get("products","*",["id"=>$SelectProduct['products'] ?? ""]); 
+                                            $total_price = ((float)$SelectProduct['amount']*(float)$SelectProduct['price']);
+                                            $total_amount += $SelectProduct['amount'];
+                                            $total += $total_price;
+                                        ?>
+                                        <tr>
+                                            <td class="p-2">
+                                                <?=$getPro['name'] ?? "" ?>
+                                                <div class="small">
+                                                    <?=$jatbi->lang('Màu sắc')?>: <?=$app->get("colors","name",["id"=>$SelectProduct['colors'] ?? ""])?><br>
+                                                    <?=$jatbi->lang('Màu sắc')?>: <?=$app->get("nearsightedness","name",["id"=>$SelectProduct['nearsightedness'] ?? ""])?><br>
+                                                </div>
+                                            </td>
+                                            <td class="p-2">
+                                                <?=$app->get("units","name",["id"=>$getPro['units'] ?? ""])?>
+                                            </td>
+                                            <td class="p-2 text-center">
+                                                <div class="input-group get-amount flex-nowrap">
+                                                    <input type="number" name="amount"
+                                                        class="blur-update form-control p-1 text-center"
+                                                        data-form='{"value": "this.val"}' data-action="blur"
+                                                        data-url="/invoices/invoices-update/returns/<?=$action;?>/products/amount/<?=$key;?>"
+                                                        value="<?=$SelectProduct['amount'] ?? 0?>" data-load="this" min="0"
+                                                        data-selector="[data-pos-sales],[data-pos-payment]">
+                                                    <span class="input-group-text"><?=$SelectProduct['warehouses'] ?? 0?></span>
+                                                </div>
+                                            </td>
+                                            <td class="p-2 text-end">
+                                                <a href="#" class="modal-url text-primary" data-action="modal" data-load="this" data-action="modal" data-load="this" data-selector="[data-pos-sales],[data-pos-payment]"
+                                                    data-url="/invoices/invoices-updatee/returns/<?=$action;?>/products-details/<?=$key;?>">
+                                                    <?=number_format($SelectProduct['price'] ?? 0)?>
+                                                </a>
+                                                <?php if(isset($SelectProduct['price']) && isset($SelectProduct['price_old']) && $SelectProduct['price'] != $SelectProduct['price_old']){?>
+                                                <p class="mb-0 text-decoration-line-through small">
+                                                    <?=number_format($SelectProduct['price_old'])?>
+                                                </p>
+                                                <?php } ?>
+                                            </td>
+                                            <td class="p-2 text-end fw-bold text-success">
+                                                <?=number_format($total_price)?>
+                                            </td>
+                                            <td class="p-2 text-center">
+                                                <a class="click-update text-danger" data-load="this" data-action="modal"
+                                                    data-url="/invoices/invoices-update/returns/<?=$action;?>/products/deleted/<?=$key;?>"><i
+                                                        class="ti ti-trash"></i></a>
+                                            </td>
+                                        </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card card-custom mb-4" data-pos-type_payment>
+                        <div class="card-header">
+							<div class="d-flex justify-content-between align-items-center">
+								<label class="col-form-label"><?=$jatbi->lang('Thanh toán')?></label>
+								<div>
+									<a href="#" class="modal-url btn btn-light btn-sm" data-action="modal" data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/minus"><?=$jatbi->lang('Giảm trừ')?></a>
+									<a href="#" class="modal-url btn btn-light btn-sm" data-action="modal" data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/surcharge"><?=$jatbi->lang('Phụ thu')?></a>
+								</div>
+							</div>
+						</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-6 order-2 order-lg-1">
+                                    <?=$app->component('select', [
+                                        "name" => 'type', 
+                                        "placeholder" => $jatbi->lang('Trạng thái'), 
+                                        "options" => $Status_invoices ?? [], 
+                                        "selected" => $data['status'] ?? '', 
+                                        "required" => true, 
+                                        "attr" => 'data-load="this" data-action = "change" data-form=\'{"value": "this.val"}\'
+                                                data-url= "/invoices/invoices-update/'.$dispatch.'/'.$action.'/status"'
+                                    ])?>
+                                    <div class="card-header p-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            Phương thức thanh toán
+                                            <a href="#" class="text-dark" data-action="click" data-load="this"
+                                                data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/details-prepay-add">
+                                                <i class="ti ti-plus"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-1">
+                                        <?php if(count($data['prepay'] ?? [])==0){?>
+                                        <?php } else { ?>
+                                            <?php foreach ($data['prepay'] as $prepaykey => $prepay) {?>
+                                            <div class="input-group mb-1">
+                                                <select name="type" class="form-control" data-load="this"
+                                                    data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/details-prepay/type_payments/<?=$prepaykey?>"
+                                                    data-action="change" data-form='{"value": "this.val"}'
+                                                    data-selector="[data-pos-type_payment]">
+                                                    <option value="">Chọn</option>
+                                                    <?php foreach ($type_payments as $key => $type_payment) {
+                                                        $subpays = $app->select("type_payments","*",["main"=>$type_payment['id'],"status"=>'A',"deleted"=>0, "type"=>1]);
+                                                    ?>
+                                                    <option value="<?=$type_payment['id']?>" <?=isset($prepay['type_payments'])
+                                                        && $prepay['type_payments']==$type_payment['id']?'selected':''?>>
+                                                        <?=$type_payment['name']?>
+                                                    </option>
+                                                    <?php foreach ($subpays as $key => $subpay) {?>
+                                                    <option value="<?=$subpay['id']?>" <?=isset($prepay['type_payments']) &&
+                                                        $prepay['type_payments']==$subpay['id']?'selected':''?>>-----
+                                                        <?=$subpay['name']?>
+                                                    </option>
+                                                    <?php } ?>
+                                                    <?php } ?>
+                                                </select>
+
+                                                <input placeholder="Số tiền" type="tel" data-number="money" data-currency=""
+                                                    data-decimals="0" data-thousands="," data-decimal="." name="price"
+                                                    class="form-control" data-action="blur" data-load="this"
+                                                    data-selector="[data-pos-type_payment]"
+                                                    id="price-<?=$action?><?=$prepaykey?>"
+                                                    data-form='{"value": "#price-<?=$action?><?=$prepaykey?>.val"}'
+                                                    data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/details-prepay/price/<?=$prepaykey?>"
+                                                    value="<?=$prepay['price'] ?? "" ?>">
+
+                                                <input placeholder="Nội dung" type="text" name="content" class="form-control"
+                                                    data-action="blur" data-load="this" data-selector="[data-pos-type_payment]"
+                                                    id="content-<?=$action?><?=$prepaykey?>"
+                                                    data-form='{"value": "#content-<?=$action?><?=$prepaykey?>.val"}'
+                                                    data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/details-prepay/content/<?=$prepaykey?>"
+                                                    value="<?=$prepay['content'] ?? "" ?>">
+
+                                                <span class="input-group-text rounded-0">
+                                                    <a href="#" class="text-danger" data-action="click" data-load="this"
+                                                        data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details-deleted/prepay/<?=$prepaykey?>"
+                                                        data-selector="[data-pos-type_payment]">
+                                                        <i class="ti ti-trash"></i>
+                                                    </a>
+                                                </span>
+                                            </div>
+                                            <?php } ?>
+                                        <?php } ?>
+                                    </div>
+                                    <?=$app->component('input',[
+                                        "type" => "date",
+                                        "name"=>'date',
+                                        'required' => true,
+                                        "placeholder"=>$jatbi->lang("Ngày"),
+                                        "value" => $data['date'] ??  date('d/m/Y'),
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%" data-load = "this"
+                                                    data-action = "blur" data-form=\'{"value": "this.val"}\'
+                                                    data-url="/invoices/invoices-update/'.$dispatch.'/'.$action.'/date"'
+                                    ])?>
+                                    <?=$app->component('textarea', [
+                                        "name" => 'notes', 
+                                        "placeholder" => $jatbi->lang('Ghi chú'), 
+                                        "value" => $data['notes'] ?? '', 
+                                        "attr" => 'data-load="this" data-action="blur" data-form=\'{"value": "this.val"}\' 
+                                                    data-url="/invoices/invoices-update/'.$dispatch.'/'.$action.'/notes"'
+                                    ])?>
+                                </div>
+                                <div class="col-lg-6 order-1 order-lg-2">
+                                    <div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<?=$jatbi->lang('Số lượng sản phẩm')?>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?=number_format($total_amount)?>
+					    				</div>
+					    			</div>
+					    			<div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<?=$jatbi->lang('Tổng tiền hàng')?>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?=number_format($total)?>
+					    				</div>
+					    			</div>
+					    			<?php if(count($data['vat'] ?? [])>0){?>
+					    				<div class="row mb-2">
+						    				<div class="col-12 fw-bold ">
+						    					<?=$jatbi->lang('Thuế VAT')?>
+						    				</div>
+						    				<div class="col-12 small fst-italic">
+							    				<?php foreach ($data['vat'] as $keyvat => $vat) {?>
+								    				<div class="row  mb-1">
+									    				<div class="col">
+									    					<?=$jatbi->lang('Thuế VAT')?> <?=$keyvat?>%
+									    				</div>
+									    				<div class="col text-end">
+									    					<?=number_format(array_sum($vat))?>
+									    				</div>
+									    			</div>
+								    			<?php } ?>
+								    		</div>
+						    			</div>
+					    			<?php }?>
+                                    <?php if(($data['discount_card'] ?? 0 )>0){?>
+					    			<div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<a href="#" class="modal-url" data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/discount_customers/">
+						    					<?=$jatbi->lang('Thẻ khách hàng')?> <?=$data['discount_customers']?>%
+						    				</a>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php $discount_cus = ($data['discount_customers']*$total)/100 ?>
+					    					<?=number_format($discount_cus)?>
+					    				</div>
+					    			</div>
+					    			<?php } ?>
+					    			<?php if(count($data['minus'] ?? [])>0){?>
+					    			<div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<a href="#" class="modal-url" data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/minus/">
+					    						<?=$jatbi->lang('Giảm trừ')?>
+					    					</a>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php foreach ($data['minus'] as $minus) {
+					    						$total_minus += (float)$minus['price'];
+					    					}?>
+					    					<?=number_format($total_minus)?>
+					    				</div>
+					    			</div>
+					    			<?php } ?>
+					    			<?php if(count($data['surcharge'] ?? [])>0){?>
+					    			<div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<a href="#" class="modal-url" data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/surcharge/">
+					    						<?=$jatbi->lang('Phụ thu')?>
+					    					</a>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php foreach ($data['surcharge'] as $surcharge) {
+					    						$total_surcharge += (float)$surcharge['price'];
+					    					}?>
+					    					<?=number_format($total_surcharge)?>
+					    				</div>
+					    			</div>
+					    			<?php } ?>
+					    			<?php 
+                                        $discount = $discount ?? 0;
+                                        $discount_cus = $discount_cus ?? 0;
+                                        $total_minus = $total_minus ?? 0;
+                                        $total_surcharge = $total_surcharge ?? 0;
+                                        $total_payment = ($total-$discount-$discount_cus-$total_minus)+$total_surcharge; 
+                                    ?>
+					    			<div class="row fw-bold mb-2 text-dark">
+					    				<div class="col">
+					    					<?=$jatbi->lang('Tạm tính')?>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?=number_format($total_payment)?>
+					    				</div>
+					    			</div>
+					    			<div class="row fw-bold mb-2 fs-6 text-success">
+					    				<div class="col">
+					    					<?=$jatbi->lang('Phải trả lại')?>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php 
+                                                $payment = $total_payment+($data['transport']['price'] ?? 0)
+                                            ?>
+					    					<?=number_format($payment)?>
+					    				</div>
+					    			</div>
+					    			<?php if(count($data['prepay'] ?? [])>0){?>
+					    			<div class="row fw-bold mb-2">
+					    				<div class="col">
+					    					<a href="#" class="modal-url" data-action="modal" data-load="this"
+                                                data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/prepay">
+						    					<?=$jatbi->lang('Trả lại')?>
+						    				</a>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php 
+                                            $total_prepay = 0;
+                                            foreach ($data['prepay'] as $prepay) {
+					    						$total_prepay += (float)($prepay['price'] ?? 0);
+					    					}?>
+					    					<?=number_format($total_prepay)?>
+					    				</div>
+					    			</div>
+					    			<div class="row fw-bold mb-2 text-warning">
+					    				<div class="col">
+					    					<?=$jatbi->lang('Còn lại')?>
+					    				</div>
+					    				<div class="col text-end">
+					    					<?php $payment_prepay = $payment-$total_prepay?>
+					    					<?=number_format($payment_prepay)?>
+					    				</div>
+					    			</div>
+					    			<?php } ?>
+					    			<?php if($data['point']>0){
+					    				$getPoint = $database->get("point","*",["id"=>$data['point'],"status"=>"A"]);
+					    			?>
+					    				<?php if($getPoint['no_discount']==1 && $discount==0 || $getPoint['no_discount']==0){?>
+					    				<div class="row fw-bold mb-2">
+						    				<div class="col">
+						    					<?=$jatbi->lang('Tích điểm')?>
+						    				</div>
+						    				<div class="col text-end">
+						    					-<?=number_format(($payment/$getPoint['point_price'])*$getPoint['point_point'])?>
+						    				</div>
+						    			</div>
+						    			<?php } ?>
+					    			<?php } ?>
+					    			<div class="col-lg-12 mb-3" data-pos-personnels>
+										<?=$app->component('select', [
+                                            'name' => 'personnels',
+                                            'placeholder' => $jatbi->lang("Nhân viên bán hàng"),
+                                            'required' => true,
+                                            'options' => $personnels ?? [],
+                                            'class' => 'change-update',
+                                            "attr" => 'data-action="change" data-load = "this"
+                                                data-url="/invoices/invoices-updatee/'.$dispatch.'/'.$action.'/personnels" 
+                                                data-form=\'{"value": "this.val"}\''
+                                        ])?>
+										<div>
+                                            <?php foreach ($data['personnels'] ?? [] as $key => $value) {?>
+                                            <div class="input-group mb-1">
+                                                <div class="input-group-text">
+                                                    <?=$value['name'] ?? ""?>
+                                                </div>
+                                                <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                                    data-thousands="," data-decimal="." name="price"
+                                                    class="blur-update form-control number" data-load="this" data-action="blur"
+                                                    data-form='{"value": "this.val"}'
+                                                data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/commission/<?=$value['id']?>" data-selector="[data-pos-personnels]" 
+                                                value="<?= number_format((float)($value['price'] ?? 0)) ?>">
+                                                <div class="input-group-text">
+                                                    <a class="click-update text-danger" data-load="this" data-action="click"
+                                                        data-selector="[data-pos-personnels]" data-alert="true"
+                                                        data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/personnels-deleted/<?=$value['id']?>">
+                                                        <i class="ti ti-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <?php } ?>
+                                        </div>
+									</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <?=$app->component('select', [
+                        'name' => 'stores',
+                        'placeholder' => $jatbi->lang("Cửa hàng"),
+                        'required' => true,
+                        'options' => $stores ?? [],
+                        'selected' => $data['stores'] ?? '',
+                        'class' => 'change-update',
+                        "attr" => 'data-action="change" data-load = "this"
+                            data-url="/invoices/invoices-update/'.$dispatch.'/'.$action.'/stores" 
+                            data-form=\'{"value": "this.val"}\''
+                    ])?>
+                    <?=$app->component('select', [
+                        'name' => 'stores',
+                        'placeholder' => $jatbi->lang("Quầy hàng"),
+                        'required' => true,
+                        'options' => $branchss ?? [],
+                        'selected' => $data['branch'] ?? '',
+                        'class' => 'change-update',
+                        "attr" => 'data-action="change" data-load = "this"
+                            data-url="/invoices/invoices-updatee/'.$dispatch.'/'.$action.'/branch" 
+                            data-form=\'{"value": "this.val"}\''
+                    ])?>
+
+                    <div class="customers mb-3">
+                        <div class="d-flex align-items-center bg-white rounded-pill border shadow-sm p-2 "
+                            data-search="true" data-url="/api/customers-search/<?=$action; ?>" data-pos-customers>
+
+                            <i class="ti ti-search fs-2 text-muted mx-2"></i>
+
+                            <div class="flex-grow-1 position-relative">
+                                <input type="text" class="form-control bg-transparent border-0 shadow-none py-2"
+                                    placeholder="Tìm kiếm khách hàng...">
+                                <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute w-100 z-3 mt-1"
+                                    style="max-height: 300px; overflow-y: auto;"></div>
+                                <template class="search-item-template">
+                                    <div class="search-item border-0 py-2 btn text-start position-relative"
+                                        style="display: flex; align-items: center; gap: 10px;">
+                                        <div data-attr-products="value">
+                                            <strong data-name="text"></strong><br>
+                                            <a data-action="click" data-load="this" data-selector="[data-pos-customers]"
+                                                data-attr-url="url-3" class="stretched-link" href="#!"></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <button class="btn btn-eclo rounded-circle p-0 ms-2" type="button" data-action="modal"
+                                data-url="/customers/customers-add/orders/<?=$action?>" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <i class="ti ti-plus fs-4"></i>
+                            </button>
+                        </div>
+
+                        <div id="customer-details-box" class="mt-2" data-pos-customers>
+                            <div class="border rounded-3 p-2 bg-light">
+                                <div class="d-flex justify-content-between">
+                                    <p class="mb-1 small">
+                                        <strong>Họ & Tên:</strong>
+                                        <span id="customer-name">
+                                            <?= $getCus['name'] ?? "" ?>
+                                        </span>
+                                    </p>
+                                </div>
+                                <p class="mb-1 small">
+                                    <strong>Điện thoại:</strong>
+                                    <span id="customer-phone"></span>
+                                    <?= $getCus['phone'] ?? "" ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Địa chỉ:</strong>
+                                    <span id="customer-address"></span>
+                                    <?= $getCus['address'] ?? "" ?>
+                                    <?= !empty($getCus['ward']) ? ', '.$app->get("ward","name",["id"=>$getCus['ward']]) : '' ?>
+                                    <?= !empty($getCus['district']) ? ', '.$app->get("district","name",["id"=>$getCus['district']]) : '' ?>
+                                    <?= !empty($getCus['province']) ? ', '.$app->get("province","name",["id"=>$getCus['province']]) : '' ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Email:</strong>
+                                    <span id="customer-email"></span>
+                                    <?= $getCus['email'] ?? "" ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Loại khách hàng:</strong>
+                                    <span id="customer-type"></span>
+                                    <?= !empty($getCus['type']) ? $app->get("customers_types","name",["id"=>$getCus['type']]) : "" ?>
+                                </p>
+
+                                <?php if (!empty($data['customers']['card']['id']) && $data['customers']['card']['id'] > 0) { ?>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Thẻ quà tặng: </span>
+                                    <strong>
+                                        <?= $data['customers']['card']['code'] ?? "" ?>
+                                    </strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Giảm giá: </span>
+                                    <strong>
+                                        <?= $data['customers']['card']['discount'] ?? 0 ?>%
+                                    </strong>
+                                </div>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?=$app->component('input', [
+                        "name" => 'code_group', 
+                        "placeholder" => $jatbi->lang('Mã đoàn'), 
+                        "value" => $data['code_group'] ?? '', 
+                        "required" => true, 
+                        "attr" => 'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                                data-url= "/invoices/invoices-update/'.$dispatch.'/'.$action.'/code_group"'
+                    ])?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-0 py-3 text-end">
+            <button class="btn btn-light rounded-pill px-4 click-update" data-action="click"
+                data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/cancel"><?=$jatbi->lang('Hủy')?></button>
+            <button class="btn btn-eclo rounded-pill px-5 click-update" data-action="click"
+                data-load="/invoices/returns" data-print="modal"
+                data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/completed/sales"><?=$jatbi->lang('Hoàn tất')?></button>
+        </div>
+    </div>
+</div>

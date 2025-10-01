@@ -1,0 +1,9 @@
+{
+    "name": "Invoices",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.invoices",
+    "author": "ECLO",
+    "description": "Hóa đơn",
+    "requires": "1.0.0"
+}

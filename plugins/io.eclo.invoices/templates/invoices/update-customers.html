@@ -1,0 +1,130 @@
+<div class="container-fluid pjax-content-load">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body">
+            <?=$title?>
+        </h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small" aria-current="page"><a href="<?=$jatbi->url('/invoices')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Đơn hàng")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page">
+                <?=$title?>
+            </li>
+        </ul>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="col-form-label fw-bold"><?=$jatbi->lang('Khách hàng')?></label>
+                <a class="btn btn-eclo" data-action="modal" data-url="/customers/customers-add/update-customers/<?=$action?>">
+                    <i class="ti ti-plus"></i>
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center bg-white rounded-pill border shadow-sm p-2 " data-search="true"
+                data-url="/api/customers-search/<?=$action; ?>" data-customers>
+
+                <i class="ti ti-search fs-2 text-muted mx-2"></i>
+
+                <div class="flex-grow-1 position-relative">
+                    <input type="text" class="form-control bg-transparent border-0 shadow-none py-2"
+                        placeholder="Tìm kiếm khách hàng...">
+                    <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute w-100 z-3 mt-1"
+                        style="max-height: 300px; overflow-y: auto;"></div>
+                    <template class="search-item-template">
+                        <div class="search-item border-0 py-2 btn text-start position-relative"
+                            style="display: flex; align-items: center; gap: 10px;">
+                            <div data-attr-products="value">
+                                <strong data-name="text"></strong><br>
+                                <a data-action="click" data-load="this" data-selector="[data-customers]"
+                                    data-attr-url="url-2" class="stretched-link" href="#!"></a>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <label class="col-form-label fw-bold mt-3" style="font-size:16px"><?=$jatbi->lang('Khách hàng')?></label>
+            <div class="row d-flex align-items-start mt-2">
+                <div class="col-md-6 mb-3"> 
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Ho & Tên')?>: </span>
+                    <strong>
+                        <?=$getCustomers['name'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Loại khách hàng')?>: </span>
+                    <strong>
+                        <?=$app->get("customers_types","name",["id"=>$getCustomers['type'] ?? ""])?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Điện thoại')?>: </span>
+                    <strong>
+                        <?=$getCustomers['phone'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Email')?>: </span>
+                    <strong>
+                        <?=$getCustomers['email'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Địa chỉ')?>: </span>
+                    <strong>
+                        <?= $getCustomers['address'] ?? "" ?>
+                        <?= (!empty($getCustomers['ward'])) ? ', ' . $app->get("ward", "name", ["id" => $getCustomers['ward']]) : "" ?>
+                        <?= (!empty($getCustomers['district'])) ? ', ' . $app->get("district", "name", ["id" => $getCustomers['district']]) : "" ?>
+                        <?= (!empty($getCustomers['province'])) ? ', ' . $app->get("province", "name", ["id" => $getCustomers['province']]) : "" ?>
+                    </strong>
+                </div>
+            </div>
+            <label class="col-form-label fw-bold mt-3"
+                style="font-size:16px"><?=$jatbi->lang('Khách hàng muốn thay đổi')?></label>
+            <div class="row d-flex align-items-start mt-2" data-customers>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Họ & Tên')?>: </span>
+                    <strong>
+                        <?=$getCust['name'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Loại khách hàng')?>: </span>
+                    <strong>
+                        <?=$app->get("customers_types","name",["id"=>$getCust['type'] ?? ""])?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Điện thoại')?>: </span>
+                    <strong>
+                        <?=$getCust['phone'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Email')?>: </span>
+                    <strong>
+                        <?=$getCust['email'] ?? ''?>
+                    </strong>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Địa chỉ')?>: </span>
+                    <strong>
+                        <?= $getCust['address'] ?? "" ?>
+                        <?= (!empty($getCust['ward'])) ? ', ' . $app->get("ward", "name", ["id" => $getCust['ward']]) : "" ?>
+                        <?= (!empty($getCust['district'])) ? ', ' . $app->get("district", "name", ["id" => $getCust['district']]) : "" ?>
+                        <?= (!empty($getCust['province'])) ? ', ' . $app->get("province", "name", ["id" => $getCust['province']]) : "" ?>
+                    </strong>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end align-items-center">
+                <button class="btn btn-eclo-light rounded-pill px-4 me-2" data-action="click" data-load="this"
+                    data-url="/invoices/invoices-updatee/<?=$dispatch?>/<?=$action?>/cancel"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-eclo rounded-pill px-5" data-action="click"
+                    data-load="/invoices/invoices-views/<?=$data['id']?>"
+                    data-url="/invoices/invoices-customers/<?=$dispatch?>/<?=$action?>/completed/<?=$data['id']?>"><?=$jatbi->lang('Hoàn tất')?></button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,75 @@
+<div class="container-fluid pjax-content-load">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small" aria-current="page"><a href="<?=$jatbi->url('/invoices/invoices-views/'.$invoice['id'])?>" class="pjax-load link-secondary"><?=$jatbi->lang("Đơn hàng")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+        </ul>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <?=$app->component('select', [
+                        'name' => 'type_payments',
+                        'placeholder' => $jatbi->lang("Hình thức thanh toán"),
+                        'required' => true,
+                        'options' => $type_payments ?? [],
+                        'class' => 'change-update',
+                        "attr" => 'data-action="change" data-load = "this" data-selector="[data-pos-table]"
+                            data-url="/invoices/payments-update/'.$action.'/typepayments/add/0" 
+                            data-form=\'{"value": "this.val"}\''
+                    ])?>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th width="1%">STT</th>
+                                    <th width="30%"><?=$jatbi->lang('Hình thức thanh toán')?></th>
+                                    <th width="20%"><?=$jatbi->lang('Giá tiền')?></th>
+                                    <th><?=$jatbi->lang('Nội dung')?></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody data-pos-table>
+                                <?php 
+                                $dem = 0 ; 
+                                foreach (($SelectType_payments ?? []) as $key => $SelectType_payment) {
+                                    $type_payment = $app->get("type_payments",["name","id","code"],["id"=>$SelectType_payment['type_payments'] ?? ""]);			
+                                ?>	
+                                <tr>
+                                    <td class="text-center"><?=++$dem?></td>
+                                    <td><?=$type_payment['name'] ?? ""?></td>
+                                    <td>
+                                        <input placeholder="Số tiền" type="tel" data-number="money" data-currency=""
+                                        data-decimals="0" data-thousands="," data-decimal="." name="price"
+                                        class="form-control" data-action="blur" data-load="this"
+                                        data-selector="[data-pos-table]"
+                                        data-form='{"value": "this.val"}'
+                                        data-url="/invoices/payments-update/<?=$action?>/typepayments/price/<?=$key?>"
+                                        value="<?=$SelectType_payment['price'] ?? "" ?>">
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <textarea name="additional_information" class="form-control blur-update"
+                                            style="height: 50px; resize: none;" data-action="blur"
+                                            id="additional_information-<?=$key;?>"
+                                            data-selector="[data-pos-sales],[data-pos-payment]" data-load="this"
+                                            data-form='{"value": "#additional_information-<?=$key;?>.val"}'
+                                            data-url="/invoices/payments-update/<?=$action?>/typepayments/content/<?=$key?>"><?=$SelectType_payment['content'] ?? ''?></textarea>
+                                    </td>
+                                    <td class="text-center"><a class="btn btn-link text-danger p-0" data-action="click" data-load="this" data-url="/invoices/payments-update/<?=$action?>/typepayments/deleted/<?=$key?>"><i class="ti ti-trash"></i></a></td>
+                                </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                    <button class="btn btn-danger rounded-pill px-4" data-action="click" data-load="this" data-url="/invoices/payments-update/<?=$action?>/cancel/0/0"><?=$jatbi->lang('Hủy')?></button>
+                    <button class="btn btn-eclo rounded-pill px-5" data-action="click" data-load="/invoices/invoices-views/<?=$invoices?>" data-url="/invoices/payments-update/<?=$action?>/completed/0/0"><?=$jatbi->lang('Hoàn tất')?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

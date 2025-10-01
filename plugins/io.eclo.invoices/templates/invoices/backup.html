@@ -1,0 +1,239 @@
+<div class="container-fluid">
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body p-3">
+            <div class="row g-4">
+                <div class="col-lg-9">
+                    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 p-3 mb-4">
+                        <div class="card-body p-2">
+                            <div class="row align-items-center">
+                                <div class="col-lg-10">
+                                    <div class="bg-body rounded-pill p-2 d-flex justify-content-center align-items-center" data-pos-sales>
+                                        <i class="ti ti-search fs-3 ms-2"></i>
+                                        <div class="w-100" data-search="true" data-url="/api/product-search/<?=$action; ?>">
+                                            <input type="text" class="form-control bg-transparent border-0 shadow-none py-3 w-100" placeholder="Tìm kiếm">
+                                            <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3" style="--max-height:300px;"></div>
+                                            <template class="search-item-template">
+                                                <div class="search-item border-0 py-2 btn text-start position-relative" style="display: flex; align-items: center; gap: 10px;">
+                                                    <div data-attr-products="value">
+                                                        <strong data-name="text"></strong><br>
+                                                        <div class="d-flex">
+                                                            <div class="me-2">Số lượng: <small data-name="amount"></small></div>
+                                                            <div class="me-2">Quầy: <small data-name="brands"></small></div>
+                                                        </div>
+                                                        <a data-action="click" data-load="this" data-selector="[data-pos-products],[data-pos-payment]" data-attr-url="url" class="stretched-link" href="#!"></a>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <a href="/invoices/invoices" class="btn btn-eclo w-100 py-2">Đơn hàng</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <nav class="me-3 ms-3 mb-4">
+                        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                            <div class="nav-link active me-2">
+                                <a class="pjax-load fw-bold text-dark" href="/invoices/sales/1/">Đơn hàng 1</a>
+                                <a class="click-update ms-3 text-secondary" data-load="" data-url="/invoices/invoices-update/placeholder-dispatch/1/cancel/"><i class="fa fa-times"></i></a>
+                            </div>
+                            <div class="nav-link me-2">
+                                <a class="pjax-load fw-bold text-dark" href="/invoices/sales/2/">Đơn hàng 2</a>
+                                <a class="click-update ms-3 text-secondary" data-load="" data-url="/invoices/invoices-update/placeholder-dispatch/2/cancel/"><i class="fa fa-times"></i></a>
+                            </div>
+                            <button class="click-event nav-link text-primary" data-load="/invoices/sales/3" data-url="/invoices/invoices-update/placeholder-dispatch/3/orderid/"><i class="fa fa-plus"></i></button>
+                        </div>
+                    </nav>
+                    <div class="sales-infomation">
+                        <div class="card sales-products pjax-content-load mb-4 bg-body bg-opacity-50 shadow border-0 rounded-4">
+                            <div class="card-body p-3">
+                                <div class="list-products">
+                                    <div class="table-responsive">
+                                        <table class="table align-middle table-hover fs-7">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="15%" class="p-2">Sản phẩm</th>
+                                                    <th width="5%" class="p-2">Đơn vị</th>
+                                                    <th width="10%" class="text-center p-2">Số lượng</th>
+                                                    <th width="10%" class="text-end p-2">Đơn giá</th>
+                                                    <th width="10%" class="text-end p-2">Thành tiền</th>
+                                                    <th width="10%" class="text-center p-2">Quầy hàng</th>
+                                                    <th width="15%" class="text-center p-2">Thông tin bổ sung</th>
+                                                    <th width="1%" class="p-2"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody data-pos-products>
+                                                <?php foreach ($SelectProducts as $key => $SelectProduct) {  
+                                                    $getPro = $app->get("products",["code","name","units","branch"],["id"=>$SelectProduct['products']]); 
+                                                    // $products_details = $database->select("products_details","*",["products"=>$getPro['id'],"deleted"=>0]); 
+                                                    $total_price = ($SelectProduct['amount']*$SelectProduct['price']);
+                                                    $total_amount += $SelectProduct['amount'];
+                                                    $total += $total_price;
+                                                ?>
+                                                <tr>
+                                                    <td class="p-2">
+                                                        <span class="fw-bold text-primary"><?=$getPro['code']?> - <?=$getPro['name']?></span>
+                                                        <div class="small text-muted mb-2"></div>
+                                                    </td>
+                                                    <td class="p-2"><?=$app->get("units","name",["id"=>$getPro['units']])?></td>
+                                                    <td class="p-2 text-center">
+                                                        <div class="input-group get-amount flex-nowrap">
+                                                            <button class="input-group-text fw-bold get-amount-minus bg-light" data-load="" data-url="/invoices/invoices-update/sales/<?= $action;?>/products/amount/<?=$key;?>"><i class="fa fa-minus"></i></button>
+                                                            <input type="number" name="amount" class="blur-update form-control text-center" data-url="/invoices/invoices-update/sales/<?= $action;?>/products/amount/<?=$key;?>" value="1" data-load="true" min="0">
+                                                            <button class="input-group-text fw-bold get-amount-plus bg-light" data-load="" data-url="/invoices/invoices-update/sales/<?= $action;?>/products/amount/<?=$key;?>"><i class="fa fa-plus"></i></button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="p-2 text-end">
+                                                        <a href="#" class="modal-url text-primary" data-url="/invoices/invoices-update/sales/<?= $action;?>/products-details/<?=$key;?>"><?=number_format($SelectProduct['price'])?></a>
+                                                        <?php if($SelectProduct['price']!=$SelectProduct['price_old']){?>
+														<p class="mb-0 text-decoration-line-through small"><?=number_format($SelectProduct['price_old'])?></p>
+													    <?php } ?>
+                                                    </td>
+                                                    <td class="p-2 text-end fw-bold text-success"><?=number_format($total_price)?></td>
+                                                    <td class="p-2 text-center fw-bold"><?=$app->get("branch","name",["id"=>$getPro['branch']])?></td>
+                                                    <td class="p-2 text-center">
+                                                        <textarea name="additional_information" class="form-control blur-update" style="height: 50px; resize: none;" data-action="blur" data-load="false" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/products/additional_information/0/"><?=$SelectProduct['additional_information']?></textarea>
+                                                    </td>
+                                                    <td class="p-2 text-center"><a class="click-update text-danger" data-load="" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/products/deleted/0/"><i class="ti ti-trash"></i></a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="7" class="p-2"></td>
+                                                </tr>
+                                                <?php } ?>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border rounded-3 p-3 mb-4">
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="mb-3">
+                                        <label class="col-form-label fw-bold">Ghi chú</label>
+                                        <textarea name="notes" class="form-control blur-update" style="height: 100px; resize: vertical;" data-load="false" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/notes/">Ghi chú chung</textarea>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="mb-3">
+                                        <label class="col-form-label fw-bold">Nhân viên bán hàng</label>
+                                        <select name="personnels" class="form-control select2 change-update" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/personnels/">
+                                            <option value="">Chọn nhân viên</option>
+                                            <option value="1">NV001 - Nguyễn Văn A</option>
+                                            <option value="2">NV002 - Trần Văn B</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <div class="input-group mb-2">
+                                            <div class="input-group-text bg-light">Nguyễn Văn A</div>
+                                            <input type="text" name="price" class="blur-update form-control number" data-load="false" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/commission/1/" value="50,000">
+                                            <div class="input-group-text bg-light">
+                                                <a class="click-update text-danger" data-load="/invoices/sales/placeholder-action" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/personnels-deleted/1/">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="card sales-payment p-3 pjax-content-load h-100 bg-body bg-opacity-50 shadow border-0 rounded-4">
+                        <div class="customers border-bottom pb-3">
+                            <div class="input-group mb-3">
+                                <select name="customers" class="select2-search-ajax form-control search-ajax-customers change-update" style="width: 100%;" multiple data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/customers/"></select>
+                                <button class="btn btn-primary btn-sm text-nowrap modal-url pe-3 ps-3" data-url="/customers/customers-add/placeholder-dispatch/placeholder-action/"><i class="fa fa-plus"></i></button>
+                            </div>
+                            <!-- Thông tin khách hàng -->
+                            <div class="row d-flex align-items-start">
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Họ tên:</span>
+                                    <strong class="text-dark">Nguyễn Văn C</strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Loại khách hàng:</span>
+                                    <strong class="text-dark">VIP</strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Điện thoại:</span>
+                                    <strong class="text-dark">0901234567</strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Email:</span>
+                                    <strong class="text-dark">example@email.com</strong>
+                                </div>
+                                <div class="col-md-12 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Địa chỉ:</span>
+                                    <strong class="text-dark">123 Đường ABC, Quận 1, TP.HCM</strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Thẻ khách hàng:</span>
+                                    <strong class="text-dark">CARD001</strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Giảm giá:</span>
+                                    <strong class="text-dark">10%</strong>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="col-form-label fw-bold">Mã đoàn</label>
+                                            <input type="text" name="code_group" class="form-control blur-update code_group" data-load="false" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/code_group/" value="MA001">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="col-form-label fw-bold">Quầy hàng</label>
+                                            <select name="branch" class="form-control select2 change-update" data-load="false" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/branch/">
+                                                <option value="">Chọn quầy</option>
+                                                <option value="1" selected>Quầy 1</option>
+                                                <option value="2">Quầy 2</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="details border-bottom py-3">
+                            <div class="mb-3">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">Phụ thu</span>
+                                    <input placeholder="Phụ thu" data-number="money" data-currency="" data-decimals="0" data-thousands="." data-decimal="," type="tel" name="surcharge" class="form-control blur-update number" data-load="true" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-input/surcharge/0/" value="10,000">
+                                </div>
+                            </div>
+                            <div class="card mb-3">
+                                <div class="card-header p-2 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Phương thức thanh toán</span>
+                                        <a href="#" class="text-dark click-event" data-load="" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-prepay-add/"><i class="fa fa-plus"></i></a>
+                                    </div>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="input-group mb-2">
+                                        <select name="type" class="select2 form-control change-update" style="width: 45%;" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-prepay/type_payments/0/">
+                                            <option value="">Chọn</option>
+                                            <option value="1">Tiền mặt</option>
+                                            <option value="2">Chuyển khoản</option>
+                                        </select>
+                                        <input placeholder="Số tiền" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-prepay/price/0/" type="text" name="price" value="100,000" class="form-control number blur-update" style="width: 25%;">
+                                        <input placeholder="Nội dung" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-prepay/content/0/" type="text" name="content" value="Thanh toán đơn hàng" class="form-control blur-update" style="width: 25%;">
+                                        <span class="input-group-text rounded-0 bg-light"><a class="click-update text-danger" data-load="" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/details-deleted/prepay/0/"><i class="fa fa-trash"></i></a></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment mt-3" data-pos-payment>
+                            <!-- Tổng thanh toán -->
+                            <button class="click-update1 btn btn-success w-100 p-2 fs-5 text-white" data-load="/invoices/sales/" data-print="true" data-action="submit" data-url="/invoices/invoices-update/placeholder-dispatch/placeholder-action/completed/sales">Thanh toán 110,000</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

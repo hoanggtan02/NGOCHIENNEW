@@ -1,0 +1,79 @@
+<div class="container-fluid pjax-content-load">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body">
+            <?=$title?>
+        </h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small" aria-current="page"><a href="<?=$jatbi->url('/invoices')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Đơn hàng")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page">
+                <?=$title?>
+            </li>
+        </ul>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="col-form-label fw-bold"><?=$jatbi->lang('Nhân viên bán hàng')?></label>
+            </div>
+            <div class="mb-1">
+                <?=$app->component('select', [
+                    'name' => 'personnels',
+                    'placeholder' => $jatbi->lang("Nhân viên bán hàng"),
+                    'required' => true,
+                    'options' => $personnelss ?? [],
+                    'class' => 'change-update',
+                    "attr" => 'data-action="change" data-load = "this" data-selector="[data-pos-table]"
+                        data-url="/invoices/invoices-personnels/'.$action.'/personnels/add/0" 
+                        data-form=\'{"value": "this.val"}\''
+                ])?>
+            </div>
+            <div class="table-responsive flex-grow-1">
+                <table class="table align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="10%"><?=$jatbi->lang('Nhân viên bán hàng')?></th>
+                            <th width="10%" class="text-center"><?=$jatbi->lang('Hoa hồng')?></th>
+                            <th width="1%"></th>
+                        </tr>
+                    </thead>
+                    <tbody data-pos-table>
+                        <?php 
+                        foreach (($Select_personnels ?? []) as $key => $value) {?>
+                        <tr>
+                            <td class="p-2">
+                                <?=$value['name'] ?? "" ?>
+                            </td>
+                            <td class="p-2">
+                                <input placeholder="Số tiền" type="tel" data-number="money" data-currency=""
+                                    data-decimals="0" data-thousands="," data-decimal="." name="price"
+                                    class="form-control" data-action="blur" data-load="this"
+                                    data-selector="[data-pos-table]"
+                                    data-form='{"value": "this.val"}'
+                                    data-url="/invoices/invoices-personnels/<?=$action?>/personnels/price/<?=$key?>"
+                                    value="<?=$value['price'] ?? "" ?>">
+                            </td>
+                            <td class="p-2 text-center">
+                                <a class="click-update text-danger" data-load="this" data-action="click" data-selector="[data-pos-table]"
+                                    data-url="/invoices/invoices-personnels/<?=$action?>/personnels/deleted/<?=$key?>"><i
+                                        class="ti ti-trash"></i></a>
+                            </td>
+                        </tr>
+                        <?php } ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            </div>
+            <div class="d-flex justify-content-end align-items-center">
+                <button class="btn btn-eclo-light rounded-pill px-4 me-2" data-action="click" data-load="this" data-selector="[data-pos-table]"
+                    data-url="/invoices/invoices-personnels/<?=$action?>/cancel/0/0"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-eclo rounded-pill px-5" data-action="click" 
+                    data-load="/invoices/invoices-views/<?=$invoices?>"
+                    data-url="/invoices/invoices-personnels/<?=$action?>/completed/0/0"><?=$jatbi->lang('Hoàn tất')?></button>
+            </div>
+        </div>
+    </div>
+</div>

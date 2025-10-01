@@ -1,0 +1,605 @@
+<div class="container-fluid py-2" data-pos-this>
+    <div class="row g-3">
+        <div class="col-lg-9">
+            <div class="card h-100 bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body d-flex flex-column p-3">
+                    <div class="row align-items-center mb-4">
+                        <div class="col-lg-12">
+                            <div class="bg-body rounded-pill p-2 d-flex justify-content-center align-items-center"
+                                data-pos-sales>
+                                <i class="ti ti-search fs-3 ms-2"></i>
+                                <div class="w-100" data-search="true" data-url="/api/product-search/<?=$action; ?>">
+                                    <input type="text"
+                                        class="form-control bg-transparent border-0 shadow-none py-3 w-100"
+                                        placeholder="Tìm kiếm">
+                                    <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3"
+                                        style="--max-height:300px;"></div>
+                                    <template class="search-item-template">
+                                        <div class="search-item border-0 py-2 btn text-start position-relative"
+                                            style="display: flex; align-items: center; gap: 10px;">
+                                            <div data-attr-products="value">
+                                                <strong data-name="text"></strong><br>
+                                                <div class="d-flex">
+                                                    <div class="me-2">Số lượng: <small data-name="amount"></small></div>
+                                                    <div class="me-2">Quầy: <small data-name="brands"></small></div>
+                                                </div>
+                                                <a data-action="click" data-load="this"
+                                                    data-selector="[data-pos-sales],[data-pos-payment]"
+                                                    data-attr-url="url" class="stretched-link" href="#!"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <nav class="mb-3" data-pos-sales>
+                        <div class="nav nav-tabs nav-pills-eclo" role="tablist">
+                            <?php
+                            $sales = $_SESSION['sales'] ?? [];
+                            $nextKey = !empty($sales) ? max(array_keys($sales)) + 1 : 1;
+                            ?>
+
+                            <?php foreach ($sales as $orderkey => $orderid): ?>
+                            <div class="nav-link <?=$action==$orderkey ? 'active' : ''?> me-1 ">
+                                <a class="pjax-load fw-bold text-danger"
+                                    data-selector="[data-pos-sales],[data-pos-payment]"
+                                    href="/invoices/sales/<?=$orderkey?>"> Đơn hàng
+                                    <?=$orderkey?>
+                                </a>
+                                <a class="click-update ms-3 text-secondary"
+                                    data-selector="[data-pos-sales],[data-pos-payment]" data-action="click"
+                                    data-load="this"
+                                    data-url="/invoices/invoices-updatee/sales/<?=$orderkey?>/cancel"><i
+                                        class="ti ti-x"></i></a>
+                            </div>
+                            <?php endforeach; ?>
+                            <?php if(count($stores) == 1){ ?>
+                            <a data-action="click" data-selector="[data-pos-sales],[data-pos-payment]" data-load="this"
+                                class="nav-link fw-bold text-danger"
+                                data-url="/invoices/invoices-update/sales/<?=$nextKey?>/orderid/<?=$nextKey?>">
+                                <i class="ti ti-plus"></i>
+                            </a>
+                            <?php }else{ ?>
+                            <a data-action="modal" data-selector="[data-pos-sales],[data-pos-payment]" data-load="this"
+                                class="nav-link fw-bold text-danger" data-url="/select-store-modal">
+                                <i class="ti ti-plus"></i> Thêm đơn hàng
+                            </a>
+                            <?php } ?>
+                        </div>
+                    </nav>
+
+                    <div class="table-responsive flex-grow-1">
+                        <table class="table align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="15%" class="p-2">Sản phẩm</th>
+                                    <th width="5%" class="p-2">Đơn vị</th>
+                                    <th width="10%" class="text-center p-2">Số lượng</th>
+                                    <th width="10%" class="text-end p-2">Đơn giá</th>
+                                    <th width="10%" class="text-end p-2">Thành tiền</th>
+                                    <th width="10%" class="text-center p-2">Quầy hàng</th>
+                                    <th width="15%" class="text-center p-2">Thông tin bổ sung</th>
+                                    <th width="1%" class="p-2"></th>
+                                </tr>
+                            </thead>
+                            <tbody data-pos-sales>
+                                <?php 
+                                $total_amount = 0;
+                                $total = 0;
+                                if (!empty($SelectProducts) && is_array($SelectProducts)) {
+                                    foreach ($SelectProducts as $key => $SelectProduct) {  
+                                        $getPro = $app->get("products", ["code", "name", "units", "branch"], ["id" => $SelectProduct['products'] ?? 0]);
+                                        $total_price = (isset($SelectProduct['amount']) && isset($SelectProduct['price'])) ? ($SelectProduct['amount'] * $SelectProduct['price']) : 0;
+                                        $total_amount += $SelectProduct['amount'];
+										$total += $total_price;
+                                ?>
+                                <tr>
+                                    <td class="p-2">
+                                        <span class="fw-bold text-primary">
+                                            <?=$getPro['code']?> -
+                                            <?=$getPro['name']?>
+                                        </span>
+                                        <div class="small text-muted mb-2"></div>
+                                    </td>
+                                    <td class="p-2"><?=$app->get("units", "name", ["id" => $getPro['units']])?></td>
+                                    <td class="p-2 text-center">
+                                        <div class="input-group get-amount flex-nowrap">
+                                            <button class="input-group-text p-1 fw-bold get-amount-minus bg-light"
+                                                data-load="this" data-action="click"
+                                                data-url="/invoices/invoices-update/sales/<?=$action;?>/products/amount/<?=$key;?>"
+                                                data-form='{"increment":"minus"}'
+                                                data-selector="[data-pos-sales],[data-pos-payment]">
+                                                <i class="ti ti-minus"></i>
+                                            </button>
+                                            <input type="number" name="amount"
+                                                class="blur-update form-control p-1 text-center"
+                                                id="input-amount-<?=$key;?>"
+                                                data-form='{"value": "#input-amount-<?=$key;?>.val"}' data-action="blur"
+                                                data-url="/invoices/invoices-update/sales/<?=$action;?>/products/amount/<?=$key;?>"
+                                                value="<?=$SelectProduct['amount'] ?? 0?>" data-load="this" min="0"
+                                                data-selector="[data-pos-sales],[data-pos-payment]">
+                                            <button class="input-group-text p-1 fw-bold get-amount-plus bg-light"
+                                                data-load="this" data-action="click"
+                                                data-url="/invoices/invoices-update/sales/<?=$action;?>/products/amount/<?=$key;?>"
+                                                data-form='{"increment":"plus"}'
+                                                data-selector="[data-pos-sales],[data-pos-payment]">
+                                                <i class="ti ti-plus"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="p-2 text-end">
+                                        <a href="#" class="modal-url text-primary"
+                                            data-url="/invoices/invoices-update/sales/<?=$action;?>/products-details/<?=$key;?>">
+                                            <?=number_format($SelectProduct['price'] ?? 0)?>
+                                        </a>
+                                        <?php if(isset($SelectProduct['price']) && isset($SelectProduct['price_old']) && $SelectProduct['price'] != $SelectProduct['price_old']){?>
+                                        <p class="mb-0 text-decoration-line-through small">
+                                            <?=number_format($SelectProduct['price_old'])?>
+                                        </p>
+                                        <?php } ?>
+                                    </td>
+                                    <td class="p-2 text-end fw-bold text-success">
+                                        <?=number_format($total_price)?>
+                                    </td>
+                                    <td class="p-2 text-center fw-bold">
+                                        <?=$app->get("branch", "name", ["id" => $getPro['branch']])?>
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <textarea name="additional_information" class="form-control blur-update"
+                                            style="height: 50px; resize: none;" data-action="blur"
+                                            id="additional_information-<?=$key;?>"
+                                            data-selector="[data-pos-sales],[data-pos-payment]" data-load="this"
+                                            data-form='{"value": "#additional_information-<?=$key;?>.val"}'
+                                            data-url="/invoices/invoices-update/sales/<?=$action;?>/products/additional_information/<?=$key;?>"><?=$SelectProduct['additional_information'] ?? ''?></textarea>
+                                    </td>
+                                    <td class="p-2 text-center">
+                                        <a class="click-update text-danger" data-load="this" data-action="modal"
+                                            data-url="/invoices/invoices-update/sales/<?=$action;?>/products/deleted/<?=$key;?>"><i
+                                                class="ti ti-trash"></i></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="7" class="p-2"></td>
+                                </tr>
+                                <?php } 
+                                } else { ?>
+                                <tr>
+                                    <td colspan="8" class="text-center">Chưa có sản phẩm trong đơn hàng</td>
+                                </tr>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-auto border-top pt-3">
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <textarea name="notes" class="form-control" placeholder="Ghi chú đơn hàng..." rows="5"
+                                    data-action="blur" id="notes-<?=$action?>" data-load="this"
+                                    data-form='{"value": "#notes-<?=$action?>.val"}'
+                                    data-selector="[data-pos-sales],[data-pos-payment]"
+                                    data-url="/invoices/invoices-update/sales/<?=$action?>/notes"><?=$data['notes'] ?? ""?></textarea>
+                            </div>
+                            <div class="col-md-4" data-pos-personnels>
+                                <div class="mb-1">
+                                    <!-- <label class="col-form-label">Nhân viên bán hàng</label>
+                                    <select name="personnels" class="form-select change-update" data-load="this"
+                                        data-url="/invoices/invoices-updatee/sales/<?=$action?>/personnels"
+                                        data-selector="[data-pos-personnels],[data-pos-payment]" data-action="change"
+                                        data-form='{"value": "this.val"}'>
+                                        <option value="">Chọn nhân viên bán hàng</option>
+                                        <?php foreach($personnels ?? [] as $personnel): ?>
+                                        <option value="<?=$personnel['id']?>" data-form='{"code": "<?=$personnel['
+                                            code']?>", "name": "
+                                            <?=$personnel['name']?>"}'>
+                                            <?=$personnel['code']?> -
+                                            <?=$personnel['name']?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select> -->
+                                    <?=$app->component('select', [
+                                        'name' => 'personnels',
+                                        'placeholder' => $jatbi->lang("Nhân viên bán hàng"),
+                                        'required' => true,
+                                        'options' => $personnels ?? [],
+                                        'class' => 'change-update',
+                                        "attr" => 'data-action="change" data-load = "this"
+                                            data-url="/invoices/invoices-updatee/sales/'.$action.'/personnels" 
+                                            data-form=\'{"value": "this.val"}\''
+                                    ])?>
+                                </div>
+                                <div>
+                                    <?php foreach ($data['personnels'] ?? [] as $key => $value) {?>
+                                    <div class="input-group mb-1">
+                                        <div class="input-group-text">
+                                            <?=$value['name']?>
+                                        </div>
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="." name="price"
+                                            class="blur-update form-control number" data-load="this" data-action="blur"
+                                            id="price-<?=$value['id']?>" data-form='{"value": "#price-<?=$value['
+                                            id'];?>.val"}'
+                                        data-url="/invoices/invoices-update/sales/
+                                        <?=$action?>/commission/
+                                        <?=$value['id']?>" data-selector="[data-pos-personnels]" value="
+                                        <?=number_format($value['price'])?>">
+                                        <div class="input-group-text">
+                                            <a class="click-update text-danger" data-load="this" data-action="click"
+                                                data-selector="[data-pos-personnels]" data-alert="true"
+                                                data-url="/invoices/invoices-update/sales/<?=$action?>/personnels-deleted/<?=$value['id']?>">
+                                                <i class="ti ti-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card h-100 bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body d-flex flex-column p-3">
+                    <div class="customers mb-3">
+                        <div class="d-flex align-items-center bg-white rounded-pill border shadow-sm p-2 "
+                            data-search="true" data-url="/api/customers-search/<?=$action; ?>" data-pos-customers>
+
+                            <i class="ti ti-search fs-2 text-muted mx-2"></i>
+
+                            <div class="flex-grow-1 position-relative">
+                                <input type="text" class="form-control bg-transparent border-0 shadow-none py-2"
+                                    placeholder="Tìm kiếm khách hàng...">
+                                <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute w-100 z-3 mt-1"
+                                    style="max-height: 300px; overflow-y: auto;"></div>
+                                <template class="search-item-template">
+                                    <div class="search-item border-0 py-2 btn text-start position-relative"
+                                        style="display: flex; align-items: center; gap: 10px;">
+                                        <div data-attr-products="value">
+                                            <strong data-name="text"></strong><br>
+                                            <a data-action="click" data-load="this" data-selector="[data-pos-customers]"
+                                                data-attr-url="url" class="stretched-link" href="#!"></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <button class="btn btn-eclo rounded-circle p-0 ms-2" type="button" data-action="modal"
+                                data-url="/customers/customers-add/sales/<?=$action?>"
+                                style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <i class="ti ti-plus fs-4"></i>
+                            </button>
+                        </div>
+
+                        <div id="customer-details-box" class="mt-2" data-pos-customers>
+                            <div class="border rounded-3 p-2 bg-light">
+                                <div class="d-flex justify-content-between">
+                                    <p class="mb-1 small">
+                                        <strong>Họ & Tên:</strong>
+                                        <span id="customer-name">
+                                            <?= $getCus['name'] ?? "" ?>
+                                        </span>
+                                    </p>
+                                </div>
+                                <p class="mb-1 small">
+                                    <strong>Điện thoại:</strong>
+                                    <span id="customer-phone"></span>
+                                    <?= $getCus['phone'] ?? "" ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Địa chỉ:</strong>
+                                    <span id="customer-address"></span>
+                                    <?= $getCus['address'] ?? "" ?>
+                                    <?= !empty($getCus['ward']) ? ', '.$app->get("ward","name",["id"=>$getCus['ward']]) : '' ?>
+                                    <?= !empty($getCus['district']) ? ', '.$app->get("district","name",["id"=>$getCus['district']]) : '' ?>
+                                    <?= !empty($getCus['province']) ? ', '.$app->get("province","name",["id"=>$getCus['province']]) : '' ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Email:</strong>
+                                    <span id="customer-email"></span>
+                                    <?= $getCus['email'] ?? "" ?>
+                                </p>
+                                <p class="mb-0 small">
+                                    <strong>Loại khách hàng:</strong>
+                                    <span id="customer-type"></span>
+                                    <?= !empty($getCus['type']) ? $app->get("customers_types","name",["id"=>$getCus['type']]) : "" ?>
+                                </p>
+
+                                <?php if (!empty($data['customers']['card']['id']) && $data['customers']['card']['id'] > 0) { ?>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Thẻ quà tặng: </span>
+                                    <strong>
+                                        <?= $data['customers']['card']['code'] ?? "" ?>
+                                    </strong>
+                                </div>
+                                <div class="col-md-6 mb-2 d-flex">
+                                    <span class="fst-italic text-muted d-block me-2">Giảm giá: </span>
+                                    <strong>
+                                        <?= $data['customers']['card']['discount'] ?? 0 ?>%
+                                    </strong>
+                                </div>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div data-pos-branch>
+                        <!-- Mã đoàn -->
+                        <div class="mb-3">
+                            <?=$app->component('input', [
+                            "name" => 'code_group',
+                            "placeholder" => $jatbi->lang("Mã đoàn"),
+                            "id" => 'code_group-'.$action,
+                            "value" => $data['code_group'] ?? '',
+                            "attr" => 'data-action="blur" data-form=\'{"value": "#code_group-'.$action.'.val"}\' data-url="/invoices/invoices-update/sales/'.$action.'/code_group"'
+                        ])?>
+                        </div>
+
+                        <!-- Quầy hàng -->
+                        <div class="mb-3">
+                            <?=$app->component('select', [
+                            "name" => 'branch', 
+                            "placeholder" => $jatbi->lang("Quầy hàng"),
+                            "options" => $branchs ?? [],
+                            "selected" => $data['branch'] ?? '',
+                            "class" => 'change-update',
+                            "attr" => 'data-url="/invoices/invoices-updatee/sales/'.$action.'/branch" data-action="change" data-form=\'{"value": "this.val"}\' data-selector="[data-pos-branch]"'
+                        ])?>
+                        </div>
+                    </div>
+
+
+                    <div class="mt-auto border-top pt-3" data-pos-payment data-pos-type_payment>
+
+
+                        <!-- <h6 class="fw-bold">Thanh toán</h6> -->
+                        <div id="payment-methods-container">
+                            <div class="input-group rounded-pill border bg-white p-1 mb-2">
+                                <span class="input-group-text bg-transparent border-0 fw-bold text-muted">
+                                    <?=$jatbi->lang('Phụ thu')?>
+                                </span>
+                                <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                    data-thousands="," data-decimal="." name="surcharge"
+                                    class="form-control text-end bg-transparent border-0 shadow-none number"
+                                    placeholder="Phụ thu" data-action="blur" data-load="this"
+                                    id="surcharge-<?=$action?>" data-form='{"value": "#surcharge-<?=$action?>.val"}'
+                                    data-url="/invoices/invoices-update/sales/<?=$action?>/details-input/surcharge/0"
+                                    value="<?=$data['surcharge'][0]['price'] ??  "" ?>">
+                            </div>
+                            <div class="card mb-2">
+                                <div class="card-header p-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        Phương thức thanh toán
+                                        <a href="#" class="text-dark" data-action="click" data-load="this"
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay-add">
+                                            <i class="ti ti-plus"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-body p-1" data-pos-type_payment>
+                                    <?php if(!isset($data['prepay'])){?>
+                                    <!-- Dòng nhập thanh toán -->
+                                    <div class="input-group mb-1">
+                                        <select name="type" class="form-control" data-load="this"
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/type_payments/0"
+                                            data-action="change" data-form='{"value": "this.val"}'
+                                            data-selector="[data-pos-type_payment]">
+                                            <option value="">Chọn</option>
+                                            <?php foreach ($type_payments as $key => $type_payment) {
+                                                $subpays = $app->select("type_payments","*",["main"=>$type_payment['id'],"status"=>'A',"deleted"=>0, "type"=>1]);
+                                            ?>
+                                            <option value="<?=$type_payment['id']?>"
+                                                <?=isset($data['prepay'][0]['type_payments']) &&
+                                                $data['prepay'][0]['type_payments']==$type_payment['id'] ? 'selected'
+                                                : '' ?>>
+                                                <?=$type_payment['name']?>
+                                            </option>
+                                            <?php foreach ($subpays as $key => $subpay) { ?>
+                                            <option value="<?=$subpay['id']?>"
+                                                <?=isset($data['prepay'][0]['type_payments']) &&
+                                                $data['prepay'][0]['type_payments']==$subpay['id'] ? 'selected' : '' ?>>
+                                                -----
+                                                <?=$subpay['name']?>
+                                            </option>
+                                            <?php } ?>
+                                            <?php } ?>
+                                        </select>
+
+                                        <input placeholder="Số tiền" type="tel" data-number="money" data-currency=""
+                                            data-decimals="0" data-thousands="," data-decimal="." name="price"
+                                            class="form-control" data-action="blur" data-load="this"
+                                            data-selector="[data-pos-type_payment]" id="price-<?=$action?>"
+                                            data-form='{"value": "#price-<?=$action?>.val"}'
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/price/0"
+                                            value="<?=$data['prepay'][0]['price'] ?? "" ?>">
+
+                                        <input placeholder="Nội dung" type="text" name="content" class="form-control"
+                                            data-action="blur" data-load="this" data-selector="[data-pos-type_payment]"
+                                            id="content-<?=$action?>" data-form='{"value": "#content-<?=$action?>.val"}'
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/content/0"
+                                            value="<?=$data['prepay'][0]['content'] ?? "" ?>">
+
+                                        <span class="input-group-text rounded-0">
+                                            <a href="#" class="text-danger" data-action="click" data-load="this"
+                                                data-url="/invoices/invoices-update/sales/<?=$action?>/details-deleted/prepay/0"
+                                                data-selector="[data-pos-type_payment]">
+                                                <i class="ti ti-trash"></i>
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <?php } else { ?>
+                                    <?php foreach ($data['prepay'] as $prepaykey => $prepay) {?>
+                                    <div class="input-group mb-1">
+                                        <select name="type" class="form-control" data-load="this"
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/type_payments/<?=$prepaykey?>"
+                                            data-action="change" data-form='{"value": "this.val"}'
+                                            data-selector="[data-pos-type_payment]">
+                                            <option value="">Chọn</option>
+                                            <?php foreach ($type_payments as $key => $type_payment) {
+                                                        $subpays = $app->select("type_payments","*",["main"=>$type_payment['id'],"status"=>'A',"deleted"=>0, "type"=>1]);
+                                                    ?>
+                                            <option value="<?=$type_payment['id']?>" <?=isset($prepay['type_payments'])
+                                                && $prepay['type_payments']==$type_payment['id']?'selected':''?>>
+                                                <?=$type_payment['name']?>
+                                            </option>
+                                            <?php foreach ($subpays as $key => $subpay) {?>
+                                            <option value="<?=$subpay['id']?>" <?=isset($prepay['type_payments']) &&
+                                                $prepay['type_payments']==$subpay['id']?'selected':''?>>-----
+                                                <?=$subpay['name']?>
+                                            </option>
+                                            <?php } ?>
+                                            <?php } ?>
+                                        </select>
+
+                                        <input placeholder="Số tiền" type="tel" data-number="money" data-currency=""
+                                            data-decimals="0" data-thousands="," data-decimal="." name="price"
+                                            class="form-control" data-action="blur" data-load="this"
+                                            data-selector="[data-pos-type_payment]"
+                                            id="price-<?=$action?><?=$prepaykey?>"
+                                            data-form='{"value": "#price-<?=$action?><?=$prepaykey?>.val"}'
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/price/<?=$prepaykey?>"
+                                            value="<?=$prepay['price'] ?? "" ?>">
+
+                                        <input placeholder="Nội dung" type="text" name="content" class="form-control"
+                                            data-action="blur" data-load="this" data-selector="[data-pos-type_payment]"
+                                            id="content-<?=$action?><?=$prepaykey?>"
+                                            data-form='{"value": "#content-<?=$action?><?=$prepaykey?>.val"}'
+                                            data-url="/invoices/invoices-updatee/sales/<?=$action?>/details-prepay/content/<?=$prepaykey?>"
+                                            value="<?=$prepay['content'] ?? "" ?>">
+
+                                        <span class="input-group-text rounded-0">
+                                            <a href="#" class="text-danger" data-action="click" data-load="this"
+                                                data-url="/invoices/invoices-update/sales/<?=$action?>/details-deleted/prepay/<?=$prepaykey?>"
+                                                data-selector="[data-pos-type_payment]">
+                                                <i class="ti ti-trash"></i>
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <?php } ?>
+                                    <?php } ?>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="d-flex justify-content-between"><span>Số lượng sản phẩm:</span><span
+                                class="fw-bold">
+                                <?=number_format($total_amount)?>
+                            </span></div>
+                        <div class="d-flex justify-content-between"><span>Tổng tiền hàng:</span><span class="fw-bold">
+                                <?=number_format($total)?>
+                            </span></div>
+                        <?php 
+                        $total_minus = 0;
+                        $total_surcharge = 0;
+                        ?>
+                        <?php if (!empty($data['discount_card']) && $data['discount_card'] > 0){?>
+                        <div class="row fw-bold mb-2">
+                            <div class="col">
+                                <a href="#" class="modal-url"
+                                    data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/discount_customers/">
+                                    Thẻ khách hàng
+                                    <?=$data['discount_customers']?>%
+                                </a>
+                            </div>
+                            <div class="col text-end">
+                                <?php $discount_cus = ($data['discount_customers']*$total)/100 ?>
+                                <?=number_format($discount_cus)?>
+                            </div>
+                        </div>
+                        <?php } ?>
+                        <?php if (!empty($data['minus']) && is_array($data['minus'])){?>
+                        <div class="row fw-bold mb-2">
+                            <div class="col">
+                                <a href="#" class="modal-url"
+                                    data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details/minus/">
+                                    Giảm trừ
+                                </a>
+                            </div>
+                            <div class="col text-end">
+                                <?php foreach ($data['minus'] as $minus) {
+                                    $total_minus += $minus['price'];
+                                }?>
+                                <?=number_format($total_minus)?>
+                            </div>
+                        </div>
+                        <?php } ?>
+                        <?php if (!empty($data['surcharge']) && is_array($data['surcharge'])){?>
+                        <div class="row fw-bold mb-2">
+                            <div class="col">
+                                <a href="#" class="modal-url" data-action="modal" data-load="this"
+                                    data-url="/invoices/invoices-update/sales/<?=$action?>/details/surcharge">
+                                    Phụ thu
+                                </a>
+                            </div>
+                            <div class="col text-end">
+                                <?php foreach ($data['surcharge'] as $surcharge) {
+                                    $total_surcharge += $surcharge['price'];
+                                }?>
+                                <?=number_format($total_surcharge)?>
+                            </div>
+                        </div>
+                        <?php } ?>
+                        <?php $total_payment = 
+                            (($total ?? 0) - ($discount ?? 0) - ($discount_cus ?? 0) - ($total_minus ?? 0)) 
+                            + ($total_surcharge ?? 0); ?>
+                        <?php $payment = $total_payment + ($data['transport']['price'] ?? 0); ?>
+                        <div class="d-flex justify-content-between"><span>Tạm tính:</span><span class="fw-bold">
+                                <?=number_format($total_payment)?>
+                            </span>
+                        </div>
+                        <?php if (!empty($data['prepay']) && is_array($data['prepay']) && count($data['prepay']) > 0) { ?>
+                        <div class="d-flex justify-content-between">
+                            <a href="#" class="modal-url"
+                                data-url="/invoices/invoices-update/sales/<?=$action?>/details/prepay"
+                                data-action="modal" data-load="this">
+                                <span class="text-info">Khách thanh
+                                    toán:</span>
+                            </a>
+                            <span class="fw-bold text-info">
+                                <?php $total_prepay = 0 ;
+                                foreach ($data['prepay'] as $prepay) {
+                                    $total_prepay += (float)($prepay['price'] ?? 0);
+                                }?>
+                                <?=number_format($total_prepay ?? 0)?>
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between"><span class="text-warning">Còn lại:</span>
+                            <span class="fw-bold text-warning text-decoration-none">
+                                <?php $payment_prepay = $payment - $total_prepay?>
+                                <?=number_format($payment_prepay?? 0)?>
+                            </span>
+                        </div>
+                        <!-- <hr>
+                        <div class="d-flex justify-content-between fs-5"><span class="fw-bold">Khách cần
+                                trả:</span><span class="fw-bold text-success">1,800,000</span></div> -->
+                        <?php } ?>
+                        <?php if (isset($data['point']) && $data['point'] > 0) {
+                            $getPoint = $app->get("point","*",["id"=>$data['point'],"status"=>"A"]);
+                        ?>
+                        <?php if ($getPoint['no_discount'] == 1 && $discount == 0 || $getPoint['no_discount'] == 0) { ?>
+                        <div class="row fw-bold ">
+                            <div class="col">
+                                Tích điểm
+                            </div>
+                            <div class="col text-end">
+                                <?=number_format(($payment / $getPoint['point_price']) * $getPoint['point_point'])?>
+                            </div>
+                        </div>
+                        <?php } ?>
+                        <?php } ?>
+                        <button class="btn btn-eclo w-100 p-3 fs-5 fw-bold" data-action="click" data-load="this"
+                            data-url="/invoices/invoices-update/sales/<?=$action?>/completed/sales" data-alert="true"
+                            data-selector="[data-pos-this]" data-print="modal">
+                            Thanh Toán
+                            <?=number_format($payment)?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

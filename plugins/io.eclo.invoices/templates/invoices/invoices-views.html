@@ -1,0 +1,463 @@
+<div class="pjax-content-load">
+    <nav class="d-flex justify-content-between align-items-center" aria-label="breadcrumb" style="margin-left: 15px;">
+        <div>
+            <h4><?=$jatbi->lang('Hóa đơn')?> #
+                <?=($setting['ballot_code']['invoices'] ?? 'HĐ')?>-<?=$data['id']?>
+            </h4>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/"><?=$jatbi->lang('Trang chủ')?></a></li>
+                <li class="breadcrumb-item active" aria-current="page"><?=$jatbi->lang('Hóa đơn')?></li>
+            </ol>
+        </div>
+        <div>
+            <a class="btn btn-eclo" data-action="modal" style="margin-right: 5px;"
+                data-url="/invoices/invoices-print/<?=$data['id']?>"><?=$jatbi->lang('In hóa đơn')?></a>
+            <?php if($jatbi->permission('invoices.cancel','button') || $jatbi->permission('invoices.cancel.confirm','button')): ?>
+            <?php if($data['type'] != 3 && isset($data['cancel'])): ?>
+            <?php if($data['cancel'] == 0): ?>
+            <a class="btn btn-danger" data-action="modal"
+                data-url="/invoices/invoices-cancel-req/<?=$data['id']?>"><?=$jatbi->lang('Yêu cầu hủy')?></a>
+            <?php elseif($data['cancel'] == 1): ?>
+            <a class="btn btn-primary" data-action="modal"
+                data-url="/invoices/invoices-cancel-confirm/<?=$data['id']?>"><?=$jatbi->lang('Xác nhận hủy')?></a>
+            <?php endif; ?>
+            <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row justify-content-between align-items-start">
+            <div class="col-lg-8">
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Sản phẩm')?></label></div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th><?=$jatbi->lang('Sản phẩm')?></th>
+                                        <th><?=$jatbi->lang('Đơn vị')?></th>
+                                        <th class="text-center"><?=$jatbi->lang('Số lượng')?></th>
+                                        <th class="text-end"><?=$jatbi->lang('Đơn giá')?></th>
+                                        <th class="text-end"><?=$jatbi->lang('Thành tiền')?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($SelectProducts as $item): ?>
+                                    <tr>
+                                        <td><span class="fw-bold">
+                                                <?=$item['product_code']?> -
+                                                <?=$item['product_name']?>
+                                            </span></td>
+                                        <td>
+                                            <?=$item['unit_name']?>
+                                        </td>
+                                        <td class="text-center">
+                                            <?=$item['amount']?>
+                                        </td>
+                                        <td class="text-end">
+                                            <?=number_format($item['price'])?>
+                                            <?php if($item['price'] != $item['price_old']): ?>
+                                            <p class="mb-0 text-decoration-line-through small text-muted">
+                                                <?=number_format($item['price_old'])?>
+                                            </p>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            <?=number_format($item['amount'] * $item['price'])?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Thanh toán')?></label></div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-6 order-2 order-lg-1">
+                                <p class="mb-1"><span
+                                        class="fst-italic text-muted"><?=$jatbi->lang('Trạng thái')?>:</span> <strong>
+                                        <?=($setting['Status_invoices'][$data['status']]['name'] ?? 'N/A')?>
+                                    </strong></p>
+                                <div class="mb-1">
+                                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Hình thức thanh toán')?>:</span>
+                                    <?php 
+                                    $payment_methods_found = false;
+                                    foreach ($detaills as $item): 
+                                        if ($item['type'] === 'prepay'):
+                                            $payment_methods_found = true;
+                                            $payment_name = empty($item['type_payment_name']) ? 'Tiền mặt' : $item['type_payment_name'];
+                                    ?>
+                                    <?php 
+                                        endif; 
+                                    endforeach; 
+
+                                    if (!$payment_methods_found) {
+                                        echo '<strong class="d-block ms-3">Chưa có</strong>';
+                                    }
+                                    ?>
+                                </div>
+                                <p class="mb-1"><span
+                                        class="fst-italic text-muted"><?=$jatbi->lang('Ngày tạo')?>:</span>
+                                    <strong><?=$jatbi->datetime($data['date_poster'])?></strong>
+                                </p>
+                                <p class="mb-1"><span class="fst-italic text-muted"><?=$jatbi->lang('Ghi chú')?>:</span>
+                                    <strong>
+                                        <?=$data['notes']?>
+                                    </strong>
+                                </p>
+                                <div>
+                                    <span class="fst-italic text-muted d-block"><?=$jatbi->lang('Nhân viên bán hàng')?>:</span>
+                                    <?php foreach($selectpers as $per): ?>
+                                    <div class="ms-3"><strong>
+                                            <?=$per['personnel_name']?>
+                                        </strong> 
+                                        <p> <?=$jatbi->lang('Hoa hồng')?>:
+                                            <?=number_format($per['price'])?> VNĐ
+                                        </p>
+                                 
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 order-1 order-lg-2">
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Số lượng sản phẩm')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($total_amount)?>
+                                    </div>
+                                </div>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Tổng tiền hàng')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['total'])?>
+                                    </div>
+                                </div>
+                                <?php if($data['vat'] > 0): ?>
+                                <div class="row mb-3">
+                                    <div class="col fw-bold "><?=$jatbi->lang('VAT')?></div>
+                                    <div class="col text-end fw-bold ">
+                                        <?=number_format($data['vat'])?>
+                                    </div>
+                                    <div class="col-12 small fst-italic">
+                                        <?php foreach ($vats as $keyvat => $vat): ?>
+                                        <div class="row mb-1">
+                                            <div class="col"><?=$jatbi->lang('VAT')?>
+                                                <?=$keyvat?>%
+                                            </div>
+                                            <div class="col text-end">
+                                                <?=number_format($vat)?>
+                                            </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if($data['discount_price'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Giảm giá')?>
+                                        <?=$data['discount']?>%
+                                    </div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['discount_price'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if($data['discount_customers_price'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Thẻ khách hàng')?>
+                                        <?=$data['discount_customers']?>%
+                                    </div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['discount_customers_price'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if($data['minus'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Giảm trừ')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['minus'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if($data['surcharge'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Phụ thu')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['surcharge'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <div class="row fw-bold mb-3 text-dark">
+                                    <div class="col"><?=$jatbi->lang('Tạm tính')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($total_payment)?>
+                                    </div>
+                                </div>
+                                <?php if($data['transport'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col">
+                                        <?=$jatbi->lang('Phí vận chuyển')?>
+                                        <?php if($transport): ?><span class="small text-secondary d-block">
+                                            <?=$transport['transport_name']?> -
+                                            <?=$transport['content']?>
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['transport'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <div class="row fw-bold mb-3 fs-6 text-success">
+                                    <div class="col"><?=$jatbi->lang('Phải thu')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($payment)?>
+                                    </div>
+                                </div>
+                                <?php if($data['prepay'] > 0): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Đã thanh toán')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($data['prepay'])?>
+                                    </div>
+                                </div>
+                                <?php if($payment_prepay > 0): ?>
+                                <div class="row fw-bold mb-3 text-warning">
+                                    <div class="col"><?=$jatbi->lang('Còn lại')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($payment_prepay)?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php endif; ?>
+                                <?php if($getPoint): ?>
+                                <div class="row fw-bold mb-3">
+                                    <div class="col"><?=$jatbi->lang('Tích điểm')?></div>
+                                    <div class="col text-end">
+                                        <?=number_format($getPoint['point'])?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <?php foreach ($grouped_detaills as $type => $items): ?>
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang($type)?></label></div>
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="small">
+                                    <tr>
+                                        <th><?=$jatbi->lang('Mã')?></th>
+                                        <?php if($type === 'Thanh toán'): ?>
+                                        <th><?=$jatbi->lang('Hình thức')?></th>
+                                        <?php endif; ?>
+                                        <th><?=$jatbi->lang('Ngày')?></th>
+                                        <th class="text-end"><?=$jatbi->lang('Số tiền')?></th>
+                                        <th><?=$jatbi->lang('Nội dung')?></th>
+                                        <th><?=$jatbi->lang('Tài khoản')?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small">
+                                    <?php foreach($items as $item): ?>
+                                    <tr>
+                                        <td>#
+                                            <?=$item['code']?>
+                                        </td>
+                                        <?php if($type === 'Thanh toán'): ?>
+                                        <td>
+                                            <?=$item['type_payment_name'] ?: 'Tiền mặt'?>
+                                        </td>
+                                        <?php endif; ?>
+                                        <td><?=$jatbi->datetime($item['date'])?></td>
+                                        <td class="text-end">
+                                            <?=number_format($item['price'])?>
+                                        </td>
+                                        <td>
+                                            <?=$item['content']?>
+                                        </td>
+                                        <td>
+                                            <?=$item['user_name']?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Giảm trừ')?></label></div>
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="small">
+                                    <tr>
+                                        <th><?=$jatbi->lang('Mã')?></th>
+                                        <th><?=$jatbi->lang('Ngày')?></th>
+                                        <th class="text-end"><?=$jatbi->lang('Số tiền')?></th>
+                                        <th><?=$jatbi->lang('Nội dung')?></th>
+                                        <th><?=$jatbi->lang('Tài khoản')?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small">
+                                    <?php foreach ($grouped_detaills['Giảm trừ'] ?? [] as $item): ?>
+                                    <tr>
+                                        <td>#
+                                            <?=$item['code']?>
+                                        </td>
+                                        <td><?=$jatbi->datetime($item['date'])?></td>
+                                        <td class="text-end">
+                                            <?=number_format($item['price'])?>
+                                        </td>
+                                        <td>
+                                            <?=$item['content']?>
+                                        </td>
+                                        <td>
+                                            <?=$item['user_name']?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Phụ thu')?></label></div>
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="small">
+                                    <tr>
+                                        <th><?=$jatbi->lang('Mã')?></th>
+                                        <th><?=$jatbi->lang('Ngày')?></th>
+                                        <th class="text-end"><?=$jatbi->lang('Số tiền')?></th>
+                                        <th><?=$jatbi->lang('Nội dung')?></th>
+                                        <th><?=$jatbi->lang('Tài khoản')?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small">
+                                    <?php foreach ($grouped_detaills['Phụ thu'] ?? [] as $item): ?>
+                                    <tr>
+                                        <td>#
+                                            <?=$item['code']?>
+                                        </td>
+                                        <td><?=$jatbi->datetime($item['date'])?></td>
+                                        <td class="text-end">
+                                            <?=number_format($item['price'])?>
+                                        </td>
+                                        <td>
+                                            <?=$item['content']?>
+                                        </td>
+                                        <td>
+                                            <?=$item['user_name']?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Nhật ký')?></label></div>
+                    <div class="card-body p-2">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="small">
+                                    <tr>
+                                        <th><?=$jatbi->lang('Ngày')?></th>
+                                        <th><?=$jatbi->lang('Nội dung')?></th>
+                                        <th><?=$jatbi->lang('Tài khoản')?></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="small">
+                                    <?php foreach ($logs as $log): ?>
+                                    <tr>
+                                        <td><?=$jatbi->datetime($log['date'])?></td>
+                                        <td>
+                                            <?=$log['content']?>
+                                        </td>
+                                        <td>
+                                            <?=$log['user_name']?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Cửa hàng')?></label></div>
+                    <div class="card-body"><strong>
+                            <?=$data['store_name']?>
+                        </strong></div>
+                </div>
+                <div class="card card-custom mb-4">
+                    <div class="card-header"><label class="col-form-label"><?=$jatbi->lang('Khách hàng')?></label></div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>
+                                <?=$data['customer_name']?>
+                            </strong></p>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Loại khách hàng')?>:</span>
+                            <?=$data['customer_type_name']?>
+                        </p>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Điện thoại')?>:</span>
+                            <?=$data['customer_phone']?>
+                        </p>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Email')?>:</span>
+                            <?=$data['customer_email']?>
+                        </p>
+                        <p class="mb-1 small">
+                            <span class="text-muted d-block"><?=$jatbi->lang('Địa chỉ')?>:</span>
+                            <strong>
+                                <?=$data['customer_address']?>
+                                <?=empty($data['ward_name']) ? '' : ', '.$data['ward_name']?>
+                                <?=empty($data['district_name']) ? '' : ', '.$data['district_name']?>
+                                <?=empty($data['province_name']) ? '' : ', '.$data['province_name']?>
+                            </strong>
+                        </p>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Ghi chú')?>:</span>
+                            <?=$data['customer_notes']?>
+                        </p>
+                        <?php if($getCard):?>
+                        <hr>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Thẻ khách hàng')?>:</span>
+                            <?=$getCard['code']?>
+                        </p>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Giảm giá')?>:</span>
+                            <?=$getCard['discount']?>%
+                        </p>
+                        <?php endif; ?>
+                        <?php if(!empty($data['code_group'])): ?>
+                        <p class="mb-1 small"><span class="text-muted"><?=$jatbi->lang('Mã đoàn')?>:</span> <strong
+                                class="bg-primary text-white rounded-3 p-1">
+                                <?=$data['code_group']?>
+                            </strong></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
