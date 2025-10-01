@@ -1,0 +1,129 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-lg pt-standalone" >
+		<div class="modal-content rounded-5 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-sm-12">
+                            <?php if($req=='discount'){?>
+                            <div class="mb-3">
+                                <?=$app->component('input', [
+                                    "name" => 'precent',
+                                    "placeholder" => $jatbi->lang("Phần trăm"),
+                                    "value" => $data['precent'] ?? '',
+                                    "required" => 'false',
+                                ])?>
+                            </div>
+                            <?php } else { ?>
+                            <div class="mb-3">
+                                <?=$app->component('input', [
+                                    "name" => 'price',
+                                    "placeholder" => $jatbi->lang("Số tiền"),
+                                    "value" => $data['price'] ?? '',
+                                    "required" => 'false',
+                                ])?>
+                            </div>
+                            <?php } ?>
+                            <?php if($req=='prepay'){?>
+                            <div class="mb-3">
+                                <?php
+                                $options = [];
+
+                                foreach ($type_payments as $type_payment) {
+                                    // Thêm option cha
+                                    $options[] = [
+                                        'value' => $type_payment['id'],
+                                        'text'  => $type_payment['name']
+                                    ];
+
+                                    // Lấy các option con
+                                    $subpays = $app->select("type_payments", "*", [
+                                        "main"    => $type_payment['id'],
+                                        "status"  => 'A',
+                                        "deleted" => 0
+                                    ]);
+
+                                    foreach ($subpays as $subpay) {
+                                        $options[] = [
+                                            'value' => $subpay['id'],
+                                            'text'  => '----- ' . $subpay['name']
+                                        ];
+                                    }
+                                }
+                                ?>
+                                <?=$app->component('select', [
+									"name" => 'type',
+									"placeholder" => $jatbi->lang("Hình thức thanh toán"),
+									"attr" => 'data-width="100%"',
+									"options" => $options ?? []
+								])?>
+                                
+                            </div>
+                            <?php } ?>
+                            <div class="mb-3">
+                                <?=$app->component('input',[
+                                    "name"=>'date',
+                                    "type" => 'date',
+                                    "placeholder"=>$jatbi->lang("Ngày"),
+                                    "value" => date('Y-m-d'),
+                                    "attr" => 'data-width="100%"',
+                                ])?>
+                            </div>
+                            <div class="mb-3">
+                                <?=$app->component('textarea', [
+                                    "name" => "content",
+                                    "placeholder" => $jatbi->lang("Nội dung"),
+                                    "value" => $data['content'] ?? '',
+                                    "attr" => 'style="height: 100px;"',
+                                    "required" => false,
+                                ])?>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <table class="table table-hover table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <?php if($req =='prepay'){?>
+                                            <th>Hình thức thanh toán</th>
+                                        <?php } ?>
+                                        <th>Ngày</th>
+                                        <th>Số tiền</th>
+                                        <th>Nội dung</th>
+                                        <th>Tài khoản</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody data-pos-update-detail>
+                                    <?php foreach (($datas ?? []) as $key => $data) {?>
+                                        <tr>
+                                            <?php if($req =='prepay'){?>
+                                                <td><?=$app->get("type_payments","name",["id"=>$data['type_payments']])?></td>
+                                            <?php } ?>
+                                            <td><?= isset($data['date']) ? date('d/m/Y H:i:s', strtotime($data['date'])) : "" ?></td>
+                                            <td><?=number_format($data['price'] ?? 0)?></td>
+                                            <td><?=$data['content'] ?? ""?></td>
+                                            <td><?= isset($data['user']) ? $app->get("accounts","name",["id"=>$data['user']]) : "" ?></td>
+                                            <td class="text-center"><a class="click-update  text-danger" data-load="this" data-action="click"
+                                                data-selector="[data-pos-update-detail]"
+                                                data-url="/invoices/invoices-update/<?=$dispatch?>/<?=$action?>/details-deleted/<?=$req?>/<?=$key?>"><i class="ti ti-trash"></i></a></td>
+                                        </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-sm-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"
+                                    data-selector="[data-pos-update-detail]"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

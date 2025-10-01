@@ -1,0 +1,211 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body invoices-print">
+
+                <!-- Thông tin cửa hàng + tiêu đề phiếu -->
+                <div class="text-start mb-3">
+                    <h5 class="fw-bold text-uppercase p-0 m-0">
+                        <?=$data['store_info']['name'] ?? ''?>
+                    </h5>
+                    <p>
+                        <?=$data['store_info']['address'] ?? ''?>
+                    </p>
+                    <h4 class="fw-bold my-3 text-center">
+                        <?=($data['type'] ?? 1) == 3 ? 'PHIẾU NHẬP HÀNG' : 'PHIẾU XUẤT HÀNG'?>
+                    </h4>
+                </div>
+
+                <!-- Thông tin khách hàng + số phiếu -->
+                <div class="row mb-3 small">
+                    <div class="col-5">
+                        <p class="mb-1"><strong>Khách hàng:</strong>
+                            <?=$data['customer']['name'] ?? ''?>
+                        </p>
+                        <p class="mb-1"><strong>Điện thoại:</strong>
+                            <?=$data['customer']['phone'] ?? ''?>
+                        </p>
+                        <p class="mb-1"><strong>Địa chỉ:</strong>
+                            <?=$data['customer']['full_address'] ?? ''?>
+                        </p>
+                        <p class="mb-1"><strong>Ghi chú:</strong>
+
+                        </p>
+                    </div>
+
+                    <div class="col-4">
+                        <p class="mb-1"><strong>Chi nhánh:</strong>
+                            <?=$data['store_info']['name'] ?? ''?>
+                        </p>
+                        <p class="mb-1"><strong>Kho hàng:</strong>
+                     
+                        </p>
+                        <p class="mb-1"><strong>Mã đoàn:</strong>
+                            <?=$data['code_group'] ?? ''?>
+                        </p>
+                        <p class="mb-1"><strong>Nhân viên:</strong>
+                            <?=$data['personnel_name'] ?? ''?>
+                        </p>
+                    </div>
+
+                    <div class="col-3">
+                        <p class="mb-1"><strong>Số phiếu:</strong>
+                            <?=$data['code'] ?? ''?>
+                            <?=$data['id'] ?? ''?>
+                        </p>
+                        <p class="mb-0"><strong>Ngày xuất:</strong>
+                            <?=date('d/m/Y H:i:s', strtotime($data['date_poster'] ?? time()))?>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách sản phẩm -->
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">STT</th>
+                                <th class="text-center">Mã hàng</th>
+                                <th class="text-center">Tên hàng</th>
+                                <th class="text-center">Chất liệu</th>
+                                <th class="text-center">Thông tin bổ sung</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-center">Đơn giá</th>
+                                <th class="text-center">Chiết khấu</th>
+                                <th class="text-center">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+              $total_amount = 0; $total_price = 0; $stt = 0;
+              foreach($data['products'] ?? [] as $item):
+                $stt++;
+                $line_total = ($item['amount'] ?? 0) * ($item['price'] ?? 0);
+                $total_amount += $item['amount'] ?? 0;
+                $total_price += $line_total;
+              ?>
+                            <tr>
+                                <td class="text-center">
+                                    <?=$stt?>
+                                </td>
+                                <td>
+                                    <?=$item['product_code'] ?? ''?>
+                                </td>
+                                <td>
+                                    <?=$item['product_name'] ?? ''?>
+                                </td>
+                                <td>
+
+                                </td>
+                                <td>
+                                    <?=$item['additional_information']?>
+                                </td>
+
+                                </td>
+                                <td class="text-center">
+                                    <?=$item['amount'] ?? 0?>
+                                </td>
+                                <td class="text-center">
+                                    <?=number_format($item['price_old'] > 0 ? $item['price_old'] : ($item['price'] ?? 0))?>
+                                </td>
+                                <td class="text-center">
+                                    <?=number_format($item['item_discount_price'] ?? 0)?>
+                                </td>
+                                <td class="text-center fw-bold">
+                                    <?=number_format($line_total)?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-center border-0">Cộng</td>
+                                <td class="text-center border-0">
+                                    <?=$total_amount?>
+                                </td>
+                                <td class="border-0" colspan="2"></td>
+                                <td class="text-center fw-bold border-0">
+                                    <?=number_format($total_price)?>
+                                </td>
+                            </tr>
+
+                            <?php 
+                                $total_discount = ($data['discount_price'] ?? 0) + ($data['minus'] ?? 0) + ($data['discount_customers_price'] ?? 0);
+                                if ($total_discount > 0): 
+                            ?>
+                            <tr>
+                                <td colspan="8" class="text-end border-0 pt-1 pb-1">Tổng chiết khấu</td>
+                                <td class="text-end fw-bold border-0 pt-1 pb-1">(
+                                    <?=number_format($total_discount)?>)
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+
+                            <?php if (!empty($data['surcharge']) && $data['surcharge'] > 0): ?>
+                            <tr>
+                                <td colspan="8" class="text-end border-0 pt-1 pb-1">Phụ thu</td>
+                                <td class="text-end fw-bold border-0 pt-1 pb-1">
+                                    <?=number_format($data['surcharge'])?>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+
+                            <?php if (!empty($data['transport']) && $data['transport'] > 0): ?>
+                            <tr>
+                                <td colspan="8" class="text-end border-0 pt-1 pb-1">Phí vận chuyển</td>
+                                <td class="text-end fw-bold border-0 pt-1 pb-1">
+                                    <?=number_format($data['transport'])?>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+
+                            <tr class="fs-5 table-light">
+                                <td colspan="8" class="text-end fw-bold">Tổng cộng thanh toán</td>
+                                <td class="text-end fw-bold text-success">
+                                    <?=number_format($data['payments'] ?? 0)?>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Ngày lập phiếu -->
+                <div class="row mt-3 text-dark">
+                    <div class="col-md-8"></div>
+                    <div class="col-md-4 text-center">
+                        <p><i>Ngày
+                                <?=date("d",strtotime($data['date']))?> Tháng
+                                <?=date("m",strtotime($data['date']))?> Năm
+                                <?=date("Y",strtotime($data['date']))?>
+                            </i></p>
+                    </div>
+                </div>
+
+                <!-- Chữ ký -->
+                <div class="row mt-5">
+                    <div class="col-6 text-center">
+                        <h6 class="fw-bold">Khách hàng</h6>
+                        <p class="small"><i>(Ký, họ tên)</i></p>
+                        <div style="height: 80px;"></div>
+                        <p class="fw-bold">
+                            <?=$data['customer']['name'] ?? ''?>
+                        </p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <h6 class="fw-bold">Người lập phiếu</h6>
+                        <p class="small"><i>(Ký, họ tên,đóng dấu)</i></p>
+                        <div style="height: 80px;"></div>
+                        <p class="fw-bold">
+                            <?=$data['creator_name'] ?? ''?>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-print-none">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
+                    <button class="btn btn-success btn-print"><?=$jatbi->lang('IN')?></button>
+                </div>
+            </div>
+        </div>
+    </div>
