@@ -1,0 +1,135 @@
+<div class="container-fluid mt-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$jatbi->lang("Lịch sử xuất hàng")?>
+            </h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$jatbi->lang("Lịch sử xuất hàng")?>
+                </li>
+            </ul>
+        </div>
+        <div class="d-flex align-items-center">
+            <!-- <div class="dropdown me-2">
+                <button class="btn btn-eclo px-3 py-2 rounded-pill fw-semibold small d-flex align-items-center"
+                        type="button" id="export" data-bs-auto-close="true" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-export fs-5 me-2"></i> <?=$jatbi->lang("Thao tác")?>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <?php if ($jatbi->permission('ingredient-import', 'button')) { ?>
+                        <a class="dropdown-item pjax-load" href="/warehouses/ingredient-import/">
+                            <?=$jatbi->lang("Nhập hàng thủ công")?>
+                        </a>
+                        <a class="dropdown-item pjax-load" href="/warehouses/ingredient-import-crafting/">
+                            <?=$jatbi->lang("Nhập hàng chế tác")?>
+                        </a>
+                        <a class="dropdown-item pjax-load" href="/warehouses/ingredient-import-history/">
+                            <?=$jatbi->lang("Lịch sử nhập hàng")?>
+                        </a>
+                    <?php } ?>
+                    <?php if ($jatbi->permission('ingredient-export', 'button')) { ?>
+                        <a class="dropdown-item pjax-load" href="/warehouses/ingredient-export-history/">
+                            <?=$jatbi->lang("Lịch sử xuất hàng")?>
+                        </a>
+                    <?php } ?>
+                    <?php if ($jatbi->permission('ingredient-cancel', 'button')) { ?>
+                        <a class="dropdown-item pjax-load" href="/warehouses/ingredient-cancel-history/">
+                            <?=$jatbi->lang("Lịch sử hủy hàng")?>
+                        </a>
+                    <?php } ?>
+                </div>
+            </div> -->
+            <div class="filter-search">
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="dropdown">
+                        <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false">
+                            <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                             style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?=$app->component('select', [
+                                    "name" => 'user',
+                                    "placeholder" => $jatbi->lang("Tài khoản"),
+                                    "selected" => $app->xss($_GET['user'] ?? ''),
+                                    "class" => 'filter-name',
+                                    "attr" => 'data-width="100%"',
+                                    "options" => $accounts ?? []
+                                ])?>
+                                <?=$app->component('input', [
+                                    "name" => 'date',
+                                    "placeholder" => $jatbi->lang("Ngày"),
+                                    "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
+                                    "class" => 'filter-name',
+                                    "attr" => 'data-width="100%" data-datepicker',
+                                ])?>
+                            </div>
+                            <div class="px-3 py-2 text-end w-100">
+                                <button type="button" class="btn btn-light px-3 py-2 rounded-pill reset-filter">
+                                    <?=$jatbi->lang("Làm mới")?>
+                                </button>
+                                <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill button-filter">
+                                    <?=$jatbi->lang("Tìm")?>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+             <div class="custom-buttons d-none">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-eclo dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="ti ti-truck-loading"></i> <?=$jatbi->lang('Lịch sử')?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 bg-blur shadow-lg rounded-4"
+                        style="--blur:10px;">
+
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-import-history"><?=$jatbi->lang("Lịch sử nhập hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-export-history"><?=$jatbi->lang("Lịch sử xuất hàng")?></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item pjax-load"
+                                href="/warehouses/ingredient-cancel-history"><?=$jatbi->lang("Lịch sử hủy hàng")?></a>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="id"><?=$jatbi->lang("Số Phiếu")?></th>
+                        <th data-name="content"><?=$jatbi->lang("Nội dung")?></th>
+                        <th data-name="date_poster"><?=$jatbi->lang("Ngày")?></th>
+                        <th data-name="user" ><?=$jatbi->lang("Tài khoản")?></th>
+                        <th data-name="action" >
+                            <?=$jatbi->lang("Tùy chọn")?>
+                        </th>
+                    </tr>
+                </thead>
+                
+            </table>
+        </div>
+    </div>
+</div>

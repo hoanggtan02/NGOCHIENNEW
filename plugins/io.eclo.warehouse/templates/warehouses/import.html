@@ -1,0 +1,233 @@
+<div class="container-fluid">
+    <div class="mb-3">
+        <h4 class="mb-0 fw-bold text-body">
+            <?=$title?>
+        </h4>
+        <ul class="breadcrumb small mb-0">
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+            <li class="breadcrumb-item small"><a href="<?=$jatbi->url('/warehouses/warehouses-import-history/')?>"
+                    class="pjax-load link-secondary"><?=$jatbi->lang("Lịch sử nhập hàng")?></a></li>
+            <li class="breadcrumb-item small text-body" aria-current="page">
+                <?=$title?>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <?php if($type === 'move'): ?>
+                <div class="col-md-6 col-lg-3">
+                    <?=$app->component('input', ['placeholder' => $jatbi->lang("Cửa hàng"), 'value' => $data['stores']['name'] ?? '', 'disabled' => true])?>
+                </div>
+                <?php endif; ?>
+                <div class="col-md-6 col-lg-3">
+                    <?=$app->component('select', [
+                            'name' => 'stores', 'placeholder' => $jatbi->lang("Cửa hàng"), 'required' => true,
+                            'options' => $store_options, 
+                            'selected' => $data['stores']['id'] ?? '', 
+                            'class' => 'change-update', 
+                            'id' => 'stores',
+                            'attr' => 'data-action="change" data-load="this" data-url="/warehouses/warehouses-update/import/stores/update/0" data-form=\'{"value": "this.val"}\''
+                        ])?>
+                </div>
+
+                <?php if($type !== 'move'): ?>
+                <div class="col-md-6 col-lg-3">
+                    <?=$app->component('select',[
+                            "name"=>'branch', 
+                            "placeholder"=>$jatbi->lang("Quầy hàng"), 
+                            'required' => true,
+                            'options' => $branch_options, 
+                            'selected' => $data['branch']['id'] ?? '', 
+                            'attr' => 'data-action="change" data-load="this" data-url="/warehouses/warehouses-update/import/branch/update/0" data-form=\'{"value": "this.val"}\'' ,
+                            "id" => "branch",
+                        ])?>
+                </div>
+                <?php endif; ?>
+
+                <div class="col-md-6 col-lg-3">
+                    <?=$app->component('input', [
+                        'type' => 'date', 'name' => 'date', 'placeholder' => $jatbi->lang("Ngày"), 'required' => true,
+                        'value' => $data['date'],
+                        'attr' => 'data-action="change" data-load="this" data-url="/warehouses/warehouses-update/import/date/update/0" data-form=\'{"value": "this.val"}\''
+                    ])?>
+                </div>
+            </div>
+
+            <?php if($type === ''): ?>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="bg-body rounded-pill p-2 d-flex justify-content-center align-items-center" data-error>
+                        <i class="ti ti-search fs-3 ms-2"></i>
+                        <div class="w-100" data-search="true" data-url="/api/product-tim"
+                            data-form='{"stores": "#stores.val", "branch": "#branch.val"}'>
+                            <input type="text" class="form-control bg-transparent border-0 shadow-none py-3 w-100"
+                                placeholder="Tìm kiếm sản phẩm theo mã hoặc tên">
+                            <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3"
+                                style="--max-height:300px;"></div>
+                            <template class="search-item-template">
+                                <div
+                                    class="search-item border-0 py-2 btn text-start position-relative d-flex align-items-center gap-2">
+                                    <div data-attr-products="value">
+                                        <strong data-name="text"></strong>
+                                        <div class="d-flex small text-muted">
+                                            <div class="me-2">Cửa hàng: <small data-name="stores"></small></div>
+                                        </div>
+                                        <div class="d-flex small text-muted">
+                                            <div class="me-2">Quầy: <small data-name="brands"></small></div>
+                                        </div>
+                                        <a data-action="click" data-load="this" data-selector="[data-error]"
+                                            data-attr-url="url" data-alert="true" class="stretched-link" href="#!"></a>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="table-responsive mt-3" data-error>
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <?php if($type === 'move'): ?>
+                            <th></th>
+                            <?php endif; ?>
+                            <th class="text-center">STT</th>
+                            <th class="text-center"><?=$jatbi->lang('Mã SP')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Sản phẩm')?></th>
+                            <th class="text-center"><?=$jatbi->lang('NCC')?></th>
+                            <th class="text-center" ><?=$jatbi->lang('Giá vốn')?></th>
+                            <th class="text-center" ><?=$jatbi->lang('Số lượng')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Đơn vị')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Thành tiền')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Ghi chú')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Cửa hàng')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Quầy hàng')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Thời hạn')?></th>
+                            <?php if($type !== 'move'): ?>
+                            <th></th>
+                            <?php endif; ?>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $stt = 0; $total_all_price = 0; $total_amount = 0; ?>
+                        <?php foreach ($SelectProducts as $item): ?>
+                        <?php $stt++; $total_all_price += (float)($item['total_price'] ?? 0); $total_amount += (float)($item['amount'] ?? 0); ?>
+                        <tr>
+                            <?php if($type === 'move'): ?>
+                            <td>
+                                <div class="form-check"><input class="form-check-input check-update" type="checkbox"
+                                        <?=($item['status']??0)==0?'checked':''?>
+                                    data-url="/warehouses/warehouses-update/import/check-update/
+                                    <?=$item['key']?>/0">
+                                </div>
+                            </td>
+                            <?php endif; ?>
+                            <td class="text-center">
+                                <?=$stt?>
+                            </td>
+                            <td class="">
+                                <?=$item['code']?>
+                            </td>
+                            <td>
+                                <?=$item['name']?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?=$item['vendor_name']?>
+                            </td>
+                            <td>
+                                <!-- <?=$app->component('input', ['type' => 'text', 'class' => 'form-control form-control-sm text-end number', 'value' => $item['price'] ?? 0, 'attr' => 'data-url="/warehouses/warehouses-update/import/products/price/' . ($item['key'] ?? '') . '" data-form=\'{"value": "this.val"}\' data-action="blur" data-load="this"'])?> -->
+                                <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                    data-thousands="," data-decimal="." class="form-control form-control-sm text-end"
+                                    value="<?=$item['price'] ?? 0?>"
+                                    data-url="/warehouses/warehouses-update/import/products/price/<?=$item['key']?>"
+                                    data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                            </td>
+
+                            <td>
+                                <!-- <?=$app->component('input', ['type' => 'text', 'class' => 'form-control form-control-sm text-center number', 'value' => $item['amount'] ?? '', 'attr' => 'data-url="/warehouses/warehouses-update/import/products/amount/' . ($item['key'] ?? '') . '" data-form=\'{"value": "this.val"}\' data-action="blur" data-load="this"'])?> -->
+                                <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                    data-thousands="," data-decimal="." class="form-control form-control-sm text-center"
+                                    value="<?=$item['amount'] ?? ''?>"
+                                    data-url="/warehouses/warehouses-update/import/products/amount/<?=$item['key']?>"
+                                    data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                            </td>
+
+                            <td class="text-center text-nowrap">
+                                <?=$item['unit']?>
+                            </td>
+                            <td class="text-end text-nowrap fw-bold">
+                                <?=number_format($item['total_price'])?>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm"
+                                    value="<?=$item['notes'] ?? ''?>"
+                                    data-url="/warehouses/warehouses-update/import/products/notes/<?=$item['key']?>"
+                                    data-alert="true" data-action="blur" data-form='{"value": "this.val"}'
+                                    data-load="this">
+                            </td>
+                            <td class="text-nowrap">
+                                <?=$item['store']?>
+                            </td>
+                            <td class="text-nowrap">
+                                <?=$item['branch']?>
+                            </td>
+                            <td>
+
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control text-end"
+                                        value="<?=$item['duration'] ?? ''?>"
+                                        data-url="/warehouses/warehouses-update/import/products/duration/<?=$item['key']?>"
+                                        data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    <span class="input-group-text"><?=$jatbi->lang('Tháng')?></span>
+                                </div>
+                            </td>
+                            <?php if($type !== 'move'): ?>
+                            <td class="text-center"><a class="click-update text-danger" role="button"
+                                    data-action="click" data-load="this"
+                                    data-url="/warehouses/warehouses-update/import/products/deleted/<?=$item['key']?>"><i
+                                        class="ti ti-trash fs-5"></i></a></td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold table-light">
+                            <td colspan="<?= ($type === 'move') ? 5 : 4 ?>" class="text-end pt-3 pb-3 fs-6">
+                                <?=$jatbi->lang('Tổng cộng')?>:
+                            </td>
+                            <td class="pt-3 pb-3"></td>
+                            <td class="text-center pt-3 pb-3 fs-6">
+                                <?=number_format($total_amount)?>
+                            </td>
+                            <td class="pt-3 pb-3"></td>
+                            <td class="text-end pt-3 pb-3 fs-5">
+                                <?=number_format($total_all_price)?>
+                            </td>
+                            <td colspan="5" class="pt-3 pb-3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <?=$app->component('textarea', [
+                    "name" => 'content', "placeholder" => "Nội dung", "value" => $data['content'] ?? '', 
+                    "attr" => 'data-action="blur" data-load="this" data-url="/warehouses/warehouses-update/import/content/update/0" data-form=\'{"value": "this.val"}\''
+                ])?>
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent border-0 py-3 text-end">
+            <button class="btn btn-light rounded-pill px-4 click-update" data-action="click"
+                data-url="/warehouses/warehouses-update/import/cancel/0/0"><?=$jatbi->lang('Hủy')?></button>
+            <button class="btn btn-eclo rounded-pill px-5 click-update" data-action="click"
+                data-load="/warehouses/warehouses-history/"
+                data-url="/warehouses/warehouses-update/import/completed/0/0"><?=$jatbi->lang('Hoàn tất')?></button>
+        </div>
+    </div>
+</div>

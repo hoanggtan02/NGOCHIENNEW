@@ -1,0 +1,286 @@
+<div class="container-fluid mt-4">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul>
+        </div>
+<div class="filter-search">
+    <div class="d-flex align-items-center justify-content-end">
+        <div class="dropdown">
+            <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+            </button>
+            
+            <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                style="--blur:10px;--min-width:500px;--min-width-xs:100vw">
+                <div class="fw-semibold py-2 px-3">
+                    <?=$jatbi->lang("Điều kiện lọc")?>
+                </div>
+                <hr class="border-secondary border-opacity-50 my-2">
+                <div class="p-3">
+                    <div class="row">
+
+                        <?php if(count($stores) > 1): ?>
+                            <div class="col-md-6 mb-3">
+                             
+                                <?=$app->component('select', ['name' => 'stores', 'placeholder' => $jatbi->lang("Cửa hàng"), 'options' => $stores, 'selected' => $_GET['stores'] ?? '', 'class' => 'filter-name', 'id' => 'stores-filter'])?>
+                            </div>
+                            <div class="col-md-6 mb-3" id="branch-filter-wrapper">
+                     
+                                <?=$app->component('select', ['name' => 'branch', 
+                                    'placeholder' => $jatbi->lang("Quầy hàng"), 
+                                    'selected' => $_GET['branch'] ?? '', 
+                                    'class' => 'filter-name', 
+                                    'attr' => 'data-parent="#stores-filter" data-load="true" data-method="POST" data-keyword="keyword" data-max-length="1" data-url="/api/branch"'])?>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="col-md-6 mb-3">
+                            
+                            <?=$app->component('select', ['name' => 'units', 'placeholder' => $jatbi->lang("Đơn vị"), 'options' => $units, 'selected' => $_GET['units'] ?? '', 'class' => 'filter-name'])?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                
+                            <?=$app->component('select', ['name' => 'categorys', 'placeholder' => $jatbi->lang("Danh mục"), 'options' => $categorys, 'selected' => $_GET['categorys'] ?? '', 'class' => 'filter-name'])?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                         
+                            <?=$app->component('select', ['name' => 'groups', 'placeholder' => $jatbi->lang("Nhóm sản phẩm"), 'options' => $groups ?? [], 'selected' => $_GET['groups'] ?? '', 'class' => 'filter-name'])?>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                           
+                            <?=$app->component('select-status', ["class" => 'filter-name', "value" => $_GET['status'] ?? ''])?>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    
+                                    <?=$app->component('select', [
+                                        'name' => 'sosanh',
+                                        'placeholder' => $jatbi->lang('Chọn'), 
+                                        'options' => [
+                                        ['value' => '', 'text' => ''],
+                                            ['value' => '>', 'text' => 'Lớn hơn'],
+                                            ['value' => '<', 'text' => 'Nhỏ hơn'],
+                                            ['value' => '<>', 'text' => 'Trong khoảng']
+                                        ],
+                                        'selected' => $_GET['sosanh'] ?? '',
+                                        'class' => 'filter-name'
+                                    ])?>
+                                </div>
+                                <div class="col-md-4">
+                                    
+                                    <?=$app->component('input', [
+                                        'name' => 'amount_from',
+                                        'placeholder' => $jatbi->lang('Số lượng / Từ'),
+                                        'class' => 'filter-name number',
+                                        'value' => $_GET['amount_from'] ?? ''
+                                    ])?>
+                                </div>
+                                <div class="col-md-4">
+                              
+                                    <?=$app->component('input', [
+                                        'name' => 'amount_to',
+                                        'placeholder' => $jatbi->lang('Đến'),
+                                        'class' => 'filter-name number',
+                                        'value' => $_GET['amount_to'] ?? ''
+                                    ])?>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <hr class="border-secondary border-opacity-50 my-2">
+                <div class="px-3 py-2 text-end w-100">
+                    <button type="button" class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                    <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+    <?php if($jatbi->permission(['products.deleted', 'products.add', 'products.edit']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+
+            <?php if($jatbi->permission(['products.edit']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-info width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-checkbox="input.checker" data-url="/warehouses/products_amount_status"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-checks fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+
+            <?php if($jatbi->permission(['products.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-checkbox="input.checker" data-url="/warehouses/products-deleted"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+
+            <?php if($jatbi->permission(['products.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-url="/warehouses/products-add" style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+
+        </ul>
+    </div>
+    <?php } ?>
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body">
+            <div class="custom-buttons d-none">
+                        <button data-action="modal"  type="button" class="btn btn-eclo me-2" data-bs-toggle="modal" data-url="/warehouses/products-excel">
+            <i class="ti ti-file-import me-1"></i> <?=$jatbi->lang('Import Excel')?>
+        </button>
+
+        
+
+        
+                <div class="btn-group">
+                    <button type="button" class="btn btn-eclo dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="ti ti-report"></i> <?=$jatbi->lang('Nhập hàng')?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 bg-blur shadow-lg rounded-4"
+                        style="--blur:10px;">
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/products-import-crafting">
+                                <?=$jatbi->lang('Nhập hàng từ chế tác')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-import">
+                                <?=$jatbi->lang('Nhập hàng thủ công')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-import-move">
+                                <?=$jatbi->lang('Nhập hàng từ chuyển hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-import-return">
+                                <?=$jatbi->lang('Nhập hàng từ trả hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-move">
+                                <?=$jatbi->lang('Chuyển hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouse_error">
+                                <?=$jatbi->lang('Sản phẩm lỗi')?>
+                            </a>
+                        </li>
+                        <hr class="border-secondary border-opacity-50 my-2">
+
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-history/import">
+                                <?=$jatbi->lang('Lịch sử nhập hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-history/move">
+                                <?=$jatbi->lang('Lịch sử chuyển hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/warehouses-history/cancel">
+                                <?=$jatbi->lang('Lịch sử hủy hàng')?>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/warehouses/logs_warehouses/products">
+                                <?=$jatbi->lang('Nhật ký')?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                data-state-save='true' style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-name="checkbox" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-center">
+                            <div class="form-check"><input class="form-check-input checkall" type="checkbox" value=""
+                                    data-checkbox="input.checker"></div>
+                        </th>
+                        <th data-name="qr_code" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"></th>
+                        <th data-name="images" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"></th>
+                        <th data-name="code" data-searchable="true" data-orderable="false" class="text-nowrap"
+                            data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Mã sản phẩm")?></th>
+                        <th data-name="name" data-searchable="true" data-orderable="false" class="text-nowrap"
+                            data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Tên")?></th>
+                        <th data-name="amount" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Số lượng")?></th>
+                        <th data-name="units" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Đơn vị")?></th>
+                        <th data-name="price" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class=""><?=$jatbi->lang("Đơn giá")?></th>
+                        <th data-name="categorys" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Danh mục")?></th>
+                        <th data-name="vendor" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Nhà cung cấp")?></th>
+                        <th data-name="status" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Trạng thái")?></th>
+                        <th data-name="amount_status" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Kiểm tra số lượng")?></th>
+                        <th data-name="notes" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Nội dung")?></th>
+                        <th data-name="tkno" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Tài khoản nợ")?></th>
+                        <th data-name="tkco" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Tài khoản có")?></th>
+                        <th data-name="stores" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Cửa hàng")?></th>
+                        <th data-name="branch" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-nowrap"><?=$jatbi->lang("Quầy hàng")?></th>
+                        <th data-name="action" data-orderable="false" class="text-nowrap" data-visible="true"
+                            data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <td colspan="4"></td>
+                        <th class="text-end fw-bold"><?=$jatbi->lang("Tổng")?></th>
+                        <th data-name="sum_sl" data-orderable="false"></th>
+                        <th class="text-end fw-bold"></th>
+                        <th data-name="sum_price" data-orderable="false"></th>
+                        <td colspan="13"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
