@@ -1314,7 +1314,7 @@ class Jatbi
 			"date" 		=> date('Y-m-d H:i:s'),
 			"url" 		=> 'http://' . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"],
 			"ip" 		=> $ip,
-			"active"    => $this->active(),
+			// "active"    => $this->active(),
 			"browsers"	=> $_SERVER["HTTP_USER_AGENT"] ?? '',
 			"content"   => json_encode($content),
 		]);
