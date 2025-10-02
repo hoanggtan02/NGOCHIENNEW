@@ -234,10 +234,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router("/default_code-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/default_code-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa mã cố định");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -476,10 +476,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['units.edit']);
 
-    $app->router("/units-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/units-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa đơn vị");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -727,10 +727,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['sizes.edit']);
 
-    $app->router("/sizes-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/sizes-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa li ngọc");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -979,10 +979,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['colors.edit']);
 
-    $app->router("/colors-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/colors-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa màu sắc");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1228,10 +1228,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['pearl.edit']);
 
-    $app->router("/pearl-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/pearl-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa loại ngọc");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1475,10 +1475,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['group.edit']);
 
-    $app->router("/group-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/group-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa nhóm sản phẩm");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1741,11 +1741,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['categorys.edit']);
 
-    $app->router("/categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa danh mục");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -2261,11 +2261,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router("/ingredient-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/ingredient-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa nguyên liệu");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3138,11 +3138,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['products.edit']);
 
-    $app->router("/products-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/products-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa sản phẩm");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
