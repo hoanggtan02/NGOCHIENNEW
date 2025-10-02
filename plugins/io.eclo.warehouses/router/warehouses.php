@@ -2976,6 +2976,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 }
 
                 $jatbi->logs('products', 'add', $insert);
+                
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm mới thành công'), 'url' => 'auto']);
             } else {
                 echo json_encode($error);

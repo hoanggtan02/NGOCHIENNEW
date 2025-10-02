@@ -1,9 +1,0 @@
-{
-    "name": "Warehouses",
-    "version": "1.0.0",
-    "install" : "true",
-    "id": "io.eclo.warehouses",
-    "author": "ECLO",
-    "description": "Kho hàng",
-    "requires": "1.0.0"
-}

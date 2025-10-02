@@ -543,11 +543,11 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['driver-payment']);
 
-    $app->router("/driver-payment-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/driver-payment-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting) {
         $vars['title'] = $jatbi->lang("Xóa phiếu thanh toán");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1266,11 +1266,11 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         echo $app->render($template . '/drivers/other-commission-costs-post.html', $vars, $jatbi->ajax());
     })->setPermissions(['other_commission_costs.add']);
 
-    $app->router('/other_commission_costs-deleted', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/other_commission_costs-deleted', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa thanh toán hoa hồng");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -1723,10 +1723,10 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['driver.edit']);
 
-    $app->router("/driver-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/driver-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa thông tin tài xế");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
