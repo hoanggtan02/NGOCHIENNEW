@@ -824,7 +824,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['liabilities']);
 
-
     $app->router("/revenue", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Báo cáo doanh thu");
 
@@ -1228,8 +1227,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
     })->setPermissions(['revenue']);
 
     ob_start();
-
-
     $app->router('/revenue-excel', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore) {
 
         try {
@@ -1363,11 +1360,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
             exit("Lỗi: " . $e->getMessage());
         }
     })->setPermissions(['revenue']);
-
-
-
-
-
 
     $app->router("/purchases-liabilities", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Công nợ mua hàng");
@@ -1690,6 +1682,7 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
             exit("Lỗi: " . $e->getMessage());
         }
     })->setPermissions(['purchases-liabilities']);
+
     $app->router("/purchases-revenue", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Chi phí mua hàng");
 
@@ -2396,7 +2389,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['inventory_ingredient']);
 
-
     $app->router("/inventory_crafting/{type}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Xuất nhập tồn kho chế tác");
 
@@ -2651,12 +2643,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['inventory_crafting']);
 
-
-
-
-
-
-
     $app->router('/inventory_crafting_excel/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore) {
         try {
             // --- BƯỚC 1: LẤY VÀ XỬ LÝ CÁC BỘ LỌC TỪ URL ---
@@ -2848,7 +2834,6 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['inventory_crafting']);
 
-
     $app->router("/selling_products", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Sản phẩm bán chạy");
 
@@ -3027,4 +3012,5 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
             ]);
         }
     })->setPermissions(['selling_products']);
+    
 })->middleware('login');

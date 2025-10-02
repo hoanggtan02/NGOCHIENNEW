@@ -236,10 +236,10 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['job_postings.edit']);
 
     // Route: Xóa tin tuyển dụng
-    $app->router("/job_postings-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/job_postings-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa tin tuyển dụng");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -665,10 +665,10 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['candidates.edit']);
 
     // Route: Xóa ứng viên
-    $app->router("/candidates-deleted", ['GET'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/candidates-deleted", ['GET'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa ứng viên");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -986,10 +986,10 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['applications.edit']);
 
     // Route: Xóa đơn ứng tuyển
-    $app->router("/applications-deleted", ['GET'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/applications-deleted", ['GET'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa hồ sơ theo dõi");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1305,10 +1305,10 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['interviews.edit']);
 
     // Route: Xóa phỏng vấn
-    $app->router("/interviews-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/interviews-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa phỏng vấn");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
