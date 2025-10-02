@@ -1077,6 +1077,7 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
             if ($parent) {
                 $where['AND']['proposal_form.type'] = $parent;
             }
+            $datas = [];
             $app->select("proposal_form", [
                 "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "proposal_form"]]
             ], [
@@ -1113,6 +1114,7 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
             if ($parent) {
                 $where['AND']['proposal_workflows_form.form'] = $parent;
             }
+            $datas = [];
             $app->select("proposal_workflows", [
                 "[>]proposal_workflows_form" => ["id" => "workflows"],
                 "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "proposal_workflows"]]
@@ -1149,6 +1151,7 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
             if ($parent) {
                 $where['AND']['proposal_target_workflows.workflows'] = $parent;
             }
+            $datas = [];
             $app->select("proposal_target", [
                 "[>]proposal_target_workflows" => ["id" => "target"],
                 "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "proposal_target"]]
@@ -1276,6 +1279,7 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
             if ($parent) {
                 $where['AND']['proposal_target_workflows.workflows'] = $parent;
             }
+            $datas = [];
             $app->select("proposal_target", [
                 "[>]proposal_target_workflows" => ["id" => "target"],
             ], [
@@ -1667,7 +1671,7 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
                 $getdata = $app->get("proposal_consultation", "*", ["proposal" => $data['id'], "status" => 0, "account_consultation" => $account['id']]);
                 if ($getdata > 1) {
                     if ($_POST['content'] == "") {
-                        echo json_encode(['status' => 'error', 'content' => $lang['loi-trong']]);
+                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
                     }
                     if ($_POST['content']) {
                         $insert = [
