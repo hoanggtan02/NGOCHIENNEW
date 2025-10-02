@@ -471,7 +471,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
         $vars['router'] = 'settings';
         $vars['title'] = $jatbi->lang("Cài đặt");
         $vars['account'] = $app->get("accounts", "*", ["id" => $app->getSession("accounts")['id']]);
-        $vars['data'] = $app->get("settings", "*", ["account" => $app->getSession("accounts")['id']]);
+        $vars['data'] = $app->get("setting", "*", ["account" => $app->getSession("accounts")['id']]);
         echo $app->render($setting['template'] . '/users/profile.html', $vars);
     });
 

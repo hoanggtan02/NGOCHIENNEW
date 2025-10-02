@@ -121,12 +121,13 @@ $app->group("/proposal/config", function ($app) use ($setting, $jatbi, $common, 
                     ],
                     "proposal_form.status" => 'A',
                     "proposal_form.deleted" => 0,
-                    "stores_linkables.stores" => $jatbi->stores,
+                    "stores_linkables.stores" => $jatbi->stores(),
                 ]
             ];
             if ($parent) {
                 $where['AND']['proposal_form.type'] = $parent;
             }
+            $datas = [];
             $app->select("proposal_form",  [
                 "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "proposal_form"]]
             ], [
@@ -140,7 +141,7 @@ $app->group("/proposal/config", function ($app) use ($setting, $jatbi, $common, 
             });
             echo json_encode($datas);
         }
-    })->setPermissions(['warehouses']);
+    });
 
     $app->router("/form-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $stores) {
         $vars['title'] = $jatbi->lang("Thêm Hình thức đề xuất");
