@@ -14,15 +14,20 @@ $requests = [
                 "menu" => $jatbi->lang("Dữ liệu"),
                 "url" => '/files',
                 "icon" => '<i class="ti ti-server-bolt text-success"></i>',
-                "main" => 'true',
+                "main" => 'false',
+                "permission" => [
+                    'files' => $jatbi->lang("Dữ liệu")
+                ]
             ],
             'customers' => [
                 "menu" => $jatbi->lang("Khách hàng"),
                 "url" => '/customers/customers',
                 "icon" => '<i class="ti ti-users text-info"></i>',
                 "hidden" => 'false',
-                "main" => 'true',
-                "permission" => ['customers']
+                "main" => 'f',
+                "permission" => [
+                    'customers' => $jatbi->lang("Khách hàng")
+                ]
             ],
         ],
     ],
@@ -238,4 +243,3 @@ $requests = [
         ],
     ],
 ];
-
