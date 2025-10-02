@@ -153,7 +153,7 @@ $app->group($setting['manager'] . "/areas", function ($app) use ($jatbi, $settin
     $app->router("/province-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['title'] = $jatbi->lang("Xóa thành phố");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -271,7 +271,6 @@ $app->group($setting['manager'] . "/areas", function ($app) use ($jatbi, $settin
         }
     })->setPermissions(['district']);
 
-
     // --- THÊM QUẬN HUYỆN ---
     $app->router('/district-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['title'] = $jatbi->lang("Thêm Quận huyện");
@@ -319,12 +318,11 @@ $app->group($setting['manager'] . "/areas", function ($app) use ($jatbi, $settin
         }
     })->setPermissions(['district.edit']);
 
-
     // --- XÓA QUẬN HUYỆN ---
     $app->router("/district-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['title'] = $jatbi->lang("Xóa quận huyện");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -560,10 +558,10 @@ $app->group($setting['manager'] . "/areas", function ($app) use ($jatbi, $settin
 
 
     // --- XÓA QUẬN HUYỆN ---
-    $app->router("/ward-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router("/ward-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa phường xã");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',

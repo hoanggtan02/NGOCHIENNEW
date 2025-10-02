@@ -169,7 +169,7 @@ $app->group($setting['manager'] . "/training", function ($app) use ($jatbi, $set
         $vars['title'] = $jatbi->lang("Xóa Khóa học");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $box_ids = explode(',', $app->xss($_GET['box'] ?? ''));
@@ -388,12 +388,12 @@ $app->group($setting['manager'] . "/training", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['training_sessions.edit']);
 
-    $app->router('/training-sessions-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/training-sessions-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
 
         $vars['title'] = $jatbi->lang("Xóa lớp học");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $box_ids = explode(',', $app->xss($_GET['box'] ?? ''));
@@ -616,11 +616,11 @@ $app->group($setting['manager'] . "/training", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['enrollments.edit']);
 
-    $app->router('/employee-enrollments/delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template,$setting) {
+    $app->router('/employee-enrollments/delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting) {
         $vars['title'] = $jatbi->lang("Xóa Ghi danh");
 
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $box_ids = explode(',', $app->xss($_GET['box'] ?? ''));

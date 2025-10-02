@@ -358,9 +358,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['personnels.edit']);
 
-    $app->router("/personnels-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/personnels-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -615,10 +615,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['offices.edit']);
 
-    $app->router("/offices-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/offices-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa Phòng ban");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -908,9 +908,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['timework.edit']);
 
-    $app->router("/timework-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/timework-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         }
         if ($app->method() === 'POST') {
             $app->header([
@@ -1132,9 +1132,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary-categorys.edit']);
 
-    $app->router("/salary-categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/salary-categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1516,10 +1516,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['rosters.edit']);
 
-    $app->router("/rosters-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/rosters-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa Bảng phân công");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -2295,10 +2295,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['contract.edit']);
 
-    $app->router("/contract-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/contract-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa Hợp đồng lao động");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -2879,7 +2879,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['insurrance.add']);
 
-
     $app->router("/insurrance-add/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Thêm Bảo hiểm");
         if ($app->method() === 'GET') {
@@ -2968,10 +2967,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['insurrance.edit']);
 
-    $app->router("/insurrance-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/insurrance-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa Bảo hiểm");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3203,9 +3202,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough-categorys.edit']);
 
-    $app->router("/furlough-categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/furlough-categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3622,16 +3621,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough.edit']);
 
-    $app->router("/furlough-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/furlough-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
             $datas = $app->select("furlough", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {
+            if (count($datas) > 0) {    
                 foreach ($datas as $data) {
                     $app->update("furlough", ["deleted" => 1], ["id" => $data['id']]);
                 }
@@ -3839,17 +3838,17 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
     })->setPermissions(['holiday.edit']);
-
-    $app->router("/holiday-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template) {
+    
+    $app->router("/holiday-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
             $datas = $app->select("holiday", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {
+            if (count($datas) > 0) {    
                 foreach ($datas as $data) {
                     $app->update("holiday", ["deleted" => 1], ["id" => $data['id']]);
                 }
@@ -4030,9 +4029,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reward-discipline.edit']);
 
-    $app->router("/reward-discipline-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/reward-discipline-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -4233,9 +4232,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reward-discipline.edit']);
 
-    $app->router("/time-late-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/time-late-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -4402,9 +4401,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary-advance.edit']);
 
-    $app->router("/salary-advance-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/salary-advance-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -4975,9 +4974,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['timekeeping.edit']);
 
-    $app->router("/timekeeping-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/timekeeping-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -5512,10 +5511,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['uniforms_items.edit']);
 
-    $app->router("/uniforms-items-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/uniforms-items-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa đồng phục");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -5845,10 +5844,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['uniforms_allocations.edit']);
 
-    $app->router("/uniforms-allocations-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/uniforms-allocations-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa cấp phát đồng phục");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
