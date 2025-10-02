@@ -585,6 +585,194 @@ class Jatbi
 			return  $this->app->select("brands_linkables", "brands", ["data" => $data, "type" => $type]);
 		}
 	}
+	private function _getAccountStores()
+	{
+		if ($this->cachedAccountBrands !== null) { // Vẫn dùng cache cũ để tránh lỗi
+			return $this->cachedAccountBrands;
+		}
+
+		$user = $this->_getAuthenticatedUser();
+		if (!$user) {
+			$this->cachedAccountBrands = [];
+			return [];
+		}
+
+		$where = [
+			"status" => "A",
+			"deleted" => 0
+		];
+
+		// Logic mới: Đọc quyền từ cột 'stores' của bảng 'accounts'
+		if (!empty($user['stores'])) {
+			$store_ids = json_decode($user['stores'], true);
+			if (is_array($store_ids) && !empty($store_ids)) {
+				$where['id'] = $store_ids;
+			} else {
+				// Nếu cột stores có dữ liệu nhưng không phải JSON hợp lệ, không trả về gì
+				$this->cachedAccountBrands = [];
+				return [];
+			}
+		}
+		// Nếu $user['stores'] rỗng, không thêm điều kiện 'id', tức là lấy tất cả (dành cho super admin)
+
+		$this->cachedAccountBrands = $this->app->select("stores", [
+			"id",
+			"name",
+			"address",
+		], $where);
+
+		return $this->cachedAccountBrands;
+	}
+	public function stores($type = null, $post = null)
+	{
+		$cacheKey = 'stores_' . ($type ?? 'default') . serialize($post);
+		if (isset($this->cachedBrands[$cacheKey])) { // Vẫn dùng cache cũ để tránh lỗi
+			return $this->cachedBrands[$cacheKey];
+		}
+
+		$checkuser = $this->_getAuthenticatedUser();
+		if (!$checkuser) return null;
+
+		$cookie = $this->app->getCookie('stores') ?? null;
+		$result = null;
+
+		switch ($type) {
+			case 'SELECT':
+				$accountStores = $this->_getAccountStores();
+				$result = array_map(function ($store) {
+					return [
+						'name' => $store['name'],
+						'id' => $store['id'],
+						'value' => $store['id'],
+						'address' => $store['address'],
+						'text' => $store['name'],
+					];
+				}, $accountStores);
+				break;
+
+			case 'SET':
+				$accountStores = $this->_getAccountStores();
+				$idList = array_column($accountStores, 'id');
+
+				if (empty($cookie)) {
+					$newCookieValue = (count($accountStores) === 1) ? $accountStores[0]['id'] : 0;
+					$this->app->setCookie("stores", $newCookieValue, time() + ((3600 * 24 * 30) * 12), '/');
+				} elseif (count($accountStores) === 1 && $cookie != $accountStores[0]['id']) {
+					$this->app->setCookie("stores", $accountStores[0]['id'], time() + ((3600 * 24 * 30) * 12), '/');
+				} elseif (count($accountStores) > 1 && !in_array($cookie, $idList)) {
+					$this->app->setCookie("stores", 0, time() + ((3600 * 24 * 30) * 12), '/');
+				}
+				$this->app->setCookie("branch", 0, -1, '/');
+				$result = '';
+				break;
+
+			case 'GET':
+				if (!empty($cookie) && $cookie != 0) {
+					$result = $this->app->get("stores", "*", ["deleted" => 0, "status" => 'A', "id" => $cookie]);
+				} else {
+					$result = ["name" => $this->lang("Tất cả cửa hàng"), "id" => 0];
+				}
+				break;
+
+			case 'ID':
+				if (!empty($cookie) && $cookie != 0) {
+					$result = (int)$cookie;
+				} else {
+					$result = 0;
+				}
+				break;
+
+			case 'POST': // Dùng cho hàm setStores, đảm bảo luôn trả về một mảng ID
+				if ($post === null || $post === '') {
+					$result = [];
+				} else {
+					$result = is_array($post) ? $post : [$post];
+				}
+				break;
+
+			default:
+				$accountStores = $this->_getAccountStores();
+				if (!empty($cookie) && $cookie != 0) {
+					if (in_array($cookie, array_column($accountStores, 'id'))) {
+						$result = [$cookie];
+					} else {
+						$result = array_column($accountStores, 'id');
+					}
+				} else {
+					$result = array_column($accountStores, 'id');
+				}
+				break;
+		}
+
+		$this->cachedBrands[$cacheKey] = $result;
+		return $result;
+	}
+	public function setStores($action, $type, $data, $stores = null)
+	{
+		// Lấy danh sách stores hiện tại nếu là edit và không có stores mới được truyền vào
+		if (empty($stores) && $action == 'edit') {
+			$stores = $this->app->select("stores_linkables", "stores", [
+				"type" => $type,
+				"data" => $data
+			]) ?? [];
+		}
+
+		// Giả định bạn đã có hàm $this->stores() thay thế cho $this->brands()
+		$PostStore = $this->stores('POST', $stores ?? '');
+		$PostStore = is_array($PostStore) ? $PostStore : [$PostStore];
+
+		if ($action === 'add') {
+			foreach ($PostStore as $option) {
+				$insert_option = [
+					"stores" => $option, // Thay 'brands' bằng 'stores'
+					"type"   => $type,
+					"data"   => $data,
+				];
+				$this->app->insert("stores_linkables", $insert_option); // Thay bảng
+			}
+		} elseif ($action === 'edit') {
+			// 1. Lấy tất cả các liên kết stores đang có của đối tượng
+			$existing_options = $this->app->select("stores_linkables", "*", [ // Thay bảng
+				"data" => $data,
+				"type" => $type
+			]);
+
+			// 2. Tạo một map để tra cứu nhanh: [store_id => link_id]
+			$existing_map = [];
+			foreach ($existing_options as $opt) {
+				$existing_map[$opt['stores']] = $opt['id']; // Thay 'brands' bằng 'stores'
+			}
+
+			$current_stores = [];
+
+			// 3. Lặp qua danh sách stores mới để thêm hoặc giữ lại
+			foreach ($PostStore as $option) {
+				if (isset($existing_map[$option])) {
+					// Giữ lại: store này đã có, không cần làm gì
+					$current_stores[] = $option;
+				} else {
+					// Thêm mới: store này chưa có, insert vào DB
+					$this->app->insert("stores_linkables", [ // Thay bảng
+						"stores" => $option, // Thay 'brands' bằng 'stores'
+						"type"   => $type,
+						"data"   => $data,
+					]);
+					$current_stores[] = $option;
+				}
+			}
+
+			// 4. Lặp qua danh sách stores cũ để xóa những liên kết không còn tồn tại
+			foreach ($existing_map as $store => $id) {
+				if (!in_array($store, $current_stores)) {
+					// Xóa: store cũ này không có trong danh sách mới, cần xóa đi
+					$this->app->delete("stores_linkables", ["id" => $id]); // Thay bảng
+				}
+			}
+		} elseif ($action === 'select') {
+			// Trả về danh sách ID các stores được liên kết
+			return $this->app->select("stores_linkables", "stores", ["data" => $data, "type" => $type]); // Thay bảng và cột
+		}
+	}
 	public function ajax($type = null)
 	{
 		if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
