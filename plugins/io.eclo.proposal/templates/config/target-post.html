@@ -1,17 +1,22 @@
-<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
-	<div class="modal-dialog  pt-standalone">
-		<div class="modal-content rounded-5">
-			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
-				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
-					<i class="ti ti-x fs-4"></i>
-				</button>
-			</div>
-			<div class="modal-body">
-				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
-				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
-					<div class="row g-3">
-						<div class="col-lg-12">
-							<?=$app->component('select',[
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog  pt-standalone">
+        <div class="modal-content rounded-5">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close "
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-lg-12">
+                            <?=$app->component('select',[
                                 "name"=>'workflows[]',
                                 "placeholder"=>$jatbi->lang("Quy trình"),
                                 "selected" => $workflowsSelect,
@@ -19,47 +24,50 @@
                                 "required" => "true",
                                 "options" => $workflows,
                             ])?>
-							<?=$app->component('input',[
+                            <?=$app->component('input',[
                                 "name"=>'name',
                                 "placeholder"=>$jatbi->lang("Tên"),
                                 "value" => $data['name'] ?? '',
                                 "required" => 'true',
                             ])?>
-							<?=$app->component('input',[
+                            <?=$app->component('input',[
                                 "name"=>'code',
                                 "placeholder"=>$jatbi->lang("Mã"),
                                 "value" => $data['code'] ?? '',
                                 "required" => 'true',
                             ])?>
-							<?=$app->component('select',[
+                            <?=$app->component('select',[
                                 "name"=>'record',
                                 "placeholder"=>$jatbi->lang("Định khoản"),
                                 "selected" => $data['record'],
                                 "attr" => 'data-width="100%"',
                                 "options" => $records,
                             ])?>
-							<?=$app->component('textarea',[
+                            <?=$app->component('textarea',[
                                 "name"=>'notes',
                                 "placeholder"=>$jatbi->lang("Ghi chú"),
                                 "value" => $data['notes'] ?? '',
                             ])?>
-							<?=$app->component('select-status',[
+                            <?=$app->component('select-status',[
                                 "value" => $data['status'] ?? '',
                             ])?>
-							<?=$app->component('brands',[
-                                "name"=>'brands',
-                                "placeholder"=>$jatbi->lang("Chi nhánh"),
-                                "selected" => $data['brands'],   
-                                "multi" => "true",
+                            <?=$app->component('select',[
+                                "name"=>'stores[]',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $data['stores'] ?? "",   
+                                "attr" => 'data-width="100%" multiple data-actions-box="true"',
                                 "required" => "true",
+                                "options" => $stores,
                             ])?>
-						</div>
-						<div class="col-lg-12">
-							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
+                        </div>
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
