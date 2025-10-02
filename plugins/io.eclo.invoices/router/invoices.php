@@ -37,234 +37,6 @@ if (isset($session['id'])) {
 }
 $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $setting, $accStore, $stores,$template) {
     // Chứng từ bán hàng 
-
-    // $app->router('/license_sale', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-    //     $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
-
-    //     if ($app->method() === 'GET') {
-    //         $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-    //         $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-    //         $vars['personnels'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-    //         $vars['branchs'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("branch", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-    //         $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
-    //         echo $app->render($setting['template'] . '/invoices/license-sale.html', $vars);
-
-    //     } elseif ($app->method() === 'POST') {
-    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-
-    //         // --- 1. Đọc tham số ---
-    //         $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
-    //         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-    //         $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
-    //         $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-    //         $orderName = isset($_POST['order'][0]['column']) ? $_POST['columns'][$_POST['order'][0]['column']]['name'] : 'invoices_products.id';
-    //         $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-
-    //         $filter_code_group = isset($_POST['code_group']) ? trim($_POST['code_group']) : '';
-    //         $filter_user = isset($_POST['user']) ? trim($_POST['user']) : '';
-    //         $filter_personnels = isset($_POST['personnels']) ? trim($_POST['personnels']) : '';
-    //         $filter_status = isset($_POST['status']) ? trim($_POST['status']) : '';
-    //         $storeFilter = isset($_POST['stores']) ? $_POST['stores'] : '';
-    //         $filter_branch = isset($_POST['branch']) ? trim($_POST['branch']) : '';
-    //         $filter_date = isset($_POST['date']) ? trim($_POST['date']) : '';
-
-    //         // --- 2. Xây dựng truy vấn với JOIN ---
-    //         $joins = [
-    //             "[>]invoices" => ["invoices" => "id"],
-    //             "[>]products" => ["products" => "id"],
-    //             "[>]units" => ["products.units" => "id"],
-    //             "[>]stores" => ["invoices_products.stores" => "id"],
-    //             "[>]branch" => ["invoices_products.branch" => "id"]
-    //         ];
-
-    //         $where = [
-    //             "AND" => [
-    //                 "invoices_products.deleted" => 0,
-    //                 "invoices_products.cancel" => [0, 1],
-    //                 "invoices.status" => 2,
-    //             ],
-    //         ];
-
-    //         // Áp dụng bộ lọc
-    //         if (!empty($searchValue)) {
-    //             $where['AND']['OR'] = [
-    //                 "invoices.code_group[~]" => $searchValue,
-    //                 "products.name[~]" => $searchValue,
-    //                 "products.code[~]" => $searchValue,
-    //             ];
-    //         }
-    //         if (!empty($storeFilter)) {
-    //             $where['AND']['invoices_products.stores'] = $storeFilter;
-    //         }
-    //         if (!empty($filter_branch)) {
-    //             $where['AND']['invoices_products.branch'] = $filter_branch;
-    //         }
-    //         if (!empty($filter_code_group)) {
-    //             $where['AND']['invoices.code_group[~]'] = $filter_code_group;
-    //         }
-    //         if (!empty($filter_user)) {
-    //             $where['AND']['invoices.user'] = $filter_user;
-    //         }
-    //         if (!empty($filter_status)) {
-    //             $where['AND']['invoices.status'] = $filter_status;
-    //         }
-    //         if (!empty($filter_personnels)) {
-    //             $invoice_ids = $app->select("invoices_personnels", "invoices", ["personnels" => $filter_personnels]);
-    //             $where['AND']['invoices_products.invoices'] = $invoice_ids;
-    //         }
-
-    //         if (!empty($filter_date)) {
-    //             $date_parts = explode(' - ', $filter_date);
-    //             if (count($date_parts) == 2) {
-    //                 $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
-    //                 $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
-    //             }
-    //         } else {
-    //             $date_from = date('Y-m-d 00:00:00');
-    //             $date_to = date('Y-m-d 23:59:59');
-    //         }
-    //         $where['AND']['invoices_products.date_poster[<>]'] = [$date_from, $date_to];
-
-    //         // --- 3. Đếm và tính tổng ---
-    //         $count = $app->count("invoices_products", $joins, "invoices_products.id", $where);
-
-    //         // Tính tổng cho toàn bộ dữ liệu đã lọc
-    //         $total_mua_grand = 0;
-    //         $total_tra_grand = 0;
-    //         $total_quantity_filtered = 0;
-
-    //         $where_for_totals = $where;
-    //         unset($where_for_totals['LIMIT'], $where_for_totals['ORDER']);
-
-    //         // SỬA LỖI: Truy vấn tính tổng cần phải có JOIN
-    //         $all_filtered_data = $app->select("invoices_products", $joins, [
-    //             'invoices_products.price',
-    //             'invoices_products.type',
-    //             'invoices_products.amount',
-    //             'invoices_products.discount_priceinvoices'
-    //         ], $where_for_totals);
-
-    //         foreach ($all_filtered_data as $loc) {
-    //             $thanh_tien = ($loc['price'] - $loc['discount_priceinvoices']) * $loc['amount'];
-    //             if ($loc['type'] == 3) {
-    //                 $total_tra_grand += $thanh_tien;
-    //                 $total_quantity_filtered -= $loc['amount'];
-    //             } else {
-    //                 $total_mua_grand += $thanh_tien;
-    //                 $total_quantity_filtered += $loc['amount'];
-    //             }
-    //         }
-
-    //         // Thêm sắp xếp và phân trang
-    //         $where["ORDER"] = [$orderName => strtoupper($orderDir)];
-    //         $where["LIMIT"] = [$start, $length];
-
-    //         // --- 4. Lấy dữ liệu chính ---
-    //         $datas = [];
-    //         $total_mua_page = 0;
-    //         $total_tra_page = 0;
-    //         $total_quantity_page = 0;
-
-    //         $columns = [
-    //             'invoices_products.id',
-    //             'invoices_products.invoices',
-    //             'invoices_products.products',
-    //             'invoices_products.price',
-    //             'invoices_products.price_old',
-    //             'invoices_products.discount_price',
-    //             'invoices_products.discount_priceinvoices',
-    //             'invoices_products.discount_invoices',
-    //             'invoices_products.discount',
-    //             'invoices_products.type',
-    //             'invoices_products.amount',
-    //             'invoices_products.minus',
-    //             'invoices_products.date_poster',
-    //             'invoices_products.additional_information',
-    //             'invoices.code(invoice_code)',
-    //             'invoices.code_group',
-    //             'products.name(product_name)',
-    //             'products.code(product_code)',
-    //             'units.name(unit_name)',
-    //             'stores.name(store_name)',
-    //             'branch.name(branch_name)',
-    //             'invoices.code(invoices_code)',
-    //             'invoices.status(invoices_status)',
-    //         ];
-
-    //         $app->select("invoices_products", $joins, $columns, $where, function ($data) use (&$datas, &$total_mua_page, &$total_tra_page, &$total_quantity_page, $jatbi, $app, $setting) {
-
-    //             $personnel_html = '';
-    //             $personnel_data = $app->select("invoices_personnels", ["[>]personnels" => ["personnels" => "id"]], "personnels.name", ["invoices" => $data["invoices"], "invoices_personnels.deleted" => 0]);
-    //             foreach ($personnel_data as $per_name) {
-    //                 $personnel_html .= ($per_name ?? 'N/A') . '<br>';
-    //             }
-
-    //             $giamgiasp = $data['price_old'] - $data['price'];
-    //             $price_display = (($data['discount_price'] != 0 || $data['discount_price'] != '') ? $data['discount_price'] :
-    //                 ((($data['discount_price'] == 0 && $data['discount_priceinvoices'] == 0 && $data['discount_invoices'] == 0 && $data['discount'] == 0) && $giamgiasp != 0) ? $giamgiasp : ''));
-    //             $is_promo = ($giamgiasp != 0 || $data['price'] == 0 || $data['discount'] || $data['minus'] || $data['discount_invoices'] || $data['discount_priceinvoices'] > 0);
-    //             $thanh_tien = ($data['price'] - $data['discount_priceinvoices']) * $data['amount'];
-
-    //             // Tính tổng cho trang hiện tại
-    //             if ($data['type'] == 3) {
-    //                 $total_tra_page += $thanh_tien;
-    //                 $total_quantity_page -= $data['amount'];
-    //             } else {
-    //                 $total_mua_page += $thanh_tien;
-    //                 $total_quantity_page += $data['amount'];
-    //             }
-
-    //             $datas[] = [
-    //                 "checkbox" => $app->component("box", ["data" => $data['id']]),
-    //                 "ma_hoa_don" => '<a class="text-nowrap pjax-load" href="/invoices/invoices-views/' . $data['invoices'] . '">#' . $setting['ballot_code']['invoices'] . '-' . $data['invoices_code'] . '' . $data['invoices'] . '</a>',
-    //                 "ma_doan" => (string) ($data['code_group'] ?? ''),
-    //                 "ma_hang" => (string) ($data['product_code'] ?? ''),
-    //                 "ten_hang" => (string) ($data['product_name'] ?? ''),
-    //                 "thong_tin_bo_sung" => (string) ($data['additional_information'] ?? ''),
-    //                 "don_gia" => number_format($data['price_old'] ?? 0),
-    //                 "so_luong" => (string) ($data['type'] == 3 ? '-' . ($data['amount'] ?? 0) : ($data['amount'] ?? 0)),
-    //                 "hang_khuyen_mai" => '<input type="checkbox" ' . ($is_promo ? 'checked' : '') . ' disabled>',
-    //                 "dvt" => (string) ($data['unit_name'] ?? ''),
-    //                 "chiet_khau_sp_percent" => ($data['discount'] == 0 ? '' : number_format($data['discount'])),
-    //                 "tien_chiet_khau_sp" => ($price_display == '' ? '' : number_format($price_display)),
-    //                 "chiet_khau_dh_percent" => ($data['discount_invoices'] == 0 ? '' : number_format($data['discount_invoices'])),
-    //                 "tien_chiet_khau_dh" => ($data['discount_priceinvoices'] == 0 ? '' : number_format($data['discount_priceinvoices'])),
-    //                 "giam_tru" => ($data['minus'] == 0 ? '' : number_format($data['minus'])),
-    //                 "thanh_tien" => ($data['type'] == 3 ? '-' : '') . number_format($thanh_tien),
-    //                 "trang_thai" => '<span class="fw-bold text-' . ($setting['Status_invoices'][$data['invoices_status']]['color'] ?? 'secondary') . '">' . ($setting['Status_invoices'][$data['invoices_status']]['name'] ?? 'Không xác định') . '</span>',
-    //                 "nhan_vien_ban_hang" => $personnel_html,
-    //                 "ngay" => (string) ($data['date_poster'] ?? ''),
-    //                 "cua_hang" => (string) ($data['store_name'] ?? ''),
-    //                 "quay_hang" => (string) ($data['branch_name'] ?? ''),
-    //                 "action" => $app->component("action", [
-    //                     "button" => [
-    //                         ['type' => 'button', 'name' => $jatbi->lang("Sửa"), 'permission' => ['license_sale.edit'], 'action' => ['data-url' => '/invoices/license_sale/edit/' . $data['id'], 'data-action' => 'modal']],
-    //                         ['type' => 'button', 'name' => $jatbi->lang("Xóa"), 'permission' => ['license_sale.delete'], 'action' => ['data-url' => '/invoices/license_sale/delete?box=' . $data['id'], 'data-action' => 'modal']]
-    //                     ]
-    //                 ]),
-    //             ];
-    //         });
-
-    //         // --- 5. Trả về JSON ---
-    //         echo json_encode([
-    //             "draw" => $draw,
-    //             "recordsTotal" => $count,
-    //             "recordsFiltered" => $count,
-    //             "data" => $datas,
-    //             "footerData" => [
-    //                 "page_total" => number_format($total_mua_page - $total_tra_page),
-    //                 "grand_total" => number_format($total_mua_grand - $total_tra_grand),
-    //                 "total_quantity_page" => $total_quantity_page,
-    //                 "total_quantity_filtered" => $total_quantity_filtered,
-    //                 "total_value_filtered" => number_format($total_mua_grand - $total_tra_grand)
-    //             ]
-    //         ]);
-    //     }
-    // })->setPermissions(['license_sale']);
-
-
-
-
     $app->router('/license_sale', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores,$template) {
         $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
         if ($app->method() === 'GET') {
@@ -786,7 +558,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             exit("Lỗi: " . $e->getMessage());
         }
     })->setPermissions(['license_sale']);
-
 
     // tra hang
     $app->router('/returns', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore,$template) {
@@ -1451,7 +1222,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices-cancel']);
 
-
     $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
         $vars['title'] = $jatbi->lang("Đơn hàng");
         if ($app->method() === 'GET') {
@@ -1731,7 +1501,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         // Lấy dữ liệu hóa đơn để làm việc
         $data = $app->get("invoices", ["id", "code", "code_group"], ["id" => $id, "deleted" => 0]);
         if (!$data) {
-            return $app->render($template . '/error.html', [], $jatbi->ajax());
+            return $app->render($setting['template'] . '/error.html', [], $jatbi->ajax());
         }
 
         $vars['title'] = $jatbi->lang("Sửa mã đoàn") . ' #' . $data['code'] . $data['id'];
@@ -2089,8 +1859,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['insurance']);
 
-
-
     // xem hoa don 
     $app->router('/products_views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['datas'] = $app->select("invoices_products", ["id", "products"], ["invoices" => $vars['id']]);
@@ -2100,7 +1868,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
     })->setPermissions(['invoices']);
-
 
     $app->router('/invoices-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
         $id = $vars['id'] ?? 0;
@@ -2287,7 +2054,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => 'auto']);
         }
     })->setPermissions(['invoices.edit']);
-
 
     $app->router('/invoices-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
         $id = $vars['id'] ?? 0;

@@ -403,7 +403,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         echo json_encode(['status' => 'success', 'content' => 'Cập nhật thành công']);
     })->setPermissions(['sales']);
 
-
     $app->router('/invoices-update/{dispatch}/{action}/orderid/{get}', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
         $app->header(['Content-Type' => 'application/json']);
         $dispatch = $vars['dispatch'];
@@ -527,7 +526,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['sales']);
 
-
     $app->router('/invoices-updatee/{dispatch}/{action}/customers/{get}', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
         $app->header(['Content-Type' => 'application/json']);
         $dispatch = $vars['dispatch'];
@@ -554,7 +552,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             echo json_encode(['status' => 'error', 'content' => 'Cập nhật thất bại']);
         }
     })->setPermissions(['sales']);
-
 
     $app->router('/invoices-update/{dispatch}/{action}/details-input/surcharge/{get}', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
         $app->header(['Content-Type' => 'application/json']);
@@ -786,7 +783,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         // $app->setSession($dispatch, $sales_session);
         echo json_encode(['status' => 'success', 'content' => 'Cập nhật thành công']);
     })->setPermissions(['sales']);
-
 
     $app->router('/invoices-update/{dispatch}/{action}/completed/sales', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
         $app->header(['Content-Type' => 'application/json']);
@@ -1574,7 +1570,6 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['sales']);
 
-
     $app->router('/invoices-sales-print/{get}', ['GET'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         // $app->header(['Content-Type' => 'application/json']);
 
@@ -1745,4 +1740,5 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             }
         }
     })->setPermissions(['sales']);
+
 })->middleware('login');
