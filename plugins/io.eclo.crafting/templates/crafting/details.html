@@ -82,22 +82,20 @@
                             <?=$jatbi->lang("Điều kiện lọc")?>
                         </div>
                         <div class="px-3 mt-3">
-                            <?=$app->component('input', [
-        "name" => 'date',
-        "id" => 'date', // Thêm ID để JavaScript có thể tìm thấy
-        "placeholder" => $jatbi->lang("Ngày"),
-        // Đặt giá trị mặc định đơn giản, JS sẽ quản lý việc này
-        "value" => date('01/01/2021') . ' - ' . date('d/m/Y'),
-        "class" => 'filter-name form-control', // Thêm class form-control
-        "attr" => 'data-width="100%" data-datepicker',
-    ])?>
+         <?=$app->component('input',[
+                                            "name" => 'date',
+                                            "placeholder" => $jatbi->lang("Ngày"),
+                                            "value" => $app->xss($_GET['date'] ?? (date('01/01/2021', strtotime($date_from)) . ' - ' . date('d/m/Y', strtotime($date_to)))),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" data-datepicker',
+                                        ])?>
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">
-                            <button type="button" class="btn btn-light px-3 py-2 rounded-pill"
-                                id="btn-reset-filter"><?=$jatbi->lang("Làm mới")?></button>
-                            <button type="button" class="btn btn-eclo px-3 py-2 rounded-pill"
-                                id="btn-filter"><?=$jatbi->lang("Tìm")?></button>
+ <button type="button"
+                                            class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                                        <button type="button"
+                                            class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
                         </div>
                     </div>
                 </div>

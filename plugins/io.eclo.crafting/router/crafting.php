@@ -530,6 +530,14 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 return;
             }
 
+
+
+            $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
+            $date_to = date('Y-m-d 23:59:59');
+
+               $vars['date_from'] = $date_from;
+            $vars['date_to'] = $date_to;
+
             // Truyền các biến cần thiết cho View
             $vars['data'] = $data;
             $vars['title'] = $jatbi->lang("Chi tiết nguyên liệu") . ': ' . $data['code'];
@@ -552,13 +560,21 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             // $dateParts = explode(' - ', $dateRange);
             // $date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('Y-m-01 00:00:00');
             // $date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-t 23:59:59');
+$filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
-$dateRange = $_POST['date'] ?? '';
-$dateParts = explode(' - ', $dateRange);
 
-// Nếu không có ngày nào được gửi lên, mặc định lấy từ đầu năm 2021 đến hiện tại
-$date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('2021-01-01 00:00:00');
-$date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-d 23:59:59');
+
+        $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
+            $date_to = date('Y-m-d 23:59:59');
+
+
+            if (!empty($filter_date)) {
+                $date_parts = explode(' - ', $filter_date);
+                if (count($date_parts) == 2) {
+                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
+                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
+                }
+            }
             $baseWhere = [
                 "warehouses_logs.ingredient" => $id,
                 "warehouses_logs.date[<>]" => [$date_from, $date_to],
