@@ -34,7 +34,7 @@ if (isset($session['id'])) {
 
 
 //mã cố định
-$app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $setting, $accStore, $stores,$template) {
+$app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $setting, $accStore, $stores, $template) {
     $app->router('/default_code', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Mã cố định");
 
@@ -730,7 +730,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router("/sizes-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa li ngọc");
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -982,7 +982,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router("/colors-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa màu sắc");
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -1741,11 +1741,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['categorys.edit']);
 
-    $app->router("/categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting, $template) {
+    $app->router("/categorys-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Xóa danh mục");
 
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -2265,7 +2265,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $vars['title'] = $jatbi->lang("Xóa nguyên liệu");
 
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -2645,7 +2645,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     // })->setPermissions(['products']);
 
 
-    $app->router('/products', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template, $stores) {
+    $app->router('/products', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template, $stores) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho thành phẩm");
             array_unshift($stores, [
@@ -2845,7 +2845,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['products']);
 
-    $app->router('/products-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $stores) {
+    $app->router('/products-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $stores) {
         $vars['title'] = $jatbi->lang("Thêm Sản phẩm");
 
         if ($app->method() === 'GET') {
@@ -2976,7 +2976,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 }
 
                 $jatbi->logs('products', 'add', $insert);
-                
+
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm mới thành công'), 'url' => 'auto']);
             } else {
                 echo json_encode($error);
@@ -2984,7 +2984,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['products.add']);
 
-    $app->router('/products-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/products-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = $vars['id'] ?? 0;
         $vars['title'] = $jatbi->lang("Sửa Sản phẩm");
 
@@ -3142,7 +3142,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $vars['title'] = $jatbi->lang("Xóa sản phẩm");
 
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template']. '/common/deleted.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3279,7 +3279,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     })->setPermissions(['products']);
 
 
-    $app->router('/warehouses-history/{type}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/warehouses-history/{type}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $type = $vars['type'] ?? 'import';
 
         // Cấu hình dựa trên type
@@ -3823,7 +3823,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['ingredient']);
 
-    $app->router('/products-details/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $accStore) {
+    $app->router('/products-details/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         $id = (int) ($vars['id'] ?? 0);
         if ($app->method() === 'GET') {
             // Lấy thông tin sản phẩm
@@ -4254,7 +4254,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router('/logs_warehouses/ingredient', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template, $setting) {
+    $app->router('/logs_warehouses/ingredient', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
 
         $vars['title'] = $jatbi->lang("Nhật ký Nguyên liệu");
         $vars['type'] = 'ingredient';
@@ -4626,7 +4626,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router('/logs_warehouses/products', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template, $setting) {
+    $app->router('/logs_warehouses/products', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
 
         $vars['title'] = $jatbi->lang("Nhật ký Sản phẩm");
         $vars['type'] = 'products';
@@ -7084,7 +7084,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template, $setting) {
+    $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC GET (HIỂN THỊ TRANG) ----
         if ($app->method() === 'GET') {
             $jatbi->permission('ingredient-import');
@@ -8225,7 +8225,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template ,$setting) {
+    $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC GET (HIỂN THỊ TRANG) ----
         if ($app->method() === 'GET') {
             $jatbi->permission('ingredient-import');
@@ -9066,7 +9066,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     });
 
-    $app->router('/products-add/{dispatch}/{action}', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template, $setting, $stores) {
+    $app->router('/products-add/{dispatch}/{action}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting, $stores) {
         $vars['title'] = $jatbi->lang("Thêm Sản phẩm");
 
         if ($app->method() === 'GET') {
@@ -9454,14 +9454,19 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $size_id = $sizes_map[$row_data['G']] ?? null;
                 $unit_id = $units_map[$row_data['J']] ?? null;
                 $type_id = 0;
-                if ($row_data['L'] == 'Đai') {
-                    $type_id = 1;
-                } elseif ($row_data['L'] == 'Ngọc') {
-                    $type_id = 2;
-                } elseif ($row_data['L'] == 'Khác') {
-                    $type_id = 3;
+                if (isset($row_data['L'])) {
+                    if ($row_data['L'] == 'Đai') {
+                        $type_id = 1;
+                    } elseif ($row_data['L'] == 'Ngọc') {
+                        $type_id = 2;
+                    } elseif ($row_data['L'] == 'Khác') {
+                        $type_id = 3;
+                    } else {
+                        $errors[] = "Dòng $current_row: Phân Loại '{$row_data['L']}' không hợp lệ.";
+                        continue;
+                    }
                 } else {
-                    $errors[] = "Dòng $current_row: Phân Loại '{$row_data['L']}' không hợp lệ.";
+                    $errors[] = "Dòng $current_row: Thiếu cột 'Phân Loại' (L).";
                     continue;
                 }
 
