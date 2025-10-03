@@ -547,12 +547,18 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
 
-            // Lấy bộ lọc ngày tháng từ dữ liệu POST (do JavaScript gửi lên)
-            $dateRange = $_POST['date'] ?? '';
-            $dateParts = explode(' - ', $dateRange);
-            $date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('Y-m-01 00:00:00');
-            $date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-t 23:59:59');
+            // // Lấy bộ lọc ngày tháng từ dữ liệu POST (do JavaScript gửi lên)
+            // $dateRange = $_POST['date'] ?? '';
+            // $dateParts = explode(' - ', $dateRange);
+            // $date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('Y-m-01 00:00:00');
+            // $date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-t 23:59:59');
 
+$dateRange = $_POST['date'] ?? '';
+$dateParts = explode(' - ', $dateRange);
+
+// Nếu không có ngày nào được gửi lên, mặc định lấy từ đầu năm 2021 đến hiện tại
+$date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('2021-01-01 00:00:00');
+$date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-d 23:59:59');
             $baseWhere = [
                 "warehouses_logs.ingredient" => $id,
                 "warehouses_logs.date[<>]" => [$date_from, $date_to],
