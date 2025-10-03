@@ -1,0 +1,119 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close "
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-sm-12">
+                            <div class="mb-3">
+                                <?=$app->component('input', [
+                                    "type" => 'tel',
+                                    "placeholder" => $jatbi->lang("Số tiền cũ"),
+                                    "class" => "number", 
+                                    "required" => true,
+                                    "value" => $data['price_old'] ?? '',
+                                    "disabled" => true,
+                                    "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
+                                ])?>
+                            </div>
+                            <div class="mb-3">
+                                <?=$app->component('select', [
+                                    'name' => 'type',
+                                    'placeholder' => $jatbi->lang("Loại"),
+                                    'options' => $productTypeOptions,
+                                    'selected' => $data['details']['type'] ?? '',
+                                    'class' => 'products-details-type',
+                                ])?>
+                            </div>
+                            <?php 
+                                $type = $data['details']['type'] ?? 1; // mặc định là 1 (Số tiền)
+                            ?>
+                            <div class="mb-3 products-details-price" <?=($type==1 || $type=='' ) ? ''
+                                : 'style="display:none"' ?>>
+                                <?=$app->component('input', [
+                                    "type"=> 'tel',
+                                    "name" => "price", 
+                                    "placeholder" => $jatbi->lang("Số tiền"),
+                                    "class" => "number",
+                                    "required" => true,
+                                    "value" => $data['details']['price'] ?? '',
+                                    "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
+                                ])?>
+                            </div>
+
+                            <div class="mb-3 products-details-minus" <?=($type==2) ? '' : 'style="display:none"' ?>>
+                                <?=$app->component('input', [
+                                    "type"=> 'tel',
+                                    "name" => "minus", 
+                                    "placeholder" => $jatbi->lang("Giảm trừ"),
+                                    "class" => "number",
+                                    "required" => true,
+                                    "value" => $data['details']['minus'] ?? '',
+                                    "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
+                                ])?>
+                            </div>
+
+                            <div class="mb-3 products-details-precent" <?=($type==3) ? '' : 'style="display:none"' ?>>
+                                <?=$app->component('input', [
+                                    "type"=> 'number',
+                                    "name" => "precent",
+                                    "placeholder"=> $jatbi->lang("Phần trăm"),
+                                    "class" => "number",
+                                    "required" => true,
+                                    "value" => $data['details']['precent'] ?? '',
+                                    "attr" => 'min="0" max="100" step="1"'
+                                ])?>
+                            </div>
+                            <div class="mb-3">
+                                <?=$app->component('textarea', [
+                                    "name" => 'content',
+                                    "placeholder" => $jatbi->lang("Ghi chú"),
+                                    "value" => $data['content'] ?? '',
+                                    "attr" => 'style="height: 100px;"',
+                                ])?>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-sm-12">
+                        <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit"
+                            data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                    </div>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $(".products-details-type").on("change", function () {
+            let type = $(this).val();
+
+            // Ẩn hết trước
+            $(".products-details-price").hide();
+            $(".products-details-minus").hide();
+            $(".products-details-precent").hide();
+
+            // Hiện theo loại
+            if (type == 1 || type == "") {
+                $(".products-details-price").show();
+            } else if (type == 2) {
+                $(".products-details-minus").show();
+            } else if (type == 3) {
+                $(".products-details-precent").show();
+            }
+        });
+    });
+</script>

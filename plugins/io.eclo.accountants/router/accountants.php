@@ -1,8 +1,10 @@
 <?php
 if (!defined('ECLO'))
     die("Hacking attempt");
+
 use ECLO\App;
-$template = __DIR__.'/../templates';
+
+$template = __DIR__ . '/../templates';
 $jatbi = $app->getValueData('jatbi');
 $common = $jatbi->getPluginCommon('io.eclo.proposal');
 $setting = $app->getValueData('setting');
@@ -33,7 +35,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             $expenditure_types = $setting['expenditure_type'];
-            $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+            $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                 return [
                     'value' => $item['id'],
                     'text' => $jatbi->lang($item['name'])
@@ -45,7 +47,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars["expenditure_types"] = $expenditure_types_formatted;
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -57,7 +59,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars["accountants"] = $accountants_formatted;
             // Lấy danh sách stores từ cookie
-            if(count($stores) > 1){
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -71,7 +73,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars['accounts'] = $accounts;
             // echo $app->render($setting['template'] . '/accountants/expenditure.html', $vars);
-            echo $app->render($template.'/config/expenditure.html', $vars);
+            echo $app->render($template . '/config/expenditure.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -100,7 +102,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $date_to = date('Y-m-d 23:59:59');
             }
 
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Build where clause
@@ -150,7 +152,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     }
                 }
             }
-            
+
             // Calculate initial and final totals
             $total_first_thu = (float)$app->sum("expenditure", "price", [
                 "AND" => [
@@ -250,8 +252,8 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 }
 
                 $expenditure = ($expenditure == 0 && $test[0] == "expenditure_report" ? (float)$total_first : (float)$expenditure);
-                if ($key > 0 && isset($datas[$key-1]['price'])) {
-                    $expenditure += (float)$datas[$key-1]['price'];
+                if ($key > 0 && isset($datas[$key - 1]['price'])) {
+                    $expenditure += (float)$datas[$key - 1]['price'];
                 }
 
                 $doi_tuong_html = '';
@@ -305,26 +307,26 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     "chii" => number_format($chi, 1),
                     "ton" => number_format($expenditure + $thu + $chi, 1),
                     "action" => $app->component("action", [
-                            "button" => [
-                                [
-                                    'type' => 'button',
-                                    'name' => $jatbi->lang("in"),
-                                    'action' => ['data-url' => '/accountants/expenditure-views/' . $data['id'], 'data-action' => 'modal']
-                                ],
-                                [
-                                    'type' => 'button',
-                                    'name' => $jatbi->lang("Sửa"),
-                                    'permission' => ['expenditure.edit'],
-                                    'action' => ['data-url' => '/accountants/expenditure-edit/' . $data['id'], 'data-action' => 'modal']
-                                ],
-                                [
-                                    'type' => 'button',
-                                    'name' => $jatbi->lang("Chuyển dữ liệu kế toán"),
-                                    'permission' => ['expenditure.move'],
-                                    'action' => ['data-url' => '/accountants/expenditure-move/' . $data['id'], 'data-action' => 'modal']
-                                ],
-                            ]
-                        ]),
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("in"),
+                                'action' => ['data-url' => '/accountants/expenditure-views/' . $data['id'], 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['expenditure.edit'],
+                                'action' => ['data-url' => '/accountants/expenditure-edit/' . $data['id'], 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Chuyển dữ liệu kế toán"),
+                                'permission' => ['expenditure.move'],
+                                'action' => ['data-url' => '/accountants/expenditure-move/' . $data['id'], 'data-action' => 'modal']
+                            ],
+                        ]
+                    ]),
                     "id" => $data['id'],
                     "type" => $data['type'],
                     "has" => $data['has'],
@@ -366,7 +368,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             $expenditure_types = $setting['expenditure_type'];
-            $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+            $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                 return [
                     'value' => $item['id'],
                     'text' => $jatbi->lang($item['name'])
@@ -379,7 +381,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $vars["expenditure_types"] = $expenditure_types_formatted;
 
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -391,14 +393,14 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars["accountants"] = $accountants_formatted;
 
-            $personnels = $app->select("personnels", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',"stores"=>$accStore]);
+            $personnels = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A', "stores" => $accStore]);
             array_unshift($personnels, [
                 'value' => '',
                 'text' => $jatbi->lang('Nhân viên')
             ]);
             $vars["personnels"] = $personnels;
 
-            $vendors = $app->select("vendors", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',]);
+            $vendors = $app->select("vendors", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A',]);
             array_unshift($vendors, [
                 'value' => '',
                 'text' => $jatbi->lang('Nhà cung cấp')
@@ -410,61 +412,61 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'text' => $jatbi->lang('Cửa hàng')
             ]);
             $vars['stores'] = $stores;
-            echo $app->render($template.'/config/expenditure-post.html', $vars , $jatbi->ajax());
+            echo $app->render($template . '/config/expenditure-post.html', $vars, $jatbi->ajax());
             // echo $app->render($setting['template'] . '/accountants/expenditure-post.html', $vars , $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
             $error = [];
-            if(count($stores)>1){
-				$input_stores = $app->xss($_POST['stores']);
-			}
-			else {
-				$input_stores = $app->get("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
-			}
-            if ($app->xss($_POST['expenditure_types']) == '' 
-            || $app->xss($_POST['has']) == '' 
-            || $app->xss($_POST['debt']) == '' 
-            || $app->xss($_POST['price']) == '' 
-            || $app->xss($_POST['content']) == '' 
-            || $app->xss($_POST['date']) == ''
-            || $input_stores == "") {
+            if (count($stores) > 1) {
+                $input_stores = $app->xss($_POST['stores']);
+            } else {
+                $input_stores = $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+            }
+            if (
+                $app->xss($_POST['expenditure_types']) == ''
+                || $app->xss($_POST['has']) == ''
+                || $app->xss($_POST['debt']) == ''
+                || $app->xss($_POST['price']) == ''
+                || $app->xss($_POST['content']) == ''
+                || $app->xss($_POST['date']) == ''
+                || $input_stores == ""
+            ) {
                 $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
             }
             if (empty($error)) {
-                if($app->xss($_POST['expenditure_types'])==1){
-					$price = $app->xss(str_replace([','],'',$_POST['price']));
-				}
-				if($app->xss($_POST['expenditure_types'])==2){
-					$price = '-'.$app->xss(str_replace([','],'',$_POST['price']));
-				}
+                if ($app->xss($_POST['expenditure_types']) == 1) {
+                    $price = $app->xss(str_replace([','], '', $_POST['price']));
+                }
+                if ($app->xss($_POST['expenditure_types']) == 2) {
+                    $price = '-' . $app->xss(str_replace([','], '', $_POST['price']));
+                }
                 $insert = [
-                    "type" 			=> $app->xss($_POST['expenditure_types']),
-					"debt" 			=> $app->xss($_POST['debt']),
-					"has" 			=> $app->xss($_POST['has']),
-					"price" 		=> $price,
-					"content" 		=> $app->xss($_POST['content']),
-					"date" 			=> $app->xss($_POST['date']),
-					"ballot" 		=> $app->xss($_POST['ballot']),
-					// "projects" 		=> $app->xss($_POST['projects']),
-					"customers" 	=> $app->xss($_POST['customers']),
-					"personnels" 	=> $app->xss($_POST['personnels']),
-					// "purchase" 		=> $app->xss($_POST['purchase']),
-					"vendor" 		=> $app->xss($_POST['vendors']),
-					"notes" 		=> $app->xss($_POST['notes']),
-					"user"			=> $app->getSession("accounts")['id'] ?? 0,
-					"date_poster"	=> date("Y-m-d H:i:s"),
-					"stores"		=> $input_stores,
+                    "type"             => $app->xss($_POST['expenditure_types']),
+                    "debt"             => $app->xss($_POST['debt']),
+                    "has"             => $app->xss($_POST['has']),
+                    "price"         => $price,
+                    "content"         => $app->xss($_POST['content']),
+                    "date"             => $app->xss($_POST['date']),
+                    "ballot"         => $app->xss($_POST['ballot']),
+                    // "projects" 		=> $app->xss($_POST['projects']),
+                    "customers"     => $app->xss($_POST['customers']),
+                    "personnels"     => $app->xss($_POST['personnels']),
+                    // "purchase" 		=> $app->xss($_POST['purchase']),
+                    "vendor"         => $app->xss($_POST['vendors']),
+                    "notes"         => $app->xss($_POST['notes']),
+                    "user"            => $app->getSession("accounts")['id'] ?? 0,
+                    "date_poster"    => date("Y-m-d H:i:s"),
+                    "stores"        => $input_stores,
                 ];
 
                 $app->insert("expenditure", $insert);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                $jatbi->logs('expenditure','expenditure-add',$insert);
-            }else {
+                $jatbi->logs('expenditure', 'expenditure-add', $insert);
+            } else {
                 echo json_encode($error);
             }
-            
         }
     })->setPermissions(['expenditure.add']);
 
@@ -496,7 +498,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             if ($vars['data'] > 1) {
                 $expenditure_types = $setting['expenditure_type'];
-                $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+                $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                     return [
                         'value' => $item['id'],
                         'text' => $jatbi->lang($item['name'])
@@ -509,7 +511,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars["expenditure_types"] = $expenditure_types_formatted;
 
                 $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-                $accountants_formatted = array_map(function($item) {
+                $accountants_formatted = array_map(function ($item) {
                     return [
                         'value' => $item['code'],
                         'text' => $item['code'] . ' - ' . $item['name']
@@ -521,14 +523,14 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 ]);
                 $vars["accountants"] = $accountants_formatted;
 
-                $personnels = $app->select("personnels", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',"stores"=>$accStore]);
+                $personnels = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A', "stores" => $accStore]);
                 array_unshift($personnels, [
                     'value' => '',
                     'text' => $jatbi->lang('Nhân viên')
                 ]);
                 $vars["personnels"] = $personnels;
 
-                $vendors = $app->select("vendors", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',]);
+                $vendors = $app->select("vendors", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A',]);
                 array_unshift($vendors, [
                     'value' => '',
                     'text' => $jatbi->lang('Nhà cung cấp')
@@ -542,7 +544,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars['stores'] = $stores;
 
                 // echo $app->render($setting['template'] . '/accountants/expenditure-post.html', $vars, $jatbi->ajax());
-                echo $app->render($template.'/config/expenditure-post.html', $vars , $jatbi->ajax());
+                echo $app->render($template . '/config/expenditure-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
             }
@@ -551,51 +553,52 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'Content-Type' => 'application/json',
             ]);
             $error = [];
-            if(count($stores)>1){
-				$input_stores = $app->xss($_POST['stores']);
-			}
-			else {
-				$input_stores = $app->get("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]]);
-			}
-            if ($app->xss($_POST['expenditure_types']) == '' 
-            || $app->xss($_POST['has']) == '' 
-            || $app->xss($_POST['debt']) == '' 
-            || $app->xss($_POST['price']) == '' 
-            || $app->xss($_POST['content']) == '' 
-            || $app->xss($_POST['date']) == ''
-            || $input_stores == "") {
+            if (count($stores) > 1) {
+                $input_stores = $app->xss($_POST['stores']);
+            } else {
+                $input_stores = $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+            }
+            if (
+                $app->xss($_POST['expenditure_types']) == ''
+                || $app->xss($_POST['has']) == ''
+                || $app->xss($_POST['debt']) == ''
+                || $app->xss($_POST['price']) == ''
+                || $app->xss($_POST['content']) == ''
+                || $app->xss($_POST['date']) == ''
+                || $input_stores == ""
+            ) {
                 $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
             }
             if (empty($error)) {
-                if($app->xss($_POST['expenditure_types'])==1){
-					$price = $app->xss(str_replace([','],'',$_POST['price']));
-				}
-				if($app->xss($_POST['expenditure_types'])==2){
-					$price = '-'.$app->xss(str_replace([','],'',$_POST['price']));
-				}
+                if ($app->xss($_POST['expenditure_types']) == 1) {
+                    $price = $app->xss(str_replace([','], '', $_POST['price']));
+                }
+                if ($app->xss($_POST['expenditure_types']) == 2) {
+                    $price = '-' . $app->xss(str_replace([','], '', $_POST['price']));
+                }
                 $update = [
-                    "type" 			=> $app->xss($_POST['expenditure_types']),
-					"debt" 			=> $app->xss($_POST['debt']),
-					"has" 			=> $app->xss($_POST['has']),
-					"price" 		=> $price,
-					"content" 		=> $app->xss($_POST['content']),
-					"date" 			=> $app->xss($_POST['date']),
-					"ballot" 		=> $app->xss($_POST['ballot']),
-					// "projects" 		=> $app->xss($_POST['projects']),
-					"customers" 	=> $app->xss($_POST['customers']),
-					"personnels" 	=> $app->xss($_POST['personnels']),
-					// "purchase" 		=> $app->xss($_POST['purchase']),
-					"vendor" 		=> $app->xss($_POST['vendors']),
-					"notes" 		=> $app->xss($_POST['notes']),
-					"user"			=> $app->getSession("accounts")['id'] ?? 0,
-					"date_poster"	=> date("Y-m-d H:i:s"),
-					"stores"		=> $input_stores,
+                    "type"             => $app->xss($_POST['expenditure_types']),
+                    "debt"             => $app->xss($_POST['debt']),
+                    "has"             => $app->xss($_POST['has']),
+                    "price"         => $price,
+                    "content"         => $app->xss($_POST['content']),
+                    "date"             => $app->xss($_POST['date']),
+                    "ballot"         => $app->xss($_POST['ballot']),
+                    // "projects" 		=> $app->xss($_POST['projects']),
+                    "customers"     => $app->xss($_POST['customers']),
+                    "personnels"     => $app->xss($_POST['personnels']),
+                    // "purchase" 		=> $app->xss($_POST['purchase']),
+                    "vendor"         => $app->xss($_POST['vendors']),
+                    "notes"         => $app->xss($_POST['notes']),
+                    "user"            => $app->getSession("accounts")['id'] ?? 0,
+                    "date_poster"    => date("Y-m-d H:i:s"),
+                    "stores"        => $input_stores,
                 ];
 
                 $app->update("expenditure", $update, ["id" => $vars['id']]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                $jatbi->logs('expenditure','expenditure-edit',$update);
-            }else {
+                $jatbi->logs('expenditure', 'expenditure-edit', $update);
+            } else {
                 echo json_encode($error);
             }
         }
@@ -623,7 +626,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
         }
     })->setPermissions(['expenditure.deleted']);
-    
+
     $app->router("/expenditure-move/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $common, $template) {
         $vars['title'] = $jatbi->lang("Chuyển dữ liệu kế toán");
 
@@ -652,7 +655,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             if ($vars['data'] > 1) {
                 $expenditure_types = $setting['expenditure_type'];
-                $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+                $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                     return [
                         'value' => $item['id'],
                         'text' => $jatbi->lang($item['name'])
@@ -665,7 +668,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars["expenditure_types"] = $expenditure_types_formatted;
 
                 $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-                $accountants_formatted = array_map(function($item) {
+                $accountants_formatted = array_map(function ($item) {
                     return [
                         'value' => $item['code'],
                         'text' => $item['code'] . ' - ' . $item['name']
@@ -677,14 +680,14 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 ]);
                 $vars["accountants"] = $accountants_formatted;
 
-                $personnels = $app->select("personnels", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',"stores"=>$accStore]);
+                $personnels = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A', "stores" => $accStore]);
                 array_unshift($personnels, [
                     'value' => '',
                     'text' => $jatbi->lang('Nhân viên')
                 ]);
                 $vars["personnels"] = $personnels;
 
-                $vendors = $app->select("vendors", ["id (value)","name (text)"],["deleted"=> 0,"status"=>'A',]);
+                $vendors = $app->select("vendors", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A',]);
                 array_unshift($vendors, [
                     'value' => '',
                     'text' => $jatbi->lang('Nhà cung cấp')
@@ -696,14 +699,14 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     'text' => $jatbi->lang('Cửa hàng')
                 ]);
                 $vars['stores'] = $stores;
-                $accountantss = $app->select("type_accountant", ["id(value)","name(text)"],["deleted"=> 0,"status"=>'A']);
+                $accountantss = $app->select("type_accountant", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
                 array_unshift($accountantss, [
                     'value' => '',
                     'text' => $jatbi->lang('Chọn kế toán')
                 ]);
                 $vars["accountantss"] = $accountantss;
                 // echo $app->render($setting['template'] . '/accountants/expenditure-move.html', $vars, $jatbi->ajax());
-                echo $app->render($template.'/config/expenditure-move.html', $vars , $jatbi->ajax());
+                echo $app->render($template . '/config/expenditure-move.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
             }
@@ -839,7 +842,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
     $app->router("/expenditure-views/{id}", ['GET'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Xem chi tiết thu chi");
 
-        $vars['data'] = $app->get("expenditure", ["type", "id","ballot", "invoices", "customers", "personnels", "accounts", "drivers_payment", "purchase", "vendor", "user", "debt", "has", "price", "date", "content", "stores"], ["id" => $vars['id'], "deleted" => 0]);
+        $vars['data'] = $app->get("expenditure", ["type", "id", "ballot", "invoices", "customers", "personnels", "accounts", "drivers_payment", "purchase", "vendor", "user", "debt", "has", "price", "date", "content", "stores"], ["id" => $vars['id'], "deleted" => 0]);
 
         if ($vars['data']) {
             $vars['store'] = $app->get("stores", "name", ["id" => $vars['data']['stores'], "deleted" => 0]);
@@ -858,7 +861,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $vars['has_code'] = $vars['data']['has'] ? $app->get("accountants_code", "code", ["code" => $vars['data']['has']]) : '';
 
             // echo $app->render($setting['template'] . '/accountants/expenditure-view.html', $vars, $jatbi->ajax());
-            echo $app->render($template.'/config/expenditure-view.html', $vars , $jatbi->ajax());
+            echo $app->render($template . '/config/expenditure-view.html', $vars, $jatbi->ajax());
         } else {
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
@@ -1110,7 +1113,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             $expenditure_types = $setting['expenditure_type'];
-            $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+            $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                 return [
                     'value' => $item['id'],
                     'text' => $jatbi->lang($item['name'])
@@ -1121,7 +1124,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'text' => $jatbi->lang('Tất cả')
             ]);
             $vars["expenditure_types"] = $expenditure_types_formatted;
-            if(Count($stores) > 1){
+            if (Count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -1136,7 +1139,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars['accounts'] = $accounts;
             // echo $app->render($setting['template'] . '/accountants/expenditure_report.html', $vars);
-            echo $app->render($template.'/config/expenditure_report.html', $vars);
+            echo $app->render($template . '/config/expenditure_report.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -1164,7 +1167,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // Handle session and stores
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Build where clause
@@ -1392,19 +1395,19 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 }
 
                 $expenditure = ($expenditure == 0 && $test[0] == "expenditure_report" ? (float)$total_first : (float)$expenditure);
-                if ($key > 0 && isset($datas[$key-1]['price'], $datas[$key-1]['type'], $datas[$key-1]['debt'], $datas[$key-1]['has'])) {
+                if ($key > 0 && isset($datas[$key - 1]['price'], $datas[$key - 1]['type'], $datas[$key - 1]['debt'], $datas[$key - 1]['has'])) {
                     if (
-                        $datas[$key-1]['type'] == 1 &&
+                        $datas[$key - 1]['type'] == 1 &&
                         (
-                            ($datas[$key-1]['debt'] == 112 && $datas[$key-1]['has'] == 1111) ||
-                            ($datas[$key-1]['debt'] == 112 && $datas[$key-1]['has'] == 111) ||
-                            ($datas[$key-1]['debt'] == 1121 && $datas[$key-1]['has'] == 111) ||
-                            ($datas[$key-1]['debt'] == 1121 && $datas[$key-1]['has'] == 1111)
+                            ($datas[$key - 1]['debt'] == 112 && $datas[$key - 1]['has'] == 1111) ||
+                            ($datas[$key - 1]['debt'] == 112 && $datas[$key - 1]['has'] == 111) ||
+                            ($datas[$key - 1]['debt'] == 1121 && $datas[$key - 1]['has'] == 111) ||
+                            ($datas[$key - 1]['debt'] == 1121 && $datas[$key - 1]['has'] == 1111)
                         )
                     ) {
-                        $expenditure += -(float)$datas[$key-1]['price'];
+                        $expenditure += -(float)$datas[$key - 1]['price'];
                     } else {
-                        $expenditure += (float)$datas[$key-1]['price'];
+                        $expenditure += (float)$datas[$key - 1]['price'];
                     }
                 }
 
@@ -1507,13 +1510,13 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
         }
     })->setPermissions(['expenditure_report']);
-    
+
     $app->router("/deposit_book", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Sổ tiền gửi");
 
         if ($app->method() === 'GET') {
             $expenditure_types = $setting['expenditure_type'];
-            $expenditure_types_formatted = array_map(function($item) use ($jatbi) {
+            $expenditure_types_formatted = array_map(function ($item) use ($jatbi) {
                 return [
                     'value' => $item['id'],
                     'text' => $jatbi->lang($item['name'])
@@ -1524,7 +1527,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'text' => $jatbi->lang('Tất cả')
             ]);
             $vars["expenditure_types"] = $expenditure_types_formatted;
-            if(count($stores) > 1){
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -1539,7 +1542,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars['accounts'] = $accounts;
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -1550,9 +1553,9 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'text' => $jatbi->lang('Tất cả')
             ]);
             $vars["accountants"] = $accountants_formatted;
-            
+
             // echo $app->render($setting['template'] . '/accountants/deposit_book.html', $vars);
-            echo $app->render($template.'/config/deposit_book.html', $vars);
+            echo $app->render($template . '/config/deposit_book.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -1582,7 +1585,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // Handle session and stores
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Handle debt and has conditions
@@ -1648,7 +1651,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 "LIMIT" => $start,
                 "ORDER" => ["expenditure.date" => strtoupper($orderDir)],
             ]);
-            
+
             $total_page = [];
             if (!empty($total_first_thu_page)) {
                 foreach ($total_first_thu_page as $value) {
@@ -1657,7 +1660,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     }
                 }
             }
-            
+
             // Calculate special totals for debt and has
             $dauky111_1121 = $app->select("expenditure", ["price", "id", "debt", "has"], [
                 "AND" => [
@@ -1678,7 +1681,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 ],
                 "ORDER" => ["expenditure.date" => strtoupper($orderDir)],
             ]);
-            
+
             $total_dk111_1121 = 0;
             foreach ($dauky111_1121 as $dk) {
                 $debt = (int)$dk['debt'];  // ép về số
@@ -1688,7 +1691,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     $total_dk111_1121 += (float)$dk['price'];
                 }
             }
-            
+
             $count_data = $app->select("expenditure", "*", [
                 "AND" => $where['AND'],
                 "ORDER" => ["expenditure.date" => strtoupper("DESC")],
@@ -1702,7 +1705,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     $total_last_thu1 += (float)$thu1['price'];
                 }
             }
-            
+
             $total_first_thu = (float)$app->sum("expenditure", "price", [
                 "AND" => [
                     "OR" => [
@@ -1821,8 +1824,8 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 }
 
                 $expenditure = ($expenditure == 0 && $test[0] == "deposit_book" ? (float)$total_first : (float)$expenditure);
-                if ($key > 0 && isset($datas[$key-1]['type'], $datas[$key-1]['has'], $datas[$key-1]['debt'], $datas[$key-1]['price'])) {
-                    $expenditure += ($datas[$key-1]['type'] == 1 && in_array($datas[$key-1]['has'], [1121, 112]) && in_array($datas[$key-1]['debt'], [111, 1111]) ? -(float)$datas[$key-1]['price'] : (float)$datas[$key-1]['price']);
+                if ($key > 0 && isset($datas[$key - 1]['type'], $datas[$key - 1]['has'], $datas[$key - 1]['debt'], $datas[$key - 1]['price'])) {
+                    $expenditure += ($datas[$key - 1]['type'] == 1 && in_array($datas[$key - 1]['has'], [1121, 112]) && in_array($datas[$key - 1]['debt'], [111, 1111]) ? -(float)$datas[$key - 1]['price'] : (float)$datas[$key - 1]['price']);
                 }
 
                 $doi_tuong_html = '';
@@ -1911,7 +1914,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         if ($app->method() === 'GET') {
             // $vars['customers'] = $app->select("customers", ["id", "name"], ["deleted" => 0, "status" => 'A']);
             // echo $app->render($setting['template'] . '/accountants/accounts_receivable.html', $vars);
-            echo $app->render($template.'/config/accounts_receivable.html', $vars);
+            echo $app->render($template . '/config/accounts_receivable.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -1938,7 +1941,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // Handle session and stores
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Build where clause
@@ -2065,7 +2068,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $vars['title'] = $jatbi->lang("Sổ chi tiết tài khoản");
 
         if ($app->method() === 'GET') {
-            if(count($stores) > 1){
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -2080,7 +2083,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars['accounts'] = $accounts;
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -2092,7 +2095,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars["accountants"] = $accountants_formatted;
             // echo $app->render($setting['template'] . '/accountants/subsidiary_ledger.html', $vars);
-            echo $app->render($template.'/config/subsidiary_ledger.html', $vars);
+            echo $app->render($template . '/config/subsidiary_ledger.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -2144,7 +2147,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // Handle session and stores
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Build where clause
@@ -2373,7 +2376,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             // echo $app->render($setting['template'] . '/accountants/income_statement.html', $vars);
-            echo $app->render($template.'/config/income_statement.html', $vars);
+            echo $app->render($template . '/config/income_statement.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -2389,7 +2392,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // Xử lý stores
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Tính toán chỉ số cho năm hiện tại
@@ -2745,7 +2748,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             // Lấy danh sách cửa hàng (stores)
-            if(count($stores) > 1){
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -2779,7 +2782,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
 
             // echo $app->render($setting['template'] . '/accountants/inventory_table.html', $vars);
-            echo $app->render($template.'/config/inventory_table.html', $vars);
+            echo $app->render($template . '/config/inventory_table.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -2801,7 +2804,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $date_to = date("Y-m-t", strtotime("$year-$month-01"));
 
             // Xử lý cửa hàng (stores)
-            
+
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Tạo điều kiện WHERE
@@ -2860,20 +2863,20 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
                 // Tạo HTML cho cột xử lý
                 $xuLy = $chenhlechsoluong != 0
-                ? $app->component("action", [
-                    "button" => [
-                        [
-                            'type' => 'button',
-                            'name' => $jatbi->lang("Sửa"),
-                            'action' => [
-                                'data-url' => '/accountants/handle/' . $data['id'],
-                                'data-action' => 'modal'
-                            ]
-                        ],
-                    ]
-                ])
-                : '<div class="text-success">Đã xử lý</div>';
-                
+                    ? $app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'action' => [
+                                    'data-url' => '/accountants/handle/' . $data['id'],
+                                    'data-action' => 'modal'
+                                ]
+                            ],
+                        ]
+                    ])
+                    : '<div class="text-success">Đã xử lý</div>';
+
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "stt" => ++$key,
@@ -2914,19 +2917,19 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
     $app->router("/inventory_table-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Bảng kiểm kê");
         $action = "add";
-        if(!isset($_SESSION['inventory_table'][$action]['date'])){
+        if (!isset($_SESSION['inventory_table'][$action]['date'])) {
             $_SESSION['inventory_table'][$action]['date'] = date("Y-m-d");
         }
-        if(count($stores)==1){
-            $_SESSION['inventory_table']['add']['stores'] = ["id"=>$app->get("stores","id",["id"=>$accStore,"status"=>'A',"deleted"=>0,"ORDER"=>["id"=>"ASC"]])];
+        if (count($stores) == 1) {
+            $_SESSION['inventory_table']['add']['stores'] = ["id" => $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]])];
         }
         $data = [
             "date" => $_SESSION['inventory_table'][$action]['date'],
             "content" => $_SESSION['inventory_table'][$action]['content'] ?? "",
             "stores" => $_SESSION['inventory_table'][$action]['stores'] ?? "",
-        ];	
-        $storess = $app->select("stores", "*",["deleted"=> 0,"status"=>'A',"id"=>$accStore]);
-        $storess_formatted = array_map(function($item) {
+        ];
+        $storess = $app->select("stores", "*", ["deleted" => 0, "status" => 'A', "id" => $accStore]);
+        $storess_formatted = array_map(function ($item) {
             return [
                 'value' => $item['id'],
                 'text' => $item['name']
@@ -2942,8 +2945,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $vars['data'] = $data;
         $vars['SelectProducts'] = $SelectProducts;
         // echo $app->render($setting['template'] . '/accountants/inventory_table-add.html', $vars);
-        echo $app->render($template.'/config/inventory_table.html', $vars);
-
+        echo $app->render($template . '/config/inventory_table.html', $vars);
     })->setPermissions(['inventory_table.add']);
 
     $app->router("/inventory_table-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
@@ -2968,7 +2970,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
         }
     })->setPermissions(['inventory_table']);
-    
+
     $app->router("/products-inventory_table", ['POST'], function ($vars) use ($app) {
         $app->header([
             'Content-Type' => 'application/json',
@@ -2978,24 +2980,29 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $SearchStore = $_SESSION['inventory_table']['add']['stores'] ?? "";
 
         $where = [
-            "AND"=>[
-				"OR"=>[
-					"name[~]"=>$searchValue,
-					"code[~]"=>$searchValue,
-				],
-				"status"=>'A',
-				"deleted"=>0,
-				"stores" => $SearchStore,
-			],
+            "AND" => [
+                "OR" => [
+                    "name[~]" => $searchValue,
+                    "code[~]" => $searchValue,
+                ],
+                "status" => 'A',
+                "deleted" => 0,
+                "stores" => $SearchStore,
+            ],
             "LIMIT" => 15
         ];
 
         $datas = [];
         $app->select("products", [
-            "id","code","name","stores","branch","price"
+            "id",
+            "code",
+            "name",
+            "stores",
+            "branch",
+            "price"
         ], $where, function ($data) use (&$datas, $vars, $app) {
             $datas[] = [
-                "text" => $data['code'].' - '.$data['name'].' - '.$app->get("stores","name",["id"=>$data['stores']]).' - '.$app->get("branch","name",["id"=>$data['branch']]),
+                "text" => $data['code'] . ' - ' . $data['name'] . ' - ' . $app->get("stores", "name", ["id" => $data['stores']]) . ' - ' . $app->get("branch", "name", ["id" => $data['branch']]),
                 "url" => "/accountants/inventory_table-update/add/products/add/" . $data['id'],
                 "value" => $data['id'],
             ];
@@ -3007,19 +3014,18 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
     $app->router('/inventory_table-update/add/products/add/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
-        $data = $app->get("products", "*",["id"=>$app->xss($vars['id']),"status"=>"A","deleted"=>0,]);
-        if($data>1){
+        $data = $app->get("products", "*", ["id" => $app->xss($vars['id']), "status" => "A", "deleted" => 0,]);
+        if ($data > 1) {
             $_SESSION['inventory_table'][$action]['products'][] = [
-                "products"=>$data['id'],
-                "amount"=>1,
-                "price"=>$data['price'],
-                "code"=>$data['code'],
-                "name"=>$data['name'],
+                "products" => $data['id'],
+                "amount" => 1,
+                "price" => $data['price'],
+                "code" => $data['code'],
+                "name" => $data['name'],
             ];
-            echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
-        }
-        else {
-            echo json_encode(['status'=>'error','content'=> "Cập nhật thất bại"]);
+            echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => "Cập nhật thất bại"]);
         }
     });
 
@@ -3027,31 +3033,30 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
         unset($_SESSION['inventory_table'][$action]['products'][$vars['id']]);
-        echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+        echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
     });
 
     $app->router('/inventory_table-update/add/products/amount/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
-        $_SESSION['inventory_table'][$action]['products'][$vars['id']]['amount'] = $app->xss(str_replace([','],'',$_POST['value']));
-        echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+        $_SESSION['inventory_table'][$action]['products'][$vars['id']]['amount'] = $app->xss(str_replace([','], '', $_POST['value']));
+        echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
     });
 
     $app->router('/inventory_table-update/add/stores', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
 
-        $data = $app->get("stores", "*",["id"=>$app->xss($_POST['value'])]);
-        if($data>1){
+        $data = $app->get("stores", "*", ["id" => $app->xss($_POST['value'])]);
+        if ($data > 1) {
             unset($_SESSION['inventory_table'][$action]['products']);
             $_SESSION['inventory_table'][$action]['stores'] = [
-                "id"=>$data['id'],
-                "name"=>$data['name'],
+                "id" => $data['id'],
+                "name" => $data['name'],
             ];
-            echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
-        }
-        else {
-            echo json_encode(['status'=>'error','content'=> "Cập nhật thất bại"]);
+            echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => "Cập nhật thất bại"]);
         }
     });
 
@@ -3059,14 +3064,14 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
         $_SESSION['inventory_table'][$action]['date'] = $app->xss($_POST['value']);
-        echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+        echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
     });
 
     $app->router('/inventory_table-update/add/content', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = "add";
         $_SESSION['inventory_table'][$action]['content'] = $app->xss($_POST['value']);
-        echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+        echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
     });
 
     $app->router('/inventory_table-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
@@ -3076,7 +3081,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $app->header(['Content-Type' => 'application/json']);
             $action = "add";
             unset($_SESSION['inventory_table'][$action]);
-            echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+            echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
         }
     });
 
@@ -3093,22 +3098,22 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $inventory_table = $_SESSION['inventory_table'][$action] ?? [];
 
             if (!isset($inventory_table['products']) || !is_array($inventory_table['products'])) {
-                echo json_encode(['status'=>'error','content'=> "Không có sản phẩm để cập nhật"]);
+                echo json_encode(['status' => 'error', 'content' => "Không có sản phẩm để cập nhật"]);
                 return;
             }
 
             foreach ($inventory_table['products'] as $value1) {
-                if (!isset($value1['amount']) || $value1['amount'] === ''){
+                if (!isset($value1['amount']) || $value1['amount'] === '') {
                     $error_warehouses = 'true';
                 }
             }
-            if($error_warehouses){
-                $error = ['status'=>'error','content'=> "Vui lòng nhập số lượng"];
+            if ($error_warehouses) {
+                $error = ['status' => 'error', 'content' => "Vui lòng nhập số lượng"];
             }
-            if(count($error)==0){
+            if (count($error) == 0) {
                 foreach ($inventory_table['products'] as $key => $value) {
-                    $product = $app->get("products",["id","name","code","price","branch","stores"],["id"=>$value['products']]);
-                    $soluong = $app->select("warehouses_logs",["products","amount","type","data"],["products"=>$value['products'],"date[<=]"=>$inventory_table['date']]);
+                    $product = $app->get("products", ["id", "name", "code", "price", "branch", "stores"], ["id" => $value['products']]);
+                    $soluong = $app->select("warehouses_logs", ["products", "amount", "type", "data"], ["products" => $value['products'], "date[<=]" => $inventory_table['date']]);
                     foreach ($soluong as $as => $sl) {
                         if ($sl['data'] !== "products") continue;
 
@@ -3117,132 +3122,127 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                         if ($sl['type'] == 'import') {
                             if (!isset($nhap[$productId])) $nhap[$productId] = 0;
                             $nhap[$productId] += $sl['amount'];
-                        }
-                        elseif ($sl['type'] == 'export') {
+                        } elseif ($sl['type'] == 'export') {
                             if (!isset($xuat[$productId])) $xuat[$productId] = 0;
                             $xuat[$productId] += $sl['amount'];
-                        }
-                        elseif ($sl['type'] == 'move') {
+                        } elseif ($sl['type'] == 'move') {
                             if (!isset($chuyen[$productId])) $chuyen[$productId] = 0;
                             $chuyen[$productId] += $sl['amount'];
-                        }
-                        elseif ($sl['type'] == 'error') {
+                        } elseif ($sl['type'] == 'error') {
                             if (!isset($huy[$productId])) $huy[$productId] = 0;
                             $huy[$productId] += $sl['amount'];
                         }
-                    } 
-                    $slkt[$value['products']] = $nhap[$value['products']]-$xuat[$value['products']]-$chuyen[$value['products']]-$huy[$value['products']];
+                    }
+                    $slkt[$value['products']] = $nhap[$value['products']] - $xuat[$value['products']] - $chuyen[$value['products']] - $huy[$value['products']];
                     $insert = [
-                        "date" 			=> $inventory_table['date'],
-                        "name_product"	=> $product["name"],
-                        "code_product"	=> $product["code"],
-                        "amount_product"=> $slkt[$value['products']],
-                        "price_product"	=> $product["price"],
-                        "amount" 		=> $app->xss(str_replace([','],'',$value['amount'])),
-                        "price" 		=> $product["price"],
-                        "branch"		=> $product["branch"],
-                        "stores"		=> $product["stores"],
-                        "notes" 		=> $app->xss($inventory_table['content']),
-                        "date_poster" 	=> date('Y-m-d H:i:s'),
-                        "products"		=> $app->xss($value['products']),
-                        "user"			=> $app->getSession("accounts")['id'] ?? 0,
+                        "date"             => $inventory_table['date'],
+                        "name_product"    => $product["name"],
+                        "code_product"    => $product["code"],
+                        "amount_product" => $slkt[$value['products']],
+                        "price_product"    => $product["price"],
+                        "amount"         => $app->xss(str_replace([','], '', $value['amount'])),
+                        "price"         => $product["price"],
+                        "branch"        => $product["branch"],
+                        "stores"        => $product["stores"],
+                        "notes"         => $app->xss($inventory_table['content']),
+                        "date_poster"     => date('Y-m-d H:i:s'),
+                        "products"        => $app->xss($value['products']),
+                        "user"            => $app->getSession("accounts")['id'] ?? 0,
                     ];
-                    $app->insert("inventory_table",$insert);
+                    $app->insert("inventory_table", $insert);
                     $insert_logs[] = $insert;
                 }
-                $jatbi->logs('inventory_table','add',$insert_logs);
+                $jatbi->logs('inventory_table', 'add', $insert_logs);
                 unset($_SESSION['inventory_table'][$action]);
-                echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
-            }
-            else {
-                echo json_encode(['status'=>'error','content'=>$error['content']]);
+                echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $error['content']]);
             }
         }
     });
 
     $app->router("/handle/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Xử lý");
-        $inventory_table = $app->get("inventory_table", "*",["id"=>$app->xss($vars['id'])]);
+        $inventory_table = $app->get("inventory_table", "*", ["id" => $app->xss($vars['id'])]);
         if ($app->method() === 'GET') {
             $vars['inventory_table'] = $inventory_table;
             echo $app->render($setting['template'] . '/accountants/inventory_table-post.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
-            if(empty($_POST['type'])){
-                echo json_encode(['status'=>'error','content'=> "Lỗi trống"]);
-            }				
-            else if($_POST['type']) {
-                if($_POST['type']=='import'){
+            if (empty($_POST['type'])) {
+                echo json_encode(['status' => 'error', 'content' => "Lỗi trống"]);
+            } else if ($_POST['type']) {
+                if ($_POST['type'] == 'import') {
                     $code = 'PN';
-                    $amounts = $inventory_table['amount']-$inventory_table['amount_product'];
-                    $amount = $app->xss(str_replace(['-'],'',$amounts));
-                    $inventory_table_amounts = $inventory_table['amount_product']+$amount;
-                    $inventory_table_amount = $app->xss(str_replace(['-'],'',$inventory_table_amounts));
+                    $amounts = $inventory_table['amount'] - $inventory_table['amount_product'];
+                    $amount = $app->xss(str_replace(['-'], '', $amounts));
+                    $inventory_table_amounts = $inventory_table['amount_product'] + $amount;
+                    $inventory_table_amount = $app->xss(str_replace(['-'], '', $inventory_table_amounts));
                     $receive_status = 1;
-                }else{
+                } else {
                     $code = 'PX';
-                    $amounts = $inventory_table['amount_product']-$inventory_table['amount'];
-                    $amount = $app->xss(str_replace(['-'],'',$amounts));
-                    $inventory_table_amounts = $inventory_table['amount_product']-$amount;
-                    $inventory_table_amount = $app->xss(str_replace(['-'],'',$inventory_table_amounts));
+                    $amounts = $inventory_table['amount_product'] - $inventory_table['amount'];
+                    $amount = $app->xss(str_replace(['-'], '', $amounts));
+                    $inventory_table_amounts = $inventory_table['amount_product'] - $amount;
+                    $inventory_table_amount = $app->xss(str_replace(['-'], '', $inventory_table_amounts));
                     $receive_status = 3;
                 }
-                $app->update("inventory_table",["amount_product"=>$inventory_table_amount],["id"=>$inventory_table["id"]]);
+                $app->update("inventory_table", ["amount_product" => $inventory_table_amount], ["id" => $inventory_table["id"]]);
                 $insert = [
-                    "code"			=> $code,
-                    "type"			=> $app->xss($_POST['type']),
-                    "data"			=> "products",
-                    "stores"		=> $inventory_table['stores'],
-                    "branch"		=> $inventory_table['branch'],
-                    "content"		=> $app->xss($_POST['notes']),
-                    "user"			=> $app->getSession("accounts")['id'] ?? 0,
-                    "date"			=> date("Y-m-d"),
-                    "active"		=> $jatbi->active(30),
-                    "date_poster"	=> date("Y-m-d H:i:s"),
-                    "receive_status"=> $receive_status,
+                    "code"            => $code,
+                    "type"            => $app->xss($_POST['type']),
+                    "data"            => "products",
+                    "stores"        => $inventory_table['stores'],
+                    "branch"        => $inventory_table['branch'],
+                    "content"        => $app->xss($_POST['notes']),
+                    "user"            => $app->getSession("accounts")['id'] ?? 0,
+                    "date"            => date("Y-m-d"),
+                    "active"        => $jatbi->active(30),
+                    "date_poster"    => date("Y-m-d H:i:s"),
+                    "receive_status" => $receive_status,
                 ];
-                $app->insert("warehouses",$insert);
+                $app->insert("warehouses", $insert);
                 $orderId = $app->id();
                 $pro = [
-                        "warehouses" 	=> $orderId,
-                        "data"			=> $insert['data'],
-                        "type"			=> $insert['type'],
-                        "products"		=> $inventory_table['products'],
-                        "amount"		=> $amount,
-                        "amount_total"	=> $amount,
-                        "price"			=> $inventory_table['price'],
-                        "notes"			=> $insert['content'],
-                        "date"			=> date("Y-m-d H:i:s"),
-                        "user"			=> $app->getSession("accounts")['id'] ?? 0,
-                        "stores"		=> $insert['stores'],
-                        "branch"		=> $insert['branch'],
-                    ];
-                $app->insert("warehouses_details",$pro);
+                    "warehouses"     => $orderId,
+                    "data"            => $insert['data'],
+                    "type"            => $insert['type'],
+                    "products"        => $inventory_table['products'],
+                    "amount"        => $amount,
+                    "amount_total"    => $amount,
+                    "price"            => $inventory_table['price'],
+                    "notes"            => $insert['content'],
+                    "date"            => date("Y-m-d H:i:s"),
+                    "user"            => $app->getSession("accounts")['id'] ?? 0,
+                    "stores"        => $insert['stores'],
+                    "branch"        => $insert['branch'],
+                ];
+                $app->insert("warehouses_details", $pro);
                 $GetID = $app->id();
                 $warehouses_logs = [
-                        "type"		=> $insert['type'],
-                        "data"		=> $insert['data'],
-                        "warehouses"=> $orderId,
-                        "details"	=> $GetID,
-                        "products"	=> $inventory_table['products'],
-                        "price"		=> $inventory_table['price'],
-                        "amount"	=> $pro['amount'],
-                        "total"		=> $pro['amount']*$inventory_table['price'],
-                        "notes"		=> $pro['notes'],
-                        "date" 		=> date('Y-m-d H:i:s'),
-                        "user" 		=> $app->getSession("accounts")['id'] ?? 0,
-                        "stores"	=> $insert['stores'],
-                        "branch"	=> $insert['branch'],
-                    ];
-                $app->insert("warehouses_logs",$warehouses_logs);
-                $product = $app->get("products",["id","amount"],["id"=>$inventory_table["products"]]);
-                if($_POST['type']=='import'){
-                    $amount2 = $product['amount']+$warehouses_logs['amount'];
-                }else{
-                    $amount2 = $product['amount']-$warehouses_logs['amount'];
+                    "type"        => $insert['type'],
+                    "data"        => $insert['data'],
+                    "warehouses" => $orderId,
+                    "details"    => $GetID,
+                    "products"    => $inventory_table['products'],
+                    "price"        => $inventory_table['price'],
+                    "amount"    => $pro['amount'],
+                    "total"        => $pro['amount'] * $inventory_table['price'],
+                    "notes"        => $pro['notes'],
+                    "date"         => date('Y-m-d H:i:s'),
+                    "user"         => $app->getSession("accounts")['id'] ?? 0,
+                    "stores"    => $insert['stores'],
+                    "branch"    => $insert['branch'],
+                ];
+                $app->insert("warehouses_logs", $warehouses_logs);
+                $product = $app->get("products", ["id", "amount"], ["id" => $inventory_table["products"]]);
+                if ($_POST['type'] == 'import') {
+                    $amount2 = $product['amount'] + $warehouses_logs['amount'];
+                } else {
+                    $amount2 = $product['amount'] - $warehouses_logs['amount'];
                 }
-                $app->update("products",["amount"=>$amount2],["id"=>$product["id"]]);
-                echo json_encode(['status'=>'success','content'=> "Cập nhật thành công"]);
+                $app->update("products", ["amount" => $amount2], ["id" => $product["id"]]);
+                echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
             }
         }
     })->setPermissions(['inventory_table.add']);
@@ -3251,7 +3251,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $vars['title'] = $jatbi->lang("Mã tài khoản");
         if ($app->method() === 'GET') {
             // echo $app->render($setting['template'] . '/accountants/accounts-code.html', $vars);
-            echo $app->render($template.'/config/accounts-code.html', $vars);
+            echo $app->render($template . '/config/accounts-code.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3398,7 +3398,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $vars["accountants_codes"] = $accountants_codes;
 
             // echo $app->render($setting['template'] . '/accountants/accounts-code-post.html', $vars, $jatbi->ajax());
-            echo $app->render($template.'/config/accounts-code-post.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/accounts-code-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
@@ -3445,7 +3445,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars["accountants_codes"] = $accountants_codes;
 
                 // echo $app->render($setting['template'] . '/accountants/accounts-code-post.html', $vars, $jatbi->ajax());
-                echo $app->render($template.'/config/accounts-code-post.html', $vars, $jatbi->ajax());
+                echo $app->render($template . '/config/accounts-code-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
             }
@@ -3522,7 +3522,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         $vars['title'] = $jatbi->lang("Kế toán");
         if ($app->method() === 'GET') {
             // echo $app->render($setting['template'] . '/accountants/accountant.html', $vars);
-            echo $app->render($template.'/config/accountant.html', $vars);
+            echo $app->render($template . '/config/accountant.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -3606,7 +3606,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             // echo $app->render($setting['template'] . '/accountants/accountant-post.html', $vars, $jatbi->ajax());
-            echo $app->render($template.'/config/accountant-post.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/accountant-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
@@ -3638,7 +3638,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("type_accountant", "*", ["id" => $vars['id'], "deleted" => 0]);
             if ($vars['data']) {
-                echo $app->render($template.'/config/accountant-post.html', $vars, $jatbi->ajax());
+                echo $app->render($template . '/config/accountant-post.html', $vars, $jatbi->ajax());
                 // echo $app->render($setting['template'] . '/accountants/accountant-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
@@ -3772,7 +3772,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
             // Render template expenditure.html
             // echo $app->render($setting['template'] . '/accountants/accountant-type.html', $vars);
-            echo $app->render($template.'/config/accountant-type.html', $vars);
+            echo $app->render($template . '/config/accountant-type.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -3992,7 +3992,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
         if ($app->method() === 'GET') {
             // echo $app->render($setting['template'] . '/accountants/aggregate_cost.html', $vars);
-            echo $app->render($template.'/config/aggregate_cost.html', $vars);
+            echo $app->render($template . '/config/aggregate_cost.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -4140,7 +4140,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'value' => '',
                 'text' => $jatbi->lang('Tất cả')
             ]);
-            if(count($stores) > 1){
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -4154,7 +4154,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             ]);
             $vars['accounts'] = $accounts;
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -4165,7 +4165,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'text' => $jatbi->lang('Tất cả')
             ]);
             $vars["accountants"] = $accountants_formatted;
-            echo $app->render($template.'/config/financial_paper.html', $vars);
+            echo $app->render($template . '/config/financial_paper.html', $vars);
             // echo $app->render($setting['template'] . '/accountants/financial_paper.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header([
@@ -4274,8 +4274,8 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "date" => date('d/m/Y', strtotime($data['date'])),
                     "content" => $data['content'],
-                    "debt" => $app->get("accountants_code","code",["code"=>$data['debt']]),
-                    "has" => $app->get("accountants_code","code",["code"=>$data['has']]),
+                    "debt" => $app->get("accountants_code", "code", ["code" => $data['debt']]),
+                    "has" => $app->get("accountants_code", "code", ["code" => $data['has']]),
                     "price" => number_format($data['price'], 0),
                     "stores" => $data['store_name'],
                     "user" => $data['user_name'],
@@ -4312,7 +4312,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         if ($app->method() === 'GET') {
             // Lấy danh sách tài khoản kế toán
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -4352,7 +4352,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 ];
             }, $expenditure_types);
             $vars["expenditure_types"] = $expenditure_types_formatted;
-            echo $app->render($template.'/config/financial_paper-post.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/financial_paper-post.html', $vars, $jatbi->ajax());
             // echo $app->render($setting['template'] . '/accountants/financial_paper-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -4408,7 +4408,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         if ($app->method() === 'GET') {
             // Lấy danh sách tài khoản kế toán
             $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-            $accountants_formatted = array_map(function($item) {
+            $accountants_formatted = array_map(function ($item) {
                 return [
                     'value' => $item['code'],
                     'text' => $item['code'] . ' - ' . $item['name']
@@ -4432,7 +4432,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             }
 
             // echo $app->render($setting['template'] . '/accountants/financial_paper-update.html', $vars, $jatbi->ajax());
-            echo $app->render($template.'/config/financial_paper-update.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/financial_paper-update.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
@@ -4500,7 +4500,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             if ($vars['data']) {
                 // Lấy danh sách tài khoản kế toán
                 $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
-                $accountants_formatted = array_map(function($item) {
+                $accountants_formatted = array_map(function ($item) {
                     return [
                         'value' => $item['code'],
                         'text' => $item['code'] . ' - ' . $item['name']
@@ -4542,7 +4542,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars["expenditure_types"] = $expenditure_types_formatted;
 
                 // echo $app->render($setting['template'] . '/accountants/financial_paper-post.html', $vars, $jatbi->ajax());
-                echo $app->render($template.'/config/financial_paper-post.html', $vars, $jatbi->ajax());
+                echo $app->render($template . '/config/financial_paper-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
             }
@@ -4657,7 +4657,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 $vars["expenditure_types"] = $expenditure_types_formatted;
 
                 // echo $app->render($setting['template'] . '/accountants/expenditure-post.html', $vars, $jatbi->ajax());
-                echo $app->render($template.'/config/expenditure-post.html', $vars, $jatbi->ajax());
+                echo $app->render($template . '/config/expenditure-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
             }
@@ -4715,15 +4715,366 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         }
     })->setPermissions(['financial_paper_move']);
 
-    // $app->router("/financial_paper_move/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
-    //     $vars['title'] = $jatbi->lang("Kết chuyển chứng từ");
+    $app->router("/update-acountant-invoice/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
+        $dispatch = "update-acountant-invoice";
+        $action = $vars['id'];
+        $datas = $_SESSION[$dispatch][$action] ?? [];
+        $data = $app->get("accountant_invoices", ["id", "invoice", "code"], ["id" => $app->xss($vars['id']), "deleted" => 0, "stores" => $accStore]);
+        if ($data > 1) {
+            $GetInvoice_products = $app->select("accountant_invoices_products", ["id", "price", "price_old", "amount", "products"], ["invoices" => $data['invoice'], "deleted" => 0]);
+            $vars['datas'] = $datas;
+            $vars['data'] = $data;
+            $vars['action'] = $action;
+            $vars['GetInvoice_products'] = $GetInvoice_products;
+            $vars['title'] = "#" . $setting['ballot_code']['invoices'] . "-" . $data['code'] . $data['invoice'];
 
-    //     if ($app->method() === 'GET') {
-    //         echo $app->render($setting['template'] . '/accountants/expenditure-post.html', $vars, $jatbi->ajax());
-    //     } elseif ($app->method() === 'POST') {
-    //         $app->header(['Content-Type' => 'application/json']);
-    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => $_SERVER['HTTP_REFERER']]);
-    //     }
-    // })->setPermissions(['financial_paper_move']);
+            echo $app->render($template . '/config/update-acountant-invoice.html', $vars);
+        } else {
+            echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
+        }
+    });
 
+    $app->router('/invoices-update/update-acountant-invoice/{action}/{type}/{req}/{get}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $app->header(['Content-Type' => 'application/json']);
+        $dispatch = "update-acountant-invoice";
+
+        // Lấy vars an toàn
+        $action = $vars['action'] ?? '';
+        $type   = $vars['type']   ?? '';
+        $req    = $vars['req']    ?? '';
+        $get    = $vars['get']    ?? '';
+
+        // Đảm bảo session structure tồn tại (tránh undefined index)
+        if (!isset($_SESSION[$dispatch])) {
+            $_SESSION[$dispatch] = [];
+        }
+        if (!isset($_SESSION[$dispatch][$action])) {
+            $_SESSION[$dispatch][$action] = ['products' => [], 'vat' => []];
+        }
+
+        if ($type === 'products') {
+            if ($req === 'add') {
+                // Lấy dữ liệu sản phẩm theo id hoặc theo code (an toàn)
+                $fields = [
+                    "id",
+                    "amount_status",
+                    "code",
+                    "vat",
+                    "price",
+                    "vat_type",
+                    "images",
+                    "name",
+                    "categorys",
+                    "units",
+                    "notes",
+                    "branch",
+                    "amount",
+                    "group"
+                ];
+
+                if (empty($_POST['req'])) {
+                    $data = $app->get("products", $fields, [
+                        "id" => $app->xss($get),
+                        "status" => "A",
+                        "deleted" => 0
+                    ]);
+                } elseif (isset($_POST['req']) && $_POST['req'] === 'input') {
+                    $data = $app->get("products", $fields, [
+                        "code" => $app->xss($get),
+                        "status" => "A",
+                        "deleted" => 0
+                    ]);
+                } else {
+                    $data = null;
+                }
+
+                // Kiểm tra kết quả trả về (array/false)
+                if (!empty($data) && is_array($data)) {
+                    $warehouses = isset($data['amount']) ? (int)$data['amount'] : 0;
+
+                    // Tính VAT/price an toàn với default
+                    $vat = isset($data['vat']) ? (float)$data['vat'] : 0.0;
+                    $vat_type = isset($data['vat_type']) ? (int)$data['vat_type'] : 0;
+                    $orig_price = isset($data['price']) ? (float)$data['price'] : 0.0;
+
+                    $vat_price = 0.0;
+                    $price = $orig_price;
+                    $price_vat = $orig_price;
+
+                    if ($vat_type === 1) {
+                        // VAT included in price
+                        if ($vat !== 0) {
+                            $vat_price = $orig_price - ($orig_price / (1 + ($vat / 100)));
+                            $price_vat = $orig_price - $vat_price;
+                        } else {
+                            $vat_price = 0.0;
+                            $price_vat = $orig_price;
+                        }
+                    } elseif ($vat_type === 2) {
+                        // VAT on top of price
+                        $vat_price = $orig_price * ($vat / 100);
+                        $price = $orig_price + $vat_price;
+                        $price_vat = $orig_price;
+                    }
+
+                    // Nếu sản phẩm chưa có trong session -> thêm; nếu có -> tăng amount
+                    if (!isset($_SESSION[$dispatch][$action]['products'][$data['id']])) {
+                        $_SESSION[$dispatch][$action]['products'][$data['id']] = [
+                            "products"      => $data['id'],
+                            "amount"        => 1,
+                            "price"         => $price,
+                            "price_vat"     => $price_vat,
+                            "vat"           => $vat,
+                            "vat_type"      => $vat_type,
+                            "vat_price"     => $vat_price,
+                            "price_old"     => $price,
+                            "images"        => $data['images'] ?? '',
+                            "code"          => $data['code'] ?? '',
+                            "name"          => $data['name'] ?? '',
+                            "categorys"     => $data['categorys'] ?? '',
+                            "amount_status" => $data['amount_status'] ?? '',
+                            "units"         => $data['units'] ?? '',
+                            "notes"         => $data['notes'] ?? '',
+                            "warehouses"    => $warehouses > 0 ? $warehouses : 0,
+                            "precent"       => 0,
+                            "minus"         => 0,
+                        ];
+
+                        // đảm bảo vat array là array trước khi gán
+                        if (!isset($_SESSION[$dispatch][$action]['vat'][$vat]) || !is_array($_SESSION[$dispatch][$action]['vat'][$vat])) {
+                            $_SESSION[$dispatch][$action]['vat'][$vat] = [];
+                        }
+                        $_SESSION[$dispatch][$action]['vat'][$vat][$data['id']] = $vat_price;
+
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+                    } else {
+                        // tăng số lượng an toàn
+                        $currentAmount = (int)($_SESSION[$dispatch][$action]['products'][$data['id']]['amount'] ?? 0);
+                        $_SESSION[$dispatch][$action]['products'][$data['id']]['amount'] = $currentAmount + 1;
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+                    }
+                } else {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không tìm thấy')]);
+                }
+            } elseif ($req === 'deleted') {
+                $data = $app->get("products", ["id", "vat"], ["id" => $app->xss($get)]);
+                if (!empty($data) && is_array($data)) {
+                    $pid = $data['id'];
+                    $pvat = $data['vat'];
+
+                    if (isset($_SESSION[$dispatch][$action]['products'][$pid])) {
+                        unset($_SESSION[$dispatch][$action]['products'][$pid]);
+                    }
+                    if (isset($_SESSION[$dispatch][$action]['vat'][$pvat][$pid])) {
+                        unset($_SESSION[$dispatch][$action]['vat'][$pvat][$pid]);
+                    }
+                    // nếu vat group rỗng -> unset
+                    if (empty($_SESSION[$dispatch][$action]['vat'][$pvat])) {
+                        unset($_SESSION[$dispatch][$action]['vat'][$pvat]);
+                    }
+                }
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+            } elseif ($req === 'price') {
+                $raw = $_POST['value'] ?? '0';
+                $val = $app->xss(str_replace(',', '', $raw));
+                $_SESSION[$dispatch][$action]['products'][$get]['price'] = $val;
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+            } elseif ($req === 'amount') {
+                $raw = $_POST['value'] ?? '0';
+                // cast an toàn
+                $value = (int)str_replace(',', '', $raw);
+                if ($value < 0) {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không âm')]);
+                } else {
+                    $_SESSION[$dispatch][$action]['products'][$get]['amount'] = $app->xss($value);
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+                }
+            } else {
+                // default: ghi trực tiếp giá trị (nếu cần)
+                $val = $_POST['value'] ?? '';
+                $_SESSION[$dispatch][$action]['products'][$get][$req] = $app->xss($val);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+            }
+        } elseif ($type === 'products-details') {
+            if ($app->method() === 'GET') {
+                $data = $_SESSION[$dispatch][$action]['products'][$req] ?? [];
+                $vars['data'] = $data;
+                $vars['title'] = $jatbi->lang("Chi tiết sản phẩm");
+                $productTypeOptions = [
+                    [
+                        "value" => 1,
+                        "text"  => $jatbi->lang("Giá sản phẩm")
+                    ],
+                    [
+                        "value" => 2,
+                        "text"  => $jatbi->lang("Giảm tiền")
+                    ],
+                    [
+                        "value" => 3,
+                        "text"  => $jatbi->lang("Giảm phần trăm")
+                    ],
+                ];
+                $vars['productTypeOptions'] = $productTypeOptions;
+                echo $app->render($template . '/config/invoices-update-products-details.html', $vars, $jatbi->ajax());
+            } elseif ($app->method() === 'POST') {
+                $app->header(['Content-Type' => 'application/json']);
+
+                // Lấy giá cũ an toàn
+                $price_old = $_SESSION[$dispatch][$action]['products'][$req]['price_old'] ?? 0;
+
+                // Khởi tạo mặc định tránh Undefined
+                $type    = (int) ($app->xss($_POST['type'] ?? 1));
+                $value   = 0;
+                $minus   = 0;
+                $precent = 0;
+                $price   = $price_old;
+
+                if ($type === 2) {
+                    // Giảm trừ trực tiếp
+                    $minus = (int) str_replace(',', '', $_POST['minus'] ?? 0);
+                    $price = max(0, $price_old - $minus); // tránh âm
+                } elseif ($type === 3) {
+                    // Giảm theo %
+                    $precent = (int) str_replace(',', '', $_POST['precent'] ?? 0);
+                    $precent = max(0, min(100, $precent)); // clamp 0–100
+                    $price   = max(0, $price_old - (($price_old * $precent) / 100));
+                } else {
+                    // Giá nhập tay
+                    $value = (int) str_replace(',', '', $_POST['price'] ?? 0);
+                    $price = $value;
+                }
+
+                // Ghi session an toàn
+                $_SESSION[$dispatch][$action]['products'][$req]['details'] = [
+                    "type"    => $type,
+                    "value"   => $value,
+                    "minus"   => $minus,
+                    "precent" => $precent,
+                    "price"   => $price,
+                    "content" => $app->xss($_POST['content'] ?? ''),
+                ];
+
+                $_SESSION[$dispatch][$action]['products'][$req]['price']   = $price;
+                $_SESSION[$dispatch][$action]['products'][$req]['minus']   = $minus;
+                $_SESSION[$dispatch][$action]['products'][$req]['precent'] = $precent;
+
+                echo json_encode([
+                    'status'  => 'success',
+                    'content' => $jatbi->lang("Cập nhật thành công")
+                ]);
+            }
+        } elseif ($type === 'cancel') {
+            unset($_SESSION[$dispatch][$action]);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Yêu cầu không hợp lệ')]);
+        }
+    });
+
+    $app->router('/acountant-invoice-edit/{get}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $data = $app->get("accountant_invoices_products", "*", ["id" => $app->xss($vars["get"])]);
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Sửa sản phẩm");
+            if ($data > 1) {
+                $getIn = $app->get("products", "*", ["id" => $data['products']]);
+            } else {
+                echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
+            }
+            $vars['getIn'] = $getIn;
+            $vars['data'] = $data;
+            echo $app->render($template . '/config/acountant-invoice-edit.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+            if (empty($_POST['amount']) || empty($_POST['price'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
+            }
+            if ($_POST['amount'] && $_POST['price']) {
+                $insert = [
+                    "products"     => $app->xss($data['products']),
+                    "amount"     => $app->xss($_POST['amount']),
+                    "price"     => $app->xss(str_replace([','], '', $_POST['price'])),
+                    "total"        => $app->xss(str_replace([','], '', $_POST['amount'])) * $app->xss(str_replace([','], '', $_POST['price'])),
+                    "total_cost" => $app->xss(str_replace([','], '', $_POST['amount'])) * $data['price_old'],
+                    "date"         => date("Y-m-d H:i:s"),
+                    "user"         => $app->getSession("accounts")['id'] ?? 0,
+                ];
+                $app->update("accountant_invoices_products", $insert, ["id" => $data['id']]);
+                $jatbi->logs('accountant_invoices_products', 'edit', $insert);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        }
+    });
+
+    $app->router('/acountant-invoice-delete/{get}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $data = $app->get("accountant_invoices_products", "*", ["id" => $app->xss($vars["get"])]);
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $data = $app->get("accountant_invoices_products", "*", ["id" => $app->xss($vars['get'])]);
+            $jatbi->logs('accountant_invoices_products', 'delete', $data);
+            $app->update("accountant_invoices_products", ["deleted" => 1], ["id" => $data['id']]);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    });
+
+    $app->router('/accountant-invoices/update-acountant-invoice/{action}/completed/{get}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $dispatch = "update-acountant-invoice";
+            $action = $vars['action'];
+            $type = "completed";
+            $datas = $_SESSION[$dispatch][$action];
+            $data = $app->get("accountant_invoices", "*", ["invoice" => $app->xss($vars['get']), "deleted" => 0, "stores" => $accStore]);
+            if ($data > 1) {
+                if ($type == 'completed') {
+                    if (count($datas['products']) > 0) {
+                        foreach (($datas['products'] ?? []) as $key => $pro) {
+                            $product = [
+                                "type"            => $data['type'],
+                                "invoices"        => $data['invoice'],
+                                "account_invoices" => $data['id'],
+                                "products"        => $pro['products'] ?? '',
+                                "nearsightedness" => $pro['nearsightedness'] ?? '',
+                                "farsightedness"  => $pro['farsightedness'] ?? '',
+                                "astigmatism"     => $pro['astigmatism'] ?? '',
+                                "colors"          => $pro['colors'] ?? '',
+                                "categorys"       => $pro['categorys'] ?? '',
+                                "cost"            => $pro['cost'] ?? 0,
+                                "price"           => $pro['price'] ?? 0,
+                                "price_vat"       => $pro['price_vat'] ?? 0,
+                                "vat"             => $pro['vat'] ?? 0,
+                                "vat_type"        => $pro['vat_type'] ?? '',
+                                "vat_price"       => $pro['vat_price'] ?? 0,
+                                "price_old"       => $pro['price_old'] ?? 0,
+                                "amount"          => $pro['amount'] ?? 0,
+                                "warehouses"      => $pro['warehouses'] ?? '',
+                                "customers"       => $data['customers'] ?? '',
+                                "vendor"          => $pro['vendor'] ?? '',
+                                "total"           => ($pro['amount'] ?? 0) * ($pro['price'] ?? 0),
+                                "total_cost"      => ($pro['amount'] ?? 0) * ($pro['cost'] ?? 0),
+                                "date"            => $data['date'] ?? date("Y-m-d"),
+                                "date_poster"     => date("Y-m-d H:i:s"),
+                                "user"            => $app->getSession("accounts")['id'] ?? 0,
+                                "active"          => $jatbi->active(30),
+                                "returns"         => $pro['returns'] ?? 0,
+                                "discount"        => $pro['precent'] ?? 0,
+                                "discount_price"  => (($pro['precent'] ?? 0) * ($pro['price_old'] ?? 0)) / 100,
+                                "minus"           => $pro['minus'] ?? 0,
+                                "stores"          => $data['stores'] ?? '',
+                            ];
+                            $app->insert("accountant_invoices_products", $product);
+                            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                            unset($_SESSION[$dispatch][$action]);
+                        }
+                    }
+                }
+            }
+        }
+    });
 })->middleware('login');
