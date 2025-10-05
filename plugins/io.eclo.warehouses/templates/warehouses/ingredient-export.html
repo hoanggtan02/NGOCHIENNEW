@@ -42,8 +42,8 @@
                         <div>
                             <strong data-name="text"></strong>
                             <a data-action="click" data-alert="true" data-load="this"
-                                data-selector="[ingredient-export-list-result]" data-attr-url="url" class="stretched-link"
-                                href="#!"></a>
+                                data-selector="[ingredient-export-list-result]" data-attr-url="url"
+                                class="stretched-link" href="#!"></a>
                         </div>
                     </div>
                 </template>
@@ -55,8 +55,8 @@
                         <h6 class="fw-bold mb-0">Danh sách nguyên liệu cần xuất</h6>
                         <?php if (!empty($export_data['ingredients'])): ?>
                         <button class="click-update btn btn-sm btn-outline-danger" data-action="modal"
-                            data-url="/api/ingredient-update/export/ingredient/cancel" data-selector="[ingredient-export-list-result]"
-                            data-load="this">
+                            data-url="/api/ingredient-update/export/ingredient/cancel"
+                            data-selector="[ingredient-export-list-result]" data-load="this">
                             <i class="fa fa-times me-1"></i> Hủy phiếu
                         </button>
                         <?php endif; ?>
@@ -82,27 +82,52 @@
                                 </tr>
                                 <?php else:
                                 $total = 0;
+                                $total_selling_price = 0;
+                                $total_stock_quantity = 0;
+                                $total_amount = 0;
                                 foreach ($export_data['ingredients'] as $key => $item):
+                                    $amount = (float)($item['amount'] ?? 0);
+                                    $selling_price = (float)($item['selling_price'] ?? 0);
+                                    $stock_quantity = (float)($item['stock_quantity'] ?? 0);
                                     $line_total = (float)($item['amount'] ?? 0) * (float)($item['selling_price'] ?? 0);
+                              
+
+                                    
+                                    $total_selling_price += $selling_price;
+                                    $total_stock_quantity += $stock_quantity;
+                                    $total_amount += $amount;
                                     $total += $line_total;
                                 ?>
                                 <tr>
                                     <td>
-                                        <strong><?= htmlspecialchars($item['code']) ?></strong><br>
-                                        <small><?= htmlspecialchars($item['name']) ?></small>
+                                        <strong>
+                                            <?= htmlspecialchars($item['code']) ?>
+                                        </strong><br>
+                                        <small>
+                                            <?= htmlspecialchars($item['name']) ?>
+                                        </small>
                                     </td>
-                                    <td class="text-end"><?= number_format($item['selling_price'] ?? 0) ?></td>
-                                    <td class="text-center"><?= number_format($item['stock_quantity'] ?? 0) ?></td>
+                                    <td class="text-end">
+                                        <?= number_format($item['selling_price'] ?? 0) ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?= number_format($item['stock_quantity'] ?? 0) ?>
+                                    </td>
                                     <td>
                                         <input type="number"
                                             class="form-control form-control-sm text-center blur-update"
                                             data-action="blur" id="amount-<?= $key; ?>"
                                             data-form='{"value": "#amount-<?=$key;?>.val"}'
                                             data-url="/api/ingredient-update/export/ingredient/amount/<?= $key ?>"
-                                            value="<?= htmlspecialchars($item['amount']) ?>" min="1" max="<?= htmlspecialchars($item['stock_quantity']) ?>" data-load="this">
+                                            value="<?= htmlspecialchars($item['amount']) ?>" min="1"
+                                            max="<?= htmlspecialchars($item['stock_quantity']) ?>" data-load="this">
                                     </td>
-                                    <td><?= htmlspecialchars($item['unit_name'] ?? 'N/A') ?></td>
-                                    <td class="text-end fw-bold"><?= number_format($line_total) ?></td>
+                                    <td>
+                                        <?= htmlspecialchars($item['unit_name'] ?? 'N/A') ?>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?= number_format($line_total) ?>
+                                    </td>
                                     <td>
                                         <input type="text" class="form-control form-control-sm blur-update"
                                             data-url="/api/ingredient-update/export/ingredient/notes/<?= $key ?>"
@@ -114,18 +139,25 @@
                                     <td class="text-center">
                                         <a class="click-update text-danger" data-load="this" data-action="modal"
                                             data-selector="[ingredient-export-list-result]"
-                                            data-url="/api/ingredient-update/export/ingredient/delete/<?= $key ?>"><i class="ti ti-trash"></i></a>
+                                            data-url="/api/ingredient-update/export/ingredient/delete/<?= $key ?>"><i
+                                                class="ti ti-trash"></i></a>
                                     </td>
                                 </tr>
                                 <?php endforeach; endif; ?>
                             </tbody>
                             <?php if (!empty($export_data['ingredients'])): ?>
                             <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="5" class="text-end fw-bold">Tổng cộng</td>
-                                    <td class="text-end fw-bold"><?= number_format($total) ?></td>
-                                    <td colspan="2"></td>
-                                </tr>
+                               <tr>
+        <td class="text-end fw-bold">Tổng cộng</td>
+        
+        <td class="text-end fw-bold"><?= number_format($total_selling_price) ?></td>
+        <td class="text-center fw-bold"><?= number_format($total_stock_quantity) ?></td>
+        <td class="text-center fw-bold"><?= number_format($total_amount) ?></td>
+        <td></td>
+        <td class="text-end fw-bold"><?= number_format($total) ?></td>
+
+        <td colspan="2"></td>
+    </tr>
                             </tfoot>
                             <?php endif; ?>
                         </table>
@@ -134,17 +166,17 @@
                     <?php if(!empty($export_data['ingredients'])): ?>
                     <div class="mb-3 mt-3">
                         <label class="col-form-label">Nội dung phiếu xuất <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control blur-update" id="export_content"
+                        <textarea type="text" class="form-control blur-update" id="export_content"
                             data-url="/api/ingredient-update/export/ingredient/set-content" data-action="blur"
                             data-form='{"value": "#export_content.val"}'
                             value="<?=htmlspecialchars($export_data['content'] ?? '')?>"
-                            placeholder="Nhập nội dung, ví dụ: Xuất cho chế tác lô hàng tháng 8">
+                            placeholder="Nhập nội dung..."></textarea>
                     </div>
                     <div class="mt-4">
                         <button class="btn btn-eclo w-100 p-2 fs-5" data-action="modal" type="button"
                             data-url="/api/ingredient-update/export/ingredient/completed" data-load="true"
                             data-selector="body">
-                            <i class="fa fa-check me-2"></i> Hoàn tất & Lưu phiếu
+                            <i class="fa fa-check me-2"></i> Hoàn tất
                         </button>
                     </div>
                     <?php endif; ?>

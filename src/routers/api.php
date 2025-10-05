@@ -1343,7 +1343,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
             echo json_encode(['status' => 'error', 'content' => 'Số lượng phải lớn hơn 0.']);
         } elseif ($value > $stock_quantity) {
             $_SESSION['ingredient_move']['ingredients'][$id]['amount'] = $stock_quantity;
-            echo json_encode(['status' => 'error', 'content' => 'Số lượng vượt tồn kho. Đã tự động điều chỉnh.']);
+            echo json_encode(['status' => 'error', 'content' => 'Số lượng vượt tồn kho.']);
         } else {
             $_SESSION['ingredient_move']['ingredients'][$id]['amount'] = $value;
             echo json_encode(['status' => 'success', 'content' => 'Cập nhật thành công']);

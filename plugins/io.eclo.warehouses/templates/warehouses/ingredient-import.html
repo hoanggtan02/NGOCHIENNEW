@@ -167,16 +167,16 @@
                         ?>
                     <div class="mb-3 mt-3">
                         <label class="col-form-label">Nội dung phiếu nhập <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-sm" id="import_content"
+                        <textarea  class="form-control form-control-sm" id="import_content"
                             data-url="/api/ingredient-import/set-content" data-action="blur"
                             data-form='{"value": "#import_content.val"}' value="<?=htmlspecialchars($import_content)?>"
-                            placeholder="Nhập nội dung phiếu nhập...">
+                            placeholder="Nhập nội dung phiếu nhập..."></textarea>
                     </div>
 
                     <div class="mt-4">
                         <button class=" btn btn-eclo w-100 p-2 fs-5" data-action="modal" type="button"
                             data-url="/api/ingredient-import/completed">
-                            <i class="fa fa-check me-2"></i> Hoàn tất & Lưu phiếu nhập
+                            <i class="fa fa-check me-2"></i> Hoàn tất 
                         </button>
                     </div>
                     <?php endif; ?>

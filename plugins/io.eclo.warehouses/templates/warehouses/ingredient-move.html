@@ -16,7 +16,7 @@
 
 
 
-                 <?=$app->component('select', [
+                        <?=$app->component('select', [
                     'name' => 'stores',
                     'placeholder' => $jatbi->lang("Cửa hàng"),
                     'required' => true,
@@ -26,9 +26,9 @@
                    
                     'attr' => 'id="move_store_id" data-action="change" data-form=\'{"value": "#move_store_id.val"}\' data-url="/api/ingredient-move-product/move/stores" data-load="this"'
                 ])?>
-            
-           
-        <?=$app->component('select', [
+
+
+                        <?=$app->component('select', [
             'name' => 'branch_id',
             'placeholder' => $jatbi->lang("Quầy hàng"),
             'required' => true,
@@ -39,14 +39,6 @@
             'attr' => 'id="move_branch_id" data-action="change" data-form=\'{"value": "#move_branch_id.val"}\' data-url="/api/ingredient-move-product/move/branch" data-load="this"'
         ])?>
 
-
-
-
-         
-                      
-
-                 
-                       
 
 
                     </div>
@@ -105,9 +97,17 @@
                                 </tr>
                                 <?php else:
                                 $total = 0;
+                                $total_selling_price = 0;
+                                $total_stock_quantity = 0;
+                                $total_amount = 0;
+                  
                                 foreach ($SelectIngredients as $key => $item):
                                     $line_total = (float)($item['amount'] ?? 0) * (float)($item['selling_price'] ?? 0);
                                     $total += $line_total;
+
+                                    $total_selling_price += (float)($item['selling_price'] ?? 0);
+                                    $total_stock_quantity += (float)($item['stock_quantity'] ?? 0);
+                                    $total_amount += (float)($item['amount'] ?? 0);
                             ?>
                                 <tr>
                                     <td><strong>
@@ -154,13 +154,21 @@
                             </tbody>
                             <?php if (!empty($SelectIngredients)): ?>
                             <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="5" class="text-end fw-bold">Tổng cộng</td>
-                                    <td class="text-end fw-bold">
+                                                           <tr>
+                                    <td class="text-end fw-bold p-2">Tổng cộng</td>
+                                    <td class="text-end fw-bold p-2">
+                                        <?= number_format($total_selling_price) ?>
+                                    </td>
+                                    <td class="text-center fw-bold p-2">
+                                        <?= number_format($total_stock_quantity) ?>
+                                    </td>
+                                    <td class="text-center fw-bold p-2">
+                                        <?= number_format($total_amount) ?>
+                                    </td>
+                                    <td class="p-2"></td> <td class="text-end fw-bold p-2">
                                         <?= number_format($total) ?>
                                     </td>
-                                    <td colspan="2"></td>
-                                </tr>
+                                    <td colspan="2" class="p-2"></td> </tr>
                             </tfoot>
                             <?php endif; ?>
                         </table>
@@ -169,17 +177,17 @@
                     <?php if(!empty($SelectIngredients)): ?>
                     <div class="mb-3 mt-3">
                         <label class="col-form-label">Nội dung phiếu chuyển <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control blur-update" id="move_content"
+                        <textarea type="text" class="form-control blur-update" id="move_content"
                             data-url="/api/ingredient-move-product/move/content" data-action="blur"
                             data-form='{"field": "content", "value": "#move_content.val"}'
                             value="<?=htmlspecialchars($_SESSION['ingredient_move']['content'] ?? '')?>"
-                            placeholder="Nhập nội dung phiếu nhập...">
+                            placeholder="Nhập nội dung phiếu nhập..."></textarea>
                     </div>
                     <div class="mt-4">
                         <button class="btn btn-eclo w-100 p-2 fs-5" data-action="modal" type="button"
                             data-url="/api/ingredient-move-product/move/completed" data-load="true"
                             data-selector="body">
-                            <i class="fa fa-check me-2"></i> Hoàn tất & Lưu phiếu
+                            <i class="fa fa-check me-2"></i> Hoàn tất
                         </button>
                     </div>
                     <?php endif; ?>

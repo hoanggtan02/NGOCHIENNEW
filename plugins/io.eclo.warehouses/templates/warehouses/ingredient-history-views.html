@@ -273,13 +273,17 @@ function docso($number) {
                     </table>
                 </div>
             </div>
-            <div class="modal-footer d-print-none">
+            <!-- <div class="modal-footer d-print-none">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <?php echo htmlspecialchars($jatbi->lang('Hủy') ?? 'Hủy'); ?>
                 </button>
                 <button class="btn btn-success" onclick="window.print();">
                     <?php echo htmlspecialchars($jatbi->lang('In') ?? 'In'); ?>
                 </button>
+            </div> -->
+                   <div class="modal-footer d-print-none border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-success rounded-pill px-4 btn-print" ><i class="ti ti-printer me-2"></i><?=$jatbi->lang('IN')?></button>
             </div>
         </div>
     </div>
