@@ -82,7 +82,7 @@
                             <?=$jatbi->lang("Điều kiện lọc")?>
                         </div>
                         <div class="px-3 mt-3">
-         <?=$app->component('input',[
+                            <?=$app->component('input',[
                                             "name" => 'date',
                                             "placeholder" => $jatbi->lang("Ngày"),
                                             "value" => $app->xss($_GET['date'] ?? (date('01/01/2021', strtotime($date_from)) . ' - ' . date('d/m/Y', strtotime($date_to)))),
@@ -92,10 +92,10 @@
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">
- <button type="button"
-                                            class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
-                                        <button type="button"
-                                            class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                            <button type="button"
+                                class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="button"
+                                class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
                         </div>
                     </div>
                 </div>
@@ -134,7 +134,8 @@
                                 <th data-name="totalImport" data-orderable="false"></th>
                                 <th data-name="totalExport" data-orderable="false"></th>
                                 <th data-name="totalPairing" data-orderable="false"></th>
-                                <th data-name="totalCancel" data-orderable="false"></th>
+                                <!-- <th data-name="totalCancel" data-orderable="false"></th> -->
+                                <th data-name="price" data-orderable="false"><?= number_format($data['price'])?></th>
                             </tr>
                         </tfoot>
                     </table>

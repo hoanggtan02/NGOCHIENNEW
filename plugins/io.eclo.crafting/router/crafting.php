@@ -29,9 +29,9 @@ if (isset($session['id'])) {
         $accStore[$itemStore['value']] = $itemStore['value'];
     }
 }
-$app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $setting, $stores, $accStore,$template) {
+$app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $setting, $stores, $accStore, $template) {
 
-    $app->router('/craftinggold', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/craftinggold', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho chế tác vàng");
@@ -183,7 +183,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['craftinggold']);
 
-    $app->router('/craftingsilver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/craftingsilver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho chế tác bạc");
@@ -335,7 +335,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['craftingsilver']);
 
-    $app->router('/craftingchain', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/craftingchain', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho chế tác chuỗi");
@@ -484,28 +484,25 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['craftingchain']);
 
-    $app->router('/{type}-details/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/{type}-details/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
 
         // --- PHẦN LOGIC CHUNG CHO CẢ GET VÀ POST ---
         $id = (int) ($vars['id'] ?? 0);
         $type = $vars['type'] ?? '';
 
-        // Ánh xạ 'type' từ URL sang 'group_crafting' ID trong database
         $groupCraftingId = match ($type) {
             'craftinggold' => 1,
             'craftingsilver' => 2,
             'craftingchain' => 3,
-            default => null, // Nếu type không hợp lệ
+            default => null,
         };
 
         if ($groupCraftingId === null) {
-            $app->error(404); // Không tìm thấy trang nếu type không đúng
+            $app->error(404);
             return;
         }
 
-        // --- XỬ LÝ YÊU CẦU GET: HIỂN THỊ TRANG ---
         if ($app->method() === 'GET') {
-            // Lấy thông tin chính của nguyên liệu để hiển thị ở đầu trang
             $data = $app->get("ingredient", [
                 "[>]colors" => ["colors" => "id"],
                 "[>]pearl" => ["pearl" => "id"],
@@ -526,22 +523,19 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             ], ["ingredient.id" => $id]);
 
             if (!$data) {
-                // $app->error(404);
                 return;
             }
-
-
 
             $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
             $date_to = date('Y-m-d 23:59:59');
 
-               $vars['date_from'] = $date_from;
+            $vars['date_from'] = $date_from;
             $vars['date_to'] = $date_to;
 
             // Truyền các biến cần thiết cho View
             $vars['data'] = $data;
             $vars['title'] = $jatbi->lang("Chi tiết nguyên liệu") . ': ' . $data['code'];
-            $vars['route_type'] = $type; // Dùng để tạo URL AJAX trong JavaScript
+            $vars['route_type'] = $type;
             $vars['route_id'] = $id;
 
             echo $app->render($template . '/crafting/details.html', $vars);
@@ -555,16 +549,9 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
 
-            // // Lấy bộ lọc ngày tháng từ dữ liệu POST (do JavaScript gửi lên)
-            // $dateRange = $_POST['date'] ?? '';
-            // $dateParts = explode(' - ', $dateRange);
-            // $date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('Y-m-01 00:00:00');
-            // $date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-t 23:59:59');
-$filter_date = isset($_POST['date']) ? $_POST['date'] : '';
+            $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
-
-
-        $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
+            $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
             $date_to = date('Y-m-d 23:59:59');
 
 
@@ -583,16 +570,12 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                 "warehouses_logs.group_crafting" => $groupCraftingId,
             ];
 
-            // Định nghĩa phép JOIN
             $joins = [
                 "[>]accounts" => ["user" => "id"]
             ];
 
-            // Đếm tổng số bản ghi đã lọc (cho phân trang) - ĐÃ THÊM JOIN
             $count = $app->count("warehouses_logs", $joins, "warehouses_logs.id", $baseWhere);
 
-            // Lấy tất cả log trong kỳ để tính tổng cho bảng tóm tắt
-            // Câu lệnh này không cần JOIN, chỉ cần lấy dữ liệu thô để tính tổng
             $all_logs_for_period = $app->select("warehouses_logs", ["type", "amount"], $baseWhere);
             $totalImport = 0;
             $totalExport = 0;
@@ -660,10 +643,10 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                     "totalCancel" => number_format($totalCancel),
                 ],
             ]);
-        }
+        }   
     });
 
-    $app->router('/goldsmithing', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/goldsmithing', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Chế tác sản phẩm");
@@ -829,7 +812,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         }
     })->setPermissions(['goldsmithing']);
 
-    $app->router('/silversmithing', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/silversmithing', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Chế tác bạc");
@@ -993,7 +976,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         }
     })->setPermissions(['silversmithing']);
 
-    $app->router('/chainmaking', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/chainmaking', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         // Xử lý yêu cầu GET: Lấy dữ liệu cho các bộ lọc và hiển thị trang
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Chế tác chuỗi");
@@ -1150,7 +1133,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
     })->setPermissions(['chainmaking']);
 
     // view
-    $app->router('/pairing-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/pairing-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = (int) ($vars['id'] ?? 0);
 
         // 1. Lấy dữ liệu chính của phiếu chế tác và các tên liên quan trong 1 câu lệnh
@@ -1210,7 +1193,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         echo $app->render($template . '/crafting/pairing-views.html', $vars, $jatbi->ajax());
     })->setPermissions(['chainmaking']);
 
-    $app->router('/fixed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/fixed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho sửa chế tác");
 
@@ -1344,7 +1327,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         }
     })->setPermissions(['fixed']);
 
-    $app->router('/fixed-views/{id}', 'GET', function ($vars) use ($app, $jatbi,$template) {
+    $app->router('/fixed-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
         $id = $vars['id'] ?? 0;
 
         $data = $app->get("remove_products", [
@@ -1402,7 +1385,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         echo $app->render($template . '/crafting/fixed-views.html', $vars, $jatbi->ajax());
     })->setPermissions(['fixed']);
 
-    $app->router('/history-crafting/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/history-crafting/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         $id = $vars['id'];
 
         $crafting_item = $app->get("crafting", ["id", "name"], ["id" => $id]);
@@ -1727,7 +1710,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         }
     })->setPermissions(['crafting.add']);
 
-    $app->router('/pairing-export/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
+    $app->router('/pairing-export/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
         $action = "export";
         $vars['action'] = $action;
         $type = $vars['type'] ?? 'gold';
@@ -2613,12 +2596,11 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                 "active" => $jatbi->active(30),
                 "date_poster" => date("Y-m-d H:i:s"),
                 "group_crafting" => $data['crafting_from'],
-                "group_crafting_receive" => $data['crafting_to'],
+                "group_crafting_reveice" => $data['crafting_to'],
                 "export_status" => 1,
             ];
             $app->insert("warehouses", $insert);
             $orderId = $app->id();
-
             $pro_logs = [];
             foreach ($data['ingredient'] as $value) {
                 $pro = [
@@ -2670,7 +2652,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                 $pro_logs[] = $pro;
             }
 
-            $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['fromto'][$action]]);
+            $jatbi->logs('warehouses', $action,$insert);
             unset($_SESSION['fromto'][$action]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
@@ -3568,7 +3550,6 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                 break;
             case 'gold':
             default:
-                // $jatbi->permission('crafting-import-move-gold'); // Cần định nghĩa quyền này
                 $vars['title'] = $jatbi->lang("Danh sách nhập hàng");
                 $group_crafting_id = 1;
                 break;
@@ -3607,7 +3588,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
             if (!empty($searchValue)) {
                 $where['AND']['warehouses.id[~]'] = $searchValue;
             }
-            if (!empty($filter_user)) {
+            if (!empty($filter_user) && $filter_user == null) {
                 $where['AND']['warehouses.user'] = $filter_user;
             }
             if (!empty($filter_date)) {
@@ -4229,7 +4210,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         echo $app->render($template . '/crafting/split-history-views.html', $vars, $jatbi->ajax());
     });
 
-    $app->router('/pairing-change', 'GET', function ($vars) use ($app,$template) {
+    $app->router('/pairing-change', 'GET', function ($vars) use ($app, $template) {
         $vars['title'] = "Sửa chế tác";
         $action = "change";
         $pairing = $app->getSession('pairing') ?? [];
@@ -4506,7 +4487,6 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
             echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
         }
     });
-
 
     $app->router('/pairing-update-change/change/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         if ($app->method() === 'GET') {
@@ -5252,7 +5232,6 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
         echo $app->render($template . '/crafting/split.html', $vars);
     })->setPermissions(['split']);
 
-
     $app->router('/crafting-split-update/{action}/group_crafting', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
@@ -5388,8 +5367,7 @@ $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
                 if (!empty($logs_to_insert))
                     $app->insert("warehouses_logs", $logs_to_insert);
             }
-
-            $jatbi->logs('split', $action, []);
+            $jatbi->logs('split', $action, $insert);
             unset($_SESSION['split'][$action]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
