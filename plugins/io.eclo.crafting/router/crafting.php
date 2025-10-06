@@ -643,7 +643,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                     "totalCancel" => number_format($totalCancel),
                 ],
             ]);
-        }   
+        }
     });
 
     $app->router('/goldsmithing', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
@@ -2652,7 +2652,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 $pro_logs[] = $pro;
             }
 
-            $jatbi->logs('warehouses', $action,$insert);
+            $jatbi->logs('warehouses', $action, $insert);
             unset($_SESSION['fromto'][$action]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
@@ -4476,9 +4476,9 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
     });
 
-    $app->router('/pairing-update-change/change/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/pairing-update-change/change/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -4488,9 +4488,9 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     });
 
-    $app->router('/pairing-update-change/change/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/pairing-update-change/change/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
@@ -5467,10 +5467,10 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/pairing-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
             // $vars['url'] = "/purchases/purchase";
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
@@ -5594,11 +5594,11 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     });
 
-    $app->router('/pairing-update/add/completed/{rou}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/pairing-update/add/completed/{rou}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
             $rou = $vars['rou'];
-            $vars['url'] = "/crafting/<?=$rou?>";
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            $vars['url'] = "/crafting/$rou";
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
@@ -5614,12 +5614,15 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 }
             }
             $check = $app->count("crafting", "id", ["code" => $data['code'], "price[!]" => $data['price'], "deleted" => 0, "group_crafting" => $data["group_crafting"]]);
-            if ($data['content'] == '' || $data['name'] == '' || $data['code'] == '' || $data['price'] == '' || $data['group'] == '' || $data['categorys'] == '' || $data['default_code'] == '' || $data['units'] == '' || $data['personnels'] == '' || count($data['ingredient']) == 0) {
-                $error = ["status" => 'error', 'content' => $jatbi->lang('Vui lòng nhập đầy đủ thông tin'),];
+            if (empty($data['content']) || empty($data['name']) || empty($data['code']) || empty($data['price']) || empty($data['group']) || empty($data['categorys']) || empty($data['default_code']) || empty($data['units']) || empty($data['personnels']) || empty($data['ingredient'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập đầy đủ thông tin')]);
+                return;
             } elseif ($error_warehouses == 'true') {
-                $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập đầy đủ số lượng nguyên liệu'),];
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập đầy đủ số lượng nguyên liệu')]);
+                return;
             } elseif ($check > 0) {
-                $error = ["status" => 'error', 'content' => 'Mã sản phẩm này đã có nhưng số tiền không đồng bộ, vui lòng chỉnh thêm biến thiên mã!'];
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Mã sản phẩm đã tồn tại')]);
+                return;
             }
             if (count($error) == 0) {
                 $check_crafting = $app->get("crafting", ["code", "price", "id", "amount", "amount_total", "group_crafting"], ["code" => $data['code'], "price" => $data['price'], "deleted" => 0, "group_crafting" => $data["group_crafting"], "ORDER" => ["id" => "DESC"]]);
@@ -5868,4 +5871,5 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             }
         }
     });
+    
 })->middleware('login');

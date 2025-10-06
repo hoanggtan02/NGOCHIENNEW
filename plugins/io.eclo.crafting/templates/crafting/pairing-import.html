@@ -99,7 +99,8 @@
                         <?=$app->component('textarea', [
                             "name" => 'content', 
                             "placeholder" => $jatbi->lang('Giới thiệu sản phẩm'), 
-                            "value" => $data['content'] ?? '', 
+                            "value" => $data['content'] ?? '',
+                            "required" => true, 
                             "attr" =>'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/content"'
                         ])?>
@@ -124,70 +125,83 @@
                         <div class="table-responsive mt-3" data-pos-table>
                             <table class="table table-hover table-striped table-bordered align-middle">
                                 <thead>
-									<tr>
-										<th><?=$jatbi->lang("Nguyên liệu")?></th>
-										<th><?=$jatbi->lang("Thông số")?></th>
-										<th><?=$jatbi->lang("Giá bán")?></th>
-										<th><?=$jatbi->lang("Tồn kho")?></th>
-										<th width="10%"><?=$jatbi->lang("Số lượng")?></th>
-										<th><?=$jatbi->lang("Số lượng chế tác")?></th>
-										<th><?=$jatbi->lang("Thành tiền")?></th>
-										<th></th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php 
+                                    <tr>
+                                        <th><?=$jatbi->lang("Nguyên liệu")?></th>
+                                        <th><?=$jatbi->lang("Thông số")?></th>
+                                        <th><?=$jatbi->lang("Giá bán")?></th>
+                                        <th><?=$jatbi->lang("Tồn kho")?></th>
+                                        <th width="10%"><?=$jatbi->lang("Số lượng")?></th>
+                                        <th><?=$jatbi->lang("Số lượng chế tác")?></th>
+                                        <th><?=$jatbi->lang("Thành tiền")?></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
                                     foreach (($SelectProducts ?? []) as $key => $SelectProduct) {  
 										$getPro = $app->get("ingredient","*",["id"=>$SelectProduct['ingredient']]); 
 									?>
-									<tr>
-										<td class="pe-2 ps-2">
-											<?=$getPro['code'] ?? ""?>
-										</td>
-										<td class="pe-2 ps-2">
-											<?php if($getPro['type']==1){?>
-												<p class="mb-0"><?=$jatbi->lang("Chế tác")?>: <?=$app->get("products_group","name",["id"=>$getPro['group'] ?? ""])?></p>
-												<p class="mb-0"><?=$jatbi->lang("Danh mục")?>: <?=$app->get("categorys","name",["id"=>$getPro['categorys'] ?? ""])?></p>
-											<?php } if($getPro['type']==2){?>
-												<p class="mb-0"><?=$jatbi->lang("Loại ngọc")?>: <?=$app->get("pearl","name",["id"=>$getPro['pearl'] ?? ""])?></p>
-												<p class="mb-0"><?=$jatbi->lang("Màu sắc")?>: <?=$app->get("colors","name",["id"=>$getPro['colors'] ?? ""])?></p>
-												<p class="mb-0"><?=$jatbi->lang("Li ngọc")?>: <?=$app->get("sizes","name",["id"=>$getPro['sizes'] ?? ""])?></p>
-											<?php } ?>app
-										</td>
-										<td class="pe-2 ps-2">
-											<?=number_format($SelectProduct['price'] ?? 0)?>
-										</td>
-										<td class="pe-2 ps-2">
-											<?=$SelectProduct['warehouses'] ?? ""?>
-										</td>
-										<td class="">
-											<input type="tel" data-number="money" data-currency="" data-decimals="0"
-                                                    data-thousands="," data-decimal="." name="amount" data-action="blur" 
-                                                    class="blur-update border-0 w-100  h-100 p-2 bg-transparent" data-form='{"value": "this.val"}'
-                                                    data-url="/crafting/pairing-update/add/ingredient/amount/<?=$key?>" value="<?=$SelectProduct['amount'] ?? 0?>" data-load="this" min="0">
-										</td>
-										<td class="pe-2 ps-2">
-											<?=($SelectProduct['amount'] ?? 0)*($data['amount'] ?? 0)?>
-										</td>
-										<td class="pe-2 ps-2">
-											<?=number_format(($SelectProduct['amount'] ?? 0)*((float)$SelectProduct['price'] ?? 0))?>
-										</td>
-										<td class="text-center">
-											<a class="click-update  text-danger" data-load="this" data-action="click"
+                                    <tr>
+                                        <td class="pe-2 ps-2">
+                                            <?=$getPro['code'] ?? ""?>
+                                        </td>
+                                        <td class="pe-2 ps-2">
+                                            <?php if($getPro['type']==1){?>
+                                            <p class="mb-0"><?=$jatbi->lang("Chế tác")?>:
+                                                <?=$app->get("products_group","name",["id"=>$getPro['group'] ?? ""])?>
+                                            </p>
+                                            <p class="mb-0"><?=$jatbi->lang("Danh mục")?>:
+                                                <?=$app->get("categorys","name",["id"=>$getPro['categorys'] ?? ""])?>
+                                            </p>
+                                            <?php } if($getPro['type']==2){?>
+                                            <p class="mb-0"><?=$jatbi->lang("Loại ngọc")?>:
+                                                <?=$app->get("pearl","name",["id"=>$getPro['pearl'] ?? ""])?>
+                                            </p>
+                                            <p class="mb-0"><?=$jatbi->lang("Màu sắc")?>:
+                                                <?=$app->get("colors","name",["id"=>$getPro['colors'] ?? ""])?>
+                                            </p>
+                                            <p class="mb-0"><?=$jatbi->lang("Li ngọc")?>:
+                                                <?=$app->get("sizes","name",["id"=>$getPro['sizes'] ?? ""])?>
+                                            </p>
+                                            <?php } ?>app
+                                        </td>
+                                        <td class="pe-2 ps-2">
+                                            <?=number_format($SelectProduct['price'] ?? 0)?>
+                                        </td>
+                                        <td class="pe-2 ps-2">
+                                            <?=$SelectProduct['warehouses'] ?? ""?>
+                                        </td>
+                                        <td class="">
+                                            <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                                data-thousands="," data-decimal="." name="amount" data-action="blur"
+                                                class="blur-update border-0 w-100  h-100 p-2 bg-transparent"
+                                                data-form='{"value": "this.val"}'
+                                                data-url="/crafting/pairing-update/add/ingredient/amount/<?=$key?>"
+                                                value="<?=$SelectProduct['amount'] ?? 0?>" data-load="this" min="0">
+                                        </td>
+                                        <td class="pe-2 ps-2">
+                                            <?=($SelectProduct['amount'] ?? 0)*($data['amount'] ?? 0)?>
+                                        </td>
+                                        <td class="pe-2 ps-2">
+                                            <?=number_format(($SelectProduct['amount'] ?? 0)*((float)$SelectProduct['price'] ?? 0))?>
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="click-update  text-danger" data-load="this" data-action="click"
                                                 data-url="/crafting/pairing-update/add/ingredient/deleted/<?=$key?>">
                                                 <i class="ti ti-trash"></i>
                                             </a>
-										</td>
-									</tr>
-									<?php } ?>									
-								</tbody>
-                            </table >
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
                         </div>
                         <?=$app->component('textarea', [
                             "name" => 'notes', 
                             "placeholder" => $jatbi->lang('Ghi chú'), 
+                            "required" => true, 
                             "value" => $data['notes'] ?? '', 
-                            "attr" =>'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                            "attr" =>'data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/notes"'
                         ])?>
                     </div>
