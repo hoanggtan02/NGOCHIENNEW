@@ -13,7 +13,7 @@
                                     <th>STT</th>
                                     <th>Mã sản phẩm</th>
                                     <th>Tên sản phẩm</th>
-                                    <th class="text-end">Giá bán</th>
+                                    <th class="text-end" style="width:200px">Giá bán</th>
                                     <th class="text-center" width="10%">Số lượng</th>
                                     <th>Đơn vị</th>
                                     <th class="text-end">Thành tiền</th>
@@ -39,7 +39,8 @@
                                         <?=$item['name']?>
                                     </td>
                                     <td>
-                                        <input type="text" name="price"
+                                        <input type="tel" name="price" data-number="money" data-currency=""
+                                            data-decimals="0" data-thousands="," data-decimal="."
                                             class="blur-update form-control form-control-sm text-end number"
                                             data-url="/warehouses/products-update/import/ingredient/price/<?=$key?>/"
                                             data-form='{"value": "this.val"}' data-load="true"
@@ -81,8 +82,8 @@
                     <?=$app->component('textarea', ["name" => 'content', "placeholder" => "Nội dung", "value" => $data['content'] ?? '', "attr" => 'data-action="blur" data-url="/warehouses/products-update/import/content" data-form=\'{"value": "this.val"}\''])?>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3 text-end">
-                    <button class="btn btn-light rounded-pill px-4 click-update" data-alert="true"
-                        data-action="click" data-url="/warehouses/products-update/import/cancel"><?=$jatbi->lang('Hủy')?></button>
+                    <button class="btn btn-light rounded-pill px-4 click-update" data-alert="true" data-action="click"
+                        data-url="/warehouses/products-update/import/cancel"><?=$jatbi->lang('Hủy')?></button>
                     <button class="btn btn-eclo rounded-pill px-5 click-update"
                         data-url="/warehouses/products-update/import/completed" data-action="click" data-alert="true"
                         data-load="/warehouses/products-import-history/"><?=$jatbi->lang('Hoàn tất')?></button>
