@@ -32,12 +32,13 @@
                                     "options" => $stores ?? []
                                 ])?>
                             <?php } ?>
-                            <?=$app->component('input',[
+                            <?=$app->component('input', [
                                 "name" => 'date',
-                                "placeholder" => $jatbi->lang("Ngày"),
-                                "value" => $app->xss($_GET['date'] ?? (date('01/m/Y', strtotime($date_from)) . ' - ' . date('d/m/Y', strtotime($date_to)))),
-                                "class" => 'filter-name',
+                                "placeholder" => $jatbi->lang('Ngày'),
+                                "class" => "filter-name",
                                 "attr" => 'data-width="100%" data-datepicker',
+                                "selected" => $app->xss($_GET['date'] ?? date('d/m/Y') . ' - ' . date('d/m/Y')),
+                                "id" => 'date'
                             ])?>
                         </div>
                         <div class="px-3 py-2 text-end w-100">
@@ -125,7 +126,8 @@
                                 <th data-name="totalExport" class="text-end fw-bold text-success"></th>
                                 <th data-name="totalMove" class="text-end fw-bold text-info"></th>
                                 <th data-name="totalError" class="text-end fw-bold text-danger"></th>
-                                <th data-name="ton_kho" class="text-end fw-bold text-primary"></th>
+                                 <th data-name="totalValue" class="text-end fw-bold "></th>
+                                
                                 <th colspan="5"></th>
                             </tr>
                         </tfoot>

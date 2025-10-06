@@ -3856,7 +3856,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             // Mặc định khoảng thời gian
             $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
-            $date_to = date('Y-m-d 23:59:59', strtotime('last day of this month'));
+            $date_to = date('Y-m-d 23:59:59');
 
             // Chuẩn bị dữ liệu cho template
             $vars['data'] = $data;
@@ -3879,21 +3879,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             // Lấy giá trị từ bộ lọc
             $filter_date = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
+        
             $filter_stores = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
-            // Xử lý bộ lọc ngày
-            $date_from = date('2020-05-06 00:00:00', strtotime('first day of this month'));
-            $date_to = date('2025-05-22 23:59:59', strtotime('last day of this month'));
+            $date_from = date('Y-m-d 00:00:00');
+            $date_to = date('Y-m-d 23:59:59');
+
+
             if (!empty($filter_date)) {
                 $date_parts = explode(' - ', $filter_date);
                 if (count($date_parts) == 2) {
-                    $from = trim($date_parts[0]);
-                    $to = trim($date_parts[1]);
-                    // Kiểm tra định dạng ngày hợp lệ
-                    if (strtotime(str_replace('/', '-', $from)) && strtotime(str_replace('/', '-', $to))) {
-                        $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $from)));
-                        $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $to)));
-                    }
+                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
+                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
                 }
             }
 
@@ -3933,6 +3930,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $all_logs_for_period = $app->select("warehouses_logs", $joins, [
                 "warehouses_logs.type",
                 "warehouses_logs.amount",
+                "warehouses_logs.price", 
             ], $baseWhere);
 
             // Khởi tạo mảng đầu kỳ và trong kỳ
@@ -3960,18 +3958,23 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $totalExport = 0;
             $totalMove = 0;
             $totalError = 0;
+            $totalValue = 0; 
             foreach ($all_logs_for_period as $log) {
                 $amount = floatval($log['amount']);
+                $price = floatval($log['price']);
                 if (in_array($log['type'], ['import', 'error', 'export', 'move'])) {
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
+                        $totalValue += $amount * $price; 
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
+                        $totalValue -= $amount * $price; 
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
                         $totalError += $amount;
+                        $totalValue -= $amount * $price;
                     }
                 }
             }
@@ -4021,12 +4024,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "export" => ($log['type'] == 'export' || $log['type'] == 'pairing') ? number_format($log['amount'], 2) : '',
                     "move" => ($log['type'] == 'move') ? number_format($log['amount'], 2) : '',
                     "error" => ($log['type'] == 'error') ? number_format($log['amount'], 2) : '',
-                    "price" => number_format($log['price']),
+                    "price" => number_format($log['price'] ?? ''),
                     "store" => $log['store_name'] . ($log['store_receive_name'] ? " -> " . $log['store_receive_name'] : ''),
-                    "notes" => htmlspecialchars($log['notes']),
+                    "notes" => htmlspecialchars($log['notes']?? ''),
                     "duration" => $log['duration'] ? $log['duration'] . ' ' . $jatbi->lang('tháng') : '',
-                    "date" => date("d/m/Y H:i:s", strtotime($log['date'])),
-                    "user" => htmlspecialchars($log['user_name'] ?? 'N/A'),
+                    "date" => date("d/m/Y H:i:s", strtotime($log['date']?? '')),
+                    "user" => htmlspecialchars($log['user_name'] ?? ''),
                 ];
             }
 
@@ -4041,6 +4044,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "totalExport" => number_format($totalExport, 2),
                     "totalMove" => number_format($totalMove, 2),
                     "totalError" => number_format($totalError, 2),
+                    "totalValue" => number_format($totalValue),
                     "ton_kho" => number_format($ton_kho, 2),
                 ],
             ]);
