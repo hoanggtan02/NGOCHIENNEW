@@ -3532,6 +3532,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         $vars['data'] = $data;
         $vars['action'] = $action;
         $vars['SelectProducts'] = $SelectProducts;
+        $vars['type1']= $type;
 
         echo $app->render($template . '/crafting/import-form.html', $vars);
     });
@@ -3629,7 +3630,12 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 ];
             }
 
-            echo json_encode(["draw" => $draw, "recordsTotal" => $count, "recordsFiltered" => $count, "data" => $datas]);
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas
+            ]);
         }
     });
 
@@ -5871,5 +5877,4 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             }
         }
     });
-    
 })->middleware('login');

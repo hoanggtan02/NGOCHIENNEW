@@ -39,9 +39,9 @@ if (isset($session['id'])) {
         $accStore[$itemStore['value']] = $itemStore['value'];
     }
 }
-$app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting, $accStore, $stores,$template) {
+$app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting, $accStore, $stores, $template) {
 
-    $app->router('/personnels', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/personnels', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nhân Viên");
             $vars['offices'] = $app->select("offices", ['id(value)', 'name(text)'], ['status' => 'A', 'deleted' => 0, "ORDER" => ["name" => "ASC"]]);
@@ -454,7 +454,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['personnels']);
 
     //offices
-    $app->router("/offices", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router("/offices", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $jatbi->permission('offices');
         $vars['title'] = $jatbi->lang("Phòng ban");
 
@@ -681,7 +681,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['personnels']);
 
     //timeworke
-    $app->router('/timework', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/timework', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thời gian làm việc");
             echo $app->render($template . '/hrm/timework.html', $vars);
@@ -931,7 +931,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['timework.deleted']);
 
     //salary-categorys
-    $app->router('/salary-categorys', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/salary-categorys', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Danh mục tiền lương");
 
         if ($app->method() === 'GET') {
@@ -1082,7 +1082,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary-categorys.add']);
 
-    $app->router("/salary-categorys-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template) {
+    $app->router("/salary-categorys-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Sửa Danh mục tiền lương");
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("salary_categorys", "*", ["id" => $vars['id'], "deleted" => 0]);
@@ -1154,7 +1154,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['salary-categorys.deleted']);
 
     //Bang phan cong 
-    $app->router('/rosters', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template ,$accStore) {
+    $app->router('/rosters', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Bảng phân công");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -1539,7 +1539,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['rosters.deleted']);
 
     // hop dong lao dong 
-    $app->router('/contract', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template,$setting, $accStore) {
+    $app->router('/contract', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Hợp đồng lao động");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -2317,7 +2317,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['contract.deleted']);
 
-    $app->router("/contract-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router("/contract-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Hợp đồng lao động");
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
@@ -2496,7 +2496,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['contract']);
 
     //Bao hiem
-    $app->router('/insurrance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
+    $app->router('/insurrance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
         $vars['title'] = $jatbi->lang("Bảo hiểm");
         if ($app->method() === 'GET') {
             $store_ids = array_column($stores, column_key: 'value');
@@ -3004,7 +3004,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['insurrance']);
 
-    $app->router('/furlough-categorys', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/furlough-categorys', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Danh mục nghỉ phép");
             echo $app->render($template . '/hrm/furlough-categorys.html', $vars);
@@ -3223,7 +3223,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough-categorys.deleted']);
 
-    $app->router('/furlough', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/furlough', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nghỉ phép");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -3630,7 +3630,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
             $datas = $app->select("furlough", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {    
+            if (count($datas) > 0) {
                 foreach ($datas as $data) {
                     $app->update("furlough", ["deleted" => 1], ["id" => $data['id']]);
                 }
@@ -3642,7 +3642,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough.deleted']);
 
-    $app->router('/holiday', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/holiday', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Ngày lễ");
             echo $app->render($template . '/hrm/holiday.html', $vars);
@@ -3838,7 +3838,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
     })->setPermissions(['holiday.edit']);
-    
+
     $app->router("/holiday-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
             echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
@@ -3848,7 +3848,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
             $datas = $app->select("holiday", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {    
+            if (count($datas) > 0) {
                 foreach ($datas as $data) {
                     $app->update("holiday", ["deleted" => 1], ["id" => $data['id']]);
                 }
@@ -3860,7 +3860,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['holiday.deleted']);
 
-    $app->router('/reward-discipline', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/reward-discipline', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Khen thưởng kỉ luật");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -4050,7 +4050,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reward-discipline.deleted']);
 
-    $app->router('/time-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/time-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Đi trễ về sớm");
             echo $app->render($template . '/hrm/time-late.html', $vars);
@@ -4253,7 +4253,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reward-discipline.deleted']);
 
-    $app->router('/salary-advance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $accStore) {
+    $app->router('/salary-advance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Ứng lướng");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -4422,7 +4422,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary-advance.deleted']);
 
-    $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $accStore) {
+    $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Chấm công");
 
@@ -4866,7 +4866,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router("/timekeeping-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thêm Chấm công");
-            $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
+            $vars['personnels'] = $app->select("personnels", [
+                "id (value)",
+                "name (text)"
+            ], [
+                "deleted" => 0,
+                "status" => "A",
+                "stores" => $accStore,
+                "ORDER" => ["name" => "ASC"]
+            ]);
             echo $app->render($template . '/hrm/timekeeping-post.html', $vars, $jatbi->ajax());
         }
         if ($app->method() === 'POST') {
@@ -5368,7 +5376,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary']);
 
-    $app->router('/uniforms-items', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/uniforms-items', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
 
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Danh mục Đồng phục");
@@ -5558,7 +5566,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['uniforms_items.edit']);
 
-    $app->router('/uniforms-allocations', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template ,$setting) {
+    $app->router('/uniforms-allocations', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
 
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Lịch sử cấp phát đồng phục");
@@ -5983,5 +5991,4 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         }
     })->setPermissions(['reports']);
-
 })->middleware('login');
