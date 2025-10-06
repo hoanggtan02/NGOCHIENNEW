@@ -1,36 +1,46 @@
 <div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-body">
-                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
-                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
-                    <div class="mb-3">
-                        <?=$app->component('input',[
+	<div class="modal-dialog modal-md">
+		<div class="modal-content rounded-4 border-0 shadow-lg">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button"
+					class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+					data-bs-dismiss="modal" aria-label="Close"
+					style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3">
+					<?=$title?>
+				</h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="mb-3">
+						<?=$app->component('input',[
 							"name"=>'date',
 							"placeholder"=>$jatbi->lang("Ngày"),
 							"value" => $data['date'] ?? '',
 							"type" => 'datetime-local',
 							"required" => 'true',
 						])?>
-                    </div>
-                    <div class="mb-3">
-                        <?=$app->component('select',[
+					</div>
+					<div class="mb-3">
+						<?=$app->component('select',[
 							"name"=>'personnels',
 							"options"=>$personnels,
 							"selected" => $data['personnels'] ?? '',
 							"placeholder"=>$jatbi->lang("Nhân viên"),
 							"required" => 'true',
 						])?>
-                    </div>
+					</div>
 					<div class="mb-3">
-                        <?=$app->component('textarea',[
+						<?=$app->component('textarea',[
 							"name"=>'notes',
 							"placeholder"=>$jatbi->lang("Ghi chú"),
 							"value" => $data['notes'] ?? '',
 						])?>
-                    </div>
+					</div>
 					<div class="mb-3">
-                        <?=$app->component('select',[
+						<?=$app->component('select',[
 							"name"=>'status',
 							"placeholder"=>$jatbi->lang("Trạng thái"),
 							"required" => 'true',
@@ -39,12 +49,13 @@
 								["value" => "2", "text" => $jatbi->lang("Đi ra")],
 							],
 						])?>
-                    </div>
-                    <button type="submit" class="btn btn-eclo w-100 py-2 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this">
-                        <?=$jatbi->lang("Cập nhật")?>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+					</div>
+					<button type="submit" class="btn btn-eclo w-100 py-2 rounded-pill fw-bold" data-action="submit"
+						data-alert="true" data-load="this">
+						<?=$jatbi->lang("Cập nhật")?>
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
 </div>
