@@ -6559,10 +6559,16 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router('/products-import/crafting/{id}', 'GET', function ($vars) use ($app, $template) {
         $action = "import";
         $data = $app->get("warehouses", ["id", "stores", "code", "branch", "type", "date"], ["data" => 'pairing', "type" => 'export', "id" => $app->xss($vars['id']), "deleted" => 0]);
-        if ($data > 1) {
-            if ($_SESSION['products'][$action]['crafting'] != $vars['id']) {
-                unset($_SESSION['products'][$action]);
-                // echo ($_SESSION['products'][$action]);
+        // if ($data > 1) {
+        //     if ($_SESSION['products'][$action]['crafting'] != $vars['id']) {
+        //         unset($_SESSION['products'][$action]);
+        //         // echo ($_SESSION['products'][$action]);
+        //     }
+
+
+        if ($data) {
+            if (isset($_SESSION['products'][$action]['crafting']) && $_SESSION['products'][$action]['crafting'] != $vars['id']) {
+                $_SESSION['products'][$action] = [];
             }
             if (empty($_SESSION['products'][$action]['crafting'])) {
                 $_SESSION['products'][$action]['crafting'] = $data['id'];
@@ -8149,63 +8155,63 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
 
-    $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
-        $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
+    // $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    //     $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
 
-        if ($app->method() === 'GET') {
-            $vars['accounts'] = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
-            echo $app->render($template . '/warehouses/products-import-crafting.html', $vars);
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+    //     if ($app->method() === 'GET') {
+    //         $vars['accounts'] = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
+    //         echo $app->render($template . '/warehouses/products-import-crafting.html', $vars);
+    //     } elseif ($app->method() === 'POST') {
+    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-            $draw = intval($_POST['draw'] ?? 0);
-            $start = intval($_POST['start'] ?? 0);
-            $length = intval($_POST['length'] ?? 10);
-            $searchValue = $_POST['search']['value'] ?? '';
+    //         $draw = intval($_POST['draw'] ?? 0);
+    //         $start = intval($_POST['start'] ?? 0);
+    //         $length = intval($_POST['length'] ?? 10);
+    //         $searchValue = $_POST['search']['value'] ?? '';
 
-            $where = [
-                "AND" => [
-                    "w.deleted" => 0,
-                    "w.data" => 'pairing',
-                    "w.type" => 'export',
-                    "w.export_status" => 1,
-                ]
-            ];
-            if (!empty($searchValue))
-                $where['AND']['w.id[~]'] = $searchValue;
+    //         $where = [
+    //             "AND" => [
+    //                 "w.deleted" => 0,
+    //                 "w.data" => 'pairing',
+    //                 "w.type" => 'export',
+    //                 "w.export_status" => 1,
+    //             ]
+    //         ];
+    //         if (!empty($searchValue))
+    //             $where['AND']['w.id[~]'] = $searchValue;
 
-            $joins = ["[<]stores(s)" => ["stores" => "id"], "[<]branch(b)" => ["branch" => "id"], "[<]accounts(a)" => ["user" => "id"]];
+    //         $joins = ["[<]stores(s)" => ["stores" => "id"], "[<]branch(b)" => ["branch" => "id"], "[<]accounts(a)" => ["user" => "id"]];
 
-            $count = $app->count("warehouses(w)", $joins, "w.id", $where);
+    //         $count = $app->count("warehouses(w)", $joins, "w.id", $where);
 
-            $where["ORDER"] = ['w.id' => 'DESC'];
-            $where["LIMIT"] = [$start, $length];
+    //         $where["ORDER"] = ['w.id' => 'DESC'];
+    //         $where["LIMIT"] = [$start, $length];
 
-            $columns = ["w.id", "w.code", "w.content", "w.date_poster", "s.name(store_name)", "b.name(branch_name)", "a.name(user_name)"];
-            $datas = $app->select("warehouses(w)", $joins, $columns, $where);
+    //         $columns = ["w.id", "w.code", "w.content", "w.date_poster", "s.name(store_name)", "b.name(branch_name)", "a.name(user_name)"];
+    //         $datas = $app->select("warehouses(w)", $joins, $columns, $where);
 
-            $resultData = [];
-            foreach ($datas as $data) {
-                $resultData[] = [
-                    "code" => '<a data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '/">#' . $data['code'] . $data['id'] . '</a>',
-                    "store" => $data['store_name'],
-                    "branch" => $data['branch_name'],
-                    "content" => $data['content'],
-                    "date" => $jatbi->datetime($data['date_poster']),
-                    "user" => $data['user_name'],
-                    "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '/">' . $jatbi->lang('Nhập hàng') . '</a>',
-                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
-                ];
-            }
+    //         $resultData = [];
+    //         foreach ($datas as $data) {
+    //             $resultData[] = [
+    //                 "code" => '<a data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '/">#' . $data['code'] . $data['id'] . '</a>',
+    //                 "store" => $data['store_name'],
+    //                 "branch" => $data['branch_name'],
+    //                 "content" => $data['content'],
+    //                 "date" => $jatbi->datetime($data['date_poster']),
+    //                 "user" => $data['user_name'],
+    //                 "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '/">' . $jatbi->lang('Nhập hàng') . '</a>',
+    //                 "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+    //             ];
+    //         }
 
-            echo json_encode([
-                "draw" => $draw,
-                "recordsTotal" => $count,
-                "recordsFiltered" => $count,
-                "data" => $resultData
-            ]);
-        }
-    })->setPermissions(['products.import']);
+    //         echo json_encode([
+    //             "draw" => $draw,
+    //             "recordsTotal" => $count,
+    //             "recordsFiltered" => $count,
+    //             "data" => $resultData
+    //         ]);
+    //     }
+    // })->setPermissions(['products.import']);
 
 
     $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, $template) {
@@ -8330,7 +8336,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
 
                 // Định dạng dữ liệu trả về cho mỗi hàng
-             $datasFormatted[] = [
+                $datasFormatted[] = [
                     "code" => '<a class="fw-bold modal-url" data-action="modal" data-url="/crafting/crafting-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
                     "content" => $data['content'],
                     "date_poster" => date($setting['site_datetime'] ?? 'd/m/Y H:i:s', strtotime($data['date_poster'])),
@@ -9573,7 +9579,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             unset($_SESSION['ingredient_import']['ingredients']);
 
             foreach ($sheetData as $key => $value) {
-                if ($key <= 1 || empty($value['A'])) continue;
+                if ($key <= 1 || empty($value['A']))
+                    continue;
 
                 $current_row = $key;
                 $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
@@ -9598,14 +9605,14 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
 
                 $valid_ingredients_session[$ingredient_data['id']] = [
-                    "ingredient_id"        => $ingredient_data['id'],
-                    "code"              => $ingredient_data['code'],
-                    "name"              => $ingredient_data['name'] ?? '',
-                    "selling_price"     => $price,
-                    "stock_quantity"    => $ingredient_data['amount'],
-                    "amount"            => $amount,
-                    "unit_name"         => $unit_name,
-                    "notes"             => $ingredient_data['notes'],
+                    "ingredient_id" => $ingredient_data['id'],
+                    "code" => $ingredient_data['code'],
+                    "name" => $ingredient_data['name'] ?? '',
+                    "selling_price" => $price,
+                    "stock_quantity" => $ingredient_data['amount'],
+                    "amount" => $amount,
+                    "unit_name" => $unit_name,
+                    "notes" => $ingredient_data['notes'],
                 ];
                 $success_count++;
             }

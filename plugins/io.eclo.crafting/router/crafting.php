@@ -549,7 +549,14 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
 
+
+            // // Lấy bộ lọc ngày tháng từ dữ liệu POST (do JavaScript gửi lên)
+            // $dateRange = $_POST['date'] ?? '';
+            // $dateParts = explode(' - ', $dateRange);
+            // $date_from = !empty($dateParts[0]) ? date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $dateParts[0]))) : date('Y-m-01 00:00:00');
+            // $date_to = !empty($dateParts[1]) ? date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $dateParts[1]))) : date('Y-m-t 23:59:59');
             $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
+
 
             $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
             $date_to = date('Y-m-d 23:59:59');
@@ -3894,7 +3901,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         "amount_total" => $value['amount'],
                         "price" => $value['price'],
                         "cost" => $value['cost'],
-                        "notes" => $value['notes'],
+                        "notes" => $value['notes']?? '',
                         "date" => date("Y-m-d H:i:s"),
                         "user" => $app->getSession("accounts")['id'] ?? 0,
                         "group_crafting" => $data['group_crafting'],
@@ -3969,6 +3976,13 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         $post_value = $app->xss($_POST['value'] ?? '');
 
         $_SESSION['crafting'][$action]['ingredient'][$item_key]['notes'] = $post_value;
+
+        // if (!isset($_SESSION['crafting'][$action]['ingredient'][$item_key]) || !is_array($_SESSION['crafting'][$action]['ingredient'][$item_key])) {
+        //     $_SESSION['crafting'][$action]['ingredient'][$item_key] = [];
+        // }
+
+
+        // $_SESSION['crafting'][$action]['ingredient'][$item_key]['notes'] = $post_value;
 
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
