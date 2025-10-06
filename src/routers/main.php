@@ -54,7 +54,7 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
         $date_from = date('Y-m-d 00:00:00', $firstDayOfMonth);
         $date_to = date('Y-m-t 23:59:59', $firstDayOfMonth);
         $prev_month_from = date('Y-m-d 00:00:00', strtotime($date_from . ' -1 month'));
-        
+
         $vars['dayLastMonth'] = date('t', $firstDayOfMonth);
         $startDay = date('w', $firstDayOfMonth);
         $vars['chartdate'] = range(1, $vars['dayLastMonth']);
@@ -163,7 +163,6 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
             $vars['year'] = $year;
             $vars['weeks'] = $common['weeks'];
             echo $app->render($setting['template'] . '/pages/home1.html', $vars);
-
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
             echo json_encode([
@@ -174,11 +173,10 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
     });
 
     $app->router('/list-driver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-        $jatbi->permission('drivers.view');
         $vars['title'] = $jatbi->lang("Danh sách khai báo");
 
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template'] . '/drivers/list-driver.html', $vars);
+            echo $app->render($setting['template'] . '/home_driver/list-driver.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -256,7 +254,7 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
 
 
             if (($account['type'] ?? null) != 10) {
-                $accounts_data = $app->select("accounts", ["id", "name", "phone"], ["deleted" => 0, "status" => 'A', "type" => 10]); // Chỉ lấy các tài khoản có type=10
+                $accounts_data = $app->select("accounts", ["id", "name", "phone"], ["deleted" => 0, "status" => 'A', "type" => 10]);
                 $vars['user'] = array_map(function ($acc) {
                     return [
                         'value' => $acc['id'],
@@ -269,7 +267,7 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
             $vars['stores'] = $stores;
 
             // --- BƯỚC 3: RENDER GIAO DIỆN ---
-            echo $app->render($setting['template'] . '/drivers/add-driver.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/home_driver/add-driver.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $post = array_map([$app, 'xss'], $_POST);
@@ -310,7 +308,7 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
         $vars['title'] = $jatbi->lang("Lịch sử thanh toán");
 
         if ($app->method() === 'GET') {
-            echo $app->render($setting['template'] . '/drivers/list-driver-payment.html', $vars);
+            echo $app->render($setting['template'] . '/home_driver/list-driver-payment.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -364,32 +362,35 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
             $resultData = [];
             foreach ($datas as $data) {
                 $resultData[] = [
-                    "code" => '<a data-action="modal" data-url="/drivers/payment-views/' . $data['id'] . '/">#' . $data['code'] . '</a>',
+                    "code" => '<a data-action="modal" data-url="/drivers/driver-payment-views/' . $data['id'] . '">#' . $data['code'] . '</a>',
                     "date" => date('d/m/Y', strtotime($data['date'])),
                     "number_car" => $data['number_car'],
                     "car" => $data['car'],
                     "count" => $data['count'],
                     "driver_amount" => $data['driver_amount'],
-                    "code_group" => $data['code_group'],
+                    "code_group" => $data['code_group'] ?? "",
                     "commission" => ($data['type'] == 1) ? number_format($data['total']) : '',
                     "payment" => ($data['type'] == 0) ? number_format($data['total']) : '',
                     "approver" => $data['approver_name'],
                     "action" => $app->component("action", [
                         "button" => [
-                            ['type' => 'button', 'name' => 'Xem', 'icon' => '<i class="ti ti-eye me-2"></i>', 'action' => ['data-url' => '/drivers/payment-views/' . $data['id'], 'data-action' => 'modal']]
+                            ['type' => 'button', 'name' => 'Xem', 'icon' => '<i class="ti ti-eye me-2"></i>', 'action' => ['data-url' => '/drivers/driver-payment-views/' . $data['id'], 'data-action' => 'modal']]
                         ]
                     ])
                 ];
             }
 
-            echo json_encode(["draw" => $draw, "recordsTotal" => $totalRecords, "recordsFiltered" => $filteredRecords, "data" => $resultData]);
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $totalRecords,
+                "recordsFiltered" => $filteredRecords,
+                "data" => $resultData
+            ]);
         }
     });
-
 })->middleware('login');
 
 
 $app->router("::404", 'GET', function ($vars) use ($app, $jatbi, $setting) {
     echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
 });
-?>

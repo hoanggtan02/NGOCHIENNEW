@@ -880,10 +880,10 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         } else {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
         }
-    })->setPermissions(['driver-payment']);
+    });
 
-    ob_start();
-    $app->router('/driver-payment/driver-excel', 'GET', function ($vars) use ($app, $jatbi, $setting) {
+        ob_start();
+        $app->router('/driver-payment/driver-excel', 'GET', function ($vars) use ($app, $jatbi, $setting) {
         try {
             $searchValue = $_GET['search']['value'] ?? ($_GET['name'] ?? '');
             $filter_user = $_GET['user'] ?? '';

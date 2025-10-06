@@ -1,0 +1,106 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center"
+                    data-bs-dismiss="modal" aria-label="Close" style="width:50px;height:50px;top:-5px;right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                <div class="modal-body">
+                    <h5 class="fw-bold text-body mb-3">
+                        <?=$title?>
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <?php if (($account['type'] ?? null) == 10): ?>
+                            <input type="hidden" name="user" value="<?=$account['id'] ?? ''?>">
+                            <?php else: ?>
+                            <?=$app->component('select', [
+                                "name" => 'user', 
+                                "placeholder" => "Tài xế", 
+                                "options" => $user ?? [],
+                                "selected" => $data['user'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'date', 
+                                "placeholder" => "Ngày", 
+                                "type" => "date", 
+                                // Thêm value: nếu có $data['date'] thì dùng, không thì lấy ngày hiện tại
+                                "value" => !empty($data['date']) ? date('Y-m-d', strtotime($data['date'])) : date("Y-m-d"), 
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('select', [
+                                "name" => 'stores', 
+                                "placeholder" => "Cửa hàng", 
+                                "options" => $stores ?? [],
+                                "selected" => $data['stores'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'car', 
+                                "placeholder" => "Loại xe", 
+                                "value" => $data['car'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'number_car', 
+                                "placeholder" => "Biển số xe", 
+                                "value" => $data['number_car'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'count', 
+                                "placeholder" => "Công ty lữ hành", 
+                                "value" => $data['count'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-6">
+                            <?=$app->component('input', [
+                                "name" => 'amount', 
+                                "placeholder" => "Số khách", 
+                                "type" => "number",
+                                "value" => $data['amount'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-12">
+                            <?=$app->component('input', [
+                                "name" => 'code', 
+                                "placeholder" => "Mã đoàn", 
+                                "value" => $data['code'] ?? '', // Thêm value
+                                "required" => true
+                            ])?>
+                        </div>
+                        <div class="col-md-12">
+                            <?=$app->component('textarea', [
+                                "name" => 'notes', 
+                                "placeholder" => "Ghi chú",
+                                "value" => $data['notes'] ?? '' // Thêm value
+                            ])?>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit"
+                        data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
