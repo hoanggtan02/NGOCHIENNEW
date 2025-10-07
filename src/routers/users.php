@@ -203,13 +203,15 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                 if ($account['stores'] == '' && $sessionStores == 0) {
                     $Search_ACC[$search['id']] = $search['id'];
                 } else {
-                    $storeData = unserialize($search['stores']);
-                    if (is_array($storeData)) {
-                        $getACCStores[$search['id']] = $storeData;
-                        foreach ($storeData as $value) {
-                            if (isset($accStore[$value])) {
-                                $Search_ACC[$search['id']] = $search['id'];
-                                break; // chỉ cần một match
+                    if (!empty($search['stores'])) {
+                        $storeData = unserialize($search['stores']);
+                        if (is_array($storeData)) {
+                            $getACCStores[$search['id']] = $storeData;
+                            foreach ($storeData as $value) {
+                                if (isset($accStore[$value])) {
+                                    $Search_ACC[$search['id']] = $search['id'];
+                                    break; // chỉ cần một match
+                                }
                             }
                         }
                     }
