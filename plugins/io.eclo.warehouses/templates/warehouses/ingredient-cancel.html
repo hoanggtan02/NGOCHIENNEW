@@ -95,7 +95,7 @@
                 </div>
                 <?php if(!empty($batches)): ?>
                 <div class="card-footer bg-transparent py-3 text-end">
-                    <button class="btn btn-outline-secondary" data-action="modal"
+                    <button type="button" class="btn btn-light px-4" data-action="click" data-load = "/warehouses/ingredient-details/<?=$id?>"
                         data-url="/api/ingredient-cancel/cancel">
                         <?=$jatbi->lang("Hủy bỏ")?>
                     </button>

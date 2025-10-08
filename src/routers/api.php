@@ -1964,19 +1964,19 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
          * Khi người dùng bấm nút "Hủy bỏ", một request GET sẽ được gửi tới đây
          * để hiển thị modal xác nhận.
          */
-        if ($app->method() === 'GET') {
-            // Tùy chỉnh nội dung cho modal xác nhận
-            $vars['title'] = $jatbi->lang("Xác nhận hủy bỏ");
-            $vars['content'] = $jatbi->lang("Bạn có chắc chắn muốn hủy bỏ thao tác này không? Mọi dữ liệu về phiếu hủy đang tạo sẽ bị xóa.");
+        // if ($app->method() === 'GET') {
+        //     // Tùy chỉnh nội dung cho modal xác nhận
+        //     $vars['title'] = $jatbi->lang("Xác nhận hủy bỏ");
+        //     $vars['content'] = $jatbi->lang("Bạn có chắc chắn muốn hủy bỏ thao tác này không? Mọi dữ liệu về phiếu hủy đang tạo sẽ bị xóa.");
 
-            // Render một template xác nhận chung (ví dụ: common/deleted.html)
-            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
-        }
+        //     // Render một template xác nhận chung (ví dụ: common/deleted.html)
+        //     echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        // }
         /**
          * Khi người dùng xác nhận trong modal, một request POST sẽ được gửi tới đây
          * để thực hiện hành động hủy.
          */
-        elseif ($app->method() === 'POST') {
+        if ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $session_key = 'ingredient_cancel';
 
