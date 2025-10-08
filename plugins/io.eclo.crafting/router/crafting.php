@@ -558,6 +558,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
 
+
             $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
             $date_to = date('Y-m-d 23:59:59');
 
@@ -1717,7 +1718,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['crafting.add']);
 
-    $app->router('/pairing-export/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
+
+    $app->router('/pairing-export/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $action = "export";
         $vars['action'] = $action;
         $type = $vars['type'] ?? 'gold';
@@ -3539,7 +3541,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         $vars['data'] = $data;
         $vars['action'] = $action;
         $vars['SelectProducts'] = $SelectProducts;
-        $vars['type1']= $type;
+        $vars['type1'] = $type;
 
         echo $app->render($template . '/crafting/import-form.html', $vars);
     });
@@ -3907,7 +3909,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         "amount_total" => $value['amount'],
                         "price" => $value['price'],
                         "cost" => $value['cost'],
-                        "notes" => $value['notes']?? '',
+                        "notes" => $value['notes'] ?? '',
                         "date" => date("Y-m-d H:i:s"),
                         "user" => $app->getSession("accounts")['id'] ?? 0,
                         "group_crafting" => $data['group_crafting'],
@@ -5614,11 +5616,12 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     });
 
-    $app->router('/pairing-update/add/completed/{rou}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router('/pairing-update/add/completed/{rou}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $rou = $vars['rou'];
-            $vars['url'] = "/crafting/$rou";
-            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+
+            $vars['url'] = "/crafting/" . $rou;
+            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';

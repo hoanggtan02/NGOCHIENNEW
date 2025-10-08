@@ -1,0 +1,77 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$vars['title']?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+                        <div class="col-sm-4">
+                            <?=$app->component('input',[
+								"type"        => "tel",
+								"name"        => "price",
+								"placeholder" => $jatbi->lang("Số tiền"),
+								"value"       => $data['price'] ?? '',
+								"required"    => true,
+								"attr"        => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
+							])?>
+                            <?=$app->component('input',[
+								"type" => 'date',
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => date('Y-m-d'),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                            ])?>
+                            <?=$app->component('textarea', [
+								"name" => "content",
+								"placeholder" => $jatbi->lang("Nội dung"),
+								"value" => $data['content'] ?? '',
+								"attr" => 'style="height: 100px;"',
+								"required" => true,
+							])?>
+                        </div>
+                        <div class="col-sm-8">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped table-bordered" data-pos-table>
+                                    <thead>
+                                        <tr>
+                                            <th><?=$jatbi->lang("Ngày")?></th>
+                                            <th><?=$jatbi->lang("Số tiền")?></th>
+                                            <th><?=$jatbi->lang("Nội dung")?></th>
+                                            <th><?=$jatbi->lang("Tài khoản")?></th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach (($datas ?? [] ) as $key => $data) {?>
+                                            <tr>
+                                                <td><?= date('d/m/Y H:i:s', strtotime($data['date'])) ?></td>
+                                                <td><?=number_format((float)$data['price'] ?? 0)?></td>
+                                                <td><?=$data['content'] ?? ""?></td>
+                                                <td><?=$app->get("accounts","name",["id"=>$data['user'] ?? 0])?></td>
+                                                <td class="text-center">
+                                                    <a class="click-update  text-danger" data-load="this" data-action="click" data-selector="[data-pos-table]"
+                                                        data-url="/purchases/purchase-update/edit/details-deleted/<?=$req?>/<?=$key?>">
+                                                        <i class="ti ti-trash"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div> 
+                        </div>
+                        <div class="col-sm-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

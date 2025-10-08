@@ -603,3 +603,57 @@
         </div>
     </div>
 </div>
+<!-- Container để chèn modal động -->
+<div id="modalContainer"></div>
+
+<?php if (count($stores) > 1) { ?>
+<script>
+    (function waitForJQuery() {
+        // Đợi đến khi jQuery sẵn sàng
+        if (typeof window.jQuery === 'undefined') {
+            return setTimeout(waitForJQuery, 50);
+        }
+
+        const $ = window.jQuery;
+
+        function showSelectStoreModal() {
+            $.ajax({
+                url: '/select-store-modal', // ✅ đúng route thật của bạn
+                method: 'GET',
+                success: function (response) {
+                    $('#modalContainer').html(response);
+
+                    // Tìm modal trong response
+                    const modalEl = document.querySelector('.modal-load, #selectStoreModal, .modal');
+                    if (modalEl) {
+                        const modal = new bootstrap.Modal(modalEl, {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        modal.show();
+                    } else {
+                        console.warn('Không tìm thấy modal trong response.');
+                    }
+                },
+                error: function () {
+                    console.error('Không thể tải modal chọn cửa hàng');
+                }
+            });
+        }
+
+        // ✅ Gọi ngay khi jQuery sẵn sàng và đang ở /invoices/sales/
+        $(function () {
+            if (window.location.pathname.startsWith('/invoices/sales')) {
+                showSelectStoreModal();
+            }
+        });
+
+        // ✅ Nếu trang load lại bằng PJAX thì gọi lại
+        document.addEventListener('pjax:end', function () {
+            if (window.location.pathname.startsWith('/invoices/sales')) {
+                showSelectStoreModal();
+            }
+        });
+    })();
+</script>
+<?php } ?>

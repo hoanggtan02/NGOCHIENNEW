@@ -1153,7 +1153,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
             // Get filter parameters
             $user = isset($_POST['user']) ? $app->xss($_POST['user']) : '';
-            $expenditure_type = isset($_POST['expenditure_type']) ? $app->xss($_POST['expenditure_type']) : '';
+            $expenditure_type = isset($_POST['expenditure_type']) ? $app->xss($_POST['expenditure_type']) : [1, 2];
             $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
 
             // Process date range
@@ -3933,7 +3933,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
 
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
-                    "ngay" => '<a href="#!" class="modal-url" data-url="/accountants/accountant-views/' . $data['id'] . '">' . date($setting['site_date'] ?? "d/m/Y", strtotime($data['date'])) . '</a>',
+                    "ngay" => '<a href="#!" data-action="modal" class="modal-url" data-url="/accountants/accountant-views/' . $data['id'] . '">' . date($setting['site_date'] ?? "d/m/Y", strtotime($data['date'])) . '</a>',
                     "thu" => $data['type'] == 1 ? ($data['ballot'] ?? '') : '',
                     "chi" => $data['type'] == 2 ? ($data['ballot'] ?? '') : '',
                     "dien-giai" => $data['content'] ?? '',
@@ -4181,16 +4181,11 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             // Lấy giá trị từ các bộ lọc
-            $filter_debt = isset($_POST['debt']) ? $_POST['debt'] : '';
-            $filter_has = isset($_POST['has']) ? $_POST['has'] : '';
             $filter_stores = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
-            $filter_user = isset($_POST['user']) ? $_POST['user'] : '';
             $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
             // --- 2. Xây dựng truy vấn với JOIN ---
             $joins = [
-                // "[>]accountants_code (debt_info)" => ["debt" => "id"],
-                // "[>]accountants_code (has_info)" => ["has" => "id"],
                 "[>]stores" => ["stores" => "id"],
                 "[>]accounts" => ["user" => "id"],
             ];
@@ -4202,31 +4197,9 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     'expenditure.type' => 3,
                 ],
             ];
-
-            // if (!empty($searchValue)) {
-            //     $where["AND"]["OR"] = [
-            //         "expenditure.content[~]" => $searchValue,
-            //         "debt_info.name[~]" => $searchValue,
-            //         "debt_info.code[~]" => $searchValue,
-            //         "has_info.name[~]" => $searchValue,
-            //         "has_info.code[~]" => $searchValue,
-            //         "stores.name[~]" => $searchValue,
-            //         "accounts.name[~]" => $searchValue,
-            //     ];
-            // }
-
-            // if (!empty($filter_debt)) {
-            //     $where["AND"]["expenditure.debt"] = $filter_debt;
-            // }
-            // if (!empty($filter_has)) {
-            //     $where["AND"]["expenditure.has"] = $filter_has;
-            // }
             if ($filter_stores != [0]) {
                 $where['AND']['expenditure.stores'] = $filter_stores;
             }
-            // if (!empty($filter_user)) {
-            //     $where["AND"]["expenditure.user"] = $filter_user;
-            // }
 
             if (!empty($filter_date)) {
                 $date_parts = explode(' - ', $filter_date);
@@ -4261,6 +4234,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                 'expenditure.content',
                 'expenditure.debt',
                 'expenditure.has',
+                'expenditure.move',
                 // 'debt_info.code(debt_code)',
                 // 'debt_info.name(debt_name)',
                 // 'has_info.code(has_code)',
@@ -4289,6 +4263,12 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                             ],
                         ]
                     ]),
+                    "action1" => (($data['move'] ?? null) == 0)
+
+                        ? '<a href="#" data-action = "modal" data-url = "/accountants/financial_paper_movee/' . (int)$data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3">'
+                        . $jatbi->lang('Kết chuyển') .
+                        '</a>'
+                        : '',
                 ];
             });
 
@@ -4491,6 +4471,80 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
         }
     })->setPermissions(['financial_paper']);
 
+    $app->router("/financial_paper_movee/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
+        $vars['title'] = $jatbi->lang("Kết chuyển");
+        $data = $app->get("expenditure", "*", ["id" => $app->xss($vars['id'])]);
+        if ($app->method() === 'GET') {
+            $vgroup = unserialize($data['group'] ?? "");
+            $vars['vgroup'] = $vgroup;
+            $vars['data'] = $data;
+            // Lấy danh sách tài khoản kế toán
+            $accountants = $app->select("accountants_code", ["id ", "name", "code"], ["deleted" => 0, "status" => 'A']);
+            $accountants_formatted = array_map(function ($item) {
+                return [
+                    'value' => $item['code'],
+                    'text' => $item['code'] . ' - ' . $item['name']
+                ];
+            }, $accountants);
+            array_unshift($accountants_formatted, [
+                'value' => '',
+                'text' => $jatbi->lang('Tất cả')
+            ]);
+            $vars["accountants"] = $accountants_formatted;
+
+            // Lấy danh sách cửa hàng
+            if (count($stores) > 1) {
+                array_unshift($stores, [
+                    'value' => '',
+                    'text' => $jatbi->lang('Tất cả')
+                ]);
+                $vars['stores'] = $stores;
+            } else {
+                $vars['stores'] = $app->select("stores", ["id (value)", "name (text)"], ["id" => $accStore, "status" => 'A', "deleted" => 0]);
+            }
+
+            // echo $app->render($setting['template'] . '/accountants/financial_paper-update.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/financial_paper_move.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+            if (count($stores) > 1) {
+                $input_stores = $app->xss($_POST['stores']);
+            } else {
+                $input_stores = $app->get("stores", "id", ["id" => $data['stores'], "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+            }
+            if (
+                empty($_POST['type'] ?? '') ||
+                empty($_POST['debt'] ?? '') ||
+                empty($_POST['has'] ?? '') ||
+                empty($_POST['price'] ?? '') ||
+                empty($_POST['content'] ?? '') ||
+                empty($_POST['date'] ?? '') ||
+                empty($input_stores ?? '')
+            ) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
+            }
+            if ($_POST['type'] && $_POST['debt'] && $_POST['has'] && $_POST['price'] && $_POST['content'] && $_POST['date'] && $input_stores) {
+                $insert = [
+                    "type"          => $app->xss($_POST['type'] ?? ''),
+                    "debt"          => $app->xss($_POST['debt'] ?? ''),
+                    "has"           => $app->xss($_POST['has'] ?? ''),
+                    "price"         => $app->xss(str_replace(',', '', $_POST['price'] ?? 0)),
+                    "content"       => $app->xss($_POST['content'] ?? ''),
+                    "date"          => $app->xss($_POST['date'] ?? date('Y-m-d')),
+                    "notes"         => $app->xss($_POST['notes'] ?? ''),
+                    "user"          => (int)($app->getSession('accounts')['id'] ?? 0),
+                    "date_poster"   => date('Y-m-d H:i:s'),
+                    "stores"        => $app->xss($input_stores ?? ''),
+                    "move"          => 1,
+                ];
+                $app->insert("expenditure", $insert);
+                $app->update("expenditure", ["move" => 1], ["id" => $data["id"]]);
+                $jatbi->logs('expenditure', 'forward', $insert);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        }
+    });
+
     // Route: Sửa chứng từ kế toán
     $app->router("/financial_paper-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Chỉnh sửa chứng từ kế toán");
@@ -4665,12 +4719,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
 
-            // Kiểm tra token CSRF
-            if (!isset($_POST['token']) || $_POST['token'] !== $_SESSION['csrf']['token']) {
-                $error = ["status" => "error", "content" => $jatbi->lang("Token không đúng")];
-            }
-            // Kiểm tra các trường bắt buộc
-            elseif (
+            if (
                 empty($app->xss($_POST['type'])) || empty($app->xss($_POST['debt'])) || empty($app->xss($_POST['has'])) ||
                 empty($app->xss($_POST['price'])) || empty($app->xss($_POST['content'])) || empty($app->xss($_POST['date']))
             ) {
@@ -5075,6 +5124,51 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
                     }
                 }
             }
+        }
+    });
+
+    $app->router("/accountant-views/{id}", ['GET'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
+        $vars['title'] = $jatbi->lang("Xem chi tiết thu chi");
+
+        $vars['data'] = $app->get("accountant", ["id", "type", "ballot", "debt", "has", "price", "date", "vendor", "personnels", "invoices"], ["id" => $app->xss($vars['id'])]);
+
+        if ($vars['data']) {
+            $Getorders = $GetInvoices = $GetCus = $GetPersonnel = $GetAcc = $GetVerdor = $GetUser = null;
+            if (!empty($vars['data']['orders']) && $vars['data']['orders'] != 0) {
+                $Getorders = $app->get("orders", "*", ["id" => $vars['data']['orders'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['invoices']) && $vars['data']['invoices'] != 0) {
+                $GetInvoices = $app->get("accountant_invoices", "*", ["invoice" => $vars['data']['invoices'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['customers']) && $vars['data']['customers'] != 0) {
+                $GetCus = $app->get("customers", ["id", "name"], ["id" => $vars['data']['customers'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['personnels']) && $vars['data']['personnels'] != 0) {
+                $GetPersonnel = $app->get("personnels", ["id", "name"], ["id" => $vars['data']['personnels'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['accounts']) && $vars['data']['accounts'] != 0) {
+                $GetAcc = $app->get("accounts", ["id", "name"], ["id" => $vars['data']['accounts'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['purchase']) && $vars['data']['purchase'] != 0) {
+            }
+            if (!empty($vars['data']['vendor']) && $vars['data']['vendor'] != 0) {
+                $GetVerdor = $app->get("vendors", ["id", "name"], ["id" => $vars['data']['vendor'], "deleted" => 0]);
+            }
+            if (!empty($vars['data']['user']) && $vars['data']['user'] != 0) {
+                $GetUser = $app->get("accounts", ["id", "name"], ["id" => $vars['data']['user'], "deleted" => 0]);
+            }
+            $vars['Getorders'] = $Getorders;
+            $vars['GetInvoices'] = $GetInvoices;
+            $vars['GetCus'] = $GetCus;
+            $vars['GetPersonnel'] = $GetPersonnel;
+            $vars['GetAcc'] = $GetAcc;
+            $vars['GetVerdor'] = $GetVerdor;
+            $vars['GetUser'] = $GetUser;
+            $vars['setting'] = $setting;
+            // echo $app->render($setting['template'] . '/accountants/expenditure-view.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/config/accountant-view.html', $vars, $jatbi->ajax());
+        } else {
+            echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
     });
 })->middleware('login');

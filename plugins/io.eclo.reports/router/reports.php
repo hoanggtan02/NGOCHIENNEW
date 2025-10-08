@@ -588,35 +588,58 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
             ], $where, function ($data) use (&$datas, $app, $jatbi, $setting) {
 
                 $datas[] = [
-                    "code" => '<a class="text-nowrap pjax-load" href="/invoices/invoices-views/' . $data['id'] . '/">#' . ($setting['ballot_code']['invoices'] ?? '') . '-' . ($data['code'] ?? '') . $data['id'] . '</a>',
+                    "code" => '<a class="text-nowrap pjax-load" href="/invoices/invoices-views/' . (int)$data['id'] . '/">#'
+                        . ($setting['ballot_code']['invoices'] ?? '') . '-' . ($data['code'] ?? '') . $data['id'] . '</a>',
+
                     "customer_name" => $app->get("customers", "name", ["id" => $data['customers']]),
-                    "total" => $data['type'] == 3 ? '-' . number_format(abs($data['total'] ?? 0)) : number_format($data['total'] ?? 0),
-                    "minus" => number_format($data['minus']),
-                    "discount" => number_format($data['discount']),
-                    "surcharge" => number_format($data['surcharge']),
-                    "transport" => number_format($data['transport']),
-                    "payments" => $data['type'] == 3 ? '-' . number_format(abs($data['payments'] ?? 0)) : number_format($data['payments'] ?? 0),
-                    "prepay" => $data['type'] == 3 ? '-' . number_format(abs($data['prepay'] ?? 0)) : number_format($data['prepay'] ?? 0),
-                    "remaining" => '<a href="#!" class="modal-url text-danger" data-url="/invoices/invoices-prepay/' . $data['id'] . '/">' .
-                        ($data['type'] == 3
-                            ? '-' . number_format(abs(($data['payments'] ?? 0) - ($data['prepay'] ?? 0)))
-                            : number_format(($data['payments'] ?? 0) - ($data['prepay'] ?? 0))
-                        ) .
-                        '</a>',
+
+                    "total" => $data['type'] == 3
+                        ? '-' . number_format(abs((float)($data['total'] ?? 0)))
+                        : number_format((float)($data['total'] ?? 0)),
+
+                    "minus" => number_format((float)($data['minus'] ?? 0)),
+                    "discount" => number_format((float)($data['discount'] ?? 0)),
+                    "surcharge" => number_format((float)($data['surcharge'] ?? 0)),
+                    "transport" => number_format((float)($data['transport'] ?? 0)),
+
+                    "payments" => $data['type'] == 3
+                        ? '-' . number_format(abs((float)($data['payments'] ?? 0)))
+                        : number_format((float)($data['payments'] ?? 0)),
+
+                    "prepay" => $data['type'] == 3
+                        ? '-' . number_format(abs((float)($data['prepay'] ?? 0)))
+                        : number_format((float)($data['prepay'] ?? 0)),
+
+                    "remaining" => '<a href="#!" class="modal-url text-danger" data-url="/invoices/invoices-prepay/' . (int)$data['id'] . '/">'
+                        . (
+                            $data['type'] == 3
+                            ? '-' . number_format(abs(((float)($data['payments'] ?? 0)) - ((float)($data['prepay'] ?? 0))))
+                            : number_format(((float)($data['payments'] ?? 0)) - ((float)($data['prepay'] ?? 0)))
+                        )
+                        . '</a>',
+
                     "status" => !empty($data['status']) && isset($setting['Status_invoices'][$data['status']])
                         ? '<span class="fw-bold text-' . ($setting['Status_invoices'][$data['status']]['color'] ?? '') . '">'
-                        . ($setting['Status_invoices'][$data['status']]['name'] ?? '') .
-                        '</span>'
+                        . ($setting['Status_invoices'][$data['status']]['name'] ?? '')
+                        . '</span>'
                         : '',
-                    "date" => date($setting['site_datetime'] ?? "d/m/Y H:i:s", strtotime($data['date'])),
+
+                    "date" => !empty($data['date'])
+                        ? date($setting['site_datetime'] ?? "d/m/Y H:i:s", strtotime($data['date']))
+                        : '',
+
                     "user_name" => $app->get("accounts", "name", ["id" => $data['user']]),
                     "store_name" => $app->get("stores", "name", ["id" => $data['stores']]),
+
                     "action" => $app->component("action", [
                         "button" => [
                             [
                                 'type' => 'link',
                                 'name' => $jatbi->lang("Xem"),
-                                'action' => ['href' => '/invoices/invoices-views/' . $data['id'], 'data-pjax' => '']
+                                'action' => [
+                                    'href' => '/invoices/invoices-views/' . (int)$data['id'],
+                                    'data-pjax' => ''
+                                ]
                             ],
                         ]
                     ]),
@@ -3012,5 +3035,4 @@ $app->group($setting['manager'] . "/reports", function ($app) use ($jatbi, $sett
             ]);
         }
     })->setPermissions(['selling_products']);
-    
 })->middleware('login');

@@ -1,0 +1,98 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$jatbi->lang($vars['title'])?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>" autocomplete="off"
+                    enctype="multipart/form-data" class="ajax-form">
+                    <div class="row g-3">
+                        <div class="col-sm-12">
+                            <?=$app->component('select', [
+                                "name" => 'type',
+                                "placeholder" => $jatbi->lang("Loại"),
+                                "selected" => $data['type'] ?? '',
+                                "attr" => 'data-width="100%"',
+                                "options" => [
+                                    ["value" => "", "text" => $jatbi->lang("Loại")],
+                                    ["value" => "3", "text" => $jatbi->lang("Nghiệp vụ phát sinh")]
+                                ],
+                                "required" => 'true',
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "type" => 'date',
+                                "name" => 'date',
+                                "placeholder" => $jatbi->lang("Ngày"),
+                                "value" => $data['date'] ?? date('Y-m-d'),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "required" => 'true',
+                            ])?>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <?=$app->component('select', [
+                                        "name" => 'debt',
+                                        "placeholder" => $jatbi->lang("Tài khoản nợ"),
+                                        "selected" => $data['debt'] ?? '',
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%"',
+                                        "options" => $accountants ?? [],
+                                        "required" => 'true',
+                                    ])?>
+                                </div>
+                                <div class="col-md-6">
+                                    <?=$app->component('select', [
+                                        "name" => 'has',
+                                        "placeholder" => $jatbi->lang("Tài khoản có"),
+                                        "selected" => $data['has'] ?? '',
+                                        "class" => 'filter-name',
+                                        "attr" => 'data-width="100%"',
+                                        "options" => $accountants ?? [],
+                                        "required" => 'true',
+                                    ])?>
+                                </div>
+                            </div>
+                            <?=$app->component('textarea', [
+                                "name" => 'content',
+                                "placeholder" => $jatbi->lang("Diễn giải"),
+                                "value" => $data['content'] ?? '',
+                                "attr" => 'style="height: 308px;"',
+                                "required" => 'true',
+                            ])?>
+                            <?php if (count($stores) > 1) { ?>
+                            <?=$app->component('select', [
+                                    "name" => 'stores',
+                                    "placeholder" => $jatbi->lang("Cửa hàng"),
+                                    "selected" => $data['stores'] ?? '',
+                                    "attr" => 'data-width="100%"',
+                                    "options" => $stores,
+                                    "required" => 'true',
+                                ])?>
+                            <?php } ?>
+                        </div>
+                        <div class="col-sm-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true" data-load="this">
+                                <div class="spinner-button" style="display: none">
+                                    <span class="spinner-border spinner-border-sm" role="status"
+                                        aria-hidden="true"></span>
+                                    <span class="me-1"><?=$jatbi->lang("Đang tải")?></span>
+                                </div>
+                                <span class="name-button"><?=$jatbi->lang("Hoàn thành")?></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

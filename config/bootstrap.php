@@ -24,6 +24,12 @@ $getsetting = $app->get("settings", "*", ["ORDER" => ["id" => "DESC"]]);
 
 $config['app']['timework_from'] = $getsetting['timework_from'];
 $config['app']['timework_to'] = $getsetting['timework_to'];
+$config['app']['name'] = $getsetting['name'];
+$config['app']['address'] = $getsetting['address'];
+$config['app']['district'] = $getsetting['district'];
+$config['app']['province'] = $getsetting['province'];
+$config['app']['ward'] = $getsetting['ward'];
+$config['app']['phone'] = $getsetting['phone'];
 
 // Set vào app
 $app->setValueData('setting', $config['app']);

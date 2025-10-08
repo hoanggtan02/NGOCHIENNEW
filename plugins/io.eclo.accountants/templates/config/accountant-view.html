@@ -1,0 +1,164 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative d-print-none"></div>
+
+            <div class="modal-body">
+                <table class="w-100">
+                    <tr>
+                        <td class="text-start align-top">
+                            <h6 class="fw-bold">
+                                <?=$setting['name']?><br>
+                            </h6>
+                            <p class="mb-0">
+                                <?=$setting['address']?>
+                                <?=$app->get("ward", "name", ["id" => $setting['ward']])?>
+                                <?=$app->get("district", "name", ["id" => $setting['district']])?>
+                                <?=$app->get("province", "name", ["id" => $setting['province']])?>
+                            </p>
+                            <p class="mb-0">
+                                <?=$setting['phone']?>
+                            </p>
+                        </td>
+                        <td class="text-end align-top">
+                            <strong>Mẫu số 02 - TT</strong>
+                            <p class="fst-italic mb-0">(Ban hành theo TT200/2014/TT-BTC)</p>
+                            <p class="mb-0"><strong>Số:</strong> <span class="me-4">
+                                    <?=$data['ballot']?>
+                                </span></p>
+                            <p class="mb-0">
+                                <strong>Nợ:</strong>
+                                <span class="me-4 fw-bold">
+                                    <?=$app->get("accountants_code", "code", ["code" => $data['debt']])?>
+                                </span>
+                                <strong><?=str_replace('-', '', number_format($data['price']))?></strong>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Có:</strong>
+                                <span class="me-4 fw-bold">
+                                    <?=$app->get("accountants_code", "code", ["code" => $data['has']])?>
+                                </span>
+                                <strong><?=str_replace('-', '', number_format($data['price']))?></strong>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-center">
+                            <h3 class="fw-bold text-uppercase">
+                                <?=$data['type'] == 1 ? $jatbi->lang('Phiếu thu') : $jatbi->lang('Phiếu chi')?>
+                            </h3>
+                            <p class="fst-italic">
+                                Ngày
+                                <?=date("d", strtotime($data['date']))?> Tháng
+                                <?=date("m", strtotime($data['date']))?> Năm
+                                <?=date("Y", strtotime($data['date']))?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="w-100">
+                    <tr>
+                        <?php if ($data['type'] == 1) { ?>
+                        <td width="5%" class="text-nowrap">Họ tên người thu tiền:</td>
+                        <td>
+                            <?=$GetUser['name'] ?? ''?>
+                        </td>
+                        <?php } elseif ($data['type'] == 2 && !empty($data['vendor'])) { ?>
+                        <td width="5%" class="text-nowrap">Họ tên người nhận tiền:</td>
+                        <td>
+                            <?=$GetVerdor['name'] ?? ''?>
+                        </td>
+                        <?php } elseif ($data['type'] == 2 && !empty($data['personnels'])) { ?>
+                        <td width="5%" class="text-nowrap">Họ tên người chi tiền:</td>
+                        <td>
+                            <?=$GetPersonnel['name'] ?? ''?>
+                        </td>
+                        <?php } ?>
+                    </tr>
+
+                    <tr>
+                        <td width="5%" class="text-nowrap">Địa chỉ:</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td width="5%" class="text-nowrap">Lý do:</td>
+                        <td>
+                            <?=$data['content'] ?? ""?>
+                        </td>
+                    </tr>
+
+                    <?php $total = $app->sum("accountant_invoices_products", "total", ["invoices" => $data["invoices"], "deleted" => 0]); ?>
+                    <tr>
+                        <td width="5%" class="text-nowrap">Số tiền:</td>
+                        <td><?=str_replace('-', '', number_format($total))?></td>
+                    </tr>
+                    <tr>
+                        <td width="5%" class="text-nowrap">Chứng từ gốc:</td>
+                        <td></td>
+                    </tr>
+                </table>
+
+                <table class="w-100 mt-2">
+                    <tr>
+                        <td class="text-end" colspan="5">
+                            <p class="fst-italic">
+                                Ngày
+                                <?=date("d", strtotime($data['date']))?> Tháng
+                                <?=date("m", strtotime($data['date']))?> Năm
+                                <?=date("Y", strtotime($data['date']))?>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-center" width="20%">
+                            <strong>Giám đốc</strong>
+                            <p class="fst-italic small">(Ký họ tên, đóng dấu)</p>
+                        </td>
+                        <td class="text-center" width="20%">
+                            <strong>Kế toán trưởng</strong>
+                            <p class="fst-italic small">(Ký họ tên)</p>
+                        </td>
+                        <td class="text-center" width="20%">
+                            <strong>Thủ quỹ</strong>
+                            <p class="fst-italic small">(Ký họ tên)</p>
+                        </td>
+                        <td class="text-center" width="20%">
+                            <strong>Người lập phiếu</strong>
+                            <p class="fst-italic small">(Ký họ tên)</p>
+                        </td>
+                        <td class="text-center" width="20%">
+                            <strong>Người nhận tiền</strong>
+                            <p class="fst-italic small">(Ký họ tên)</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                        <td style="height:100px" class="text-center align-bottom"></td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-start" colspan="5">
+                            <p class="fst-italic mb-0 pt-3">Đã nhận đủ số tiền (Viết bằng chữ):</p>
+                            <p class="fst-italic">(Liên gửi ra ngoài phải đóng dấu)</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <?=$jatbi->lang('Hủy')?>
+                </button>
+                <button class="btn btn-success" onclick="window.print();">
+                    <?=$jatbi->lang('In')?>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
