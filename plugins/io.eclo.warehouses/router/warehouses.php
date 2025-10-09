@@ -3274,15 +3274,15 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $vars['barcode_image'] = $barcode_image_base64;
         $vars['barcode_value'] = $default_code_value;
 
-        // Render giao diện modal
+
         echo $app->render($template . '/warehouses/products-barcode.html', $vars, $jatbi->ajax());
     })->setPermissions(['products']);
 
 
-    $app->router('/warehouses-history/{type}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+    $app->router('/warehouses-history/{type}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $type = $vars['type'] ?? 'import';
 
-        // Cấu hình dựa trên type
+
         $config = [
             'import' => ['title' => 'Lịch sử nhập hàng', 'code' => 'import'],
             'move' => ['title' => 'Lịch sử chuyển hàng', 'code' => ['move', 'return']],
@@ -3294,12 +3294,41 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $vars['type'] = $type;
 
         if ($app->method() === 'GET') {
-            $vars['accounts'] = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
+            if (count($stores) > 1) {
+                array_unshift($stores, [
+                    'value' => '',
+                    'text' => $jatbi->lang('Tất cả')
+                ]);
+            }
+            $vars['stores'] = $stores;
+
+            // Logic cho Quầy hàng (branchs)
+            $branchs = $accStore == 0
+                ? $app->select("branch", ["id (value)", "name (text)"], ["status" => 'A', "deleted" => 0, "stores" => $stores[0]['id']])
+                : $app->select("branch", ["id (value)", "name (text)"], ["status" => 'A', "deleted" => 0, "stores" => $accStore]);
+            array_unshift($branchs, [
+                'value' => '',
+                'text' => $jatbi->lang('Tất cả')
+            ]);
+            $vars['branchs'] = $branchs;
+
+            // Logic cho Tài khoản (accounts)
+            $accounts = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
+            array_unshift($accounts, [ // Thêm "Tất cả" để giống revenue
+                'value' => '',
+                'text' => $jatbi->lang('Tất cả')
+            ]);
+            $vars['accounts'] = $accounts;
+            $vars['date_from'] = date('Y-m-d 00:00:00');
+            $vars['date_to'] = date('Y-m-d 23:59:59');
+            $stores = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
+
+
             echo $app->render($template . '/warehouses/history.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-            // Đọc tham số từ DataTables và bộ lọc
+
             $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
@@ -3307,15 +3336,41 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $orderName = isset($_POST['order'][0]['column']) ? $_POST['columns'][$_POST['order'][0]['column']]['name'] : 'warehouses.id';
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
-            $filter_categorys = isset($_POST['categorys']) ? $_POST['categorys'] : '';
-            $filter_branch = isset($_POST['branch']) ? $_POST['branch'] : '';
-            $filter_units = isset($_POST['units']) ? $_POST['units'] : '';
-            $filter_status = isset($_POST['status']) ? $_POST['status'] : '';
-            $filter_groups = isset($_POST['groups']) ? $_POST['groups'] : '';
-            // $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
-            $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
-
             $filter_user = $_POST['user'] ?? '';
+            $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
+            $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
+
+            $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
+            $user = isset($_POST['user']) ? $app->xss($_POST['user']) : '';
+
+
+            if ($date_string) {
+                $date = explode(' - ', $date_string);
+                $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date[0]))));
+                $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date[1]))));
+            } else {
+                $date_from = date('Y-m-d 00:00:00');
+                $date_to = date('Y-m-d 23:59:59');
+            }
+            if ($store != "") {
+                $where['AND']['warehouses.stores'] = $store;
+            }
+            $stores_map = [];
+            $accounts_map = [];
+            $branch_map = [];
+            $all_stores = $app->select("stores", ["id", "name"], ["deleted" => 0]);
+            foreach ($all_stores as $s) {
+                $stores_map[$s['id']] = $s['name'];
+            }
+
+            $all_branches = $app->select("branch", ["id", "name"], ["status" => 'A', "deleted" => 0]);
+            foreach ($all_branches as $b) {
+                $branch_map[$b['id']] = $b['name'];
+            }
+            $all_accounts = $app->select("accounts", ["id", "name"], ["deleted" => 0, "status" => 'A']);
+            foreach ($all_accounts as $a) {
+                $accounts_map[$a['id']] = $a['name'];
+            }
 
             // Xây dựng mệnh đề WHERE
             $where = [
@@ -3323,8 +3378,15 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "warehouses.deleted" => 0,
                     "warehouses.data" => 'products',
                     "warehouses.type" => $current_config['code'],
+                    "warehouses.date[<>]" => [$date_from, $date_to],
+                    "warehouses.branch[<>]" => $branchss ? [$branchss, $branchss] : '',
+
+
                 ]
             ];
+            if ($store != "") {
+                $where['AND']['warehouses.stores'] = $store;
+            }
 
             if (!empty($searchValue)) {
                 $where['AND']['OR'] = [
@@ -3337,24 +3399,16 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $where['AND']['warehouses.user'] = $filter_user;
             }
 
-            if (!empty($filter_date)) {
-                $dates = explode(' - ', $filter_date);
-                if (count($dates) === 2) {
-                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($dates[0]))));
-                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($dates[1]))));
-                    $where["AND"]["warehouses.date_poster[<>]"] = [$date_from, $date_to];
-                }
-            }
+
+
 
             $joins = [
                 "[<]accounts" => ["user" => "id"],
                 "[<]stores" => ["stores" => "id"],
                 "[<]branch" => ["branch" => "id"],
-                // "[<]stores(receive_store)" => ["stores_receive" => "id"],
-                // "[<]branch(receive_branch)" => ["branch_receive" => "id"],
             ];
 
-            // Đếm bản ghi
+
             $count = $app->count("warehouses", $joins, "warehouses.id", $where);
 
             $where["ORDER"] = [$orderName => strtoupper($orderDir)];
@@ -3971,8 +4025,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
+
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
+
+
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
@@ -4028,6 +4085,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "error" => ($log['type'] == 'error') ? number_format($log['amount'], 2) : '',
                     "price" => number_format($log['price']),
                     "store" => $log['store_name'] . ($log['store_receive_name'] ? " -> " . $log['store_receive_name'] : ''),
+
                     "notes" => htmlspecialchars($log['notes']),
                     "duration" => $log['duration'] ? $log['duration'] . ' ' . $jatbi->lang('tháng') : '',
                     "date" => date("d/m/Y H:i:s", strtotime($log['date'])),
