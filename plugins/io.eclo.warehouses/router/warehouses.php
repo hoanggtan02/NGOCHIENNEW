@@ -3333,12 +3333,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
             $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-            $orderName = isset($_POST['order'][0]['column']) ? $_POST['columns'][$_POST['order'][0]['column']]['name'] : 'warehouses.id';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'warehouses.id';
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             $filter_user = $_POST['user'] ?? '';
             $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
-            $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
+            $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : '';
 
             $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
             $user = isset($_POST['user']) ? $app->xss($_POST['user']) : '';
@@ -3379,7 +3379,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "warehouses.data" => 'products',
                     "warehouses.type" => $current_config['code'],
                     "warehouses.date[<>]" => [$date_from, $date_to],
-                    "warehouses.branch[<>]" => $branchss ? [$branchss, $branchss] : '',
+                    // "warehouses.branch[<>]" => $branchss ? [$branchss, $branchss] : '',
 
 
                 ]
@@ -3394,8 +3394,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     'warehouses.content[~]' => $searchValue,
                 ];
             }
+            if (!empty($branchss) && $branchss != 'null') {
+                $where['AND']['warehouses.branch'] = $branchss;
+            }
 
-            if (!empty($filter_user)) {
+            // Sửa điều kiện if cho user
+            if (!empty($filter_user) && $filter_user != 'null') {
                 $where['AND']['warehouses.user'] = $filter_user;
             }
 
@@ -6584,19 +6588,19 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
                 // Xử lý an toàn: Dùng giá trị mặc định nếu không tìm thấy dữ liệu crafting
                 $_SESSION['products'][$action]['products'][] = [
-                    "crafting"      => $value['crafting'],
-                    "amount"        => $value['amount'],
-                    "price"         => $value['price'],
-                    "cost"          => $value['cost'],
-                    "name"          => $getcrafting['name'] ?? 'N/A',
-                    "vendor"        => $getcrafting['vendor'] ?? '',
-                    "code"          => $getcrafting['code'] ?? '',
-                    "categorys"     => $getcrafting['categorys'] ?? '',
-                    "group"         => $getcrafting['group'] ?? '',
-                    "default_code"  => $getcrafting['default_code'] ?? '',
-                    "units"         => $getcrafting['units'] ?? '',
-                    "notes"         => $getcrafting['notes'] ?? '',
-                    "content"       => $getcrafting['content'] ?? '',
+                    "crafting" => $value['crafting'],
+                    "amount" => $value['amount'],
+                    "price" => $value['price'],
+                    "cost" => $value['cost'],
+                    "name" => $getcrafting['name'] ?? 'N/A',
+                    "vendor" => $getcrafting['vendor'] ?? '',
+                    "code" => $getcrafting['code'] ?? '',
+                    "categorys" => $getcrafting['categorys'] ?? '',
+                    "group" => $getcrafting['group'] ?? '',
+                    "default_code" => $getcrafting['default_code'] ?? '',
+                    "units" => $getcrafting['units'] ?? '',
+                    "notes" => $getcrafting['notes'] ?? '',
+                    "content" => $getcrafting['content'] ?? '',
                 ];
             }
 
@@ -9223,7 +9227,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             unset($_SESSION['ingredient_import']['ingredients']);
 
             foreach ($sheetData as $key => $value) {
-                if ($key <= 1 || empty($value['A'])) continue;
+                if ($key <= 1 || empty($value['A']))
+                    continue;
 
                 $current_row = $key;
                 $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
@@ -9248,14 +9253,14 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
 
                 $valid_ingredients_session[$ingredient_data['id']] = [
-                    "ingredient_id"        => $ingredient_data['id'],
-                    "code"              => $ingredient_data['code'],
-                    "name"              => $ingredient_data['name'] ?? '',
-                    "selling_price"     => $price,
-                    "stock_quantity"    => $ingredient_data['amount'],
-                    "amount"            => $amount,
-                    "unit_name"         => $unit_name,
-                    "notes"             => $ingredient_data['notes'],
+                    "ingredient_id" => $ingredient_data['id'],
+                    "code" => $ingredient_data['code'],
+                    "name" => $ingredient_data['name'] ?? '',
+                    "selling_price" => $price,
+                    "stock_quantity" => $ingredient_data['amount'],
+                    "amount" => $amount,
+                    "unit_name" => $unit_name,
+                    "notes" => $ingredient_data['notes'],
                 ];
                 $success_count++;
             }
@@ -9286,12 +9291,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         if ($app->method() === 'GET') {
 
-            $accounts  = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
-            array_unshift($accounts , [
+            $accounts = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
+            array_unshift($accounts, [
                 'value' => '',
                 'text' => $jatbi->lang('Tất cả')
             ]);
-            $vars['accounts'] = $accounts ;
+            $vars['accounts'] = $accounts;
             echo $app->render($template . '/warehouses/products-import-history.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -9308,8 +9313,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $storeId = isset($_POST['stores']) ? $app->xss($_POST['stores']) : '';
 
             $conditions = [
-                "warehouses.data"    => "products",
-                "warehouses.type"    => "import",
+                "warehouses.data" => "products",
+                "warehouses.type" => "import",
                 "warehouses.deleted" => 0,
             ];
 
@@ -9334,10 +9339,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             if ($searchValue != '') {
                 $conditions['OR'] = [
-                    'warehouses.code[~]'    => $searchValue,
+                    'warehouses.code[~]' => $searchValue,
                     'warehouses.content[~]' => $searchValue,
-                    'warehouses.id[~]'      => $searchValue,
-                    'accounts.name[~]'      => $searchValue,
+                    'warehouses.id[~]' => $searchValue,
+                    'accounts.name[~]' => $searchValue,
                 ];
             }
 
@@ -9366,22 +9371,22 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             $app->select("warehouses", $join, $columns, $queryForSelect, function ($data) use (&$datas, $jatbi, $app, $setting) {
                 $datas[] = [
-                    "code"    => '<a class="modal-url fw-semibold" data-url="/warehouses/products-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
+                    "code" => '<a class="modal-url fw-semibold" data-url="/warehouses/products-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
                     "content" => ($data['crafting'] != '')
                         ? '<a class="modal-url" data-url="/crafting/pairing-export-views/' . $data['crafting'] . '">' . $data['content'] . '</a>'
                         : $data['content'],
-                    "date"    => $jatbi->date($data['date_poster']),
-                    "user"    => $data['user_name'] ?? 'N/A',
-                    "views"   => '<button data-action="modal" data-url="/warehouses/products-history-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+                    "date" => $jatbi->date($data['date_poster']),
+                    "user" => $data['user_name'] ?? 'N/A',
+                    "views" => '<button data-action="modal" data-url="/warehouses/products-history-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
                 ];
             });
 
             // --- 6. Trả về kết quả JSON ---
             echo json_encode([
-                "draw"            => $draw,
-                "recordsTotal"    => $count,
+                "draw" => $draw,
+                "recordsTotal" => $count,
                 "recordsFiltered" => $count,
-                "data"            => $datas ?? []
+                "data" => $datas ?? []
             ]);
         }
     })->setPermissions(['products.import']);

@@ -69,12 +69,13 @@
                         </div>
                         <div class="px-3">
                             <?=$app->component('input', [
-                                    "name" => 'date',
-                                    "placeholder" => $jatbi->lang("Ngày"),
-                                    "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
-                                    "class" => 'filter-name',
-                                    "attr" => 'data-width="100%" data-datepicker',
-                                ])?>
+        "name" => 'date',
+        "placeholder" => $jatbi->lang("Ngày"),
+        
+        "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
+        "class" => 'filter-name',
+        "attr" => 'data-width="100%" data-datepicker',
+    ])?>
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">
