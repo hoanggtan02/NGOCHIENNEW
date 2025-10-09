@@ -3971,11 +3971,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
-
-                        $totalValue += $amount * $price;
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
-                        $totalValue -= $amount * $price;
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
