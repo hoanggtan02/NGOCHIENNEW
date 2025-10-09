@@ -43,14 +43,14 @@
                                             data-decimals="0" data-thousands="," data-decimal="."
                                             class="blur-update form-control form-control-sm text-end number"
                                             data-url="/warehouses/products-update/import/ingredient/price/<?=$key?>/"
-                                            data-form='{"value": "this.val"}' data-load="true"
+                                            data-form='{"value": "this.val"}' data-load="this" data-action="blur"
                                             value="<?=$item['price']?>">
                                     </td>
                                     <td>
                                         <input type="number" name="amount"
-                                            class="blur-update border-0 w-100  h-100 p-2 bg-transparent"
-                                            data-url="/warehouses/products-update/import/ingredient/amount/<?=$key?>/"
-                                            value="<?=$SelectProduct['amount']?>" data-load="true" min="0">
+                                            class="blur-update form-control form-control-sm text-end number"
+                                            data-url="/warehouses/products-update/import/ingredient/amount/<?=$key?>"
+                                            value="<?=$item['amount']?>" data-load="this" data-action="blur" min="0">
 
                                     </td>
                                     <td>
@@ -82,11 +82,11 @@
                     <?=$app->component('textarea', ["name" => 'content', "placeholder" => "Nội dung", "value" => $data['content'] ?? '', "attr" => 'data-action="blur" data-url="/warehouses/products-update/import/content" data-form=\'{"value": "this.val"}\''])?>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3 text-end">
-                    <button class="btn btn-light rounded-pill px-4 click-update" data-alert="true" data-action="click"
+                    <button class="btn btn-light rounded-pill px-4 click-update" data-action="click"
                         data-url="/warehouses/products-update/import/cancel"><?=$jatbi->lang('Hủy')?></button>
                     <button class="btn btn-eclo rounded-pill px-5 click-update"
-                        data-url="/warehouses/products-update/import/completed" data-action="click" data-alert="true"
-                        data-load="/warehouses/products-import-history/"><?=$jatbi->lang('Hoàn tất')?></button>
+                        data-url="/warehouses/products-update/import/completed" data-action="click"
+                        data-load="/warehouses/products-import-history"><?=$jatbi->lang('Hoàn tất')?></button>
                 </div>
             </div>
         </div>

@@ -3856,7 +3856,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             // Mặc định khoảng thời gian
             $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
-            $date_to = date('Y-m-d 23:59:59');
+            $date_to = date('Y-m-d 23:59:59', strtotime('last day of this month'));
 
             // Chuẩn bị dữ liệu cho template
             $vars['data'] = $data;
@@ -3879,18 +3879,21 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             // Lấy giá trị từ bộ lọc
             $filter_date = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
-        
             $filter_stores = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
-            $date_from = date('Y-m-d 00:00:00');
-            $date_to = date('Y-m-d 23:59:59');
-
-
+            // Xử lý bộ lọc ngày
+            $date_from = date('2020-05-06 00:00:00', strtotime('first day of this month'));
+            $date_to = date('2025-05-22 23:59:59', strtotime('last day of this month'));
             if (!empty($filter_date)) {
                 $date_parts = explode(' - ', $filter_date);
                 if (count($date_parts) == 2) {
-                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
-                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
+                    $from = trim($date_parts[0]);
+                    $to = trim($date_parts[1]);
+                    // Kiểm tra định dạng ngày hợp lệ
+                    if (strtotime(str_replace('/', '-', $from)) && strtotime(str_replace('/', '-', $to))) {
+                        $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $from)));
+                        $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $to)));
+                    }
                 }
             }
 
@@ -3930,7 +3933,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $all_logs_for_period = $app->select("warehouses_logs", $joins, [
                 "warehouses_logs.type",
                 "warehouses_logs.amount",
-                "warehouses_logs.price", 
             ], $baseWhere);
 
             // Khởi tạo mảng đầu kỳ và trong kỳ
@@ -3958,23 +3960,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $totalExport = 0;
             $totalMove = 0;
             $totalError = 0;
-            $totalValue = 0; 
             foreach ($all_logs_for_period as $log) {
                 $amount = floatval($log['amount']);
-                $price = floatval($log['price']);
                 if (in_array($log['type'], ['import', 'error', 'export', 'move'])) {
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
-                        $totalValue += $amount * $price; 
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
-                        $totalValue -= $amount * $price; 
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
                         $totalError += $amount;
-                        $totalValue -= $amount * $price;
                     }
                 }
             }
@@ -4024,12 +4021,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "export" => ($log['type'] == 'export' || $log['type'] == 'pairing') ? number_format($log['amount'], 2) : '',
                     "move" => ($log['type'] == 'move') ? number_format($log['amount'], 2) : '',
                     "error" => ($log['type'] == 'error') ? number_format($log['amount'], 2) : '',
-                    "price" => number_format($log['price'] ?? ''),
+                    "price" => number_format($log['price']),
                     "store" => $log['store_name'] . ($log['store_receive_name'] ? " -> " . $log['store_receive_name'] : ''),
-                    "notes" => htmlspecialchars($log['notes']?? ''),
+                    "notes" => htmlspecialchars($log['notes']),
                     "duration" => $log['duration'] ? $log['duration'] . ' ' . $jatbi->lang('tháng') : '',
-                    "date" => date("d/m/Y H:i:s", strtotime($log['date']?? '')),
-                    "user" => htmlspecialchars($log['user_name'] ?? ''),
+                    "date" => date("d/m/Y H:i:s", strtotime($log['date'])),
+                    "user" => htmlspecialchars($log['user_name'] ?? 'N/A'),
                 ];
             }
 
@@ -4044,7 +4041,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "totalExport" => number_format($totalExport, 2),
                     "totalMove" => number_format($totalMove, 2),
                     "totalError" => number_format($totalError, 2),
-                    "totalValue" => number_format($totalValue),
                     "ton_kho" => number_format($ton_kho, 2),
                 ],
             ]);
@@ -6560,254 +6556,276 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     // })->setPermissions(['products.import']);
 
 
-    $app->router('/products-import/crafting/{id}', 'GET', function ($vars) use ($app, $template) {
+    // $app->router('/products-import/crafting/{id}', 'GET', function ($vars) use ($app, $template) {
+    //     $action = "import";
+    //     $data = $app->get("warehouses", ["id", "stores", "code", "branch", "type", "date"], ["data" => 'pairing', "type" => 'export', "id" => $app->xss($vars['id']), "deleted" => 0]);
+    //     if ($data > 1) {
+    //         if ($_SESSION['products'][$action]['crafting'] != $vars['id']) {
+    //             unset($_SESSION['products'][$action]);
+    //             // echo ($_SESSION['products'][$action]);
+    //         }
+    //         if (empty($_SESSION['products'][$action]['crafting'])) {
+    //             $_SESSION['products'][$action]['crafting'] = $data['id'];
+    //             $details = $app->select("warehouses_details", "*", ["warehouses" => $data['id']]);
+    //             foreach ($details as $key => $value) {
+    //                 $getcrafting = $app->get("crafting", "*", ["id" => $value['crafting']]);
+    //                 $_SESSION['products'][$action]['products'][] = [
+    //                     "crafting" => $value['crafting'],
+    //                     "amount" => $value['amount'],
+    //                     "price" => $value['price'],
+    //                     "cost" => $value['cost'],
+    //                     "name" => $getcrafting['name'],
+    //                     "vendor" => $getcrafting['vendor'] ?? '',
+    //                     "code" => $getcrafting['code'],
+    //                     "categorys" => $getcrafting['categorys'],
+    //                     "group" => $getcrafting['group'],
+    //                     "default_code" => $getcrafting['default_code'],
+    //                     "units" => $getcrafting['units'],
+    //                     "notes" => $getcrafting['notes'],
+    //                     "content" => $getcrafting['content'],
+    //                 ];
+    //             }
+    //             if (empty($_SESSION['products'][$action]['stores'])) {
+    //                 $_SESSION['products'][$action]['stores'] = $app->get("stores", "*", ["id" => $data['stores']]);
+    //             }
+    //             if (empty($_SESSION['products'][$action]['branch'])) {
+    //                 $_SESSION['products'][$action]['branch'] = $app->get("branch", "*", ["id" => $data['branch']]);
+    //             }
+    //             if (empty($_SESSION['products'][$action]['date'])) {
+    //                 $_SESSION['products'][$action]['date'] = date("Y-m-d H:i:s");
+    //             }
+    //             $_SESSION['products'][$action]['content'] = "nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'];
+    //         }
+    //         $data = [
+    //             "date" => $_SESSION['products'][$action]['date'],
+    //             "content" => $_SESSION['products'][$action]['content'],
+    //             "stores" => $_SESSION['products'][$action]['stores'],
+    //             "branch" => $_SESSION['products'][$action]['branch'],
+    //             "products" => $_SESSION['products'][$action]['products'],
+    //         ];
+    //         $vars['data'] = $data;
+    //         echo $app->render($template . '/warehouses/products-import-form.html', $vars);
+    //     }
+    // })->setPermissions(['products.import']);
+
+    $app->router('/products-import/crafting/{id}', 'GET', function ($vars) use ($app, $template, $jatbi) {
         $action = "import";
-        $data = $app->get("warehouses", ["id", "stores", "code", "branch", "type", "date"], ["data" => 'pairing', "type" => 'export', "id" => $app->xss($vars['id']), "deleted" => 0]);
-        // if ($data > 1) {
-        //     if ($_SESSION['products'][$action]['crafting'] != $vars['id']) {
-        //         unset($_SESSION['products'][$action]);
-        //         // echo ($_SESSION['products'][$action]);
-        //     }
+        $warehouse_id = $app->xss($vars['id']);
 
+        // 1. Lấy dữ liệu phiếu kho chính
+        $data = $app->get("warehouses", ["id", "stores", "code", "branch", "type", "date"], ["data" => 'pairing', "type" => 'export', "id" => $warehouse_id, "deleted" => 0]);
 
-        if ($data) {
-            if (isset($_SESSION['products'][$action]['crafting']) && $_SESSION['products'][$action]['crafting'] != $vars['id']) {
-                $_SESSION['products'][$action] = [];
-            }
-            if (empty($_SESSION['products'][$action]['crafting'])) {
-                $_SESSION['products'][$action]['crafting'] = $data['id'];
-                $details = $app->select("warehouses_details", "*", ["warehouses" => $data['id']]);
-                foreach ($details as $key => $value) {
-                    $getcrafting = $app->get("crafting", "*", ["id" => $value['crafting']]);
-                    $_SESSION['products'][$action]['products'][] = [
-                        "crafting" => $value['crafting'],
-                        "amount" => $value['amount'],
-                        "price" => $value['price'],
-                        "cost" => $value['cost'],
-                        "name" => $getcrafting['name'],
-                        "vendor" => $getcrafting['vendor'] ?? '',
-                        "code" => $getcrafting['code'],
-                        "categorys" => $getcrafting['categorys'],
-                        "group" => $getcrafting['group'],
-                        "default_code" => $getcrafting['default_code'],
-                        "units" => $getcrafting['units'],
-                        "notes" => $getcrafting['notes'],
-                        "content" => $getcrafting['content'],
-                    ];
-                }
-                if (empty($_SESSION['products'][$action]['stores'])) {
-                    $_SESSION['products'][$action]['stores'] = $app->get("stores", "*", ["id" => $data['stores']]);
-                }
-                if (empty($_SESSION['products'][$action]['branch'])) {
-                    $_SESSION['products'][$action]['branch'] = $app->get("branch", "*", ["id" => $data['branch']]);
-                }
-                if (empty($_SESSION['products'][$action]['date'])) {
-                    $_SESSION['products'][$action]['date'] = date("Y-m-d H:i:s");
-                }
-                $_SESSION['products'][$action]['content'] = "nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'];
-            }
-            $data = [
-                "date" => $_SESSION['products'][$action]['date'],
-                "content" => $_SESSION['products'][$action]['content'],
-                "stores" => $_SESSION['products'][$action]['stores'],
-                "branch" => $_SESSION['products'][$action]['branch'],
-                "products" => $_SESSION['products'][$action]['products'],
-            ];
-            $vars['data'] = $data;
-            echo $app->render($template . '/warehouses/products-import-form.html', $vars);
+        if (!$data) {
+            return $app->render($template . '/error.html', ['title' => $jatbi->lang('Không tìm thấy phiếu kho')]);
         }
+
+        // 2. Xử lý session
+        if (($_SESSION['products'][$action]['crafting'] ?? null) != $warehouse_id) {
+            unset($_SESSION['products'][$action]);
+        }
+
+        // 3. Nếu session trống, tiến hành lấy dữ liệu mới
+        if (empty($_SESSION['products'][$action]['crafting'])) {
+            $_SESSION['products'][$action]['crafting'] = $data['id'];
+
+            // TỐI ƯU HÓA: LẤY DỮ LIỆU HÀNG LOẠT
+            $details = $app->select("warehouses_details", "*", ["warehouses" => $data['id']]);
+            $crafting_ids = array_column($details, 'crafting');
+
+            $crafting_map = [];
+            if (!empty($crafting_ids)) {
+                $craftings_data = $app->select("crafting", "*", ["id" => $crafting_ids]);
+                $crafting_map = array_column($craftings_data, null, 'id');
+            }
+            // KẾT THÚC TỐI ƯU HÓA
+
+            foreach ($details as $value) {
+                $getcrafting = $crafting_map[$value['crafting']] ?? null;
+
+                // Xử lý an toàn: Dùng giá trị mặc định nếu không tìm thấy dữ liệu crafting
+                $_SESSION['products'][$action]['products'][] = [
+                    "crafting"      => $value['crafting'],
+                    "amount"        => $value['amount'],
+                    "price"         => $value['price'],
+                    "cost"          => $value['cost'],
+                    "name"          => $getcrafting['name'] ?? 'N/A',
+                    "vendor"        => $getcrafting['vendor'] ?? '',
+                    "code"          => $getcrafting['code'] ?? '',
+                    "categorys"     => $getcrafting['categorys'] ?? '',
+                    "group"         => $getcrafting['group'] ?? '',
+                    "default_code"  => $getcrafting['default_code'] ?? '',
+                    "units"         => $getcrafting['units'] ?? '',
+                    "notes"         => $getcrafting['notes'] ?? '',
+                    "content"       => $getcrafting['content'] ?? '',
+                ];
+            }
+
+            // Lấy các thông tin khác
+            $_SESSION['products'][$action]['stores'] = $app->get("stores", "*", ["id" => $data['stores']]);
+            $_SESSION['products'][$action]['branch'] = $app->get("branch", "*", ["id" => $data['branch']]);
+            $_SESSION['products'][$action]['date'] = date("Y-m-d H:i:s");
+            $_SESSION['products'][$action]['content'] = "Nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'];
+        }
+
+        // 4. Chuẩn bị dữ liệu và render view
+        $vars['data'] = $_SESSION['products'][$action] ?? [];
+        $vars['action'] = $action;
+
+        echo $app->render($template . '/warehouses/products-import-form.html', $vars);
     })->setPermissions(['products.import']);
 
-
-    $app->router('/products-update/import/{field}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
+    // Router cập nhật Ngày & Nội dung
+    $app->router('/products-update/import/content', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-
         $action = 'import';
-        $field = $vars['field'];
-        if ($field == 'date' || $field == 'content') {
-            $_SESSION['products'][$action][$field] = $app->xss($_POST['value']);
+        $field = $vars['field'] ?? '';
+        $post_value = $app->xss($_POST['value'] ?? '');
+
+        if (in_array($field, ['date', 'content'])) {
+            $_SESSION['products'][$action][$field] = $post_value;
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($field == 'cancel') {
-            unset($_SESSION['products'][$action]);
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($field == 'completed') {
-            $total_products = 0;
-            $error_warehouses = 'false';
-            $error = [];
-            $data = $_SESSION['products'][$action];
-            $warehouses = $app->get("warehouses", ["id", "export_status"], ["id" => $data['crafting'], "deleted" => 0]);
-            foreach ($data['products'] as $value) {
-                $total_products += $value['amount'] * $value['price'];
-                if ($value['amount'] == '' || $value['amount'] == 0 || $value['amount'] < 0) {
-                    $error_warehouses = 'true';
-                }
+        }
+    });
+
+    // Router Hủy phiếu
+    $app->router('/products-update/import/cancel', 'POST', function ($vars) use ($app, $jatbi) {
+        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+        $action = 'import';
+        unset($_SESSION['products'][$action]);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Đã hủy")]);
+    });
+
+    // Router Hoàn tất phiếu
+    $app->router('/products-update/import/completed', 'POST', function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+        $action = 'import';
+        $data = $_SESSION['products'][$action] ?? [];
+
+        // --- BƯỚC 1: KIỂM TRA DỮ LIỆU ĐẦU VÀO ---
+        if (empty($data['content']) || empty($data['products'])) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Lỗi trống")]);
+            return;
+        }
+        foreach ($data['products'] as $value) {
+            if (empty($value['amount']) || $value['amount'] <= 0) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập số lượng hợp lệ cho tất cả sản phẩm")]);
+                return;
             }
-            if ($data['content'] == '' || count($data['products']) == 0) {
-                $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
-            } elseif ($error_warehouses == 'true') {
-                $error = ['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập số lượng")];
-            } elseif ($warehouses['export_status'] == 2) {
-                $error = ['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập")];
-            }
-            if (count($error) == 0) {
-                $insert = [
+        }
+        $warehouse = $app->get("warehouses", ["id", "export_status"], ["id" => $data['crafting'] ?? 0, "deleted" => 0]);
+        if ($warehouse && $warehouse['export_status'] == 2) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập kho")]);
+            return;
+        }
+
+        // --- BƯỚC 2: XỬ LÝ TRONG MỘT TRANSACTION ĐỂ ĐẢM BẢO AN TOÀN ---
+        try {
+            $result = $app->action(function ($db) use ($app, $data, $jatbi) {
+                // 1. Tạo phiếu kho (warehouses)
+                $insert_warehouse = [
                     "code" => 'PN',
                     "type" => 'import',
                     "data" => 'products',
-                    "stores" => $data['stores']['id'],
-                    "branch" => $data['branch']['id'],
-                    "content" => $data['content'],
-                    "vendor" => isset($data['vendor']) ? ($data['vendor']['id'] ?? null) : null,
+                    "stores" => $data['stores']['id'] ?? null,
+                    "branch" => $data['branch']['id'] ?? null,
+                    "content" => $data['content'] ?? '',
+                    "vendor" => $data['vendor']['id'] ?? null,
                     "user" => $app->getSession("accounts")['id'] ?? 0,
-                    "date" => $data['date'],
+                    "date" => $data['date'] ?? date("Y-m-d"),
                     "active" => $jatbi->active(30),
                     "date_poster" => date("Y-m-d H:i:s"),
-                    "crafting" => $data['crafting'],
+                    "crafting" => $data['crafting'] ?? null,
                     "move" => $data['move'] ?? null,
                 ];
-                $app->insert("warehouses", $insert);
-                $orderId = $app->id();
-                $insert_products_logs = [];
-                $pro_logs = [];
-                $crafting_details_logs = [];
-                foreach ($data['products'] as $key => $value) {
-                    $getProducts = $app->get("crafting", ["id"], ["id" => $value['crafting']]);
-                    $Selectdetails[$value['id'] ?? $key] = $app->select("crafting_details", "*", ["crafting" => $getProducts['id'], "deleted" => 0]);
-                    $storeget = $data['stores'];
-                    $branchget = $data['branch'];
-                    $code = $storeget['code'] . $branchget['code'] . $value['code'];
-                    $checkcode = $app->get("products", ["id", "code", "amount"], ["code" => $code, "deleted" => 0, "price" => $app->xss(str_replace([','], '', $value['price']))]);
-                    if ($code == $checkcode['code']) {
-                        $app->update("products", ["amount" => $checkcode['amount'] + $value['amount'], "crafting" => $data['crafting']], ["id" => $checkcode['id']]);
-                        $app->update("products_details", ["deleted" => 1], ["products" => $checkcode['id']]);
-                        $IDPro = $checkcode['id'];
-                        foreach ($Selectdetails[$value['id'] ?? $key] as $detail) {
-                            $crafting_details = [
-                                "products" => $IDPro,
-                                "ingredient" => $detail['ingredient'],
-                                "code" => $detail['code'],
-                                "type" => $detail['type'],
-                                "group" => $detail['group'],
-                                "categorys" => $detail['categorys'],
-                                "pearl" => $detail['pearl'],
-                                "sizes" => $detail['sizes'],
-                                "colors" => $detail['colors'],
-                                "units" => $detail['units'],
-                                "price" => $detail['price'],
-                                "cost" => $detail['cost'],
-                                "amount" => $detail['amount'],
-                                "total" => $detail['total'],
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "date" => date("Y-m-d H:i:s"),
-                            ];
-                            $app->insert("products_details", $crafting_details);
-                            $crafting_details_logs[] = $crafting_details;
-                        }
+                $warehouse_id = $db->insert("warehouses", $insert_warehouse);
+
+                // 2. Lấy thông tin cần thiết trước vòng lặp
+                $all_product_codes_in_session = array_column($data['products'], 'code');
+                $full_product_codes = array_map(function ($code) use ($data) {
+                    return ($data['stores']['code'] ?? '') . ($data['branch']['code'] ?? '') . $code;
+                }, $all_product_codes_in_session);
+
+                $existing_products_db = $db->select("products", ["id", "code", "amount"], ["code" => $full_product_codes, "deleted" => 0]);
+                $existing_products_map = array_column($existing_products_db, null, 'code');
+
+                $crafting_ids = array_column($data['products'], 'crafting');
+                $crafting_details_db = $db->select("crafting_details", "*", ["crafting" => $crafting_ids, "deleted" => 0]);
+                $crafting_details_map = [];
+                foreach ($crafting_details_db as $detail) {
+                    $crafting_details_map[$detail['crafting']][] = $detail;
+                }
+
+                // 3. Lặp qua sản phẩm để xử lý
+                foreach ($data['products'] as $product_data) {
+                    $product_code = ($data['stores']['code'] ?? '') . ($data['branch']['code'] ?? '') . $product_data['code'];
+                    $product_id = null;
+
+                    if (isset($existing_products_map[$product_code])) {
+                        $existing_product = $existing_products_map[$product_code];
+                        $product_id = $existing_product['id'];
+                        $db->update("products", ["amount[+]" => $product_data['amount'], "crafting" => $data['crafting']], ["id" => $product_id]);
+                        $db->update("products_details", ["deleted" => 1], ["products" => $product_id]);
                     } else {
-                        $insert_products = [
+                        $product_id = $db->insert("products", [
                             "type" => 1,
-                            "main" => 0,
-                            "code" => $code,
-                            "name" => $app->xss($value['name']),
-                            "categorys" => $app->xss($value['categorys']),
-                            "vat" => $setting['site_vat'],
-                            "vat_type" => 1,
-                            "amount" => $value['amount'],
-                            "content" => $value['content'],
-                            "vendor" => $app->xss($value['vendor']),
-                            "group" => $app->xss($value['group']),
-                            "price" => $app->xss(str_replace([','], '', $value['price'])),
-                            "units" => $app->xss($value['units']),
-                            "notes" => $app->xss($value['notes']),
-                            "active" => $jatbi->active(32),
-                            // "images" => $handle->file_dst_name == '' ? 'no-images.jpg' : $handle->file_dst_name,
-                            "date" => date('Y-m-d H:i:s'),
+                            "code" => $product_code,
+                            "name" => $product_data['name'],
+                            "categorys" => $product_data['categorys'],
+                            "amount" => $product_data['amount'],
+                            "price" => str_replace(',', '', $product_data['price']),
+                            "units" => $product_data['units'],
                             "status" => 'A',
                             "user" => $app->getSession("accounts")['id'] ?? 0,
-                            "new" => 1,
-                            "stores" => $insert['stores'],
-                            "branch" => $insert['branch'],
-                            "code_products" => $value['code'],
-                            "tkno" => $value['no'],
-                            "tkco" => $value['co'],
-                            "default_code" => $value['default_code'],
+                            "date" => date('Y-m-d H:i:s'),
+                            "stores" => $insert_warehouse['stores'],
+                            "branch" => $insert_warehouse['branch'],
+                            "code_products" => $product_data['code'],
                             "crafting" => $data['crafting']
-                        ];
-                        $app->insert("products", $insert_products);
-                        $IDPro = $app->id();
-                        foreach ($Selectdetails[$value['id'] ?? $key] as $detail) {
-                            $crafting_details = [
-                                "products" => $IDPro,
-                                "ingredient" => $detail['ingredient'],
-                                "code" => $detail['code'],
-                                "type" => $detail['type'],
-                                "group" => $detail['group'],
-                                "categorys" => $detail['categorys'],
-                                "pearl" => $detail['pearl'],
-                                "sizes" => $detail['sizes'],
-                                "colors" => $detail['colors'],
-                                "units" => $detail['units'],
-                                "price" => $detail['price'],
-                                "cost" => $detail['cost'],
-                                "amount" => $detail['amount'],
-                                "total" => $detail['total'],
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "date" => $insert_products['date'],
-                            ];
-                            $app->insert("products_details", $crafting_details);
-                            $crafting_details_logs[] = $crafting_details;
-                        }
-                        $insert_products_logs[] = $insert_products;  // Di chuyển vào đây để tránh undefined
+                        ]);
                     }
-                    $pro = [
-                        "warehouses" => $orderId,
-                        "data" => $insert['data'],
-                        "type" => $insert['type'],
-                        "vendor" => $value['vendor'],
-                        "products" => $IDPro,
-                        "amount_buy" => $value['amount_buy'] ?? 0,
-                        "amount" => $value['amount'],
-                        "amount_total" => $value['amount'],
-                        "price" => $value['price'],
-                        "cost" => $value['cost'],
-                        "notes" => $value['notes'],
-                        "date" => $insert['date_poster'],
+
+                    // SỬA LỖI: Dùng vòng lặp để insert từng chi tiết một
+                    $current_crafting_details = $crafting_details_map[$product_data['crafting']] ?? [];
+                    foreach ($current_crafting_details as $detail) {
+                        $detail['products'] = $product_id;
+                        unset($detail['id'], $detail['crafting']);
+                        $db->insert("products_details", $detail);
+                    }
+
+                    $db->insert("warehouses_details", [
+                        "warehouses" => $warehouse_id,
+                        "data" => 'products',
+                        "type" => 'import',
+                        "products" => $product_id,
+                        "amount" => $product_data['amount'],
+                        "price" => $product_data['price'],
+                        "cost" => $product_data['cost'],
+                        "date" => $insert_warehouse['date_poster'],
                         "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                        "branch" => $insert['branch'],
-                        "crafting" => $app->get("warehouses_details", "crafting", ["warehouses" => $app->get("warehouses", "crafting", ["id" => $orderId])]),
-                    ];
-                    $app->insert("warehouses_details", $pro);
-                    $GetID = $app->id();
-                    $warehouses_logs = [
-                        "type" => $insert['type'],
-                        "data" => $insert['data'],
-                        "warehouses" => $orderId,
-                        "details" => $GetID,
-                        "products" => $IDPro,
-                        "price" => $value['price'],
-                        "amount" => $app->xss($value['amount']),
-                        "total" => $value['amount'] * $value['price'],
-                        "notes" => $value['notes'],
-                        "duration" => $value['duration'] ?? null,
-                        "date" => $insert['date_poster'],
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                        "branch" => $insert['branch'],
-                    ];
-                    $app->insert("warehouses_logs", $warehouses_logs);
-                    $pro_logs[] = $pro;
-                    $app->update("products", ["crafting" => $pro["crafting"]], ["id" => $IDPro]);
+                        "stores" => $insert_warehouse['stores'],
+                        "branch" => $insert_warehouse['branch'],
+                        "crafting" => $data['crafting'],
+                    ]);
                 }
-                $jatbi->logs('warehouses', $action, [$insert, $insert_products_logs, $pro_logs, $crafting_details_logs, $_SESSION['products'][$action]]);
-                $app->update("warehouses", ["export_status" => 2, "export_date" => $insert['date_poster']], ["id" => $data['crafting']]);
+
+                if (!empty($data['crafting'])) {
+                    $db->update("warehouses", ["export_status" => 2, "export_date" => date("Y-m-d H:i:s")], ["id" => $data['crafting']]);
+                }
+
+                return true;
+            });
+            
+            if ($result) {
                 unset($_SESSION['products'][$action]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
-                echo json_encode(['status' => 'error', 'content' => $error['content']]);
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra trong quá trình xử lý")]);
             }
+        } catch (Exception $e) {
+            echo json_encode(['status' => 'error', 'content' => 'Lỗi server: ' . $e->getMessage()]);
         }
     });
+
 
 
     $app->router("/warehouse_error", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
@@ -7075,8 +7093,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     });
 
-
-
     $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, $template) {
 
         $jatbi->permission('ingredient');
@@ -7090,198 +7106,131 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         echo $app->render($template . '/warehouses/ingredient-import.html', $vars);
     })->setPermissions(['ingredient']);
 
+    $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC GET (HIỂN THỊ TRANG) ----
+        if ($app->method() === 'GET') {
+            $jatbi->permission('ingredient-import');
+            $vars['title'] = $jatbi->lang("Danh sách nhập hàng");
+
+            // Lấy danh sách tài khoản để đưa vào bộ lọc
+            $accounts = $app->select("accounts", [
+                "id(value)",
+                "name(text)"
+            ], [
+                "deleted" => 0,
+                "ORDER" => ["name" => "ASC"]
+            ]);
+
+            // Thêm tùy chọn "Tất cả" vào đầu danh sách
+            array_unshift($accounts, [
+                'value' => '',
+                'text' => $jatbi->lang('Tất cả')
+            ]);
+            $vars['accounts'] = $accounts;
+
+            // Render ra file view HTML
+            echo $app->render($template . '/warehouses/ingredient-import-crafting.html', $vars);
+
+            // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC POST (CUNG CẤP DỮ LIỆU JSON CHO DATATABLES) ----
+        } elseif ($app->method() === 'POST') {
+            $jatbi->permission('ingredient-import');
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+            // --- 1. Đọc các tham số từ DataTables gửi lên ---
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['column']) ? $_POST['columns'][$_POST['order'][0]['column']]['name'] : 'warehouses.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+
+            // Lấy giá trị từ các bộ lọc tùy chỉnh
+            $userFilter = isset($_POST['user']) ? $_POST['user'] : '';
+
+            $dateFilter = isset($_POST['date']) ? $_POST['date'] : '';
+            // --- 2. Xây dựng truy vấn với JOIN ---
+            $joins = [
+                "[>]accounts" => ["user" => "id"],
+            ];
+
+            // Xây dựng điều kiện WHERE cơ bản
+            $where = [
+                "AND" => [
+                    "warehouses.deleted" => 0,
+                    "warehouses.data" => 'crafting',
+                    "warehouses.type" => 'export',
+                    "warehouses.export_status" => 1,
+                ],
+            ];
+
+            // Áp dụng bộ lọc tìm kiếm chung
+            if (!empty($searchValue)) {
+                $where['AND']['OR'] = [
+                    'warehouses.code[~]' => $searchValue,
+                    'warehouses.content[~]' => $searchValue,
+                    'accounts.name[~]' => $searchValue,
+                ];
+            }
+
+            // Áp dụng bộ lọc theo tài khoản
+            if (!empty($userFilter)) {
+                $where['AND']['warehouses.user'] = $userFilter;
+            }
+
+            if (!empty($dateFilter)) {
+                $date_parts = explode(' - ', $dateFilter);
+                if (count($date_parts) == 2) {
+                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
+                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
+                    // Thêm điều kiện vào $where
+                    $where['AND']['warehouses.date_poster[<>]'] = [$date_from, $date_to];
+                }
+            }
+
+            // --- 3. Đếm tổng số bản ghi thỏa mãn điều kiện ---
+            $recordsFiltered = $app->count("warehouses", $joins, "warehouses.id", $where);
+            $recordsTotal = $app->count("warehouses", ["deleted" => 0, "data" => 'crafting', "type" => 'export', "export_status" => 1]);
+
+
+            // Thêm điều kiện sắp xếp và phân trang
+            $where['ORDER'] = [$orderName => strtoupper($orderDir)];
+            $where['LIMIT'] = [$start, $length];
+
+            // --- 4. Lấy dữ liệu chính ---
+            $datasFormatted = [];
+            $columns = [
+                "warehouses.id",
+                "warehouses.code",
+                "warehouses.content",
+                "warehouses.date_poster",
+                "accounts.name(user_name)"
+            ];
+
+            $app->select("warehouses", $joins, $columns, $where, function ($data) use (&$datasFormatted, $jatbi, $app, $setting) {
 
 
 
+                // Định dạng dữ liệu trả về cho mỗi hàng
+                $datasFormatted[] = [
+                    "code" => '<a class="fw-bold modal-url" data-url="/crafting/crafting-history-views' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
+                    "content" => $data['content'],
+                    "date_poster" => date($setting['site_datetime'] ?? 'd/m/Y H:i:s', strtotime($data['date_poster'])),
+                    "user" => $data['user_name'],
+                    "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/ingredient-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
+                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
 
-    // $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
-    //     // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC GET (HIỂN THỊ TRANG) ----
-    //     if ($app->method() === 'GET') {
-    //         $jatbi->permission('ingredient-import');
-    //         $vars['title'] = $jatbi->lang("Danh sách nhập hàng");
+                ];
+            });
 
-    //         // Lấy danh sách tài khoản để đưa vào bộ lọc
-    //         $accounts = $app->select("accounts", [
-    //             "id(value)",
-    //             "name(text)"
-    //         ], [
-    //             "deleted" => 0,
-    //             "ORDER" => ["name" => "ASC"]
-    //         ]);
-
-    //         // Thêm tùy chọn "Tất cả" vào đầu danh sách
-    //         array_unshift($accounts, [
-    //             'value' => '',
-    //             'text' => $jatbi->lang('Tất cả')
-    //         ]);
-    //         $vars['accounts'] = $accounts;
-
-    //         // Render ra file view HTML
-    //         echo $app->render($template . '/warehouses/ingredient-import-crafting.html', $vars);
-
-    //         // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC POST (CUNG CẤP DỮ LIỆU JSON CHO DATATABLES) ----
-    //     } elseif ($app->method() === 'POST') {
-    //         $jatbi->permission('ingredient-import');
-    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-
-    //         // --- 1. Đọc các tham số từ DataTables gửi lên ---
-    //         $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
-    //         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-    //         $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
-    //         $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-    //         $orderName = isset($_POST['order'][0]['column']) ? $_POST['columns'][$_POST['order'][0]['column']]['name'] : 'warehouses.id';
-    //         $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-
-    //         // Lấy giá trị từ các bộ lọc tùy chỉnh
-    //         $userFilter = isset($_POST['user']) ? $_POST['user'] : '';
-
-    //         $dateFilter = isset($_POST['date']) ? $_POST['date'] : '';
-    //         // --- 2. Xây dựng truy vấn với JOIN ---
-    //         $joins = [
-    //             "[>]accounts" => ["user" => "id"],
-    //         ];
-
-    //         // Xây dựng điều kiện WHERE cơ bản
-    //         $where = [
-    //             "AND" => [
-    //                 "warehouses.deleted" => 0,
-    //                 "warehouses.data" => 'crafting',
-    //                 "warehouses.type" => 'export',
-    //                 "warehouses.export_status" => 1,
-    //             ],
-    //         ];
-
-    //         // Áp dụng bộ lọc tìm kiếm chung
-    //         if (!empty($searchValue)) {
-    //             $where['AND']['OR'] = [
-    //                 'warehouses.code[~]' => $searchValue,
-    //                 'warehouses.content[~]' => $searchValue,
-    //                 'accounts.name[~]' => $searchValue,
-    //             ];
-    //         }
-
-    //         // Áp dụng bộ lọc theo tài khoản
-    //         if (!empty($userFilter)) {
-    //             $where['AND']['warehouses.user'] = $userFilter;
-    //         }
-
-    //         if (!empty($dateFilter)) {
-    //             $date_parts = explode(' - ', $dateFilter);
-    //             if (count($date_parts) == 2) {
-    //                 $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
-    //                 $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
-    //                 // Thêm điều kiện vào $where
-    //                 $where['AND']['warehouses.date_poster[<>]'] = [$date_from, $date_to];
-    //             }
-    //         }
-
-    //         // --- 3. Đếm tổng số bản ghi thỏa mãn điều kiện ---
-    //         $recordsFiltered = $app->count("warehouses", $joins, "warehouses.id", $where);
-    //         $recordsTotal = $app->count("warehouses", ["deleted" => 0, "data" => 'crafting', "type" => 'export', "export_status" => 1]);
-
-
-    //         // Thêm điều kiện sắp xếp và phân trang
-    //         $where['ORDER'] = [$orderName => strtoupper($orderDir)];
-    //         $where['LIMIT'] = [$start, $length];
-
-    //         // --- 4. Lấy dữ liệu chính ---
-    //         $datasFormatted = [];
-    //         $columns = [
-    //             "warehouses.id",
-    //             "warehouses.code",
-    //             "warehouses.content",
-    //             "warehouses.date_poster",
-    //             "accounts.name(user_name)"
-    //         ];
-
-    //         $app->select("warehouses", $joins, $columns, $where, function ($data) use (&$datasFormatted, $jatbi, $app, $setting) {
-
-
-
-    //             // Định dạng dữ liệu trả về cho mỗi hàng
-    //             $datasFormatted[] = [
-    //                 "code" => '<a class="fw-bold modal-url" data-url="/crafting/crafting-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
-    //                 "content" => $data['content'],
-    //                 "date_poster" => date($setting['site_datetime'] ?? 'd/m/Y H:i:s', strtotime($data['date_poster'])),
-    //                 "user" => $data['user_name'],
-    //                 "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/ingredient-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
-    //                 "views" => '<button data-action="modal" data-url="/crafting/crafting-history-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
-
-    //             ];
-    //         });
-
-    //         // --- 5. Trả về kết quả dưới dạng JSON cho DataTables ---
-    //         echo json_encode([
-    //             "draw" => $draw,
-    //             "recordsTotal" => $recordsTotal,
-    //             "recordsFiltered" => $recordsFiltered,
-    //             "data" => $datasFormatted,
-    //         ]);
-    //     }
-    // })->setPermissions(['ingredient-import']);
-
-    // /**
-    //  * Route mới: Nhập kho từ phiếu chế tác
-    //  * URL: /ingredient-import-crafting/{id}
-    //  * Nhiệm vụ: Lấy dữ liệu từ phiếu xuất kho chế tác và hiển thị trên template nhập kho chung.
-    //  */
-    // $app->router('/ingredient-import/crafting/{id}', ['GET'], function ($vars) use ($app, $jatbi, $setting) {
-    //     $jatbi->permission('ingredient');
-
-    //     $id = (int) ($vars['id'] ?? 0);
-
-
-    //     // Xóa session cũ để bắt đầu phiếu mới từ dữ liệu chế tác
-    //     unset($_SESSION['ingredient_import']);
-
-    //     // Lấy thông tin phiếu xuất kho chế tác từ DB (logic từ code cũ)
-    //     $data = $app->get("warehouses", ["id", "code"], ["data" => 'crafting', "type" => 'export', "id" => $id, "deleted" => 0]);
-
-    //     if ($data) {
-    //         $vars['title'] = $jatbi->lang("Nhập kho từ phiếu chế tác #" . $data['code'] . $data['id']);
-    //         // Cờ này báo cho template biết đây là phiếu nhập từ chế tác
-    //         $vars['is_crafting_import'] = true;
-
-    //         // Khởi tạo và điền dữ liệu vào session
-    //         $_SESSION['ingredient_import'] = [
-    //             'ingredients' => [],
-    //             'content' => "Nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'],
-    //             'crafting_id' => $data['id'], // Lưu ID phiếu gốc để xử lý khi hoàn tất
-    //             'date' => date("Y-m-d H:i:s")
-    //         ];
-
-    //         // Lấy chi tiết các nguyên liệu từ phiếu xuất kho
-    //         $details = $app->select("warehouses_details", ["ingredient", "amount", "price"], ["warehouses" => $data['id']]);
-
-    //         foreach ($details as $value) {
-    //             $getPro = $app->get("ingredient", ["id", "code", "name_ingredient", "units", "notes", "amount as stock_quantity"], ["id" => $value['ingredient']]);
-    //             if ($getPro) {
-    //                 $unit_name = $app->get("units", "name", ["id" => $getPro['units']]) ?? 'N/A';
-    //                 $_SESSION['ingredient_import']['ingredients'][$getPro['id']] = [
-    //                     "ingredient_id" => $getPro['id'],
-    //                     "code" => $getPro['code'],
-    //                     "name" => $getPro['name_ingredient'],
-    //                     "selling_price" => $value['price'] ?? 0,
-    //                     "stock_quantity" => $getPro['stock_quantity'] ?? 0,
-    //                     "amount" => $value['amount'],
-    //                     "price" => $value['price'] ?? 0,
-    //                     "unit_name" => $unit_name,
-    //                     "notes" => $getPro['notes'] ?? '',
-    //                 ];
-    //             }
-    //         }
-    //     } else {
-    //         // Nếu không tìm thấy phiếu, hiển thị thông báo
-    //         $vars['title'] = $jatbi->lang("Không tìm thấy phiếu");
-    //         $vars['is_crafting_import'] = true; // Vẫn là context crafting
-    //         $vars['error_message'] = "Không tìm thấy phiếu chế tác hợp lệ với ID này.";
-    //     }
-
-    //     // CUỐI CÙNG, RENDER RA CÙNG TEMPLATE VỚI ROUTE TRÊN
-    //     echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
-
-    // })->setPermissions(['ingredient']);
-
+            // --- 5. Trả về kết quả dưới dạng JSON cho DataTables ---
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $recordsTotal,
+                "recordsFiltered" => $recordsFiltered,
+                "data" => $datasFormatted,
+            ]);
+        }
+    })->setPermissions(['ingredient-import']);
 
     $app->router('/ingredient-import/crafting/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $id = (int) ($vars['id'] ?? 0);
@@ -7335,7 +7284,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
     })->setPermissions(['ingredient']);
-
 
     $app->router("/warehouses-import", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Nhập hàng");
@@ -7424,120 +7372,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         echo $app->render($template . '/warehouses/import.html', $vars);
     })->setPermissions(['warehouses-import']);
-
-
-    // $app->router("/warehouses-import/{type}/{id}", 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
-    //     $vars['title'] = $jatbi->lang("Nhập hàng");
-    //     $action = "import";
-    //     $type = $vars['type'] ?? '';
-    //     $id = $vars['id'] ?? 0;
-
-    //     if (isset($_SESSION['warehouses'][$action]['import_type']) && $_SESSION['warehouses'][$action]['import_type'] !== $type) {
-    //         unset($_SESSION['warehouses'][$action]);
-    //     }
-    //     $_SESSION['warehouses'][$action]['import_type'] = $type;
-
-    //     if ($type === 'purchase' && empty($_SESSION['warehouses'][$action]['products'])) {
-    //         $purchase = $app->get("purchase", ['id', 'code', 'vendor'], ["id" => $id, "deleted" => 0, "status" => 3]);
-    //         if ($purchase) {
-    //             // Sửa lại dòng này
-    //             $purchase_products = $app->select("purchase_products", ['products', 'amount', 'price', 'vendor', 'duration'], ["purchase" => $purchase['id'], "deleted" => 0]);
-    //             // Và thêm 'duration' vào đây
-    //             foreach ($purchase_products as $p) {
-    //                 $_SESSION['warehouses'][$action]['products'][$p['products']] = ["products" => $p['products'], "amount" => $p['amount'], "price" => $p['price'], 'duration' => $p['duration']];
-    //             }
-    //             $_SESSION['warehouses'][$action]['source_id'] = $purchase['id'];
-    //             $_SESSION['warehouses'][$action]['content'] = "Nhập hàng từ phiếu mua #" . $purchase['code'];
-    //             $_SESSION['warehouses'][$action]['vendor'] = $app->get("vendors", "*", ["id" => $purchase['vendor']]);
-    //         }
-    //     } elseif ($type === 'move' && empty($_SESSION['warehouses'][$action]['products'])) {
-    //         $move = $app->get("warehouses", '*', ["id" => $id, "deleted" => 0, "receive_status" => [1, 3], "stores_receive" => $accStore]);
-    //         if ($move) {
-    //             // Sửa lại dòng này
-    //             $move_products = $app->select("warehouses_details", ['id', 'products', 'amount', 'price', 'duration'], ["warehouses" => $move['id'], "deleted" => 0]);
-    //             // Và thêm 'duration' vào đây
-    //             foreach ($move_products as $p) {
-    //                 $_SESSION['warehouses'][$action]['products'][$p['products']] = ["products" => $p['products'], "amount" => $p['amount'], "price" => $p['price'], "details_id" => $p['id'], 'duration' => $p['duration']];
-    //             }
-    //             $_SESSION['warehouses'][$action]['source_id'] = $move['id'];
-    //             $_SESSION['warehouses'][$action]['stores'] = $app->get("stores", "*", ["id" => $move['stores_receive']]);
-    //             $_SESSION['warehouses'][$action]['branch'] = $app->get("branch", "*", ["id" => $move['branch_receive']]);
-    //             $_SESSION['warehouses'][$action]['content'] = "Nhập hàng từ phiếu chuyển #" . ($move['code'] ?? $move['id']);
-    //         }
-    //     }
-
-    //     if (empty($_SESSION['warehouses'][$action]['date'])) {
-    //         $_SESSION['warehouses'][$action]['date'] = date("Y-m-d");
-    //     }
-    //     if (count($stores) == 1 && empty($_SESSION['warehouses'][$action]['stores'])) {
-    //         $_SESSION['warehouses'][$action]['stores'] = $app->get("stores", "*", ["id" => array_values($accStore)[0] ?? 0, "status" => 'A', "deleted" => 0]);
-    //     }
-
-    //     $vars['data'] = $_SESSION['warehouses'][$action] ?? [];
-    //     $vars['action'] = $action;
-    //     $vars['type'] = $type;
-
-    //     $session_products = $_SESSION['warehouses'][$action]['products'] ?? [];
-    //     $enriched_products = [];
-    //     if (!empty($session_products)) {
-    //         $product_ids = array_column($session_products, 'products');
-
-    //         $products_info = $app->select("products", [
-    //             "[>]vendors" => ["vendor" => "id"],
-    //             "[>]units" => ["units" => "id"],
-    //             "[>]stores" => ["stores" => "id"],
-    //             "[>]branch" => ["branch" => "id"]
-    //         ], [
-    //             "products.id",
-    //             "products.code",
-    //             "products.name",
-    //             "products.vendor(vendor_id)",
-    //             "vendors.name(vendor_name)",
-    //             "units.name(unit_name)",
-    //             "stores.name(store_name)",
-    //             "branch.name(branch_name)"
-    //         ], ["products.id" => $product_ids]);
-
-    //         $products_map = array_column($products_info, null, 'id');
-
-    //         foreach ($session_products as $key => $item) {
-    //             $p_id = $item['products'];
-    //             if (isset($products_map[$p_id])) {
-    //                 $product_detail = $products_map[$p_id];
-    //                 $price = (float) str_replace(',', '', $item['price'] ?? 0);
-    //                 $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
-
-    //                 $enriched_products[$key] = array_merge($item, [
-    //                     'key' => $key,
-    //                     'code' => $product_detail['code'],
-    //                     'name' => $product_detail['name'],
-    //                     'vendor_name' => $product_detail['vendor_name'],
-    //                     'unit' => $product_detail['unit_name'],
-    //                     'store' => $product_detail['store_name'],
-    //                     'branch' => $product_detail['branch_name'],
-    //                     'total_price' => $price * $amount,
-    //                 ]);
-    //             }
-    //         }
-    //     }
-    //     $vars['SelectProducts'] = $enriched_products;
-
-    //     $store_options = [];
-    //     if (!empty($stores)) {
-    //         foreach ($stores as $store) {
-    //             if (isset($store['value']) && isset($store['text'])) {
-    //                 $store_options[] = ['value' => $store['value'], 'text' => $store['text']];
-    //             }
-    //         }
-    //     }
-    //     $vars['store_options'] = $store_options;
-
-    //     $selected_store_id = $vars['data']['stores']['id'] ?? 0;
-    //     $vars['branch_options'] = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-
-    //     echo $app->render($template . '/warehouses/import.html', $vars);
-    // })->setPermissions(['warehouses-import']);
-
 
     $app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
@@ -8156,67 +7990,63 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     });
 
+    $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
 
+        if ($app->method() === 'GET') {
+            $vars['accounts'] = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
+            echo $app->render($template . '/warehouses/products-import-crafting.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
+            $draw = intval($_POST['draw'] ?? 0);
+            $start = intval($_POST['start'] ?? 0);
+            $length = intval($_POST['length'] ?? 10);
+            $searchValue = $_POST['search']['value'] ?? '';
 
-    // $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
-    //     $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
+            $where = [
+                "AND" => [
+                    "w.deleted" => 0,
+                    "w.data" => 'pairing',
+                    "w.type" => 'export',
+                    "w.export_status" => 1,
+                ]
+            ];
+            if (!empty($searchValue))
+                $where['AND']['w.id[~]'] = $searchValue;
 
-    //     if ($app->method() === 'GET') {
-    //         $vars['accounts'] = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
-    //         echo $app->render($template . '/warehouses/products-import-crafting.html', $vars);
-    //     } elseif ($app->method() === 'POST') {
-    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+            $joins = ["[<]stores(s)" => ["stores" => "id"], "[<]branch(b)" => ["branch" => "id"], "[<]accounts(a)" => ["user" => "id"]];
 
-    //         $draw = intval($_POST['draw'] ?? 0);
-    //         $start = intval($_POST['start'] ?? 0);
-    //         $length = intval($_POST['length'] ?? 10);
-    //         $searchValue = $_POST['search']['value'] ?? '';
+            $count = $app->count("warehouses(w)", $joins, "w.id", $where);
 
-    //         $where = [
-    //             "AND" => [
-    //                 "w.deleted" => 0,
-    //                 "w.data" => 'pairing',
-    //                 "w.type" => 'export',
-    //                 "w.export_status" => 1,
-    //             ]
-    //         ];
-    //         if (!empty($searchValue))
-    //             $where['AND']['w.id[~]'] = $searchValue;
+            $where["ORDER"] = ['w.id' => 'DESC'];
+            $where["LIMIT"] = [$start, $length];
 
-    //         $joins = ["[<]stores(s)" => ["stores" => "id"], "[<]branch(b)" => ["branch" => "id"], "[<]accounts(a)" => ["user" => "id"]];
+            $columns = ["w.id", "w.code", "w.content", "w.date_poster", "s.name(store_name)", "b.name(branch_name)", "a.name(user_name)"];
+            $datas = $app->select("warehouses(w)", $joins, $columns, $where);
 
-    //         $count = $app->count("warehouses(w)", $joins, "w.id", $where);
+            $resultData = [];
+            foreach ($datas as $data) {
+                $resultData[] = [
+                    "code" => '<a data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '/">#' . $data['code'] . $data['id'] . '</a>',
+                    "store" => $data['store_name'],
+                    "branch" => $data['branch_name'],
+                    "content" => $data['content'],
+                    "date" => $jatbi->datetime($data['date_poster']),
+                    "user" => $data['user_name'],
+                    "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
+                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+                ];
+            }
 
-    //         $where["ORDER"] = ['w.id' => 'DESC'];
-    //         $where["LIMIT"] = [$start, $length];
-
-    //         $columns = ["w.id", "w.code", "w.content", "w.date_poster", "s.name(store_name)", "b.name(branch_name)", "a.name(user_name)"];
-    //         $datas = $app->select("warehouses(w)", $joins, $columns, $where);
-
-    //         $resultData = [];
-    //         foreach ($datas as $data) {
-    //             $resultData[] = [
-    //                 "code" => '<a data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '/">#' . $data['code'] . $data['id'] . '</a>',
-    //                 "store" => $data['store_name'],
-    //                 "branch" => $data['branch_name'],
-    //                 "content" => $data['content'],
-    //                 "date" => $jatbi->datetime($data['date_poster']),
-    //                 "user" => $data['user_name'],
-    //                 "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '/">' . $jatbi->lang('Nhập hàng') . '</a>',
-    //                 "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
-    //             ];
-    //         }
-
-    //         echo json_encode([
-    //             "draw" => $draw,
-    //             "recordsTotal" => $count,
-    //             "recordsFiltered" => $count,
-    //             "data" => $resultData
-    //         ]);
-    //     }
-    // })->setPermissions(['products.import']);
-
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $resultData
+            ]);
+        }
+    })->setPermissions(['products.import']);
 
     $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, $template) {
 
@@ -8230,10 +8060,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         echo $app->render($template . '/warehouses/ingredient-import.html', $vars);
     })->setPermissions(['ingredient']);
-
-
-
-
 
     $app->router('/ingredient-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         // ---- PHẦN XỬ LÝ CHO PHƯƠNG THỨC GET (HIỂN THỊ TRANG) ----
@@ -8341,12 +8167,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
                 // Định dạng dữ liệu trả về cho mỗi hàng
                 $datasFormatted[] = [
-                    "code" => '<a class="fw-bold modal-url" data-action="modal" data-url="/crafting/crafting-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
+                    "code" => '<a class="fw-bold modal-url" data-url="/crafting/crafting-history-views' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
                     "content" => $data['content'],
                     "date_poster" => date($setting['site_datetime'] ?? 'd/m/Y H:i:s', strtotime($data['date_poster'])),
                     "user" => $data['user_name'],
                     "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/ingredient-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
-                    "views" => '<button data-action="modal" data-url="/crafting/crafting-history-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
 
                 ];
             });
@@ -8360,69 +8186,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             ]);
         }
     })->setPermissions(['ingredient-import']);
-
-    // /**
-    //  * Route mới: Nhập kho từ phiếu chế tác
-    //  * URL: /ingredient-import-crafting/{id}
-    //  * Nhiệm vụ: Lấy dữ liệu từ phiếu xuất kho chế tác và hiển thị trên template nhập kho chung.
-    //  */
-    // $app->router('/ingredient-import/crafting/{id}', ['GET'], function ($vars) use ($app, $jatbi, $setting) {
-    //     $jatbi->permission('ingredient');
-
-    //     $id = (int) ($vars['id'] ?? 0);
-
-
-    //     // Xóa session cũ để bắt đầu phiếu mới từ dữ liệu chế tác
-    //     unset($_SESSION['ingredient_import']);
-
-    //     // Lấy thông tin phiếu xuất kho chế tác từ DB (logic từ code cũ)
-    //     $data = $app->get("warehouses", ["id", "code"], ["data" => 'crafting', "type" => 'export', "id" => $id, "deleted" => 0]);
-
-    //     if ($data) {
-    //         $vars['title'] = $jatbi->lang("Nhập kho từ phiếu chế tác #" . $data['code'] . $data['id']);
-    //         // Cờ này báo cho template biết đây là phiếu nhập từ chế tác
-    //         $vars['is_crafting_import'] = true;
-
-    //         // Khởi tạo và điền dữ liệu vào session
-    //         $_SESSION['ingredient_import'] = [
-    //             'ingredients' => [],
-    //             'content' => "Nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'],
-    //             'crafting_id' => $data['id'], // Lưu ID phiếu gốc để xử lý khi hoàn tất
-    //             'date' => date("Y-m-d H:i:s")
-    //         ];
-
-    //         // Lấy chi tiết các nguyên liệu từ phiếu xuất kho
-    //         $details = $app->select("warehouses_details", ["ingredient", "amount", "price"], ["warehouses" => $data['id']]);
-
-    //         foreach ($details as $value) {
-    //             $getPro = $app->get("ingredient", ["id", "code", "name_ingredient", "units", "notes", "amount as stock_quantity"], ["id" => $value['ingredient']]);
-    //             if ($getPro) {
-    //                 $unit_name = $app->get("units", "name", ["id" => $getPro['units']]) ?? 'N/A';
-    //                 $_SESSION['ingredient_import']['ingredients'][$getPro['id']] = [
-    //                     "ingredient_id" => $getPro['id'],
-    //                     "code" => $getPro['code'],
-    //                     "name" => $getPro['name_ingredient'],
-    //                     "selling_price" => $value['price'] ?? 0,
-    //                     "stock_quantity" => $getPro['stock_quantity'] ?? 0,
-    //                     "amount" => $value['amount'],
-    //                     "price" => $value['price'] ?? 0,
-    //                     "unit_name" => $unit_name,
-    //                     "notes" => $getPro['notes'] ?? '',
-    //                 ];
-    //             }
-    //         }
-    //     } else {
-    //         // Nếu không tìm thấy phiếu, hiển thị thông báo
-    //         $vars['title'] = $jatbi->lang("Không tìm thấy phiếu");
-    //         $vars['is_crafting_import'] = true; // Vẫn là context crafting
-    //         $vars['error_message'] = "Không tìm thấy phiếu chế tác hợp lệ với ID này.";
-    //     }
-
-    //     // CUỐI CÙNG, RENDER RA CÙNG TEMPLATE VỚI ROUTE TRÊN
-    //     echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
-
-    // })->setPermissions(['ingredient']);
-
 
     $app->router('/ingredient-import/crafting/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $jatbi->permission('ingredient');
@@ -8478,11 +8241,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
     })->setPermissions(['ingredient']);
 
-
     $app->router('/ingredient-move', ['GET'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores) {
-
-
-        $jatbi->permission('ingredient');
         $vars['title'] = $jatbi->lang("Chuyển qua kho thành phẩm");
 
         // Khởi tạo session nếu chưa có
@@ -8549,11 +8308,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         echo $app->render($template . '/warehouses/ingredient-move.html', $vars);
     })->setPermissions(['ingredient']);
 
-
-
-
-
-
     $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $jatbi->permission('ingredient-export');
 
@@ -8573,10 +8327,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         // Render file HTML
         echo $app->render($template . '/warehouses/ingredient-export.html', $vars);
     })->setPermissions(['ingredient']);
-
-
-
-
 
     $app->router('/ingredient-cancel/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $jatbi->permission('ingredient');
@@ -8617,7 +8367,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "batch_id" => $batch['id'],
                     "vendor_id" => $batch['vendor'],
                     "amount_total" => $batch['amount_total'],
-                    "amount_cancel" => 0, // Số lượng hủy ban đầu là 0
+                    "amount_cancel" => 0,
                     "price" => $batch['price'],
                     "units_id" => $ingredient_data['units'],
                     "import_date" => $batch['date'],
@@ -8631,56 +8381,6 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         echo $app->render($template . '/warehouses/ingredient-cancel.html', $vars);
     })->setPermissions(['ingredient']);
-
-    // $app->router('/ingredient-import/purchase/{id}', ['GET'], function ($vars) use ($app, $jatbi, $setting) {
-    //     $jatbi->permission('ingredient');
-    //     $id = (int) ($vars['id'] ?? 0);
-
-    //     // Lấy thông tin phiếu mua hàng
-    //     $getPur = $app->get("purchase", ["id", "code", "vendor"], ["id" => $id, "deleted" => 0, "status" => 3]);
-    //     if (!$getPur) {
-    //         die("Không tìm thấy phiếu mua hàng hợp lệ (ID: $id, Status: 3)");
-    //     }
-
-    //     // Khởi tạo session với tên và cấu trúc mới
-    //     unset($_SESSION['ingredient_purchase_import']);
-    //     $_SESSION['ingredient_purchase_import'] = [
-    //         'ingredients' => [],
-    //         'purchase_id' => $getPur['id'],
-    //         'content'     => "Nhập hàng từ phiếu mua #" . $getPur['code'],
-    //         'vendor'      => $getPur['vendor'],
-    //         'date'        => date("Y-m-d")
-    //     ];
-
-    //     $getPros = $app->select("purchase_products", "*", ["purchase" => $getPur['id'], "deleted" => 0]);
-    //     foreach ($getPros as $value) {
-    //         $getPro = $app->get("ingredient", "*", ["id" => $value['ingredient']]);
-    //         if ($getPro) {
-    //             $unit_name = $app->get("units", "name", ["id" => $getPro['units']]) ?? 'N/A';
-    //             $stock_quantity = $app->sum("warehouses_details", "amount_total", ["ingredient" => $getPro['id']]);
-
-    //             // Sử dụng ID nguyên liệu làm khóa
-    //             $_SESSION['ingredient_purchase_import']['ingredients'][$getPro['id']] = [
-    //                 "ingredient_id"  => $getPro['id'],
-    //                 "code"           => $getPro['code'],
-    //                 "name"           => $getPro['name_ingredient'],
-    //                 "stock_quantity" => $stock_quantity ?? 0,
-    //                 "amount"         => $value['amount'],
-    //                 "price"          => $value['price'],
-    //                 "unit_name"      => $unit_name,
-    //                 "notes"          => $value['notes'] ?? ''
-    //             ];
-    //         }
-    //     }
-
-    //     // Chuẩn bị biến và hiển thị template
-    //     $vars['title'] = $jatbi->lang("Nhập kho từ phiếu mua hàng");
-    //     $vars['SelectIngredients'] = $_SESSION['ingredient_purchase_import']['ingredients'] ?? [];
-
-    //     echo $app->render($template . '/warehouses/ingredient-import-purchase.html', $vars);
-
-    // })->setPermissions(['ingredient']);
-
 
     $app->router('/ingredient-import/purchase/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Nhập hàng");
@@ -9583,8 +9283,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             unset($_SESSION['ingredient_import']['ingredients']);
 
             foreach ($sheetData as $key => $value) {
-                if ($key <= 1 || empty($value['A']))
-                    continue;
+                if ($key <= 1 || empty($value['A'])) continue;
 
                 $current_row = $key;
                 $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
@@ -9609,14 +9308,14 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
 
                 $valid_ingredients_session[$ingredient_data['id']] = [
-                    "ingredient_id" => $ingredient_data['id'],
-                    "code" => $ingredient_data['code'],
-                    "name" => $ingredient_data['name'] ?? '',
-                    "selling_price" => $price,
-                    "stock_quantity" => $ingredient_data['amount'],
-                    "amount" => $amount,
-                    "unit_name" => $unit_name,
-                    "notes" => $ingredient_data['notes'],
+                    "ingredient_id"        => $ingredient_data['id'],
+                    "code"              => $ingredient_data['code'],
+                    "name"              => $ingredient_data['name'] ?? '',
+                    "selling_price"     => $price,
+                    "stock_quantity"    => $ingredient_data['amount'],
+                    "amount"            => $amount,
+                    "unit_name"         => $unit_name,
+                    "notes"             => $ingredient_data['notes'],
                 ];
                 $success_count++;
             }
