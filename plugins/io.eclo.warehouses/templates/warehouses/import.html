@@ -100,8 +100,8 @@
                             <th class="text-center"><?=$jatbi->lang('Mã SP')?></th>
                             <th class="text-center"><?=$jatbi->lang('Sản phẩm')?></th>
                             <th class="text-center"><?=$jatbi->lang('NCC')?></th>
-                            <th class="text-center" ><?=$jatbi->lang('Giá vốn')?></th>
-                            <th class="text-center" ><?=$jatbi->lang('Số lượng')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Giá vốn')?></th>
+                            <th class="text-center"><?=$jatbi->lang('Số lượng')?></th>
                             <th class="text-center"><?=$jatbi->lang('Đơn vị')?></th>
                             <th class="text-center"><?=$jatbi->lang('Thành tiền')?></th>
                             <th class="text-center"><?=$jatbi->lang('Ghi chú')?></th>
@@ -217,7 +217,7 @@
             <div class="mt-3">
                 <?=$app->component('textarea', [
                     "name" => 'content', "placeholder" => "Nội dung", "value" => $data['content'] ?? '', 
-                    "attr" => 'data-action="blur" data-load="this" data-url="/warehouses/warehouses-update/import/content/update/0" data-form=\'{"value": "this.val"}\''
+                    "attr" => 'data-action="blur" data-url="/warehouses/warehouses-update/import/content/update/0" data-form=\'{"value": "this.val"}\''
                 ])?>
             </div>
         </div>
@@ -226,7 +226,7 @@
             <button class="btn btn-light rounded-pill px-4 click-update" data-action="click"
                 data-url="/warehouses/warehouses-update/import/cancel/0/0"><?=$jatbi->lang('Hủy')?></button>
             <button class="btn btn-eclo rounded-pill px-5 click-update" data-action="click"
-                data-load="/warehouses/warehouses-history/"
+                data-load="/warehouses/warehouses-history/import"
                 data-url="/warehouses/warehouses-update/import/completed/0/0"><?=$jatbi->lang('Hoàn tất')?></button>
         </div>
     </div>

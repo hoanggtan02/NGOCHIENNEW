@@ -1051,8 +1051,8 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         ]);
 
         $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
-        $store_id = (int) ($app->xss($_POST['stores'] ?? 0));
-        $branch_id = (int) ($app->xss($_POST['branch'] ?? 0));
+        $store_id = (int) ($_SESSION['warehouses']['import']['stores'] ?? 1);
+        $branch_id = (int) ($_SESSION['warehouses']['import']['branch'] ?? 1);
 
         // 2. Xây dựng câu điều kiện WHERE cơ bản
         $where = [

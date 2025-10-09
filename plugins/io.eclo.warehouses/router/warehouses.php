@@ -3879,6 +3879,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             // Lấy giá trị từ bộ lọc
             $filter_date = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
+
+
             $filter_stores = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             // Xử lý bộ lọc ngày
@@ -3933,6 +3935,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $all_logs_for_period = $app->select("warehouses_logs", $joins, [
                 "warehouses_logs.type",
                 "warehouses_logs.amount",
+                "warehouses_logs.price",
             ], $baseWhere);
 
             // Khởi tạo mảng đầu kỳ và trong kỳ
@@ -3960,14 +3963,19 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $totalExport = 0;
             $totalMove = 0;
             $totalError = 0;
+
+            $totalValue = 0;
             foreach ($all_logs_for_period as $log) {
                 $amount = floatval($log['amount']);
                 if (in_array($log['type'], ['import', 'error', 'export', 'move'])) {
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
+
+                        $totalValue += $amount * $price;
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
+                        $totalValue -= $amount * $price;
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
@@ -4027,6 +4035,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     "duration" => $log['duration'] ? $log['duration'] . ' ' . $jatbi->lang('tháng') : '',
                     "date" => date("d/m/Y H:i:s", strtotime($log['date'])),
                     "user" => htmlspecialchars($log['user_name'] ?? 'N/A'),
+
                 ];
             }
 
@@ -6814,7 +6823,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
                 return true;
             });
-            
+
             if ($result) {
                 unset($_SESSION['products'][$action]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
@@ -7357,11 +7366,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
         $vars['SelectProducts'] = $enriched_products;
 
-        $store_options = [];
+        $store_options = [['value' => '', 'text' => '']];
         if (!empty($stores)) {
             foreach ($stores as $store) {
                 if (isset($store['value']) && isset($store['text'])) {
-                    $store_options[] = ['value' => $store['value'], 'text' => $store['text']];
+                    $store_options[] = $store;
                 }
             }
         }
