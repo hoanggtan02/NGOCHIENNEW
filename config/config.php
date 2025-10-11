@@ -62,7 +62,7 @@ $upload = [
             "thumb_x" => "300",
         ],
         "personnels" => [
-            "url" => "images/personnels/",
+            "url" => "datas/personnels/",
             "thumb_y" => "500",
             "thumb_x" => "500",
         ],
@@ -203,6 +203,7 @@ $type_ticket = [
     ],
 ];
 
+
 return [
     "db" => [
         'type' => $env['DB_TYPE'] ?? 'mysql',
@@ -225,7 +226,7 @@ return [
         ]
     ],
     "app" => [
-        "url" => 'https://test.ngochienpearl.com',
+        "url" => 'http://ngochiennew.eclo.io',
         "name" => 'Ngọc Hiền Pearl ERP',
         "page" => 12,
         "manager" => '',

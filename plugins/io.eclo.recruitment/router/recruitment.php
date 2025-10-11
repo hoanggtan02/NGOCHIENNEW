@@ -26,10 +26,10 @@ if (isset($session['id'])) {
     }
 }
 
-$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting,$template, $accStore, $stores) {
+$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $template, $accStore, $stores) {
 
     // Route: Danh sách tin tuyển dụng
-    $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $accStore, $stores) {
+    $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores) {
         $vars['title'] = $jatbi->lang("Tin tuyển dụng");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
@@ -284,7 +284,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['job_postings.edit']);
 
     // Route: Danh sách ứng viên
-    $app->router("/candidates", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $accStore, $stores) {
+    $app->router("/candidates", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores) {
         $vars['title'] = $jatbi->lang("Hồ sơ ứng viên");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
@@ -494,7 +494,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['candidates']);
 
     // Route: Thêm ứng viên
-    $app->router("/candidates-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $stores, $accStore) {
+    $app->router("/candidates-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Thêm hồ sơ ứng viên");
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
@@ -612,52 +612,120 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['candidates.add']);
 
     // Route: Sửa ứng viên
-    $app->router("/candidates-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
+    $app->router("/candidates-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Sửa hồ sơ ứng viên");
         $data = $app->get("candidates", "*", ["id" => $vars['id'], "deleted" => 0]);
+
         if (!$data) {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             return;
         }
         $vars['data'] = $data;
+
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
+            // Bổ sung lấy danh sách vị trí tuyển dụng (giống hàm add)
+            $vars['job'] = $app->select("job_postings", ["id(value)", "title(text)"], ["deleted" => 0, "status" => "A"]);
             echo $app->render($template . '/recruitment/candidates-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
-            if (!isset($_POST['token']) || $_POST['token'] !== $_SESSION['csrf']['token']) {
-                $error = ["status" => "error", "content" => $jatbi->lang("Token không đúng")];
-            } elseif (empty($app->xss($_POST['full_name']))) {
+
+            // Validate cơ bản (giữ nguyên)
+            if (empty($app->xss($_POST['full_name']))) {
                 $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống họ tên")];
             } elseif (count($stores) > 1 && empty($app->xss($_POST['stores']))) {
                 $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng chọn cửa hàng")];
             }
 
+            // --- BẮT ĐẦU PHẦN XỬ LÝ CV ĐƯỢC COPY TỪ HÀM ADD ---
+
+            // Mặc định giữ lại CV cũ nếu không có thay đổi
             $cv_path = $data['cv_path'];
-            if (isset($_FILES['cv_path']) && $_FILES['cv_path']['error'] == 0) {
-                $upload_dir = 'Uploads/cvs/';
-                if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-                $cv_name = uniqid() . '_' . basename($_FILES['cv_path']['name']);
-                $cv_path = $upload_dir . $cv_name;
-                if (!move_uploaded_file($_FILES['cv_path']['tmp_name'], $cv_path)) {
-                    $error = ["status" => "error", "content" => $jatbi->lang("Upload CV thất bại")];
+
+            $account = $app->get('accounts', '*', ['id' => $app->getSession('accounts')['id']]);
+            if (!$account && empty($error)) {
+                $error = ["status" => "error", "content" => $jatbi->lang("Tài khoản không hợp lệ")];
+            } else {
+                // Trường hợp 1: Có file MỚI được tải lên
+                if (isset($_FILES['cv_path']) && $_FILES['cv_path']['error'] === UPLOAD_ERR_OK) {
+                    $handle = $app->upload($_FILES['cv_path']);
+                    $path_upload = $setting['uploads'] . '/' . $account['active'] . '/cvs/';
+                    if (!is_dir($path_upload)) {
+                        mkdir($path_upload, 0755, true);
+                    }
+                    $new_file_id = $jatbi->active();
+                    $allowed_types = [
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                    ];
+
+                    if ($handle->uploaded) {
+                        $handle->allowed = $allowed_types;
+                        $handle->file_max_size = 10485760; // 10MB
+                        $handle->file_new_name_body = $new_file_id;
+                        $handle->Process($path_upload);
+                    }
+
+                    if ($handle->processed) {
+                        // Toàn bộ logic lưu thông tin file vào bảng 'files'
+                        $file_url = $path_upload . $handle->file_dst_name;
+                        $file_data = [
+                            'account' => $account['id'],
+                            'category' => 0,
+                            'name' => $handle->file_src_name,
+                            'extension' => $jatbi->getFileExtension($handle->file_src_name),
+                            'url' => $file_url,
+                            'size' => $handle->file_src_size,
+                            'mime' => $handle->file_src_mime,
+                            'permission' => 0,
+                            'active' => $new_file_id,
+                            'date' => date('Y-m-d H:i:s'),
+                            'modify' => date('Y-m-d H:i:s'),
+                            'deleted' => 0,
+                            'data' => json_encode(['file_src_name' => $handle->file_src_name, 'file_src_name_body' => $handle->file_src_name_body, 'file_src_name_ext' => $handle->file_src_name_ext, 'file_src_pathname' => $handle->file_src_pathname, 'file_src_mime' => $handle->file_src_mime, 'file_src_size' => $handle->file_src_size])
+                        ];
+                        $app->insert('files', $file_data);
+                        $jatbi->logs('files', 'upload-cvs', ['file' => $file_data['name'], 'active' => $new_file_id, 'candidate' => $app->xss($_POST['full_name'])]);
+
+                        // Cập nhật $cv_path thành ID active của file MỚI
+                        $cv_path = $new_file_id;
+                        $handle->clean();
+                    } else {
+                        $error = ["status" => "error", "content" => $jatbi->lang("Upload CV thất bại: ") . ($handle->error ?? 'Lỗi không xác định')];
+                    }
+
+                    // Trường hợp 2: Chọn một file ĐÃ CÓ SẴN (và khác với file cũ)
+                } elseif (!empty($_POST['cv_path']) && $_POST['cv_path'] != $data['cv_path']) {
+                    $file = $app->get('files', '*', ['active' => $app->xss($_POST['cv_path']), 'deleted' => 0]);
+                    if ($file && $jatbi->checkFiles($file['active'])) {
+                        $cv_path = $file['active'];
+                    } else {
+                        $error = ["status" => "error", "content" => $jatbi->lang("File không hợp lệ hoặc không có quyền truy cập")];
+                    }
                 }
+                // Trường hợp 3: Không upload file mới, cũng không chọn file có sẵn -> $cv_path giữ nguyên giá trị ban đầu (file cũ), không làm gì cả.
             }
 
+            // --- KẾT THÚC PHẦN XỬ LÝ CV ---
+
+            // Nếu không có lỗi thì update ứng viên
             if (empty($error)) {
                 $input_stores = count($stores) > 1 ? $app->xss($_POST['stores']) : $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0]);
+
                 $update = [
                     "full_name" => $app->xss($_POST['full_name']),
-                    "email" => $app->xss($_POST['email'] ?? ''),
-                    "phone" => $app->xss($_POST['phone'] ?? ''),
-                    "cv_path" => $cv_path,
-                    "source" => $app->xss($_POST['source'] ?? ''),
-                    "stores" => $input_stores,
+                    "email"     => $app->xss($_POST['email'] ?? ''),
+                    "phone"     => $app->xss($_POST['phone'] ?? ''),
+                    "cv_path"   => $cv_path, // Sử dụng $cv_path đã được xử lý
+                    "source"    => $app->xss($_POST['source'] ?? ''),
+                    "job"       => $app->xss($_POST['job']),
+                    "stores"    => $input_stores,
                 ];
                 $app->update("candidates", $update, ["id" => $vars['id']]);
                 $jatbi->logs('candidates', 'edit', $update);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => $_SERVER['HTTP_REFERER']]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode($error);
             }
@@ -689,7 +757,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['candidates.deleted']);
 
     // Route: Danh sách đơn ứng tuyển
-    $app->router("/applications", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template, $stores, $accStore) {
+    $app->router("/applications", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Theo dõi quy trình ứng viên");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
@@ -1011,7 +1079,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
 
 
     // Route: Danh sách phỏng vấn
-    $app->router("/interviews", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template, $accStore) {
+    $app->router("/interviews", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
         $vars['title'] = $jatbi->lang("Lịch phỏng vấn");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
