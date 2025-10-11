@@ -232,9 +232,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "phone" => $app->xss($_POST['phone']),
                     "email" => $app->xss($_POST['email']),
                     "address" => $app->xss($_POST['address']),
-                    "province" => $app->xss($_POST['province']),
-                    "district" => $app->xss($_POST['district']),
-                    "ward" => $app->xss($_POST['ward']),
+                    "province" => $app->xss($_POST['province'] ?? 0),
+                    "district" => $app->xss($_POST['district'] ?? 0),
+                    "ward" => $app->xss($_POST['ward'] ?? 0),
                     "nationality" => $app->xss($_POST['nationality']),
                     "nation" => $app->xss($_POST['nation']),
                     "idtype" => $app->xss($_POST['idtype']),
@@ -411,47 +411,170 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['personnels']);
 
-    $app->router('/personnels-face/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/personnels-face/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
-                $vars['stores'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-                );
-                $vars['offices'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-                );
-                $vars['gender'] = [
-                    ["value" => "", "text" => "Chọn"],
-                    ["value" => 0, "text" => "Nữ"],
-                    ["value" => 1, "text" => "Nam"],
-                ];
-                $vars['contracts'] = $app->select("personnels_contract", "*", ["personnels" => $vars['data']['id'], "deleted" => 0]);
-                $vars['insurrances'] = $app->select("personnels_insurrance", "*", ["personnels" => $vars['data']['id'], "deleted" => 0]);
-                $vars['title'] = $jatbi->lang("Nhân viên: ") . $vars['data']['name'];
+                $vars['title'] = $jatbi->lang("Cập nhật Face ID: ") . $vars['data']['name'];
+                $vars['decided'] = $app->select("hrm_decided", ["name(text)", "id(value)"], ["deleted" => 0]);
                 echo $app->render($template . '/hrm/personnels-face.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             }
         }
+
         if ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
-            $data = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
-            if (!empty($data)) {
-                if ($app->xss($_POST['name']) == '' || $app->xss($_POST['phone']) == '' || $app->xss($_POST['stores']) == '') {
-                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
-                } else { // chưa làm
-                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            $app->header(['Content-Type' => 'application/json']);
+
+            $personnel = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
+            if (empty($personnel)) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy nhân viên")]);
+                return;
+            }
+
+            $errorMessages = [];
+            $successMessages = [];
+            $photo = '';
+            $isNewPhotoUploaded = false;
+
+            if (isset($_FILES['images']) && $_FILES['images']['error'] === UPLOAD_ERR_OK) {
+                $handle = $app->upload($_FILES['images']);
+
+                $path_upload = $setting['uploads'] . '/personnels/';
+                $path_thumb = $path_upload . 'thumb/';
+
+                if (!is_dir($path_upload)) mkdir($path_upload, 0755, true);
+                if (!is_dir($path_thumb)) mkdir($path_thumb, 0755, true);
+
+                $new_file_id = $jatbi->active();
+
+                if ($handle->uploaded) {
+                    $handle->allowed = ['image/*'];
+                    $handle->file_max_size = 10485760;
+                    $handle->file_new_name_body = $new_file_id;
+                    $handle->Process($path_upload);
+
+                    if ($handle->processed) {
+                        $handle->image_resize = true;
+                        $handle->image_ratio_crop = true;
+                        $handle->image_y = $setting['upload']['images']["personnels"]['thumb_y'];
+                        $handle->image_x = $setting['upload']['images']["personnels"]['thumb_x'];
+                        $handle->file_new_name_body = $new_file_id;
+                        $handle->Process($path_thumb);
+
+                        if ($handle->processed) {
+                            $photo = $handle->file_dst_name;
+                            $isNewPhotoUploaded = true;
+                            $handle->clean();
+                        } else {
+                            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Tạo ảnh thumb thất bại: ") . $handle->error]);
+                            return;
+                        }
+                    } else {
+                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Upload ảnh thất bại: ") . $handle->error]);
+                        return;
+                    }
                 }
+            } elseif ($personnel['face'] == 0) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng chọn hình ảnh để đăng ký")]);
+                return;
+            }
+
+            $devices = isset($_POST['decided']) ? $_POST['decided'] : '';
+            $deviceKeys = [];
+
+            foreach ($devices as $deviceId) {
+                $deviceConfig = $app->get("hrm_decided", "*", ["id" => $deviceId]);
+                if (!$deviceConfig) continue;
+
+                $deviceApiPayload = [
+                    'deviceKey' => $deviceConfig['decided'],
+                    'secret'    => $deviceConfig['password'],
+                ];
+
+                if ($personnel['face'] == 0) {
+                    $createPayload = array_merge($deviceApiPayload, [
+                        'sn'   => $personnel['id'],
+                        'name' => $personnel['name'],
+                        'type' => 1,
+                    ]);
+                    $createResponse = $jatbi->callCameraApi('person/create', $createPayload);
+
+                    if (empty($createResponse['success'])) {
+                        $errorMessages[] = "Thiết bị '{$deviceConfig['name']}': Lỗi tạo NV - " . ($createResponse['msg'] ?? 'Không rõ');
+                        continue;
+                    }
+
+                    $imageUrl = $setting['url'] . "/" . $setting['upload']['images']['personnels']['url'] . $photo;
+
+                    $mergePayload = array_merge($deviceApiPayload, [
+                        'personSn' => $personnel['id'],
+                        'imgUrl'   => $imageUrl,
+                        'easy'     => 1,
+                    ]);
+                    $mergeResponse = $jatbi->callCameraApi('face/merge', $mergePayload);
+
+                    if (empty($mergeResponse['success'])) {
+                        $errorMessages[] = "Thiết bị '{$deviceConfig['name']}': Lỗi thêm mặt - " . ($mergeResponse['msg'] ?? 'Không rõ');
+                    } else {
+                        $successMessages[] = "Thiết bị '{$deviceConfig['name']}': Đăng ký thành công.";
+                        $deviceKeys[] = $deviceConfig['decided'];
+                    }
+                } else {
+                    if ($app->xss($_POST['update'] ?? 0) == 1) {
+                        $updatePayload = array_merge($deviceApiPayload, [
+                            'sn'   => $personnel['id'],
+                            'name' => $personnel['code'],
+                            'type' => 1,
+                        ]);
+                        $updateResponse = $jatbi->callCameraApi('person/update', $updatePayload);
+                        if (empty($updateResponse['success'])) {
+                            $errorMessages[] = "Thiết bị '{$deviceConfig['name']}': Lỗi cập nhật - " . ($updateResponse['msg'] ?? 'Không rõ');
+                        } else {
+                            $successMessages[] = "Thiết bị '{$deviceConfig['name']}': Cập nhật thông tin thành công.";
+                        }
+                    }
+
+                    if ($isNewPhotoUploaded) {
+                        $imageUrl = $setting['url'] . "/" . $setting['upload']['images']['personnels']['url'] . $photo;
+                        $mergePayload = array_merge($deviceApiPayload, [
+                            'personSn' => $personnel['id'],
+                            'imgUrl'   => $imageUrl,
+                            'easy'     => 1,
+                        ]);
+                        $mergeResponse = $jatbi->callCameraApi('face/merge', $mergePayload);
+                        if (empty($mergeResponse['success'])) {
+                            $errorMessages[] = "Thiết bị '{$deviceConfig['name']}': Lỗi cập nhật mặt - " . ($mergeResponse['msg'] ?? 'Không rõ');
+                        } else {
+                            $successMessages[] = "Thiết bị '{$deviceConfig['name']}': Cập nhật khuôn mặt thành công.";
+                        }
+                    }
+                }
+            }
+
+            if (empty($errorMessages)) {
+                $updateData = [];
+                if ($personnel['face'] == 0) {
+                    $updateData = [
+                        "face" => 1,
+                        "images" => $photo,
+                    ];
+                } elseif ($isNewPhotoUploaded) {
+                    $updateData = ["images" => $photo];
+                }
+
+                if (!empty($updateData)) {
+                    $app->update("personnels", $updateData, ["id" => $personnel['id']]);
+                }
+
+                $jatbi->logs('personnels', 'add-face', $personnel['id']);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thao tác thành công!"), 'details' => $successMessages]);
             } else {
-                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra trong quá trình xử lý"), 'details' => $errorMessages]);
             }
         }
-    })->setPermissions(['personnels']);
+    })->setPermissions(['personnels.edit']);
 
     //offices
     $app->router("/offices", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {

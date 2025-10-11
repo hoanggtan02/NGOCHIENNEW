@@ -1845,4 +1845,32 @@ class Jatbi
 		}
 		return $years;
 	}
+
+	function callCameraApi(string $endpoint, array $payload): array
+	{
+		$curl = curl_init();
+		curl_setopt_array($curl, [
+			CURLOPT_URL => 'http://camera.ellm.io:8190/api/' . $endpoint,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0, // hoặc 30
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'POST',
+			CURLOPT_POSTFIELDS => http_build_query($payload),
+			CURLOPT_HTTPHEADER => [
+				'Content-Type: application/x-www-form-urlencoded'
+			],
+		]);
+		$response = curl_exec($curl);
+		$error = curl_error($curl);
+		curl_close($curl);
+
+		if ($error) {
+			return ['success' => false, 'msg' => 'cURL Error: ' . $error];
+		}
+
+		return json_decode($response, true) ?? ['success' => false, 'msg' => 'Invalid JSON response from API.'];
+	}
 }

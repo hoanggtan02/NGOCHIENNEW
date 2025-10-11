@@ -9225,7 +9225,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router('/products-import-history', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore, $setting) {
 
         $vars['title'] = $jatbi->lang("Lịch sử nhập hàng");
-
+        
         if ($app->method() === 'GET') {
 
             $accounts  = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
