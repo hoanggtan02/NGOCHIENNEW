@@ -1369,24 +1369,26 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router('/rosters-excel', 'GET', function ($vars) use ($app, $stores) {
         try {
             $month_year = $_GET['month_year'] ?? date('Y-m');
-            $officeF    = $_GET['office'] ?? '';
-            $store_ids  = array_column($stores, 'value');
+            $officeF = $_GET['office'] ?? '';
+            $store_ids = array_column($stores, 'value');
 
 
-            $year      = date('Y', strtotime($month_year));
-            $month     = date('m', strtotime($month_year));
+            $year = date('Y', strtotime($month_year));
+            $month = date('m', strtotime($month_year));
             $totalDays = date("t", strtotime($month_year));
             $lastDayOfMonth = "$year-$month-$totalDays";
 
             $wherePersonnel = [
                 "deleted" => 0,
-                "status"  => 'A',
-                "stores"  => $store_ids,
+                "status" => 'A',
+                "stores" => $store_ids,
             ];
-            if (!empty($officeF)) $wherePersonnel['office'] = $officeF;
+            if (!empty($officeF))
+                $wherePersonnel['office'] = $officeF;
 
             $personnel_list = $app->select("personnels", ["id", "name"], ["ORDER" => ["name" => "ASC"]] + $wherePersonnel);
-            if (empty($personnel_list)) exit("Không có nhân viên nào thỏa mãn điều kiện.");
+            if (empty($personnel_list))
+                exit("Không có nhân viên nào thỏa mãn điều kiện.");
 
             $personnel_ids = array_column($personnel_list, 'id');
 
@@ -1452,7 +1454,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $roster_map[$pid][$current_date_str] = 'OFF';
                         } elseif (!empty($detail['time_from']) && !empty($detail['time_to']) && $detail['time_from'] != '00:00:00') {
                             $hours = (strtotime($detail['time_to']) - strtotime($detail['time_from'])) / 3600;
-                            $cong  = round($hours / 8, 2);
+                            $cong = round($hours / 8, 2);
                             $roster_map[$pid][$current_date_str] = $cong;
                         } else {
                             $roster_map[$pid][$current_date_str] = '';
@@ -1785,8 +1787,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         try {
             $store_ids = array_column($stores, 'value');
             $personnels_filter = $_GET['personnels'] ?? '';
-            $type_filter       = $_GET['type'] ?? '';
-            $offices_filter    = $_GET['offices'] ?? '';
+            $type_filter = $_GET['type'] ?? '';
+            $offices_filter = $_GET['offices'] ?? '';
 
             $joins = [
                 "[><]personnels(p)" => ["pc.personnels" => "id"],
@@ -1799,9 +1801,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
 
             $where = ["AND" => ["pc.deleted" => 0, "p.deleted" => 0, "p.stores" => $store_ids], "ORDER" => ["p.name" => "ASC"]];
-            if (!empty($personnels_filter)) $where['AND']['p.id'] = $personnels_filter;
-            if (!empty($type_filter)) $where['AND']['pc.type'] = $type_filter;
-            if (!empty($offices_filter)) $where['AND']['p.office'] = $offices_filter;
+            if (!empty($personnels_filter))
+                $where['AND']['p.id'] = $personnels_filter;
+            if (!empty($type_filter))
+                $where['AND']['pc.type'] = $type_filter;
+            if (!empty($offices_filter))
+                $where['AND']['p.office'] = $offices_filter;
 
             $columns = [
                 "p.code(ma_nv)",
@@ -1826,7 +1831,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $employee_data = $app->select("personnels_contract(pc)", $joins, $columns, $where);
 
-            if (empty($employee_data)) exit("Không có dữ liệu hợp đồng thỏa mãn điều kiện.");
+            if (empty($employee_data))
+                exit("Không có dữ liệu hợp đồng thỏa mãn điều kiện.");
 
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
@@ -1841,8 +1847,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ],
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical'   => Alignment::VERTICAL_CENTER,
-                    'wrapText'   => false, // không cho xuống dòng
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'wrapText' => false, // không cho xuống dòng
                 ],
                 'borders' => [
                     'allBorders' => [
@@ -2011,7 +2017,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'Content-Type' => 'application/json',
             ]);
             $date_contract = $app->xss($_POST['date_contract']);
-            $duration = (int)$app->xss($_POST['duration']);
+            $duration = (int) $app->xss($_POST['duration']);
 
             // Tính toán ngày kết thúc
             $date_end = date('Y-m-d', strtotime($date_contract . " + " . $duration . " months"));
@@ -2066,7 +2072,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "duration" => $app->xss($_POST['duration']),
                 "date_end" => $date_end,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
-                "salary"             => $app->xss(str_replace([','], '', $_POST['salary'])),
+                "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
                 // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
@@ -2160,7 +2166,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'Content-Type' => 'application/json',
             ]);
             $date_contract = $app->xss($_POST['date_contract']);
-            $duration = (int)$app->xss($_POST['duration']);
+            $duration = (int) $app->xss($_POST['duration']);
 
             // Tính toán ngày kết thúc
             $date_end = date('Y-m-d', strtotime($date_contract . " + " . $duration . " months"));
@@ -2209,9 +2215,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "code" => $app->xss($_POST['code']),
                 "date_contract" => $app->xss($_POST['date_contract']),
                 "duration" => $app->xss($_POST['duration']),
-                "date_end" =>  $date_end,
+                "date_end" => $date_end,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
-                "salary"             => $app->xss(str_replace([','], '', $_POST['salary'])),
+                "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
                 // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
@@ -2543,7 +2549,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['contract.edit']);
 
     $app->router('/contract-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
-        $id = (int)($vars['id'] ?? 0);
+        $id = (int) ($vars['id'] ?? 0);
         $vars['title'] = $jatbi->lang("In Hợp đồng lao động");
 
         // 1. Lấy dữ liệu chính của hợp đồng và các thông tin liên quan
@@ -3454,7 +3460,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['furlough']);
 
     $app->router('/furlough-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
-        $id = (int)($vars['id'] ?? 0);
+        $id = (int) ($vars['id'] ?? 0);
         $vars['title'] = $jatbi->lang("In Đơn nghỉ phép");
 
         // 1. Lấy dữ liệu chính của đơn và JOIN với các bảng liên quan
@@ -3660,12 +3666,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "personnels" => $app->xss($_POST['personnels']),
                         "deleted" => 0,
                     ]) || $app->has("furlough", [
-                        "id[!]" => $data['id'],
-                        "date_from[<=]" => $app->xss($_POST['date_to']),
-                        "date_to[>=]" => $app->xss($_POST['date_to']),
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "deleted" => 0,
-                    ])
+                                "id[!]" => $data['id'],
+                                "date_from[<=]" => $app->xss($_POST['date_to']),
+                                "date_to[>=]" => $app->xss($_POST['date_to']),
+                                "personnels" => $app->xss($_POST['personnels']),
+                                "deleted" => 0,
+                            ])
                 ) {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày nghỉ phép bị trùng")]);
                     return;
@@ -4568,8 +4574,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             // Nhân viên theo cửa hàng
             $personnels = $app->select("personnels", ["id(value)", "name(text)"], [
                 "deleted" => 0,
-                "status"  => 'A',
-                "stores"  => $accStore
+                "status" => 'A',
+                "stores" => $accStore
             ]);
             $vars['personnels'] = array_merge(
                 [['value' => '', 'text' => $jatbi->lang('Chọn nhân viên')]],
@@ -4578,7 +4584,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $office = $app->select("offices", ["id(value)", "name(text)"], [
                 "deleted" => 0,
-                "status"  => 'A',
+                "status" => 'A',
             ]);
             $vars['office'] = array_merge(
                 [['value' => '', 'text' => $jatbi->lang('Chọn phòng ban')]],
@@ -4586,18 +4592,18 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             );
 
             // Lấy filter
-            $year       = $_GET['year'] ?? date('Y');
-            $month      = $_GET['month'] ?? date('m');
+            $year = $_GET['year'] ?? date('Y');
+            $month = $_GET['month'] ?? date('m');
             $personnelF = $_GET['personnel'] ?? '';
-            $officeF    = $_GET['office'] ?? '';
-            $stores     = $_GET['stores'] ?? $accStore;
+            $officeF = $_GET['office'] ?? '';
+            $stores = $_GET['stores'] ?? $accStore;
 
             $date_form = date("t", strtotime($year . "-" . $month . "-01"));
 
             // --- fix lọc phòng ban ---
             $whereOffice = [
                 "deleted" => 0,
-                "status"  => 'A'
+                "status" => 'A'
             ];
             if (!empty($officeF)) {
                 $whereOffice["id"] = $officeF;
@@ -4622,10 +4628,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             foreach (($offices ?? []) as $key => $office) {
                 // Lấy nhân viên theo phòng ban (fix lọc nhân viên)
                 $wherePersonnel = [
-                    "office"  => $office['id'],
+                    "office" => $office['id'],
                     "deleted" => 0,
-                    "status"  => 'A',
-                    "stores"  => $stores
+                    "status" => 'A',
+                    "stores" => $stores
                 ];
                 if (!empty($personnelF)) {
                     $wherePersonnel["id"] = $personnelF;
@@ -4638,7 +4644,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "personnels" => []
                 ];
 
-                if (empty($SelectPer)) continue;
+                if (empty($SelectPer))
+                    continue;
 
                 $perIds = array_column($SelectPer, "id");
 
@@ -4673,7 +4680,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $furloughsAll = $app->select("furlough", "*", [
                     "personnels" => $perIds,
                     "date_from[<=]" => $year . "-" . $month . "-" . $date_form,
-                    "date_to[>=]"   => $year . "-" . $month . "-01",
+                    "date_to[>=]" => $year . "-" . $month . "-01",
                     "deleted" => 0
                 ]);
                 $furloughMap = [];
@@ -4693,7 +4700,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
                     foreach ($dates as $date) {
                         $checked = $timekeepingMap[$per['id']][$date['date']] ?? null;
-                        $roster  = $rosterMap[$per['id']] ?? null;
+                        $roster = $rosterMap[$per['id']] ?? null;
                         $timeworkDetail = $roster ? ($timeworkDetailsMap[$roster][$date['week']] ?? null) : null;
                         $furlough = $furloughMap[$per['id']][$date['date']] ?? null;
 
@@ -4757,23 +4764,26 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $accStore) {
         try {
             // --- BƯỚC 1: LẤY VÀ XỬ LÝ CÁC BỘ LỌC TỪ URL ---
-            $year       = $_GET['year'] ?? date('Y');
-            $month      = $_GET['month'] ?? date('m');
+            $year = $_GET['year'] ?? date('Y');
+            $month = $_GET['month'] ?? date('m');
             $personnelF = $_GET['personnel'] ?? '';
-            $officeF    = $_GET['office'] ?? '';
-            $stores     = $_GET['stores'] ?? $accStore;
+            $officeF = $_GET['office'] ?? '';
+            $stores = $_GET['stores'] ?? $accStore;
 
             $totalDays = date("t", strtotime("$year-$month-01"));
             $from_date = "$year-$month-01";
-            $to_date   = "$year-$month-$totalDays";
+            $to_date = "$year-$month-$totalDays";
 
             // --- BƯỚC 2: TỐI ƯU HÓA - LẤY TOÀN BỘ DỮ LIỆU CẦN THIẾT TRƯỚC ---
-            $wherePersonnel = ["AND" => ["deleted" => 0, "status"  => 'A', "stores"  => $stores]];
-            if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
-            if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
+            $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
+            if (!empty($officeF))
+                $wherePersonnel['AND']['office'] = $officeF;
+            if (!empty($personnelF))
+                $wherePersonnel['AND']['id'] = $personnelF;
 
             $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
-            if (empty($personnel_list)) exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
+            if (empty($personnel_list))
+                exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
 
             $personnel_ids = array_column($personnel_list, 'id');
 
@@ -4785,7 +4795,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $furlough_category_map = array_column($app->select("furlough_categorys", ["id", "code"]), 'code', 'id');
 
             $timekeeping_map = [];
-            foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
+            foreach ($timekeeping_data as $tk)
+                $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
             $furlough_map = [];
             foreach ($furlough_data as $f) {
                 for ($d = strtotime($f['date_from']); $d <= strtotime($f['date_to']); $d += 86400) {
@@ -4793,7 +4804,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
             }
             $schedule_map = [];
-            foreach ($timework_details_data as $td) $schedule_map[$td['personnels']][$td['week']] = $td;
+            foreach ($timework_details_data as $td)
+                $schedule_map[$td['personnels']][$td['week']] = $td;
 
             // --- BƯỚC 3: XỬ LÝ DỮ LIỆU VÀ TÍNH TOÁN ---
             $excelData = [];
@@ -4830,8 +4842,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $hours = ($checkout_time - $checkin_time) / 3600;
                             $work_days++;
 
-                            if ($week_day == 7) $total_sunday_hours += $hours;
-                            else $total_day_hours += $hours;
+                            if ($week_day == 7)
+                                $total_sunday_hours += $hours;
+                            else
+                                $total_day_hours += $hours;
 
                             $value = round($hours / 8, 2);
 
@@ -4900,8 +4914,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             foreach ($summary_headers as $main => $subs) {
                 $headers_row6[] = $main;
-                for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
-                foreach ($subs as $sub) $headers_row7[] = $sub;
+                for ($i = 0; $i < count($subs) - 1; $i++)
+                    $headers_row6[] = '';
+                foreach ($subs as $sub)
+                    $headers_row7[] = $sub;
             }
 
             $sheet->fromArray($headers_row6, null, 'A6');
@@ -5010,22 +5026,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if ($_POST['personnels'] && $_POST['date'] && $_POST['status']) {
                 $gettime = $app->get("timekeeping", "*", [
                     "personnels" => $app->xss($_POST['personnels']),
-                    "date"         => date("Y-m-d", strtotime($_POST['date'])),
+                    "date" => date("Y-m-d", strtotime($_POST['date'])),
                 ]);
                 if ($_POST['status'] == 1) {
                     $timekeeping = [
-                        "personnels"     => $app->xss($_POST['personnels']),
-                        "date"             => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
-                        "checkin"        => $app->xss(date("H:i:s", strtotime($_POST['date']))),
-                        "date_poster"     => date("Y-m-d H:i:s"),
+                        "personnels" => $app->xss($_POST['personnels']),
+                        "date" => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
+                        "checkin" => $app->xss(date("H:i:s", strtotime($_POST['date']))),
+                        "date_poster" => date("Y-m-d H:i:s"),
                     ];
                 }
                 if ($_POST['status'] == 2) {
                     $timekeeping = [
-                        "personnels"     => $app->xss($_POST['personnels']),
-                        "date"             => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
-                        "checkout"        => $app->xss(date("H:i:s", strtotime($_POST['date']))),
-                        "date_poster"     => date("Y-m-d H:i:s"),
+                        "personnels" => $app->xss($_POST['personnels']),
+                        "date" => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
+                        "checkout" => $app->xss(date("H:i:s", strtotime($_POST['date']))),
+                        "date_poster" => date("Y-m-d H:i:s"),
                     ];
                 }
                 if ($gettime > 1) {
@@ -5036,12 +5052,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $getID = $app->id();
                 }
                 $insert = [
-                    "personnels"     => $app->xss($_POST['personnels']),
-                    "notes"         => $app->xss($_POST['notes']),
-                    "date"             => $app->xss($_POST['date']),
-                    "status"         => $app->xss($_POST['status']),
-                    "user"             => $app->getSession("accounts")['id'] ?? 0,
-                    "date_poster"     => date("Y-m-d H:i:s"),
+                    "personnels" => $app->xss($_POST['personnels']),
+                    "notes" => $app->xss($_POST['notes']),
+                    "date" => $app->xss($_POST['date']),
+                    "status" => $app->xss($_POST['status']),
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date_poster" => date("Y-m-d H:i:s"),
                 ];
                 $app->insert("timekeeping_details", $insert);
                 $jatbi->logs('timekeeping', 'add', [$insert, $timeLate ?? ""]);
@@ -5705,7 +5721,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_employees = array_map(function ($employee) {
                 return [
                     'value' => $employee['id'],
-                    'text'  => $employee['code'] . ' - ' . $employee['name']
+                    'text' => $employee['code'] . ' - ' . $employee['name']
                 ];
             }, $employees_db);
 
@@ -5721,14 +5737,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_items = array_map(function ($item) {
                 return [
                     'value' => $item['id'],
-                    'text'  => $item['item_name']
+                    'text' => $item['item_name']
                 ];
             }, $uniform_items_db);
 
             $formatted_items_size = array_map(function ($item) {
                 return [
                     'value' => $item['id'],
-                    'text'  => $item['size']
+                    'text' => $item['size']
                 ];
             }, $uniform_items_db);
 
@@ -5765,9 +5781,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($searchValue)) {
                 $where['AND']['OR'] = ["p.name[~]" => $searchValue, "ui.item_name[~]" => $searchValue];
             }
-            if (!empty($filter_employee)) $where['AND']['p.id'] = $filter_employee;
-            if (!empty($filter_item)) $where['AND']['ui.id'] = $filter_item;
-            if (!empty($filter_item_size)) $where['AND']['ui.id'] = $filter_item_size;
+            if (!empty($filter_employee))
+                $where['AND']['p.id'] = $filter_employee;
+            if (!empty($filter_item))
+                $where['AND']['ui.id'] = $filter_item;
+            if (!empty($filter_item_size))
+                $where['AND']['ui.id'] = $filter_item_size;
 
             if (!empty($filter_date)) {
                 $date_parts = explode(' - ', $filter_date);
@@ -5859,7 +5878,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_employees = array_map(function ($employee) {
                 return [
                     'value' => $employee['id'],
-                    'text'  => $employee['code'] . ' - ' . $employee['name']
+                    'text' => $employee['code'] . ' - ' . $employee['name']
                 ];
             }, $employees_db);
 
@@ -5875,7 +5894,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_items = array_map(function ($item) {
                 return [
                     'value' => $item['id'],
-                    'text'  => $item['item_name'] . "-" . $item['size']
+                    'text' => $item['item_name'] . "-" . $item['size']
                 ];
             }, $uniform_items_db);
 
@@ -5908,11 +5927,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['uniforms_allocations.add']);
 
     $app->router('/uniforms-allocations-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
-        $id = (int)($vars['id'] ?? 0);
+        $id = (int) ($vars['id'] ?? 0);
         $vars['title'] = $jatbi->lang("Sửa Cấp phát Đồng phục");
 
         $data = $app->get("uniform_allocations", "*", ["id" => $id, "deleted" => 0]);
-        if (!$data) return $app->render($template . '/error.html', $vars, $jatbi->ajax());
+        if (!$data)
+            return $app->render($template . '/error.html', $vars, $jatbi->ajax());
         $vars['data'] = $data;
 
         if ($app->method() === 'GET') {
@@ -5927,7 +5947,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_employees = array_map(function ($employee) {
                 return [
                     'value' => $employee['id'],
-                    'text'  => $employee['code'] . ' - ' . $employee['name']
+                    'text' => $employee['code'] . ' - ' . $employee['name']
                 ];
             }, $employees_db);
 
@@ -5943,7 +5963,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $formatted_items = array_map(function ($item) {
                 return [
                     'value' => $item['id'],
-                    'text'  => $item['item_name'] . "-" . $item['size']
+                    'text' => $item['item_name'] . "-" . $item['size']
                 ];
             }, $uniform_items_db);
 
@@ -6114,4 +6134,328 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         }
     })->setPermissions(['reports']);
+
+    $app->router('/camera', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Camera");
+
+        if ($app->method() === 'GET') {
+            echo $app->render($template . '/hrm/camera.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $statusValue = isset($_POST['status']) ? $_POST['status'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+
+            $where = [
+                "AND" => [
+                    "hrm_decided.deleted" => 0,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)]
+            ];
+
+            if ($searchValue != '') {
+                $where['AND']['OR'] = [
+                    'hrm_decided.name[~]' => $searchValue,
+
+                ];
+            }
+
+            // if ($statusValue != '') {
+            //     $where['AND']['hrm_decided.status'] = $statusValue;
+            // }
+
+            $countWhere = [
+                "AND" => array_merge(
+                    ["hrm_decided.deleted" => 0],
+                    $searchValue != '' ? [
+                        "OR" => [
+                            'hrm_decided.name[~]' => $searchValue,
+
+                        ]
+                    ] : [],
+                    // $statusValue != '' ? ["hrm_decided.status" => $statusValue] : []
+                )
+            ];
+            $count = $app->count("hrm_decided", $countWhere);
+
+            $datas = [];
+            $app->select("hrm_decided", [
+                'hrm_decided.id',
+
+                'hrm_decided.name',
+                'hrm_decided.decided',
+                'hrm_decided.password'
+
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "checkbox" => ($app->component("box", ["data" => $data['id'] ?? '']) ?? '<input type="checkbox">'),
+                    "name" => ($data['name'] ?? ''),
+                    "decided" => ($data["decided"] ?? ''),
+                    "password" => ($data["password"] ?? ''),
+                    "action" => ($app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['camera.edit'],
+                                'action' => ['data-url' => '/hrm/camera-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['camera.deleted'],
+                                'action' => ['data-url' => '/hrm/camera-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Cấu hình"),
+                                'permission' => ['camera.edit'],
+                                'action' => [
+                                    'data-url' => '/hrm/camera-option/' . ($data['decided'] ?? '') . '/' . ($data['password'] ?? ''),
+                                    'data-action' => 'modal'
+                                ]
+                            ],
+                        ]
+                    ]))
+                ];
+            });
+
+            echo json_encode(
+                [
+                    "draw" => $draw,
+                    "recordsTotal" => $count,
+                    "recordsFiltered" => $count,
+                    "data" => $datas ?? []
+                ],
+
+            );
+        }
+    })->setPermissions(['camera']);
+
+
+    $app->router('/camera-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Thêm camera");
+
+        if ($app->method() === 'GET') {
+            echo $app->render($template . '/hrm/camera-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json',]);
+            if (empty($_POST['name']) || empty($_POST['decided']) || empty($_POST['password'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
+                return;
+            }
+
+            $insert = [
+                "name" => $app->xss($_POST['name']),
+                "decided" => $app->xss($_POST['decided']),
+                "password" => $app->xss($_POST['password']),
+            ];
+            $app->insert("hrm_decided", $insert);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    })->setPermissions(['camera.add']);
+
+    $app->router("/camera-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Sửa camera");
+
+        if ($app->method() === 'GET') {
+            $vars['data'] = $app->select("hrm_decided", [
+                "id",
+
+                "name",
+                "decided",
+                "password"
+            ], [
+                "AND" => [
+                    "id" => $vars['id'],
+                    "deleted" => 0
+                ],
+                "LIMIT" => 1
+            ]);
+
+            if (!empty($vars['data'])) {
+                $vars['data'] = $vars['data'][0];
+                echo $app->render($template . '/hrm/camera-post.html', $vars, $jatbi->ajax());
+            } else {
+                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
+            }
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+
+            $data = $app->select("hrm_decided", [
+                "id",
+                "name",
+                "decided",
+                "password"
+            ], [
+                "AND" => [
+                    "id" => $vars['id'],
+                    "deleted" => 0
+                ],
+                "LIMIT" => 1
+            ]);
+
+            if (!empty($data)) {
+                $data = $data[0];
+                $error = [];
+                if ($app->xss($_POST['name']) == '') {
+                    $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
+                }
+                if ($app->xss($_POST['decided']) == '') {
+                    $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
+                }
+                if ($app->xss($_POST['password']) == '') {
+                    $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
+                }
+
+
+                if (empty($error)) {
+                    $insert = [
+
+                        "name" => $app->xss($_POST['name']),
+                        "decided" => $app->xss($_POST['decided']),
+                        "password" => $app->xss($_POST['password']),
+                    ];
+                    $app->update("hrm_decided", $insert, ["id" => $data['id']]);
+                
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), "url" => $_SERVER['HTTP_REFERER']]);
+                } else {
+                    echo json_encode($error);
+                }
+            } else {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+            }
+        }
+    })->setPermissions(['camera.edit']);
+
+    $app->router("/camera-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $vars['title'] = $jatbi->lang("Xóa camera");
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $boxid = explode(',', $app->xss($_GET['box']));
+            $datas = $app->select("hrm_decided", "*", ["id" => $boxid, "deleted" => 0]);
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $app->update("hrm_decided", ["deleted" => 1], ["id" => $data['id']]);
+                    $name[] = $data['name'];
+                }
+
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+            }
+        }
+    })->setPermissions(['camera.deleted']);
+
+
+    $app->router('/camera-option/{deviceKey}/{secret}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        // Lấy deviceKey và secret từ URL một cách an toàn
+        $deviceKey = $vars['deviceKey'] ?? '';
+        $secret = $vars['secret'] ?? '';
+
+        // --- XỬ LÝ KHI NGƯỜI DÙNG TẢI TRANG (GET) ---
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Cấu hình Camera");
+
+            // 1. Định nghĩa các giá trị mặc định cho một cấu hình mới
+            $default_options = [
+                'recSucTtsMode' => '1', // Mặc định là 'Không phát âm thanh'
+                'recSucTtsCustom' => '',
+                'recThreshold1v1' => '0.85', // Giá trị gợi ý
+                'recInterva' => '5',        // Giá trị gợi ý
+                'recDistance' => '0',       // Mặc định là 'Không giới hạn'
+                'recStrangerEnable' => '0', // Mặc định là 'Không nhận diện người lạ'
+                'sevUploadRecRecordUrl' => '',
+            ];
+
+            // 2. Lấy dữ liệu đã lưu từ database (nếu có)
+            $saved_options = $app->get("camera_option", "*", [
+                "deviceKey" => $deviceKey,
+                'secret' => $secret
+            ]);
+
+            // 3. Hợp nhất mảng mặc định với mảng đã lưu.
+            // Các giá trị đã lưu sẽ ghi đè lên giá trị mặc định.
+            // Nếu không có gì được lưu, mảng mặc định sẽ được sử dụng.
+            $vars['camera_op'] = array_merge($default_options, $saved_options ? $saved_options : []);
+
+            // 4. Render view, bạn không cần thay đổi gì ở file .html
+            echo $app->render($template . '/hrm/camera-option.html', $vars,$jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            // 1. Kiểm tra dữ liệu đầu vào
+            if (empty($_POST['recThreshold1v1']) || empty($_POST['sevUploadRecRecordUrl'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Độ chính xác và webhook không được để trống')]);
+                return;
+            }
+
+            // 2. Chuẩn bị dữ liệu để gửi đi và lưu trữ
+            $dataToSubmit = [
+                'deviceKey' => $deviceKey,
+                'secret' => $secret,
+                'recThreshold1v1' => $_POST['recThreshold1v1'],
+                'recInterva' => $_POST['recInterva'],
+                'recDistance' => $_POST['recDistance'],
+                'recStrangerEnable' => $_POST['recStrangerEnable'],
+                'sevUploadRecRecordUrl' => $_POST['sevUploadRecRecordUrl'],
+                'recSucTtsMode' => $_POST['recSucTtsMode'],
+                'recSucTtsCustom' => $_POST['recSucTtsCustom'],
+            ];
+
+            // 3. Gọi API của camera để cập nhật cấu hình
+            $curl = curl_init();
+            curl_setopt_array($curl, [
+                CURLOPT_URL => 'http://camera.ellm.io:8190/api/device/setConfig',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => http_build_query($dataToSubmit),
+                CURLOPT_HTTPHEADER => [
+                        'Authorization: Bearer your_token', 
+                        'Content-Type: application/x-www-form-urlencoded'
+                    ],
+            ]);
+            $response = curl_exec($curl);
+            $apiResponse = json_decode($response, true);
+            curl_close($curl);
+
+            // 4. Xử lý kết quả từ API
+            if (isset($apiResponse['success']) && $apiResponse['success'] === true) {
+                // API thành công, tiến hành cập nhật vào database của bạn
+                $existing_op = $app->get("camera_option", ["id"], ["deviceKey" => $deviceKey, 'secret' => $secret]);
+
+                if ($existing_op) {
+                    // Nếu đã có cấu hình -> Cập nhật
+                    $app->update('camera_option', $dataToSubmit, ['id' => $existing_op['id']]);
+                } else {
+                    // Nếu chưa có -> Thêm mới
+                    $app->insert('camera_option', $dataToSubmit);
+                }
+
+                echo json_encode(['status' => 'success', 'content' => 'Cập nhật thành công!', "url" => $_SERVER['HTTP_REFERER']]);
+            } else {
+                // API thất bại, báo lỗi
+                $errorMessage = $apiResponse['msg'] ?? "Lỗi không xác định từ API Camera.";
+                echo json_encode(['status' => 'error', 'content' => $errorMessage]);
+            }
+        }
+    })->setPermissions(['camera.edit']);
 })->middleware('login');

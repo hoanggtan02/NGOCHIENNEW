@@ -99,12 +99,23 @@ return [
                         "router" => '/hrm/reports',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'camera' => [
+                        "name" => $jatbi->lang("Camera"),
+                        "router" => '/hrm/camera',
+                        "icon" => '<i class="fas fa-grin-hearts"></i>',
+                    ],
 
 
                 ],
                 "main" => 'false',
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
+
+
+                    'camera' => $jatbi->lang("Camera"),
+                    'camera.add' => $jatbi->lang("Thêm camera"),
+                    'camera.edit' => $jatbi->lang("Sửa camera"),
+                    'camera.deleted' => $jatbi->lang("Xóa camera"),
 
                     // Quyền cho Danh mục Đồng phục
                     'uniforms_items' => $jatbi->lang("Xem danh mục đồng phục"),

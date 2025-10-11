@@ -1,0 +1,98 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <?=$app->component('select', [
+                                "name" => 'recSucTtsMode',
+                                "placeholder" => $jatbi->lang('Chế độ âm thanh'),
+                                "selected" => $camera_op['recSucTtsMode'] ?? '1',
+                                "options" => [
+                                    ["value" => "1", "text" => $jatbi->lang("Không phát âm thanh")],
+                                    ["value" => "2", "text" => $jatbi->lang("Phát âm tên")],
+                                    ["value" => "100", "text" => $jatbi->lang("Phát âm thanh tùy chỉnh")]
+                                ]
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "name" => 'recSucTtsCustom',
+                                "placeholder" => $jatbi->lang('Âm thanh tuỳ chỉnh'),
+                               
+                                "value" => $camera_op['recSucTtsCustom'] ?? ''
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "name" => 'recThreshold1v1',
+                                "placeholder" => $jatbi->lang('Độ chính xác nhận diện'),
+                                
+                                "value" => $camera_op['recThreshold1v1'] ?? ''
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "name" => 'recInterva',
+                                "placeholder" => $jatbi->lang("Khoảng thời gian nhận diện (giây)"),
+                                
+                                "value" => $camera_op['recInterva'] ?? ''
+                            ])?>
+
+                            <?=$app->component('select', [
+                                "name" => 'recDistance',
+                                "placeholder" => $jatbi->lang('Khoảng cách nhận diện'),
+                                "selected" => $camera_op['recDistance'] ?? '0',
+                                "options" => [
+                                    ["value" => "0", "text" => $jatbi->lang("Không giới hạn")],
+                                    ["value" => "1", "text" => $jatbi->lang("Trong phạm vi 0.5 mét")],
+                                    ["value" => "2", "text" => $jatbi->lang("Trong phạm vi 1 mét")],
+                                    ["value" => "3", "text" => $jatbi->lang("Trong phạm vi 1.5 mét")],
+                                    ["value" => "4", "text" => $jatbi->lang("Trong phạm vi 2 mét")],
+                                    ["value" => "5", "text" => $jatbi->lang("Trong phạm vi 3 mét")],
+                                    ["value" => "6", "text" => $jatbi->lang("Trong phạm vi 4 mét")]
+                                ]
+                            ])?>
+
+                            <?=$app->component('select', [
+                                "name" => 'recStrangerEnable',
+                                 "placeholder" => $jatbi->lang("Công tắc nhận diện người lạ"),
+                                "selected" => $camera_op['recStrangerEnable'] ?? '0',
+                                "options" => [
+                                    ["value" => "0", "text" => $jatbi->lang("Không nhận diện người lạ")],
+                                    ["value" => "1", "text" => $jatbi->lang("Nhận diện người lạ")]
+                                ]
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "name" => 'sevUploadRecRecordUrl',
+                                  "placeholder" => $jatbi->lang("Webhook"),
+                           
+                                "value" => $camera_op['sevUploadRecRecordUrl'] ?? ''
+                            ])?>
+
+                              <div class="col-lg-12">
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                        </div>
+                      
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
