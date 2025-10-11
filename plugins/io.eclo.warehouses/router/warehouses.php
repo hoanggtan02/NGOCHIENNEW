@@ -4029,11 +4029,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     $trongky[$log['type']]['amount'] += $amount;
                     if ($log['type'] == 'import') {
                         $totalImport += $amount;
-
                     } elseif ($log['type'] == 'export' || $log['type'] == 'pairing') {
                         $totalExport += $amount;
-
-
                     } elseif ($log['type'] == 'move') {
                         $totalMove += $amount;
                     } elseif ($log['type'] == 'error') {
@@ -9288,7 +9285,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router('/products-import-history', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore, $setting) {
 
         $vars['title'] = $jatbi->lang("Lịch sử nhập hàng");
-        
+
         if ($app->method() === 'GET') {
 
             $accounts = $app->select("accounts", ["id(value)", "name(text)"], ["deleted" => 0]);
@@ -9390,4 +9387,41 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             ]);
         }
     })->setPermissions(['products.import']);
+
+
+    $app->router("/products-history-views/{id}", 'GET', function ($vars) use ($app, $jatbi,$template ,$setting) {
+        $vars['data'] = $app->get("warehouses", "*", [
+            "id" => $vars['id'],
+            "deleted" => 0
+        ]);
+
+        if ($vars['data']) {
+
+
+            $vars['details'] = $app->select(
+                "warehouses_logs", 
+                [
+                    "[>]products" => ["products" => "id"],
+                    "[>]units" => ["products.units" => "id"]
+                ],
+                [
+                    "warehouses_logs.amount",
+                    "warehouses_logs.price",
+                    "warehouses_logs.notes",
+                    "products.code",
+                    "products.name(product_name)", 
+                    "units.name(unit_name)"      
+                ],
+                [
+                    "warehouses_logs.warehouses" => $vars['data']['id']
+                ]
+            );
+
+
+            echo $app->render($template . '/warehouses/products-history-views.html', $vars, $jatbi->ajax());
+        } else {
+            echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+        }
+    })->setPermissions(['products.import']);
+
 })->middleware('login');
