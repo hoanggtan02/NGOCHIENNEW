@@ -3675,12 +3675,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "personnels" => $app->xss($_POST['personnels']),
                         "deleted" => 0,
                     ]) || $app->has("furlough", [
-                                "id[!]" => $data['id'],
-                                "date_from[<=]" => $app->xss($_POST['date_to']),
-                                "date_to[>=]" => $app->xss($_POST['date_to']),
-                                "personnels" => $app->xss($_POST['personnels']),
-                                "deleted" => 0,
-                            ])
+                        "id[!]" => $data['id'],
+                        "date_from[<=]" => $app->xss($_POST['date_to']),
+                        "date_to[>=]" => $app->xss($_POST['date_to']),
+                        "personnels" => $app->xss($_POST['personnels']),
+                        "deleted" => 0,
+                    ])
                 ) {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày nghỉ phép bị trùng")]);
                     return;
@@ -4772,7 +4772,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
     $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $accStore) {
         try {
-            // --- BƯỚC 1: LẤY VÀ XỬ LÝ CÁC BỘ LỌC TỪ URL ---
             $year = $_GET['year'] ?? date('Y');
             $month = $_GET['month'] ?? date('m');
             $personnelF = $_GET['personnel'] ?? '';
@@ -4783,60 +4782,72 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $from_date = "$year-$month-01";
             $to_date = "$year-$month-$totalDays";
 
-            // --- BƯỚC 2: TỐI ƯU HÓA - LẤY TOÀN BỘ DỮ LIỆU CẦN THIẾT TRƯỚC ---
             $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
-            if (!empty($officeF))
-                $wherePersonnel['AND']['office'] = $officeF;
-            if (!empty($personnelF))
-                $wherePersonnel['AND']['id'] = $personnelF;
+            if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
+            if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
 
             $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
-            if (empty($personnel_list))
+            if (empty($personnel_list)) {
                 exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
-
+            }
             $personnel_ids = array_column($personnel_list, 'id');
 
             $timekeeping_data = $app->select("timekeeping", "*", ["personnels" => $personnel_ids, "date[<>]" => [$from_date, $to_date]]);
             $furlough_data = $app->select("furlough", "*", ["personnels" => $personnel_ids, "date_from[<=]" => $to_date, "date_to[>=]" => $from_date, "deleted" => 0, "status" => 'A']);
-            $timework_details_data = $app->select("personnels_contract_timeline(pct)", ["[>]timework_details(td)" => ["pct.week" => "week"]], "*", ["pct.personnels" => $personnel_ids]);
+
+            $rosters_data = $app->select("rosters", ["personnels", "timework", "date"], ["personnels" => $personnel_ids, "date[<=]" => $to_date, "deleted" => 0]);
+            $timework_ids = array_unique(array_column($rosters_data, 'timework'));
+            $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids]);
 
             $office_map = array_column($app->select("offices", ["id", "name"]), 'name', 'id');
             $furlough_category_map = array_column($app->select("furlough_categorys", ["id", "code"]), 'code', 'id');
 
             $timekeeping_map = [];
-            foreach ($timekeeping_data as $tk)
-                $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
+            foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
+
             $furlough_map = [];
             foreach ($furlough_data as $f) {
                 for ($d = strtotime($f['date_from']); $d <= strtotime($f['date_to']); $d += 86400) {
                     $furlough_map[$f['personnels']][date("Y-m-d", $d)] = $f;
                 }
             }
-            $schedule_map = [];
-            foreach ($timework_details_data as $td)
-                $schedule_map[$td['personnels']][$td['week']] = $td;
 
-            // --- BƯỚC 3: XỬ LÝ DỮ LIỆU VÀ TÍNH TOÁN ---
+            $rosters_map = [];
+            foreach ($rosters_data as $roster) $rosters_map[$roster['personnels']][] = $roster;
+            foreach ($rosters_map as $pid => &$p_rosters) {
+                usort($p_rosters, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
+            }
+
+            $timework_details_map = [];
+            foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
+
             $excelData = [];
             $stt = 1;
             foreach ($personnel_list as $personnel) {
                 $pid = $personnel['id'];
                 $dailyData = [];
-                $total_day_hours = 0;
-                $total_sunday_hours = 0;
-                $work_days = 0;
-                $late_count = 0;
-                $late_minutes = 0;
-                $early_count = 0;
-                $early_minutes = 0;
+                $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
 
                 foreach (range(1, $totalDays) as $day) {
                     $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
                     $current_date_str = "$year-$month-$dayStr";
-                    $week_day = date('N', strtotime($current_date_str));
+                    $current_date_ts = strtotime($current_date_str);
+                    $week_day = date('N', $current_date_ts);
                     $value = '';
 
-                    $schedule = $schedule_map[$pid][$week_day] ?? null;
+                    $active_roster = null;
+                    if (isset($rosters_map[$pid])) {
+                        foreach ($rosters_map[$pid] as $roster) {
+                            if (strtotime($roster['date']) <= $current_date_ts) {
+                                $active_roster = $roster;
+                                break;
+                            }
+                        }
+                    }
+                    $schedule = null;
+                    if ($active_roster) {
+                        $schedule = $timework_details_map[$active_roster['timework']][$week_day] ?? null;
+                    }
 
                     if (isset($furlough_map[$pid][$current_date_str])) {
                         $furlough_record = $furlough_map[$pid][$current_date_str];
@@ -4846,21 +4857,20 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     } elseif (isset($timekeeping_map[$pid][$current_date_str])) {
                         $tk = $timekeeping_map[$pid][$current_date_str];
                         if (!empty($tk['checkin']) && !empty($tk['checkout'])) {
-                            $checkin_time = strtotime($tk['checkin']);
-                            $checkout_time = strtotime($tk['checkout']);
+                        $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
+                        $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
                             $hours = ($checkout_time - $checkin_time) / 3600;
                             $work_days++;
 
-                            if ($week_day == 7)
-                                $total_sunday_hours += $hours;
-                            else
-                                $total_day_hours += $hours;
+                            if ($week_day == 7) $total_sunday_hours += $hours;
+                            else $total_day_hours += $hours;
 
                             $value = round($hours / 8, 2);
 
-                            if ($schedule) {
-                                $expected_start = strtotime($schedule['time_from']);
-                                $expected_end = strtotime($schedule['time_to']);
+                            if ($schedule && $schedule['off'] == 0) {
+                                $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
+                                $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
+
                                 if ($checkin_time > $expected_start) {
                                     $late_count++;
                                     $late_minutes += ($checkin_time - $expected_start) / 60;
@@ -4872,6 +4882,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             }
                         } else {
                             $value = 'K/L';
+                        }
+                    } else {
+                        if ($schedule && $schedule['off'] == 0) {
+                            $value = 'V';
                         }
                     }
                     $dailyData[$dayStr] = $value;
@@ -4896,7 +4910,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ];
             }
 
-            // --- BƯỚC 4: TẠO FILE EXCEL VỚI ĐỊNH DẠNG CHUẨN ---
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle("BangCongThang_$month-$year");
@@ -4974,20 +4987,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
 
-            // --- BƯỚC 5: SỬA LẠI ĐỊNH DẠNG CỘT ---
-            // Tự động giãn các cột thông tin
-            $sheet->getColumnDimension('A')->setAutoSize(true); // STT
-            $sheet->getColumnDimension('B')->setAutoSize(true); // Mã NV
-            $sheet->getColumnDimension('C')->setAutoSize(true); // Họ và tên
-            $sheet->getColumnDimension('D')->setAutoSize(true); // Bộ phận
+            $sheet->getColumnDimension('A')->setAutoSize(true);
+            $sheet->getColumnDimension('B')->setAutoSize(true);
+            $sheet->getColumnDimension('C')->setAutoSize(true);
+            $sheet->getColumnDimension('D')->setAutoSize(true);
 
-            // Set độ rộng cố định và nhỏ cho các cột ngày trong tháng
             for ($i = 1; $i <= $totalDays; $i++) {
-                $colLetter = Coordinate::stringFromColumnIndex(4 + $i); // Cột ngày bắt đầu từ E (cột thứ 5)
+                $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
                 $sheet->getColumnDimension($colLetter)->setWidth(5);
             }
 
-            // Tự động giãn các cột tổng kết ở cuối
             $summaryStartColIndex = 4 + $totalDays + 1;
             $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
             for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
@@ -4995,7 +5004,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $sheet->getColumnDimension($colLetter)->setAutoSize(true);
             }
 
-            // --- BƯỚC 6: XUẤT FILE ---
             ob_end_clean();
             $filename = "BangCong_Thang_{$month}_{$year}.xlsx";
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -5007,7 +5015,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         } catch (Exception $e) {
             ob_end_clean();
             http_response_code(500);
-            exit("Lỗi: " . $e->getMessage());
+            exit("Lỗi khi tạo file Excel: " . $e->getMessage());
         }
     })->setPermissions(['timekeeping']);
 
@@ -5070,6 +5078,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ];
                 $app->insert("timekeeping_details", $insert);
                 $jatbi->logs('timekeeping', 'add', [$insert, $timeLate ?? ""]);
+
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             }
         }
@@ -6496,7 +6505,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
             // Xử lý khoảng ngày
-                    $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
+            $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
             $date_to = date('Y-m-d 23:59:59');
 
 
@@ -6536,20 +6545,21 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $decided_map[$device['decided']] = $device['name'];
             }
 
-            // Lấy dữ liệu chính
             $datas = [];
-            $app->select("webhook", "*", $where, function ($data) use (&$datas, $jatbi, $decided_map) {
+            $app->select("webhook", "*", $where, function ($data) use (&$datas, $jatbi, $setting, $decided_map) {
                 $person_type_html = $data['personSn'] != 0
-                    ? '<span class="badge badge-light-success fw-bold">' . $jatbi->lang('Nhân viên') . '</span>'
-                    : '<span class="badge badge-light-danger fw-bold">' . $jatbi->lang('Người lạ') . '</span>';
-$imagePath = !empty($data['photo']) ? '/public' . $data['photo'] : '';
+                    ? '<span class="">' . $jatbi->lang('Nhân viên') . '</span>'
+                    : '<span class="">' . $jatbi->lang('Người lạ') . '</span>';
+
+                $imagePath = !empty($data['photo']) ? '' . $data['photo'] : '';
+
                 $datas[] = [
-                   "image" => '<img src="' . $imagePath . '" class="rounded-3 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">',
+                    "image" => '<img src="' . $setting['url'] . $imagePath . '" class="rounded-3 shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">',
                     "person_name" => $data['name'] ?? '',
                     "device_name" => $decided_map[$data['devicekey']] ?? $jatbi->lang('Không xác định'),
                     "date" => date("d/m/Y H:i:s", strtotime($data['date_face'])),
                     "type" => $person_type_html,
-                    "action" => '<a class="btn btn-sm btn-light modal-url" data-url="/admin/faceid-views/' . $data['id'] . '/"><i class="ti ti-eye" aria-hidden="true"></i></a>',
+                    "action" => '<button data-action="modal" data-url="/hrm/faceid-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
                 ];
             });
 
@@ -6562,4 +6572,17 @@ $imagePath = !empty($data['photo']) ? '/public' . $data['photo'] : '';
             ]);
         }
     })->setPermissions(['faceid']);
+
+    $app->router('/faceid-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
+
+        $vars['title'] = $jatbi->lang("Ảnh nhận diện");
+        $vars['data'] = $app->get("webhook", "*", [
+            "AND" => [
+                "id" => $vars['id'],
+                "deleted" => 0
+            ]
+        ]);
+        echo $app->render($template . '/hrm/faceid-post.html', $vars, $jatbi->ajax());
+    })->setPermissions(['faceid']);
+    
 })->middleware('login');
