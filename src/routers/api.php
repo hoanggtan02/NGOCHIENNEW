@@ -2317,31 +2317,61 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         echo json_encode($datas);
     });
 
-    $app->router("/webhook/timekeeping", ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router("/webhook-api-test", ['GET', 'POST'], function ($vars) use ($app) {
 
-        // BƯỚC 1: Lấy dữ liệu "thô" (raw data) mà webhook gửi lên
+        // BƯỚC 1: Kiểm tra phương thức request. Webhook nên là POST.
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405); // 405 Method Not Allowed
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Invalid request method. Only POST is accepted.'
+            ]);
+            exit;
+        }
+
+        // BƯỚC 2: Lấy dữ liệu "thô" (raw data) mà webhook gửi lên
         $raw_input = file_get_contents("php://input");
 
-        // BƯỚC 2: Chuẩn bị nội dung để ghi vào file log, bao gồm cả thời gian
-        $log_entry = "[" . date("Y-m-d H:i:s") . "] Received Webhook Data:\n";
-        $log_entry .= $raw_input . "\n";
+        // Lấy thêm thông tin headers để debug
+        $headers = json_encode(getallheaders(), JSON_PRETTY_PRINT);
+
+        // BƯỚC 3: Chuẩn bị nội dung để ghi vào file log, bao gồm cả thời gian và headers
+        $log_entry = "[" . date("Y-m-d H:i:s") . "] --- NEW WEBHOOK RECEIVED ---\n";
+        $log_entry .= "Request Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
+        $log_entry .= "Request Headers:\n" . $headers . "\n";
+        $log_entry .= "Raw Body:\n" . $raw_input . "\n";
         $log_entry .= "---------------------------------------------------\n\n";
 
-        // BƯỚC 3: Ghi vào file log với đường dẫn tuyệt đối (quan trọng!)
-        // Hãy đảm bảo bạn đã tạo thư mục /logs/ trên server.
-        $log_path = '/www/wwwroot/ngochiennew.eclo.io/src/routers/webhook_log.txt';
-        file_put_contents($log_path, $log_entry, FILE_APPEND);
+        // BƯỚC 4: Ghi vào file log với đường dẫn tương đối (an toàn và dễ di chuyển hơn)
+        // __DIR__ sẽ lấy đường dẫn tới thư mục chứa file PHP này.
+        // Đảm bảo thư mục này có quyền ghi cho user web server.
+        $log_path = __DIR__ . '/webhook_log.txt';
 
-        // BƯỚC 4: Phản hồi lại cho webhook sender rằng đã nhận được
+        // Thêm kiểm tra kết quả của file_put_contents để gỡ lỗi
+        if (file_put_contents($log_path, $log_entry, FILE_APPEND) === false) {
+            // Nếu ghi file thất bại, ghi lỗi vào error log của PHP
+            // Bạn có thể xem log này ở /var/log/nginx/error.log hoặc tương tự
+            error_log("Webhook logging failed: Could not write to file: " . $log_path);
+
+            // Phản hồi lỗi cho webhook sender
+            $app->header(['Content-Type' => 'application/json']);
+            http_response_code(500); // 500 Internal Server Error
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Internal Server Error: Could not write to log file.'
+            ]);
+            exit;
+        }
+
+        // BƯỚC 5: Phản hồi lại cho webhook sender rằng đã nhận được
         $app->header(['Content-Type' => 'application/json']);
         http_response_code(200); // Trả về mã 200 OK
-        echo json_encode([  
+        echo json_encode([
             'status' => 'success',
             'message' => 'Webhook received and logged successfully.'
         ]);
 
-        // BƯỚC 5: Dừng script ngay lập tức
+        // BƯỚC 6: Dừng script
         exit;
     });
-
 })->middleware(names: 'login');
