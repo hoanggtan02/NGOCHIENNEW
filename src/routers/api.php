@@ -1994,9 +1994,6 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         }
     });
 
-
-
-
     $app->router('/ingredient-cancel/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $session_key = 'ingredient_cancel';
         $data = $_SESSION[$session_key];

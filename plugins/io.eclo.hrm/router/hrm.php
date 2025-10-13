@@ -438,6 +438,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $photo = '';
             $isNewPhotoUploaded = false;
 
+            $devices = isset($_POST['decided']) ? $_POST['decided'] : '';
+            if (empty($devices) || !is_array($devices)) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng chọn thiết bị")]);
+                return;
+            }
+
             if (isset($_FILES['images']) && $_FILES['images']['error'] === UPLOAD_ERR_OK) {
                 $handle = $app->upload($_FILES['images']);
 
@@ -481,7 +487,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 return;
             }
 
-            $devices = isset($_POST['decided']) ? $_POST['decided'] : '';
+
             $deviceKeys = [];
 
             foreach ($devices as $deviceId) {
