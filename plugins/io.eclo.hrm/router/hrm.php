@@ -4770,6 +4770,272 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['timekeeping']);
 
+
+//     $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
+//     if ($app->method() === 'GET') {
+//         $vars['title'] = $jatbi->lang("Chấm công");
+
+//         // --- Chuẩn bị dữ liệu tĩnh và filter (Không thay đổi) ---
+//         $years = [];
+//         for ($i = 2020; $i <= date('Y'); $i++) {
+//             $years[] = ["value" => $i, "text" => $i];
+//         }
+//         $months = [];
+//         for ($i = 1; $i <= 12; $i++) {
+//             $value = str_pad($i, 2, "0", STR_PAD_LEFT);
+//             $months[] = ["value" => $value, "text" => $i];
+//         }
+//         $vars['years'] = $years;
+//         $vars['months'] = $months;
+
+//         // Lấy filter
+//         $year = $_GET['year'] ?? date('Y');
+//         $month = $_GET['month'] ?? date('m');
+//         $personnelF = $_GET['personnel'] ?? '';
+//         $officeF = $_GET['office'] ?? '';
+//         $stores = $_GET['stores'] ?? $accStore;
+//         $date_form = date("t", strtotime($year . "-" . $month . "-01"));
+
+//         // --- Truy vấn dữ liệu cho các Select Box (Giữ nguyên) ---
+//         $personnelsList = $app->select("personnels", ["id(value)", "name(text)"], [
+//             "deleted" => 0,
+//             "status" => 'A',
+//             "stores" => $accStore
+//         ]);
+//         $vars['personnels'] = array_merge(
+//             [['value' => '', 'text' => $jatbi->lang('Chọn nhân viên')]],
+//             $personnelsList
+//         );
+
+//         $officeList = $app->select("offices", ["id(value)", "name(text)"], [
+//             "deleted" => 0,
+//             "status" => 'A',
+//         ]);
+//         $vars['office'] = array_merge(
+//             [['value' => '', 'text' => $jatbi->lang('Chọn phòng ban')]],
+//             $officeList
+//         );
+
+//         // --- Danh sách ngày trong tháng (Giữ nguyên) ---
+//         $dates = [];
+//         for ($day = 1; $day <= $date_form; $day++) {
+//             $dayFormatted = str_pad($day, 2, "0", STR_PAD_LEFT);
+//             $date = date("Y-m-d", strtotime($year . "-" . $month . "-" . $dayFormatted));
+//             $week = date("N", strtotime($date));
+//             $dates[] = [
+//                 "name" => $dayFormatted,
+//                 "date" => $date,
+//                 "week" => $week,
+//             ];
+//         }
+
+//         // --- Lọc phòng ban (Giữ nguyên) ---
+//         $whereOffice = [
+//             "deleted" => 0,
+//             "status" => 'A'
+//         ];
+//         if (!empty($officeF)) {
+//             $whereOffice["id"] = $officeF;
+//         }
+//         $offices = $app->select("offices", "*", $whereOffice);
+
+//         // --- Tối ưu: Lấy trước toàn bộ nhân viên cần xử lý ---
+//         $allOfficeIds = array_column($offices ?? [], 'id');
+//         if (empty($allOfficeIds)) {
+//             $vars['dates'] = $dates;
+//             $vars['datas'] = [];
+//             $vars['offices'] = $offices;
+//             $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']);
+//             echo $app->render($template . '/hrm/timekeeping.html', $vars);
+//             return;
+//         }
+
+//         $wherePersonnelAll = [
+//             "office" => $allOfficeIds, // Lọc theo tất cả các phòng ban đã chọn/tìm thấy
+//             "deleted" => 0,
+//             "status" => 'A',
+//             "stores" => $stores
+//         ];
+//         if (!empty($personnelF)) {
+//             $wherePersonnelAll["id"] = $personnelF; // Nếu có lọc nhân viên cụ thể
+//         }
+//         $allPersonnels = $app->select("personnels", "*", $wherePersonnelAll);
+
+//         if (empty($allPersonnels)) {
+//             $vars['dates'] = $dates;
+//             $vars['datas'] = [];
+//             $vars['offices'] = $offices;
+//             $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']);
+//             echo $app->render($template . '/hrm/timekeeping.html', $vars);
+//             return;
+//         }
+
+//         $perIds = array_column($allPersonnels, "id");
+//         $personnelsByOffice = [];
+//         foreach ($allPersonnels as $per) {
+//             $personnelsByOffice[$per['office']][$per['id']] = $per;
+//         }
+
+//         // --- Query trước toàn bộ dữ liệu chỉ với một lần gọi cho mỗi bảng ---
+//         // 1. Chấm công
+//         $timekeepingAll = $app->select("timekeeping", ["personnels", "date", "checkin", "checkout"], [
+//             "date[>=]" => $year . "-" . $month . "-01",
+//             "date[<=]" => $year . "-" . $month . "-" . $date_form,
+//             "personnels" => $perIds
+//         ]);
+//         $timekeepingMap = [];
+//         foreach ($timekeepingAll as $c) {
+//             $timekeepingMap[$c['personnels']][$c['date']] = $c;
+//         }
+
+//         // 2. Ca làm việc (Rosters)
+//         $rostersAll = $app->select("rosters", ["personnels", "timework"], [ // Chỉ lấy 2 cột cần thiết
+//             "personnels" => $perIds,
+//             "deleted" => 0
+//         ]);
+//         $rosterMap = [];
+//         $timeworkIds = [];
+//         foreach ($rostersAll as $r) {
+//             $rosterMap[$r['personnels']] = $r['timework'];
+//             $timeworkIds[] = $r['timework'];
+//         }
+//         $timeworkIds = array_unique($timeworkIds);
+
+//         // 3. Chi tiết ca làm việc (Timework Details)
+//         $timeworkDetailsAll = $app->select("timework_details", ["timework", "week", "off"], [ // Chỉ lấy 3 cột cần thiết
+//             "timework" => $timeworkIds
+//         ]);
+//         $timeworkDetailsMap = [];
+//         foreach ($timeworkDetailsAll as $t) {
+//             $timeworkDetailsMap[$t['timework']][$t['week']] = $t;
+//         }
+
+//         // 4. Nghỉ phép (Furloughs)
+//         $furloughsAll = $app->select("furlough", ["personnels", "date_from", "date_to", "id(furlough_id)", "categorys"], [ // Bổ sung categorys
+//             "personnels" => $perIds,
+//             "date_from[<=]" => $year . "-" . $month . "-" . $date_form,
+//             "date_to[>=]" => $year . "-" . $month . "-01",
+//             "deleted" => 0
+//         ]);
+//         $furloughMap = [];
+//         $furloughCategoryIds = [];
+//         foreach ($furloughsAll as $f) {
+//             for ($d = strtotime($f['date_from']); $d <= strtotime($f['date_to']); $d += 86400) {
+//                 $dateKey = date("Y-m-d", $d);
+//                 // Đảm bảo logic xử lý ngày nghỉ nằm trong tháng được lặp đúng
+//                 if ($dateKey >= $year . "-" . $month . "-01" && $dateKey <= $year . "-" . $month . "-" . $date_form) {
+//                     $furloughMap[$f['personnels']][$dateKey] = $f;
+//                     $furloughCategoryIds[] = $f['categorys'];
+//                 }
+//             }
+//         }
+//         $furloughCategoryIds = array_unique($furloughCategoryIds);
+
+//         // 5. Categorys Nghỉ phép (Tối ưu: Chỉ truy vấn các category ID đang được dùng)
+//         $furloughCategorysAll = $app->select("furlough_categorys", ["id", "code"], [
+//             "id" => $furloughCategoryIds
+//         ]);
+//         $furloughCategoryCodeMap = [];
+//         foreach($furloughCategorysAll as $cat) {
+//             $furloughCategoryCodeMap[$cat['id']] = $cat['code'];
+//         }
+        
+//         // Truy vấn furlough_categorys đầy đủ cho phần Legend
+//         $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']);
+
+
+//         // --- Lặp qua dữ liệu đã chuẩn bị để gán vào $datas (Giữ nguyên logic) ---
+//         $datas = [];
+//         foreach (($offices ?? []) as $key => $office) {
+//             $officeId = $office['id'];
+//             $datas[$key] = [
+//                 "name" => $office['name'],
+//                 "personnels" => []
+//             ];
+
+//             $SelectPer = $personnelsByOffice[$officeId] ?? [];
+
+//             if (empty($SelectPer))
+//                 continue;
+
+//             // --- Gán dữ liệu cho từng nhân viên ---
+//             foreach ($SelectPer as $per) {
+//                 $datas[$key]["personnels"][$per['id']] = [
+//                     "id" => $per['id'],
+//                     "name" => $per['name'],
+//                     "dates" => []
+//                 ];
+
+//                 foreach ($dates as $date) {
+//                     $checked = $timekeepingMap[$per['id']][$date['date']] ?? null;
+//                     $roster = $rosterMap[$per['id']] ?? null;
+//                     $timeworkDetail = $roster ? ($timeworkDetailsMap[$roster][$date['week']] ?? null) : null;
+//                     $furlough = $furloughMap[$per['id']][$date['date']] ?? null;
+
+//                     $color = "bg-light bg-opacity-10";
+//                     $off = 0;
+//                     $offcontent = "";
+//                     $furloughCode = null; // Tối ưu: Thêm biến để lưu code
+
+//                     if ($timeworkDetail && $timeworkDetail['off'] == 1) {
+//                         $off = 1;
+//                         $offcontent = 'OFF';
+//                         $color = 'bg-primary bg-opacity-10';
+//                     } else {
+//                         // Tối ưu: Lấy $setting['timework_to'] bên ngoài vòng lặp nếu nó cố định
+//                         $timework_to_time = strtotime($date['date'] . ' ' . $setting['timework_to']);
+
+//                         if (!empty($checked['checkin']) && empty($checked['checkout'])) {
+//                             $color = 'bg-danger bg-opacity-10';
+//                         } elseif (empty($checked['checkin']) && empty($checked['checkout'])) {
+//                             if ($timework_to_time <= strtotime(date("Y-m-d H:i:s"))) {
+//                                 $color = 'bg-warning bg-opacity-10';
+//                             } else {
+//                                 $color = 'bg-light bg-opacity-10';
+//                             }
+//                         } elseif (!empty($checked['checkin']) && !empty($checked['checkout'])) {
+//                             $color = 'bg-success bg-opacity-10';
+//                         }
+//                     }
+
+//                     if ($furlough) {
+//                         $off = 1;
+//                         // Tối ưu: Thay vì query DB trong vòng lặp, dùng Map đã chuẩn bị
+//                         $furloughCode = $furloughCategoryCodeMap[$furlough['categorys']] ?? '';
+//                         $offcontent = $furloughCode;
+//                         $color = 'bg-primary bg-opacity-25';
+//                     }
+
+//                     $datas[$key]["personnels"][$per['id']]["dates"][$date['date']] = [
+//                         "name" => $date['name'],
+//                         "date" => $date['date'],
+//                         "week" => $date['week'],
+//                         "color" => $color,
+//                         "checkin" => [
+//                             "time" => $checked['checkin'] ?? null,
+//                         ],
+//                         "checkout" => [
+//                             "time" => $checked['checkout'] ?? null,
+//                         ],
+//                         "off" => [
+//                             "status" => $off,
+//                             "content" => $offcontent,
+//                         ],
+//                         // Có thể thêm thông tin timework detail nếu cần
+//                         "timework_detail" => $timeworkDetail,
+//                     ];
+//                 }
+//             }
+//         }
+
+//         $vars['dates'] = $dates;
+//         $vars['datas'] = $datas;
+//         $vars['offices'] = $offices;
+//         // $vars['furlough_categorys'] đã được truy vấn ở trên cho Legend
+
+//         echo $app->render($template . '/hrm/timekeeping.html', $vars);
+//     }
+// })->setPermissions(['timekeeping']);
     $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $accStore) {
         try {
             // --- BƯỚC 1: LẤY VÀ XỬ LÝ CÁC BỘ LỌC TỪ URL ---
