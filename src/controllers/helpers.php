@@ -1873,4 +1873,93 @@ class Jatbi
 
 		return json_decode($response, true) ?? ['success' => false, 'msg' => 'Invalid JSON response from API.'];
 	}
+
+	function count_time($date_from,$date_to,$type=null,$color=null,$css=null)
+	{
+		global $lang;
+		$start_date = new DateTime($date_from);
+		$end_date = new DateTime($date_to);
+		$diff = $end_date->diff($start_date);
+		$total = $diff->days;
+		$yeas =  $diff->y;
+		$month = $diff->m;
+		$day = $diff->d;
+		$hour = $diff->h;
+		$minute = $diff->i;
+		$second = $diff->s;
+
+		if($diff->invert==0){
+			$invert = '-';
+			$mau = $css.'danger';
+		}
+		else {
+			if($total>5 && $color==''){
+				$mau = $css.'primary';
+			} 
+			elseif($total<=5 && $total>2 && $color==''){
+				$mau = $css.'info';
+			}
+			elseif($total<=2 && $total>0 && $color==''){
+				$mau = $css.'warning';
+			}
+			elseif($total<=0 && $color==''){
+				$mau = $css.'danger';
+			}
+			else {
+				$mau = $css.'success';
+			}
+		}
+
+		if($css!=''){
+			$class = '<span class="'.$mau.'">';
+			$end_class = '</span>';
+		}
+
+		if($type=='day'){
+			return $invert.''.$diff->days;
+		}
+		elseif($type=='invert'){
+			return $invert;
+		}
+		elseif($type=='color'){
+			return $mau;
+		}
+		elseif($type=='hour'){
+			if($date_from!='' && $date_to!='' && strtotime($date_from)< strtotime($date_to)){
+				return $day*24+$hour+round($minute/60*2)/2;
+			}else{
+				return '';
+			}
+		}
+		elseif($type=='minute'){
+			return ($day*24+$hour+$minute/60 ) * 60;
+		}
+		elseif($type=='days'){
+			return $day;
+		}
+		elseif($type=='month'){
+			return $month;
+		}
+		elseif($type=='year'){
+			return $yeas;
+		}
+		else {
+			if($minute>0 && $hour==0 &&  $day==0){
+				return $class.$invert.' '.$minute.' '.lang('Phút').$end_class;
+			}
+			elseif($hour>0 && $month==0 &&  $day==0){
+				return $class.$invert.' '.$hour.' '.lang('Giờ').' '.$minute.' '.lang('Phút').$end_class;
+			}
+			elseif($day>0 && $month==0 &&  $yeas==0){
+				return $class.$invert.' '.$day.' '.lang('Ngày').' '.$hour.' '.lang('Giờ').' '.$minute.' '.lang('Phút').$end_class;
+			}
+			elseif($day>0 && $month>0 &&  $yeas==0){
+				return $class.$invert.' '.$month.' '.lang('Tháng').' '.$day.' '.lang('Ngày').' '.$hour.' '.lang('Giờ').' '.$minute.' '.lang('Phút').$end_class;
+			}
+			else {
+				return $class.$invert.' '.$yeas.' '.lang('Năm').' '.$month.' '.lang('Tháng').' '.$day.' '.lang('Ngày').' '.$hour.' '.lang('Giờ').' '.$minute.' '.lang('Phút').$end_class;
+			}
+		}
+	}
+
 }
