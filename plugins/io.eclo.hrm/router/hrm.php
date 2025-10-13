@@ -450,8 +450,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $path_upload = $setting['uploads'] . '/personnels/';
                 $path_thumb = $path_upload . 'thumb/';
 
-                if (!is_dir($path_upload)) mkdir($path_upload, 0755, true);
-                if (!is_dir($path_thumb)) mkdir($path_thumb, 0755, true);
+                if (!is_dir($path_upload))
+                    mkdir($path_upload, 0755, true);
+                if (!is_dir($path_thumb))
+                    mkdir($path_thumb, 0755, true);
 
                 $new_file_id = $jatbi->active();
 
@@ -492,16 +494,17 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             foreach ($devices as $deviceId) {
                 $deviceConfig = $app->get("hrm_decided", "*", ["id" => $deviceId]);
-                if (!$deviceConfig) continue;
+                if (!$deviceConfig)
+                    continue;
 
                 $deviceApiPayload = [
                     'deviceKey' => $deviceConfig['decided'],
-                    'secret'    => $deviceConfig['password'],
+                    'secret' => $deviceConfig['password'],
                 ];
 
                 if ($personnel['face'] == 0) {
                     $createPayload = array_merge($deviceApiPayload, [
-                        'sn'   => $personnel['id'],
+                        'sn' => $personnel['id'],
                         'name' => $personnel['name'],
                         'type' => 1,
                     ]);
@@ -516,8 +519,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
                     $mergePayload = array_merge($deviceApiPayload, [
                         'personSn' => $personnel['id'],
-                        'imgUrl'   => $imageUrl,
-                        'easy'     => 1,
+                        'imgUrl' => $imageUrl,
+                        'easy' => 1,
                     ]);
                     $mergeResponse = $jatbi->callCameraApi('face/merge', $mergePayload);
 
@@ -530,7 +533,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 } else {
                     if ($app->xss($_POST['update'] ?? 0) == 1) {
                         $updatePayload = array_merge($deviceApiPayload, [
-                            'sn'   => $personnel['id'],
+                            'sn' => $personnel['id'],
                             'name' => $personnel['code'],
                             'type' => 1,
                         ]);
@@ -546,8 +549,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         $imageUrl = $setting['url'] . "/" . $setting['upload']['images']['personnels']['url'] . $photo;
                         $mergePayload = array_merge($deviceApiPayload, [
                             'personSn' => $personnel['id'],
-                            'imgUrl'   => $imageUrl,
-                            'easy'     => 1,
+                            'imgUrl' => $imageUrl,
+                            'easy' => 1,
                         ]);
                         $mergeResponse = $jatbi->callCameraApi('face/merge', $mergePayload);
                         if (empty($mergeResponse['success'])) {
@@ -6332,7 +6335,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "password" => $app->xss($_POST['password']),
                     ];
                     $app->update("hrm_decided", $insert, ["id" => $data['id']]);
-                
+
                     echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), "url" => $_SERVER['HTTP_REFERER']]);
                 } else {
                     echo json_encode($error);
@@ -6399,7 +6402,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['camera_op'] = array_merge($default_options, $saved_options ? $saved_options : []);
 
             // 4. Render view, bạn không cần thay đổi gì ở file .html
-            echo $app->render($template . '/hrm/camera-option.html', $vars,$jatbi->ajax());
+            echo $app->render($template . '/hrm/camera-option.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -6435,9 +6438,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 CURLOPT_CUSTOMREQUEST => 'POST',
                 CURLOPT_POSTFIELDS => http_build_query($dataToSubmit),
                 CURLOPT_HTTPHEADER => [
-                        'Authorization: Bearer your_token', 
-                        'Content-Type: application/x-www-form-urlencoded'
-                    ],
+                    'Authorization: Bearer your_token',
+                    'Content-Type: application/x-www-form-urlencoded'
+                ],
             ]);
             $response = curl_exec($curl);
             $apiResponse = json_decode($response, true);
@@ -6464,4 +6467,99 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
     })->setPermissions(['camera.edit']);
+
+
+    $app->router('/faceid', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        // --- XỬ LÝ KHI NGƯỜI DÙNG TẢI TRANG (GET) ---
+        if ($app->method() === 'GET') {
+
+            $vars['title'] = $jatbi->lang("Nhật ký nhận diện");
+
+            $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
+            $date_to = date('Y-m-d 23:59:59');
+
+            $vars['date_from'] = $date_from;
+            $vars['date_to'] = $date_to;
+            echo $app->render($template . '/hrm/faceid.html', $vars);
+        }
+        // --- XỬ LÝ KHI DATATABLES GỌI AJAX ĐỂ LẤY DỮ LIỆU (POST) ---
+        elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            // 1. Lấy các tham số từ DataTables và bộ lọc
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
+            $searchValue = isset($_POST['search']['value']) ? $app->xss($_POST['search']['value']) : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
+
+            // Xử lý khoảng ngày
+                    $date_from = date('2021-01-01 00:00:00', strtotime('first day of this month'));
+            $date_to = date('Y-m-d 23:59:59');
+
+
+            if (!empty($filter_date)) {
+                $date_parts = explode(' - ', $filter_date);
+                if (count($date_parts) == 2) {
+                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
+                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
+                }
+            }
+
+
+            // 2. Xây dựng điều kiện truy vấn (WHERE)
+            $where = [
+                "AND" => [
+                    "webhook.deleted" => 0,
+                    "webhook.date_face[<>]" => [$date_from, $date_to],
+                ],
+                "ORDER" => ["webhook." . $orderName => strtoupper($orderDir)]
+            ];
+
+            if ($searchValue != '') {
+                $where['AND']['webhook.name[~]'] = $searchValue;
+            }
+
+            // 3. Đếm tổng số bản ghi khớp với điều kiện
+            $count = $app->count("webhook", $where);
+
+            // Thêm LIMIT để phân trang
+            $where["LIMIT"] = [$start, $length];
+
+            // 4. Lấy dữ liệu và tối ưu hóa truy vấn
+            // Lấy danh sách thiết bị trước để tránh lỗi N+1 query
+            $decided_devices = $app->select("hrm_decided", ["decided", "name"]);
+            $decided_map = [];
+            foreach ($decided_devices as $device) {
+                $decided_map[$device['decided']] = $device['name'];
+            }
+
+            // Lấy dữ liệu chính
+            $datas = [];
+            $app->select("webhook", "*", $where, function ($data) use (&$datas, $jatbi, $decided_map) {
+                $person_type_html = $data['personSn'] != 0
+                    ? '<span class="badge badge-light-success fw-bold">' . $jatbi->lang('Nhân viên') . '</span>'
+                    : '<span class="badge badge-light-danger fw-bold">' . $jatbi->lang('Người lạ') . '</span>';
+$imagePath = !empty($data['photo']) ? '/public' . $data['photo'] : '';
+                $datas[] = [
+                   "image" => '<img src="' . $imagePath . '" class="rounded-3 shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">',
+                    "person_name" => $data['name'] ?? '',
+                    "device_name" => $decided_map[$data['devicekey']] ?? $jatbi->lang('Không xác định'),
+                    "date" => date("d/m/Y H:i:s", strtotime($data['date_face'])),
+                    "type" => $person_type_html,
+                    "action" => '<a class="btn btn-sm btn-light modal-url" data-url="/admin/faceid-views/' . $data['id'] . '/"><i class="ti ti-eye" aria-hidden="true"></i></a>',
+                ];
+            });
+
+            // 5. Trả về kết quả dưới dạng JSON
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas ?? []
+            ]);
+        }
+    })->setPermissions(['faceid']);
 })->middleware('login');

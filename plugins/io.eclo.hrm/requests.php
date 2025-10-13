@@ -104,6 +104,11 @@ return [
                         "router" => '/hrm/camera',
                         "icon" => '<i class="fas fa-grin-hearts"></i>',
                     ],
+                       'faceid' => [
+                        "name" => $jatbi->lang("Nhật ký nhận diện"),
+                        "router" => '/hrm/faceid',
+                        "icon" => '<i class="fas fa-grin-hearts"></i>',
+                    ],
 
 
                 ],
@@ -111,6 +116,7 @@ return [
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
 
+                    "faceid"=> $jatbi->lang("Nhật ký nhận diện"),
 
                     'camera' => $jatbi->lang("Camera"),
                     'camera.add' => $jatbi->lang("Thêm camera"),
