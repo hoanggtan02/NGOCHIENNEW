@@ -1,0 +1,9 @@
+{
+    "name": "Area-new",
+    "version": "1.0.0",
+    "install" : "true",
+    "id": "io.eclo.areanew",
+    "author": "ECLO",
+    "description": "Khu vực mới",
+    "requires": "1.0.0"
+}
