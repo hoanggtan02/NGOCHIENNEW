@@ -20,13 +20,6 @@ return [
                         "router" => '/areas-new/district',
                         "icon" => '<i class="fas fa-archway"></i>',
                     ],
-                    'ward' => [
-                        "name" => $jatbi->lang("Phường xã"),
-                        "router" => '/areas-new/ward',
-                        "icon" => '<i class="fas fa-road"></i>',
-                    ],
-
-
                 ],
                 "main" => 'false',
                 "permission" => [
@@ -38,10 +31,6 @@ return [
                     'district.add' => $jatbi->lang("Thêm Quận huyện"),
                     'district.edit' => $jatbi->lang("Sửa Quận huyện"),
                     'district.deleted' => $jatbi->lang("Xóa Quận huyện"),
-                    'ward' => $jatbi->lang("Phường xã"),
-                    'ward.add' => $jatbi->lang("Thêm Phường xã"),
-                    'ward.edit' => $jatbi->lang("Sửa Phường xã"),
-                    'ward.deleted' => $jatbi->lang("Xóa Phường xã"),
                 ]
             ],
 

@@ -4444,7 +4444,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "date" => $data['date'],
                     "personnel_name" => $data['personnel_name'],
-                    "price" => $data['price'],
+                    "price" => number_format($data['price']),
                     "notes" => $data['notes'],
                     "date_poster" => $data['date_poster'],
                     "action" => ($app->component("action", [
