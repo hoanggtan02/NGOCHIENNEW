@@ -206,10 +206,10 @@ return [
                     // 'time-late.edit' => $jatbi->lang("Sửa Đi trễ về sớm"),
                     // 'time-late.deleted' => $jatbi->lang("Xóa Đi trễ về sớm"),    
 
-                    // 'salary-advance' => $jatbi->lang("Ứng lương"),
-                    // 'salary-advance.add' => $jatbi->lang("Thêm Ứng lương"),
-                    // 'salary-advance.edit' => $jatbi->lang("Sửa Ứng lương"),
-                    // 'salary-advance.deleted' => $jatbi->lang("Xóa Ứng lương"),
+                    'salary-advance' => $jatbi->lang("Ứng lương"),
+                    'salary-advance.add' => $jatbi->lang("Thêm Ứng lương"),
+                    'salary-advance.edit' => $jatbi->lang("Sửa Ứng lương"),
+                    'salary-advance.deleted' => $jatbi->lang("Xóa Ứng lương"),
 
                     'timekeeping' => $jatbi->lang("Chấm công"),
                     'timekeeping.add' => $jatbi->lang("Thêm Chấm công"),

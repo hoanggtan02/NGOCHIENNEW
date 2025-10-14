@@ -34,22 +34,22 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
             $where = [
                 "AND" => [
                     "OR" => [
-                        "province.name[~]" => $searchValue,
+                        "province_new.name[~]" => $searchValue,
                     ],
-                    "province.deleted" => 0,
-                    "province.status[<>]" => $status,
+                    "province_new.deleted" => 0,
+                    "province_new.status[<>]" => $status,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
             ];
 
-            $count = $app->count("province", [
+            $count = $app->count("province_new", [
                 "AND" => $where['AND'],
             ]);
 
             // Lấy dữ liệu phiếu giảm giá
             $datas = [];
-            $app->select("province", ["id", "name", "status"], $where, function ($data) use (&$datas, $jatbi, $app) {
+            $app->select("province_new", ["id", "name", "status"], $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "name" => $data['name'],
@@ -94,8 +94,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 return;
             }
             $insert = ["name" => $app->xss($_POST['name']), "status" => $app->xss($_POST['status'])];
-            $app->insert("province", $insert);
-            $jatbi->logs('province', 'add', $insert);
+            $app->insert("province_new", $insert);
+            $jatbi->logs('province_new', 'add', $insert);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới thành công"), 'url' => 'auto']);
         }
     })->setPermissions(['province.add']);
@@ -104,7 +104,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
     $app->router('/province-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $id = $vars['id'] ?? 0;
         $vars['title'] = $jatbi->lang("Sửa Tỉnh thành");
-        $data = $app->get("province", "*", ["id" => $id, "deleted" => 0]);
+        $data = $app->get("province_new", "*", ["id" => $id, "deleted" => 0]);
         if (!$data) {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             return;
@@ -120,8 +120,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 return;
             }
             $update = ["name" => $app->xss($_POST['name']), "status" => $app->xss($_POST['status'])];
-            $app->update("province", $update, ["id" => $id]);
-            $jatbi->logs('province', 'edit', $update);
+            $app->update("province_new", $update, ["id" => $id]);
+            $jatbi->logs('province_new', 'edit', $update);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => 'auto']);
         }
     })->setPermissions(['province.edit']);
@@ -130,7 +130,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
         $app->header([
             'Content-Type' => 'application/json',
         ]);
-        $data = $app->get("province", "*", ["id" => $vars['id'], "deleted" => 0]);
+        $data = $app->get("province_new", "*", ["id" => $vars['id'], "deleted" => 0]);
         if ($data > 1) {
             if ($data > 1) {
                 if ($data['status'] === 'A') {
@@ -138,8 +138,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 } elseif ($data['status'] === 'D') {
                     $status = "A";
                 }
-                $app->update("province", ["status" => $status], ["id" => $data['id']]);
-                $jatbi->logs('province', 'province-status', $data);
+                $app->update("province_new", ["status" => $status], ["id" => $data['id']]);
+                $jatbi->logs('province_new', 'province-status', $data);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại"),]);
@@ -159,13 +159,13 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 'Content-Type' => 'application/json',
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
-            $datas = $app->select("province", "*", ["id" => $boxid, "deleted" => 0]);
+            $datas = $app->select("province_new", "*", ["id" => $boxid, "deleted" => 0]);
             if (count($datas) > 0) {
                 foreach ($datas as $data) {
-                    $app->update("province", ["deleted" => 1], ["id" => $data['id']]);
+                    $app->update("province_new", ["deleted" => 1], ["id" => $data['id']]);
                     $name[] = $data['name'];
                 }
-                $jatbi->logs('province', 'province-deleted', $datas);
+                $jatbi->logs('province_new', 'province-deleted', $datas);
                 $jatbi->trash('/areas/province-restore', "Xóa thành phố: " . implode(', ', $name), ["database" => 'sources', "data" => $boxid]);
                 echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
             } else {
@@ -178,7 +178,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
     $app->router("/district", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['title'] = $jatbi->lang("Quận huyện");
         if ($app->method() === 'GET') {
-            $provinces_db = $app->select("province", ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']);
+            $provinces_db = $app->select("province_new", ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']);
 
             $vars['provinces'] = array_merge(
                 [['value' => '', 'text' => $jatbi->lang('Tất cả')]],
@@ -204,26 +204,26 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
             $where = [
                 "AND" => [
                     "OR" => [
-                        "district.name[~]" => $searchValue,
-                        "province.name[~]" => $searchValue,
+                        "district_new.name[~]" => $searchValue,
+                        "province_new.name[~]" => $searchValue,
                     ],
-                    "district.status[<>]" => $status,
-                    "district.deleted" => 0,
+                    "district_new.status[<>]" => $status,
+                    "district_new.deleted" => 0,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
             ];
 
             if (!empty($province)) {
-                $where['AND']['district.province'] = $province; // lọc theo tỉnh thành
+                $where['AND']['district_new.province'] = $province; // lọc theo tỉnh thành
             }
             // Đếm tổng số bản ghi
             $count = $app->count(
-                "district",
+                "district_new",
                 [
-                    "[>]province" => ["province" => "id"],
+                    "[>]province_new" => ["province" => "id"],
                 ],
-                'district.id',
+                'district_new.id',
                 [
                     "AND" => $where['AND'],
                 ]
@@ -231,13 +231,13 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
 
             // Lấy dữ liệu phiếu giảm giá
             $datas = [];
-            $app->select("district", [
-                "[>]province" => ["province" => "id"],
+            $app->select("district_new", [
+                "[>]province_new" => ["province" => "id"],
             ], [
-                "district.id",
-                "district.name",
-                "district.status",
-                "province.name (province_name)"
+                "district_new.id",
+                "district_new.name",
+                "district_new.status",
+                "province_new.name (province_name)"
             ], $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
@@ -276,7 +276,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
         $vars['title'] = $jatbi->lang("Thêm Quận huyện");
         if ($app->method() === 'GET') {
             $vars['data'] = ['status' => 'A'];
-            $vars['provinces'] = $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['provinces'] = $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
             echo $app->render($template . '/areas/district-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -285,8 +285,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 return;
             }
             $insert = ["name" => $app->xss($_POST['name']), "province" => $app->xss($_POST['province']), "status" => $app->xss($_POST['status'])];
-            $app->insert("district", $insert);
-            $jatbi->logs('district', 'add', $insert);
+            $app->insert("district_new", $insert);
+            $jatbi->logs('district_new', 'add', $insert);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới thành công"), 'url' => 'auto']);
         }
     })->setPermissions(['district.add']);
@@ -295,7 +295,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
     $app->router('/district-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $id = $vars['id'] ?? 0;
         $vars['title'] = $jatbi->lang("Sửa Quận huyện");
-        $data = $app->get("district", "*", ["id" => $id, "deleted" => 0]);
+        $data = $app->get("district_new", "*", ["id" => $id, "deleted" => 0]);
         if (!$data) {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             return;
@@ -303,7 +303,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
 
         if ($app->method() === 'GET') {
             $vars['data'] = $data;
-            $vars['provinces'] = $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['provinces'] = $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
             echo $app->render($template . '/areas/district-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -312,8 +312,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 return;
             }
             $update = ["name" => $app->xss($_POST['name']), "province" => $app->xss($_POST['province']), "status" => $app->xss($_POST['status'])];
-            $app->update("district", $update, ["id" => $id]);
-            $jatbi->logs('district', 'edit', $update);
+            $app->update("district_new", $update, ["id" => $id]);
+            $jatbi->logs('district_new', 'edit', $update);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => 'auto']);
         }
     })->setPermissions(['district.edit']);
@@ -328,13 +328,13 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 'Content-Type' => 'application/json',
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
-            $datas = $app->select("district", "*", ["id" => $boxid, "deleted" => 0]);
+            $datas = $app->select("district_new", "*", ["id" => $boxid, "deleted" => 0]);
             if (count($datas) > 0) {
                 foreach ($datas as $data) {
-                    $app->update("district", ["deleted" => 1], ["id" => $data['id']]);
+                    $app->update("district_new", ["deleted" => 1], ["id" => $data['id']]);
                     $name[] = $data['name'];
                 }
-                $jatbi->logs('district', 'district-deleted', $datas);
+                $jatbi->logs('district_new', 'district-deleted', $datas);
                 $jatbi->trash('/areas/district-restore', "Xóa thành phố: " . implode(', ', $name), ["database" => 'district', "data" => $boxid]);
                 echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
             } else {
@@ -347,7 +347,7 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
         $app->header([
             'Content-Type' => 'application/json',
         ]);
-        $data = $app->get("district", "*", ["id" => $vars['id'], "deleted" => 0]);
+        $data = $app->get("district_new", "*", ["id" => $vars['id'], "deleted" => 0]);
         if ($data > 1) {
             if ($data > 1) {
                 if ($data['status'] === 'A') {
@@ -355,8 +355,8 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
                 } elseif ($data['status'] === 'D') {
                     $status = "A";
                 }
-                $app->update("district", ["status" => $status], ["id" => $data['id']]);
-                $jatbi->logs('district', 'district-status', $data);
+                $app->update("district_new", ["status" => $status], ["id" => $data['id']]);
+                $jatbi->logs('district_new', 'district-status', $data);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại"),]);
@@ -366,243 +366,6 @@ $app->group($setting['manager'] . "/areas-new", function ($app) use ($jatbi, $se
         }
     })->setPermissions(['district.edit']);
 
-    $app->router("/ward", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
-        $vars['title'] = $jatbi->lang("Phường xã");
-        if ($app->method() === 'GET') {
 
-            $provinces_db = $app->select("province", ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']);
-            $vars['provinces'] = array_merge(
-                [['value' => '', 'text' => $jatbi->lang('Tất cả')]],
-                $provinces_db
-            );
-            $districts_db = $app->select("district", ['id(value)', 'name(text)'], [
-                'deleted' => 0,
-                'status' => 'A',
-            ]);
-
-            $vars['districts'] = array_merge(
-                [['value' => '', 'text' => $jatbi->lang('Tất cả')]],
-                $districts_db
-            );
-
-            echo $app->render($template . '/areas/ward.html', $vars);
-        } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
-
-            // Lấy tham số từ DataTables
-            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
-            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
-            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
-            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-            $status = isset($_POST['status']) ? [$_POST['status'], $_POST['status']] : '';
-            $district = isset($_POST['district']) ? $_POST['district'] : '';
-            $province = isset($_POST['province']) ? $_POST['province'] : '';
-
-            // Điều kiện lọc
-            $where = [
-                "AND" => [
-                    "OR" => [
-                        "ward.name[~]" => $searchValue,
-                        "province.name[~]" => $searchValue,
-                        "district.name[~]" => $searchValue,
-                    ],
-                    "ward.status[<>]" => $status,
-                    "ward.deleted" => 0,
-                ],
-                "LIMIT" => [$start, $length],
-                "ORDER" => [$orderName => strtoupper($orderDir)],
-            ];
-            if (!empty($district)) {
-                $where['AND']['ward.district'] = $district;
-            }
-            if (!empty($province)) {
-                $where['AND']['ward.province'] = $province;
-            }
-            // Đếm tổng số bản ghi
-            $count = $app->count(
-                "ward",
-                [
-                    "[>]district" => ["district" => "id"],
-                    "[>]province" => ["province" => "id"],
-                ],
-                'ward.id',
-                [
-                    "AND" => $where['AND'],
-                ]
-            );
-
-            // Lấy dữ liệu phiếu giảm giá
-            $datas = [];
-            $app->select(
-                "ward",
-                [
-                    "[>]district" => ["district" => "id"],
-                    "[>]province" => ["province" => "id"],
-                ],
-                [
-                    "ward.id",
-                    "ward.name",
-                    "ward.status",
-                    "province.name (province_name)",
-                    "district.name (district_name)"
-                ],
-                $where,
-                function ($data) use (&$datas, $jatbi, $app) {
-                    $datas[] = [
-                        "checkbox" => $app->component("box", ["data" => $data['id']]),
-                        "name" => $data['name'],
-                        "district" => $data['district_name'] ?? '',
-                        "province" => $data['province_name'] ?? '',
-                        "status" => $app->component("status", [
-                            "url" => "/areas/ward-status/" . $data['id'],
-                            "data" => $data['status'],
-                            "permission" => ['district.edit']
-                        ]),
-                        "action" => $app->component("action", [
-                            "button" => [
-                                [
-                                    'type' => 'button',
-                                    'name' => $jatbi->lang("Sửa"),
-                                    'permission' => ['ward.edit'],
-                                    'action' => ['data-url' => '/areas/ward-edit/' . $data['id'], 'data-action' => 'modal']
-                                ]
-                            ]
-                        ]),
-                    ];
-                }
-            );
-
-            // Trả về dữ liệu JSON
-            echo json_encode([
-                "draw" => $draw,
-                "recordsTotal" => $count,
-                "recordsFiltered" => $count,
-                "data" => $datas ?? [],
-            ]);
-        }
-    })->setPermissions(['ward']);
-
-
-    $app->router('/ward-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
-        $vars['title'] = $jatbi->lang("Thêm Phường/Xã");
-        if ($app->method() === 'GET') {
-            $vars['data'] = ['status' => 'A'];
-            $vars['province'] = $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
-            $vars['district'] = $app->select("district", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
-            echo $app->render($template . '/areas/ward-post.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json']);
-            if (empty($_POST['name']) || empty($_POST['province']) || empty($_POST['district'])) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
-                return;
-            }
-            $insert = [
-                "name" => $app->xss($_POST['name']),
-                "province" => $app->xss($_POST['province']),
-                "district" => $app->xss($_POST['district']),
-                "status" => $app->xss($_POST['status'])
-            ];
-            $app->insert("ward", $insert);
-            $jatbi->logs('ward', 'add', $insert);
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới thành công"), 'url' => 'auto']);
-        }
-    })->setPermissions(['ward.add']);
-
-    $app->router('/ward-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
-        $id = $vars['id'] ?? 0;
-        $vars['title'] = $jatbi->lang("Sửa Phường/Xã");
-
-        $data = $app->get("ward", "*", ["id" => $id, "deleted" => 0]);
-        if (!$data) {
-            echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
-            return;
-        }
-        if ($app->method() === 'GET') {
-            $vars['data'] = $data;
-            $vars['province'] = $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
-
-            $vars['district'] = [];
-            if (!empty($data['province'])) {
-                $vars['district'] = $app->select("district", ["id(value)", "name(text)"], [
-                    "deleted" => 0,
-                    "status" => "A",
-                    "province" => $data['province']
-                ]);
-            }
-
-            echo $app->render($template . '/areas/ward-post.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json']);
-
-            if (empty($_POST['name']) || empty($_POST['province']) || empty($_POST['district'])) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
-                return;
-            }
-
-            $update = [
-                "name" => $app->xss($_POST['name']),
-                "province" => $app->xss($_POST['province']),
-                "district" => $app->xss($_POST['district']),
-                "status" => $app->xss($_POST['status'])
-            ];
-
-            $app->update("ward", $update, ["id" => $id]);
-            $jatbi->logs('ward', 'edit', $update);
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => 'auto']);
-        }
-    })->setPermissions(['ward.edit']);
-
-
-    // --- XÓA QUẬN HUYỆN ---
-    $app->router("/ward-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-        $vars['title'] = $jatbi->lang("Xóa phường xã");
-        if ($app->method() === 'GET') {
-            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
-            $boxid = explode(',', $app->xss($_GET['box']));
-            $datas = $app->select("ward", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {
-                foreach ($datas as $data) {
-                    $app->update("ward", ["deleted" => 1], ["id" => $data['id']]);
-                    $name[] = $data['name'];
-                }
-                $jatbi->logs('ward', 'ward-deleted', $datas);
-                $jatbi->trash('/areas/ward-restore', "Xóa phường xã: " . implode(', ', $name), ["database" => 'ward', "data" => $boxid]);
-                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
-            } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
-            }
-        }
-    })->setPermissions(['ward.deleted']);
-
-    $app->router("/ward-status/{id}", 'POST', function ($vars) use ($app, $jatbi) {
-        $app->header([
-            'Content-Type' => 'application/json',
-        ]);
-        $data = $app->get("ward", "*", ["id" => $vars['id'], "deleted" => 0]);
-        if ($data > 1) {
-            if ($data > 1) {
-                if ($data['status'] === 'A') {
-                    $status = "D";
-                } elseif ($data['status'] === 'D') {
-                    $status = "A";
-                }
-                $app->update("ward", ["status" => $status], ["id" => $data['id']]);
-                $jatbi->logs('ward', 'ward-status', $data);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại"),]);
-            }
-        } else {
-            echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
-        }
-    })->setPermissions(['district.edit']);
     
 })->middleware('login');
