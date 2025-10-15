@@ -2326,7 +2326,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
             $data = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($data)) {
-                if ($app->xss($_POST['personnels']) == '' || $app->xss($_POST['date_contract']) == '' || $app->xss($_POST['type']) == '' || $app->xss($_POST['code']) == '' || $app->xss($_POST['date_end']) == '' || $app->xss($_POST['offices']) == '') {
+                $date_contract = $app->xss($_POST['date_contract']);
+                $duration = (int) $app->xss($_POST['duration']);
+
+                // Tính toán ngày kết thúc
+                $date_end = date('Y-m-d', strtotime($date_contract . " + " . $duration . " months"));
+                if ($app->xss($_POST['personnels']) == '' || $app->xss($_POST['date_contract']) == '' || $app->xss($_POST['type']) == '' || $app->xss($_POST['code']) == '' || $app->xss($_POST['offices']) == '') {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
                     return;
                 }
@@ -2362,6 +2367,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         $values[] = $_POST['salary_content'][$key];
                     }
                 }
+
                 $insert = [
                     "personnels" => $app->xss($_POST['personnels']),
                     "offices" => $app->xss($_POST['offices']),
@@ -2373,7 +2379,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "type" => $app->xss($_POST['type']),
                     "code" => $app->xss($_POST['code']),
                     "date_contract" => $app->xss($_POST['date_contract']),
-                    "date_end" => $app->xss($_POST['date_end']),
+                    "date_end" => $date_end,
                     "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                     // "salary" 			=> $app->xss(str_replace([','],'',$_POST['salary'])),
                     // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
@@ -6385,7 +6391,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "rd.price",
                 [
                     "AND" => [
-                        "rd.type" => 2, // Phạt
+                        "rd.type" => 2,
                         "rd.date[<>]" => [$date_from . ' 00:00:00', $date_to . ' 23:59:59'],
                         "p.stores" => $store_ids
                     ]
@@ -6412,11 +6418,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $vars['month_year_options'][] = ['value' => $value, 'text' => $text];
             }
 
-            $vars['selected_month_year'] = $selected_month_year;
+            $vars['selected_month_year'] = $selected_month_year ?? date('Y-m');
 
             echo $app->render($template . '/hrm/reports.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Phương thức không hợp lệ")]);
         }
     })->setPermissions(['reports']);
 
