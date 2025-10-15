@@ -54,6 +54,11 @@ return [
                         "router" => '/hrm/furlough',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'annual_leave' => [
+                        "name" => $jatbi->lang("Nghi phép năm"),
+                        "router" => '/hrm/annual_leave',
+                        "icon" => '<i class="ti ti-clock"></i>',
+                    ],
                     'holiday' => [
                         "name" => $jatbi->lang("Ngày lễ"),
                         "router" => '/hrm/holiday',
@@ -104,7 +109,7 @@ return [
                         "router" => '/hrm/camera',
                         "icon" => '<i class="fas fa-grin-hearts"></i>',
                     ],
-                       'faceid' => [
+                    'faceid' => [
                         "name" => $jatbi->lang("Nhật ký nhận diện"),
                         "router" => '/hrm/faceid',
                         "icon" => '<i class="fas fa-grin-hearts"></i>',
@@ -116,7 +121,7 @@ return [
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
 
-                    "faceid"=> $jatbi->lang("Nhật ký nhận diện"),
+                    "faceid" => $jatbi->lang("Nhật ký nhận diện"),
 
                     'camera' => $jatbi->lang("Camera"),
                     'camera.add' => $jatbi->lang("Thêm camera"),
@@ -187,6 +192,12 @@ return [
                     'furlough.add' => $jatbi->lang("Thêm Nghỉ phép"),
                     'furlough.edit' => $jatbi->lang("Sửa Nghỉ phép"),
                     'furlough.deleted' => $jatbi->lang("Xóa Nghỉ phép"),
+
+                    // Quyền cho Nghỉ phép năm
+                    'annual_leave' => $jatbi->lang("Nghỉ phép năm"),
+                    'annual_leave.add' => $jatbi->lang("Thêm Nghỉ phép năm"),
+                    'annual_leave.edit' => $jatbi->lang("Sửa Nghỉ phép năm"),
+                    'annual_leave.deleted' => $jatbi->lang("Xóa Nghỉ phép năm"),
 
                     // Quyền cho Ngày lễ
                     // 'holiday' => $jatbi->lang("Ngày lễ"),

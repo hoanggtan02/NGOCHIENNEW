@@ -48,9 +48,6 @@
                                 "placeholder"=>$jatbi->lang("Loại"),
                                 "required" => 'true',
                             ])?>
-                            <?=$app->component('select-status',[
-                                "value" => $data['status'] ?? '',
-                            ])?>
                             <?=$app->component('textarea',[
                                 "name"=>'notes',
                                 "placeholder"=>$jatbi->lang("Lý do"),
