@@ -52,6 +52,45 @@ $app->setComponent('status', function ($vars) use ($app, $setting, $jatbi) {
                </div>';
     }
 });
+$app->setComponent('clickable_approval', function ($vars) use ($app, $jatbi) {
+    $url = $vars['url'] ?? '';
+    $data = $vars['data'] ?? '';
+    $permissions = $vars['permission'] ?? [];
+    $hasPermission = empty($permissions) || array_reduce($permissions, fn($carry, $perm) => $carry || $jatbi->permission($perm) == 'true', false);
+    $text = '';
+    $class = '';
+
+    switch ($data) {
+        case 'A':
+            $text = $jatbi->lang("Đã duyệt");
+            $class = 'btn-success';
+            break;
+
+        case 'D':
+            $text = $jatbi->lang("Chờ duyệt");
+            $class = 'btn-warning';
+            break;
+
+        default:
+            $text = $jatbi->lang("Không xác định");
+            $class = 'btn-secondary'; 
+            break;
+    }
+
+    $common_classes = 'btn btn-sm rounded fw-semibold py-2 px-3';
+
+    $inner_html = $text;
+
+    if ($hasPermission) {
+        echo '<button type="button" 
+               class="' . $common_classes . ' ' . $class . '"
+               data-action="click" data-load="this"
+               data-url="' . $jatbi->url($url) . '" 
+               data-alert="true">' . $inner_html . '</button>';
+    } else {
+        echo '<span class="' . $common_classes . ' ' . $class . ' disabled">' . $inner_html . '</span>';
+    }
+});
 //status Component
 $app->setComponent('amount_status', function ($vars) use ($app, $setting, $jatbi) {
     $url = isset($vars['url']) ? $vars['url'] : '';
