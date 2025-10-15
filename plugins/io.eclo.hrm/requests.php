@@ -104,6 +104,12 @@ return [
                         "router" => '/hrm/reports',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'decided' => [
+                        "name" => $jatbi->lang("Quyết định thôi việc"),
+                        "router" => '/hrm/decided',
+                        "icon" => '<i class="ti ti-clock"></i>',
+                    ],
+
                     'camera' => [
                         "name" => $jatbi->lang("Camera"),
                         "router" => '/hrm/camera',
@@ -116,10 +122,21 @@ return [
                     ],
 
 
+
+
                 ],
                 "main" => 'false',
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
+
+
+
+                    'decided' => $jatbi->lang("Quyết định thôi việc"),
+                    'decided.add' => $jatbi->lang("Thêm quyết định thôi việc"),
+                    'decided.edit' => $jatbi->lang("Sửa quyết định thôi việc"),
+                    'decided.deleted' => $jatbi->lang("Xóa quyết định thôi việc"),
+
+
 
                     "faceid" => $jatbi->lang("Nhật ký nhận diện"),
 

@@ -7047,4 +7047,308 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
     })->setPermissions(['annual_leave.deleted']);
+
+
+
+
+
+
+    $app->router('/decided', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Quyết định thôi việc");
+
+        if ($app->method() === 'GET') {
+
+            echo $app->render($template . '/hrm/decided.html', $vars);
+        } elseif ($app->method() === 'POST') {
+
+            $app->header(['Content-Type' => 'application/json']);
+
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+
+
+            $personnelValue = isset($_POST['personnels']) ? $_POST['personnels'] : '';
+            $officeValue = isset($_POST['offices']) ? $_POST['offices'] : '';
+            $statusValue = isset($_POST['status']) ? $_POST['status'] : '';
+
+
+            $baseWhere = [
+                "contract_annex.type" => 2,
+                "contract_annex.deleted" => 0,
+            ];
+
+            $filterWhere = [];
+
+
+            if ($searchValue != '') {
+                $filterWhere['OR'] = [
+                    'personnels.name[~]' => $searchValue,
+                    'personnels.code[~]' => $searchValue,
+                    'contract_annex.content[~]' => $searchValue,
+                ];
+            }
+
+
+            if ($personnelValue != '') {
+                $filterWhere['contract_annex.contract'] = $personnelValue;
+            }
+            if ($officeValue != '') {
+                $filterWhere['personnels.offices_id'] = $officeValue;
+            }
+            if ($statusValue != '') {
+                $filterWhere['contract_annex.status'] = $statusValue;
+            }
+
+            $where = [
+                "AND" => array_merge($baseWhere, $filterWhere),
+                "LIMIT" => [$start, $length],
+                "ORDER" => ["contract_annex." . $orderName => strtoupper($orderDir)]
+            ];
+
+
+            $countWhere = ["AND" => array_merge($baseWhere, $filterWhere)];
+
+
+            $join = [
+                "[>]personnels" => ["contract" => "id"]
+            ];
+
+
+            $count = $app->count("contract_annex", $join, ["contract_annex.id"], $countWhere);
+
+            $datas = [];
+
+            $app->select("contract_annex", $join, [
+                'contract_annex.id',
+                'contract_annex.date',
+                'contract_annex.content',
+                'contract_annex.notes',
+                'personnels.name',
+                'personnels.code'
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "checkbox" => ($app->component("box", ["data" => $data['id'] ?? '']) ?? '<input type="checkbox">'),
+                    "personnel" => ($data['code'] ?? '') . ' - ' . ($data['name'] ?? ''),
+                    "date" => $jatbi->date($data['date']),
+                    "content" => ($data['content'] ?? ''),
+                    "notes" => ($data['notes'] ?? ''),
+                    "action" => ($app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['decided.edit'],
+                                'action' => ['data-url' => '/hrm/decided-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['decided.deleted'],
+                                'action' => ['data-url' => '/hrm/decided-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'link',
+                                'name' => $jatbi->lang("Xem"),
+                                'permission' => ['decided'],
+                                'action' => [
+                                    'href' => '/hrm/decided-views/' . $data['id'],
+                                ]
+                            ],
+                        ]
+                    ])),
+                ];
+            });
+
+
+            echo json_encode(
+                [
+                    "draw" => $draw,
+                    "recordsTotal" => $app->count("contract_annex", ["AND" => $baseWhere]),
+                    "recordsFiltered" => $count,
+                    "data" => $datas ?? []
+                ]
+            );
+        }
+    })->setPermissions(['decided']);
+
+
+
+
+    $app->router('/decided-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Thêm quyết định thôi việc");
+
+        if ($app->method() === 'GET') {
+
+            $count = $app->count("contract_annex", "id", ["deleted" => 0, "type" => 2]);
+            $vars['data']['code'] = ($count + 1) . '/QĐ-XH';
+            $vars['personnels'] = array_map(
+                fn($item) => ['value' => $item['id'], 'text' => $item['code'] . ' - ' . $item['name']],
+                $app->select("personnels", ["id", "code", "name"], ["deleted" => 0, "status" => "A"])
+            );
+
+            echo $app->render($template . '/hrm/decided-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            if (empty($_POST['personnels']) || empty($_POST['content'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")]);
+                return;
+            }
+
+            $insert = [
+                "code"          => $app->xss($_POST['code']),
+                "contract"      => $app->xss($_POST['personnels']),
+                "content"       => $app->xss($_POST['content']),
+                "date"          => $app->xss($_POST['date']),
+                "date_poster"   => $app->xss($_POST['date_poster']),
+                "type"          => 2,
+                "off"           => $app->xss($_POST['off']),
+                "notes"         => $app->xss($_POST['notes']),
+            ];
+
+
+            if ($insert['content'] == 'Đơn phương chấm dứt hợp đồng') {
+                $type = 1;
+            } else {
+                $type = 2;
+            }
+
+            $app->insert("contract_annex", $insert);
+            $app->update("personnels_contract", ["status_type" => 1], ["personnels" => $insert['contract']]);
+
+
+            $app->update("personnels", [
+                "status_type" => 1,
+                "date_off"    => $insert['date'],
+                "type"        => $type,
+                "off"         => $insert['off']
+            ], ["id" => $insert['contract']]);
+
+            $jatbi->logs('contract_annex', 'add', [$insert]);
+
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Cập nhật thành công"),
+
+            ]);
+        }
+    })->setPermissions(['decided.add']);
+
+
+    $app->router('/decided-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Sửa quyết định thôi việc");
+        $id = $vars['id'];
+
+        $data = $app->get("contract_annex", "*", ["id" => $id]);
+
+        if (!$data) {
+            header("HTTP/1.0 404 Not Found");
+            die();
+        }
+
+        if ($app->method() === 'GET') {
+            $vars['data'] = $data;
+            $mapData = function ($item) {
+                return ['value' => $item['id'], 'text' => $item['code'] . ' - ' . $item['name']];
+            };
+            $vars['personnels'] = array_map($mapData, $app->select("personnels", ["id", "code", "name"], ["deleted" => 0, "status" => "A"]));
+            echo $app->render($template . '/hrm/decided-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            if (empty($_POST['personnels']) || empty($_POST['content'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")]);
+                return;
+            }
+
+            $update = [
+                "code"          => $app->xss($_POST['code']),
+                "contract"      => $app->xss($_POST['personnels']),
+                "content"       => $app->xss($_POST['content']),
+                "date"          => $app->xss($_POST['date']),
+                "date_poster"   => $app->xss($_POST['date_poster']),
+                "type"          => 2,
+                "off"           => $app->xss($_POST['off']),
+                "notes"         => $app->xss($_POST['notes']),
+            ];
+
+
+            if ($update['content'] == 'Đơn phương chấm dứt hợp đồng') {
+                $type = 1;
+            } else {
+                $type = 2;
+            }
+
+            $app->update("contract_annex", $update, ["id" => $id]);
+            $app->update("personnels_contract", ["status_type" => 1], ["personnels" => $update['contract']]);
+
+
+            $app->update("personnels", [
+                "status_type" => 1,
+                "date_off"    => $update['date'],
+                "type"        => $type,
+                "off"         => $update['off']
+            ], ["id" => $update['contract']]);
+
+            $jatbi->logs('contract_annex', 'edit', $update, ["id" => $id]);
+
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Cập nhật thành công"),
+                'url' => $_SERVER['HTTP_REFERER']
+            ]);
+        }
+    })->setPermissions(['decided.edit']);
+
+
+
+    $app->router("/decided-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $vars['title'] = $jatbi->lang("Xóa quyết định thôi việc");
+
+        if ($app->method() === 'GET') {
+
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+
+            $box_ids = explode(',', $app->xss($_GET['box']));
+
+
+            $datas = $app->select("contract_annex", "*", ["id" => $box_ids, "deleted" => 0]);
+
+            if (count($datas) > 0) {
+                // Lấy danh sách ID của các nhân viên bị ảnh hưởng
+                $personnel_ids = array_column($datas, 'contract');
+
+
+
+                // 1. Đánh dấu đã xóa các quyết định trong `contract_annex`
+                $app->update("contract_annex", ["deleted" => 1], ["id" => $box_ids]);
+
+                // 2. Phục hồi trạng thái hợp đồng về "đang hoạt động"
+                $app->update("personnels_contract", ["status_type" => 0], ["personnels" => $personnel_ids]);
+
+                // 3. Phục hồi trạng thái nhân viên về "đang làm việc" và xóa ngày nghỉ
+                $app->update("personnels", ["status_type" => 0, "date_off" => NULL], ["id" => $personnel_ids]);
+
+
+                $jatbi->logs('contract_annex', 'delete', $datas);
+
+
+                echo json_encode([
+                    'status' => 'success',
+                    "content" => $jatbi->lang("Cập nhật thành công"),
+
+                ]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra hoặc dữ liệu không tồn tại")]);
+            }
+        }
+    })->setPermissions(['decided.deleted']);
 })->middleware('login');
