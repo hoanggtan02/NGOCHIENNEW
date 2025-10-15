@@ -6642,130 +6642,220 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $action = 'import';
         $data = $_SESSION['products'][$action] ?? [];
 
-        // --- BƯỚC 1: KIỂM TRA DỮ LIỆU ĐẦU VÀO ---
-        if (empty($data['content']) || empty($data['products'])) {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Lỗi trống")]);
-            return;
-        }
-        foreach ($data['products'] as $value) {
-            if (empty($value['amount']) || $value['amount'] <= 0) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập số lượng hợp lệ cho tất cả sản phẩm")]);
-                return;
+        $total_products = 0;
+        $error_warehouses = "";
+        $error = [];
+
+        $crafting_id = $data['crafting'] ?? 0;
+        $warehouses = $app->get("warehouses", ["id", "export_status"], ["id" => $crafting_id, "deleted" => 0]);
+
+        foreach (($data['products'] ?? []) as $value) {
+            $amount = $value['amount'] ?? 0;
+            $price = (float) str_replace(',', '', $value['price'] ?? 0);
+            $total_products += $amount * $price;
+
+            if ($amount == '' || $amount <= 0) {
+                $error_warehouses = 'true';
             }
         }
-        $warehouse = $app->get("warehouses", ["id", "export_status"], ["id" => $data['crafting'] ?? 0, "deleted" => 0]);
-        if ($warehouse && $warehouse['export_status'] == 2) {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập kho")]);
-            return;
+
+        if (empty($data['content']) || count($data['products'] ?? []) == 0) {
+            $error = ["status" => 'error', 'content' => $jatbi->lang('Vui lòng không để trống')];
+        } elseif ($error_warehouses == 'true') {
+            $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng')];
+        } elseif (($warehouses['export_status'] ?? 0) == 2) {
+            $error = ['status' => 'error', 'content' => $jatbi->lang('Phiếu này đã được nhập')];
         }
 
-        // --- BƯỚC 2: XỬ LÝ TRONG MỘT TRANSACTION ĐỂ ĐẢM BẢO AN TOÀN ---
-        try {
-            $result = $app->action(function ($db) use ($app, $data, $jatbi) {
-                // 1. Tạo phiếu kho (warehouses)
-                $insert_warehouse = [
-                    "code" => 'PN',
-                    "type" => 'import',
-                    "data" => 'products',
-                    "stores" => $data['stores']['id'] ?? null,
-                    "branch" => $data['branch']['id'] ?? null,
-                    "content" => $data['content'] ?? '',
-                    "vendor" => $data['vendor']['id'] ?? null,
-                    "user" => $app->getSession("accounts")['id'] ?? 0,
-                    "date" => $data['date'] ?? date("Y-m-d"),
-                    "active" => $jatbi->active(30),
-                    "date_poster" => date("Y-m-d H:i:s"),
-                    "crafting" => $data['crafting'] ?? null,
-                    "move" => $data['move'] ?? null,
+        if (count($error) == 0) {
+            $insert = [
+                "code"          => 'PN',
+                "type"          => 'import',
+                "data"          => 'products',
+                "stores"        => $data['stores']['id'] ?? 0,
+                "branch"        => $data['branch']['id'] ?? 0,
+                "content"       => $data['content'] ?? '',
+                "vendor"        => $data['vendor']['id'] ?? 0,
+                "user"          => $app->getSession("accounts")['id'] ?? 0,
+                "date"          => $data['date'] ?? date("Y-m-d"),
+                "active"        => $jatbi->active(30),
+                "date_poster"   => date("Y-m-d H:i:s"),
+                "crafting"      => $crafting_id,
+                "move"          => $data['move'] ?? 0,
+            ];
+
+            $app->insert("warehouses", $insert);
+            $orderId = $app->id();
+
+            $insert_products_logs = [];
+            $pro_logs = [];
+            $crafting_details_logs = [];
+
+            foreach (($data['products'] ?? []) as $value) {
+                $value_id = $value['id'] ?? 0;
+                $getProducts = $app->get("crafting", ["id"], ["id" => $value['crafting'] ?? 0]);
+                $Selectdetails[$value_id] = $app->select("crafting_details", "*", ["crafting" => $getProducts['id'] ?? 0, "deleted" => 0]);
+
+                $storeget = $data['stores'] ?? [];
+                $branchget = $data['branch'] ?? [];
+
+                $store_code = $storeget['code'] ?? '';
+                $branch_code = $branchget['code'] ?? '';
+                $code = $store_code . $branch_code . ($value['code'] ?? '');
+
+                $price_clean = (float) str_replace(',', '', $value['price'] ?? 0);
+                $checkcode = $app->get("products", ["id", "code", "amount"], [
+                    "code" => $code,
+                    "deleted" => 0,
+                    "price" => $price_clean
+                ]);
+
+                // Nếu sản phẩm đã tồn tại
+                if ($code == ($checkcode['code'] ?? '')) {
+                    $app->update("products", [
+                        "amount" => ($checkcode['amount'] ?? 0) + ($value['amount'] ?? 0),
+                        "crafting" => $crafting_id
+                    ], ["id" => $checkcode['id'] ?? 0]);
+
+                    $app->update("products_details", ["deleted" => 1], ["products" => $checkcode['id'] ?? 0]);
+                    $IDPro = $checkcode['id'] ?? 0;
+
+                    foreach (($Selectdetails[$value_id] ?? []) as $detail) {
+                        $crafting_details = [
+                            "products"   => $IDPro,
+                            "ingredient" => $detail['ingredient'] ?? '',
+                            "code"       => $detail['code'] ?? '',
+                            "type"       => $detail['type'] ?? '',
+                            "group"      => $detail['group'] ?? '',
+                            "categorys"  => $detail['categorys'] ?? '',
+                            "pearl"      => $detail['pearl'] ?? '',
+                            "sizes"      => $detail['sizes'] ?? '',
+                            "colors"     => $detail['colors'] ?? '',
+                            "units"      => $detail['units'] ?? '',
+                            "price"      => $detail['price'] ?? 0,
+                            "cost"       => $detail['cost'] ?? 0,
+                            "amount"     => $detail['amount'] ?? 0,
+                            "total"      => $detail['total'] ?? 0,
+                            "user"       => $app->getSession("accounts")['id'] ?? 0,
+                            "date"       => date("Y-m-d H:i:s"),
+                        ];
+                        $app->insert("products_details", $crafting_details);
+                        $crafting_details_logs[] = $crafting_details;
+                    }
+                } else {
+                    // Nếu sản phẩm mới
+                    $insert_products = [
+                        "type"          => 1,
+                        "main"          => 0,
+                        "code"          => $code,
+                        "name"          => $app->xss($value['name'] ?? ''),
+                        "categorys"     => $app->xss($value['categorys'] ?? ''),
+                        "vat"           => $setting['site_vat'] ?? 0,
+                        "vat_type"      => 1,
+                        "amount"        => $value['amount'] ?? 0,
+                        "content"       => $value['content'] ?? '',
+                        "vendor"        => $app->xss($value['vendor'] ?? ''),
+                        "group"         => $app->xss($value['group'] ?? ''),
+                        "price"         => $price_clean,
+                        "units"         => $app->xss($value['units'] ?? ''),
+                        "notes"         => $app->xss($value['notes'] ?? ''),
+                        "active"        => $jatbi->active(32),
+                        "images"        => 'no-images.jpg',
+                        "date"          => date('Y-m-d H:i:s'),
+                        "status"        => 'A',
+                        "user"          => $app->getSession("accounts")['id'] ?? 0,
+                        "new"           => 1,
+                        "stores"        => $insert['stores'],
+                        "branch"        => $insert['branch'],
+                        "code_products" => $value['code'] ?? '',
+                        "tkno"          => $value['no'] ?? '',
+                        "tkco"          => $value['co'] ?? '',
+                        "default_code"  => $value['default_code'] ?? '',
+                        "crafting"      => $crafting_id
+                    ];
+                    $app->insert("products", $insert_products);
+                    $IDPro = $app->id();
+
+                    foreach (($Selectdetails[$value_id] ?? []) as $detail) {
+                        $crafting_details = [
+                            "products"   => $IDPro,
+                            "ingredient" => $detail['ingredient'] ?? '',
+                            "code"       => $detail['code'] ?? '',
+                            "type"       => $detail['type'] ?? '',
+                            "group"      => $detail['group'] ?? '',
+                            "categorys"  => $detail['categorys'] ?? '',
+                            "pearl"      => $detail['pearl'] ?? '',
+                            "sizes"      => $detail['sizes'] ?? '',
+                            "colors"     => $detail['colors'] ?? '',
+                            "units"      => $detail['units'] ?? '',
+                            "price"      => $detail['price'] ?? 0,
+                            "cost"       => $detail['cost'] ?? 0,
+                            "amount"     => $detail['amount'] ?? 0,
+                            "total"      => $detail['total'] ?? 0,
+                            "user"       => $app->getSession("accounts")['id'] ?? 0,
+                            "date"       => $insert_products['date'],
+                        ];
+                        $app->insert("products_details", $crafting_details);
+                        $crafting_details_logs[] = $crafting_details;
+                    }
+                }
+
+                // Thông tin xuất nhập kho
+                $pro = [
+                    "warehouses"   => $orderId,
+                    "data"         => $insert['data'],
+                    "type"         => $insert['type'],
+                    "vendor"       => $value['vendor'] ?? '',
+                    "products"     => $IDPro,
+                    "amount_buy"   => $value['amount_buy'] ?? 0,
+                    "amount"       => $value['amount'] ?? 0,
+                    "amount_total" => $value['amount'] ?? 0,
+                    "price"        => $price_clean,
+                    "cost"         => $value['cost'] ?? 0,
+                    "notes"        => $value['notes'] ?? '',
+                    "date"         => $insert['date_poster'],
+                    "user"         => $app->getSession("accounts")['id'] ?? 0,
+                    "stores"       => $insert['stores'],
+                    "branch"       => $insert['branch'],
+                    "crafting"     => $app->get("warehouses_details", "crafting", [
+                        "warehouses" => $app->get("warehouses", "crafting", ["id" => $orderId])
+                    ]),
                 ];
-                $warehouse_id = $db->insert("warehouses", $insert_warehouse);
+                $app->insert("warehouses_details", $pro);
+                $GetID = $app->id();
 
-                // 2. Lấy thông tin cần thiết trước vòng lặp
-                $all_product_codes_in_session = array_column($data['products'], 'code');
-                $full_product_codes = array_map(function ($code) use ($data) {
-                    return ($data['stores']['code'] ?? '') . ($data['branch']['code'] ?? '') . $code;
-                }, $all_product_codes_in_session);
+                $warehouses_logs = [
+                    "type"      => $insert['type'],
+                    "data"      => $insert['data'],
+                    "warehouses" => $orderId,
+                    "details"   => $GetID,
+                    "products"  => $IDPro,
+                    "price"     => $price_clean,
+                    "amount"    => $value['amount'] ?? 0,
+                    "total"     => ($value['amount'] ?? 0) * $price_clean,
+                    "notes"     => $value['notes'] ?? '',
+                    "duration"  => $value['duration'] ?? '',
+                    "date"      => $insert['date_poster'],
+                    "user"      => $app->getSession("accounts")['id'] ?? 0,
+                    "stores"    => $insert['stores'],
+                    "branch"    => $insert['branch'],
+                ];
+                $app->insert("warehouses_logs", $warehouses_logs);
+                $pro_logs[] = $pro;
 
-                $existing_products_db = $db->select("products", ["id", "code", "amount"], ["code" => $full_product_codes, "deleted" => 0]);
-                $existing_products_map = array_column($existing_products_db, null, 'code');
-
-                $crafting_ids = array_column($data['products'], 'crafting');
-                $crafting_details_db = $db->select("crafting_details", "*", ["crafting" => $crafting_ids, "deleted" => 0]);
-                $crafting_details_map = [];
-                foreach ($crafting_details_db as $detail) {
-                    $crafting_details_map[$detail['crafting']][] = $detail;
-                }
-
-                // 3. Lặp qua sản phẩm để xử lý
-                foreach ($data['products'] as $product_data) {
-                    $product_code = ($data['stores']['code'] ?? '') . ($data['branch']['code'] ?? '') . $product_data['code'];
-                    $product_id = null;
-
-                    if (isset($existing_products_map[$product_code])) {
-                        $existing_product = $existing_products_map[$product_code];
-                        $product_id = $existing_product['id'];
-                        $db->update("products", ["amount[+]" => $product_data['amount'], "crafting" => $data['crafting']], ["id" => $product_id]);
-                        $db->update("products_details", ["deleted" => 1], ["products" => $product_id]);
-                    } else {
-                        $product_id = $db->insert("products", [
-                            "type" => 1,
-                            "code" => $product_code,
-                            "name" => $product_data['name'],
-                            "categorys" => $product_data['categorys'],
-                            "amount" => $product_data['amount'],
-                            "price" => str_replace(',', '', $product_data['price']),
-                            "units" => $product_data['units'],
-                            "status" => 'A',
-                            "user" => $app->getSession("accounts")['id'] ?? 0,
-                            "date" => date('Y-m-d H:i:s'),
-                            "stores" => $insert_warehouse['stores'],
-                            "branch" => $insert_warehouse['branch'],
-                            "code_products" => $product_data['code'],
-                            "crafting" => $data['crafting']
-                        ]);
-                    }
-
-                    // SỬA LỖI: Dùng vòng lặp để insert từng chi tiết một
-                    $current_crafting_details = $crafting_details_map[$product_data['crafting']] ?? [];
-                    foreach ($current_crafting_details as $detail) {
-                        $detail['products'] = $product_id;
-                        unset($detail['id'], $detail['crafting']);
-                        $db->insert("products_details", $detail);
-                    }
-
-                    $db->insert("warehouses_details", [
-                        "warehouses" => $warehouse_id,
-                        "data" => 'products',
-                        "type" => 'import',
-                        "products" => $product_id,
-                        "amount" => $product_data['amount'],
-                        "price" => $product_data['price'],
-                        "cost" => $product_data['cost'],
-                        "date" => $insert_warehouse['date_poster'],
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert_warehouse['stores'],
-                        "branch" => $insert_warehouse['branch'],
-                        "crafting" => $data['crafting'],
-                    ]);
-                }
-
-                if (!empty($data['crafting'])) {
-                    $db->update("warehouses", ["export_status" => 2, "export_date" => date("Y-m-d H:i:s")], ["id" => $data['crafting']]);
-                }
-
-                return true;
-            });
-
-            if ($result) {
-                unset($_SESSION['products'][$action]);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra trong quá trình xử lý")]);
+                $app->update("products", ["crafting" => $pro["crafting"]], ["id" => $IDPro]);
             }
-        } catch (Exception $e) {
-            echo json_encode(['status' => 'error', 'content' => 'Lỗi server: ' . $e->getMessage()]);
+
+            $jatbi->logs('warehouses', $action, [$insert, $insert_products_logs, $pro_logs, $crafting_details_logs, $_SESSION['products'][$action]]);
+            $app->update("warehouses", ["export_status" => 2, "export_date" => $insert['date_poster']], ["id" => $crafting_id]);
+            unset($_SESSION['products'][$action]);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => $error['content'] ?? 'Lỗi không xác định']);
         }
     });
+
 
 
 
