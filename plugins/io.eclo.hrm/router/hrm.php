@@ -3271,6 +3271,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['data'] = [
                 "furlough" => '',
                 "status" => 'A',
+                "duration" => '',
             ];
             echo $app->render($template . '/hrm/furlough-categorys-post.html', $vars, $jatbi->ajax());
         }
@@ -3543,6 +3544,44 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough-categorys.edit']);
 
+    $app->router("/furlough-status/{id}", 'POST', function ($vars) use ($app, $jatbi) {
+        $app->header(['Content-Type' => 'application/json',]);
+        $data = $app->get("furlough", "*", ["id" => $vars['id'], "deleted" => 0]);
+        if ($data) {
+            $status = "";
+            if ($data['status'] === 'A') {
+                $status = "D";
+                $app->delete("annual_leave", ["detai" => $data['id']]);
+            } elseif ($data['status'] === 'D') {
+                $status = "A";
+                $getfurloughCat = $app->get("furlough_categorys", ["type"], ["id" => $data['furlough']]);
+
+                if ($getfurloughCat && $getfurloughCat['type'] == 1) {
+                    $from = new DateTime($data['date_from']);
+                    $to = new DateTime($data['date_to']);
+                    $duration = $from->diff($to)->days + 1;
+                    // 4. Chèn lại bản ghi trừ phép vào bảng annual_leave
+                    $app->insert("annual_leave", [
+                        "amount" => "-" . $duration,
+                        "month" => date("m", strtotime($data['date_from'])),
+                        "year" => date("Y", strtotime($data['date_from'])),
+                        "personnels" => $data['personnels'],
+                        "detai" => $data['id']
+                    ]);
+                }
+            }
+            if ($status) {
+                $app->update("furlough", ["status" => $status], ["id" => $data['id']]);
+                $jatbi->logs('hrm', 'furlough-status', $data);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Trạng thái không hợp lệ")]);
+            }
+        } else {
+            echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+        }
+    })->setPermissions(['furlough-categorys.edit']);
+
     $app->router("/furlough-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thêm Nghỉ phép");
@@ -3638,6 +3677,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "date" => date("Y-m-d H:i:s"),
                 "user" => $app->getSession("accounts")['id'] ?? null,
             ];
+
             $app->insert("furlough", $insert);
             $jatbi->logs('hrm', 'furlough-add', [$insert]);
 
@@ -3745,6 +3785,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $duration_from = date('Y-m-01', strtotime($plus, strtotime($duration_from)));
                     $duration_to = date('Y-m-t', strtotime($plus, strtotime($duration_to)));
                 }
+                $from = new DateTime($data['date_from']);
+                $to = new DateTime($data['date_to']);
+                $duration = $from->diff($to)->days + 1;
                 $insert = [
                     "personnels" => $app->xss($_POST['personnels']),
                     "furlough" => $app->xss($_POST['furlough']),
@@ -3757,6 +3800,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "user" => $app->getSession("accounts")['id'] ?? null,
                 ];
                 $app->update("furlough", $insert, ["id" => $data['id']]);
+                $app->update("annual_leave", [
+                    "amount" => "-" . $duration,
+                    "month" => date("m", strtotime($data['date_from'])),
+                    "year" => date("Y", strtotime($data['date_from'])),
+                    "personnels" => $data['personnels'],
+                    "detai" => $data['id']
+                ]);
                 $jatbi->logs('hrm', 'furlough-edit', [$insert]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
@@ -3777,6 +3827,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (count($datas) > 0) {
                 foreach ($datas as $data) {
                     $app->update("furlough", ["deleted" => 1], ["id" => $data['id']]);
+                    $app->delete("annual_leave", ["detai" => $data['id']]);
                 }
                 $jatbi->logs('hrm', 'furlough-deleted', $datas);
                 echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
