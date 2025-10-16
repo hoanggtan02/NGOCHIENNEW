@@ -56,6 +56,31 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         }
     });
 
+    $app->router("/province", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        if ($app->method() === 'POST') {
+
+            $searchValue = isset($_POST['keyword']) ? $_POST['keyword'] : '';
+            $selected_id = $_POST['id'] ?? null;
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "province.name[~]" => $searchValue,
+                    ],
+                    "province.status" => 'A',
+                    "province.deleted" => 0,
+                ]
+            ];
+
+            $app->select("province", "*", $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "value" => $data['id'],
+                    "text" => $data['name'],
+                ];
+            });
+            echo json_encode($datas);
+        }
+    });
+
     $app->router("/ward", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'POST') {
             $app->header([
@@ -76,6 +101,35 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
                 $where['AND']['ward.district'] = $parent_district;
             }
             $app->select("ward", "*", $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "value" => $data['id'],
+                    "text" => $data['name'],
+                ];
+            });
+            echo json_encode($datas);
+        }
+    });
+
+    $app->router("/district_new", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        if ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $searchValue = isset($_POST['keyword']) ? $_POST['keyword'] : '';
+            $parent_district = isset($_POST['parent']) ? $_POST['parent'] : '';
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "district_new.name[~]" => $searchValue,
+                    ],
+                    "district_new.status" => 'A',
+                    "district_new.deleted" => 0,
+                ]
+            ];
+            if ($parent_district) {
+                $where['AND']['district_new.province'] = $parent_district;
+            }
+            $app->select("district_new", "*", $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "value" => $data['id'],
                     "text" => $data['name'],

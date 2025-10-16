@@ -35,6 +35,13 @@
                                 "attr" => 'multiple',
                                 "options" => $offices ?? [],
                             ])?>
+                            <?=$app->component('select',[
+                                "name"=>'status_type',
+                                "class"=>'filter-name',
+                                "placeholder"=>$jatbi->lang("Tình trạng"),
+                                "selected" => $app->xss($_GET['status_type'] ?? ''),
+                                "options" => $status_type ?? [],
+                            ])?>
                             <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>

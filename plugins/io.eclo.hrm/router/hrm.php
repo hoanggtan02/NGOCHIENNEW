@@ -10,7 +10,6 @@ use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 
 
-
 if (!defined(constant_name: 'ECLO'))
     die("Hacking attempt");
 
@@ -45,6 +44,21 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nhân Viên");
             $vars['offices'] = $app->select("offices", ['id(value)', 'name(text)'], ['status' => 'A', 'deleted' => 0, "ORDER" => ["name" => "ASC"]]);
+            $status_type = [
+                [
+                    'value' => '',
+                    'text' => $jatbi->lang('Tất cả'),
+                ],
+                [
+                    'value' => 0,
+                    'text' => $jatbi->lang('Còn làm'),
+                ],
+                [
+                    'value' => 1,
+                    'text' => $jatbi->lang('Nghỉ làm'),
+                ],
+            ];
+            $vars['status_type'] = $status_type;
             echo $app->render($template . '/hrm/personnels.html', $vars);
         }
         if ($app->method() === 'POST') {
@@ -58,6 +72,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
             $offices = isset($_POST['offices']) ? $_POST['offices'] : '';
+            $status_type = isset($_POST['status_type']) ? $_POST['status_type'] : '';
 
             $joins = [
                 "[>]offices" => ["office" => "id"],
@@ -85,6 +100,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($offices)) {
                 $where['AND']['offices.id'] = $offices;
             }
+
+            if (!empty($status_type)) {
+                $where['AND']['personnels.status_type'] = $status_type;
+            }
             $count = $app->count("personnels", $joins, ['personnels.id'], $where['AND']);
             $datas = [];
 
@@ -98,6 +117,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'personnels.email',
                 'personnels.date',
                 'personnels.status',
+                'personnels.status_type',
                 'offices.name(office_name)',
                 'stores.name(store_name)',
             ], $where, function ($data) use (&$datas, $jatbi, $app, $offices) {
@@ -204,6 +224,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
             );
 
+            $vars['province_new'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Chọn")]],
+                $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
+            );
+
 
             echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
@@ -213,18 +238,21 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if ($app->xss($_POST['name']) == '' || $app->xss($_POST['phone']) == '' || $app->xss($_POST['stores']) == '') {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
             } else {
-                // if($app->xss($_POST['same_address'])==1){
-                // 	$permanent_address = $app->xss($_POST['address']);
-                // 	$permanent_province = $app->xss($_POST['province']);
-                // 	$permanent_district = $app->xss($_POST['district']);
-                // 	$permanent_ward = $app->xss($_POST['ward']);
-                // }
-                // else {
-                // 	$permanent_address = $app->xss($_POST['permanent_address']);
-                // 	$permanent_province = $app->xss($_POST['permanent_province']);
-                // 	$permanent_district = $app->xss($_POST['permanent_district']);
-                // 	$permanent_ward = $app->xss($_POST['permanent_ward']);
-                // }
+                if($app->xss($_POST['same_address'])==1){
+                	$permanent_address = $app->xss($_POST['address']);
+                	$permanent_province = $app->xss($_POST['province']);
+                	$permanent_district = $app->xss($_POST['district']);
+                	$permanent_ward = $app->xss($_POST['ward']);
+                    $permanent_address = $app->xss($_POST['address-new']);
+                	$permanent_province = $app->xss($_POST['province-new']);
+                	$permanent_ward = $app->xss($_POST['ward-new']);
+                }
+                else {
+                	$permanent_address = $app->xss($_POST['permanent_address']);
+                	$permanent_province = $app->xss($_POST['permanent_province']);
+                	$permanent_district = $app->xss($_POST['permanent_district']);
+                	$permanent_ward = $app->xss($_POST['permanent_ward']);
+                }
                 $insert = [
                     // "active" 	=> $jatbi->random(32),
                     "code" => $app->xss($_POST['code']),
@@ -235,17 +263,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "province" => $app->xss($_POST['province'] ?? 0),
                     "district" => $app->xss($_POST['district'] ?? 0),
                     "ward" => $app->xss($_POST['ward'] ?? 0),
+                    "province-new" => $app->xss($_POST['province_new'] ?? 0),
+                    "ward-new" => $app->xss($_POST['ward_new'] ?? 0),
                     "nationality" => $app->xss($_POST['nationality']),
                     "nation" => $app->xss($_POST['nation']),
                     "idtype" => $app->xss($_POST['idtype']),
                     "idcode" => $app->xss($_POST['idcode']),
                     "iddate" => $app->xss($_POST['iddate']),
                     "idplace" => $app->xss($_POST['idplace']),
-                    // "same_address"	=> $app->xss($_POST['same_address']),
-                    // "permanent_address" 	=> $permanent_address,
-                    // "permanent_province" 	=> $permanent_province,
-                    // "permanent_district" 	=> $permanent_district,
-                    // "permanent_ward" 		=> $permanent_ward,
+                    "same_address"	=> $app->xss($_POST['same_address']),
+                    "permanent_address" 	=> $permanent_address,
+                    "permanent_province" 	=> $permanent_province,
+                    "permanent_district" 	=> $permanent_district,
+                    "permanent_ward" 		=> $permanent_ward,
                     "birthday" => $app->xss($_POST['birthday']),
                     "gender" => $app->xss(!empty($_POST['gender']) ? $_POST['gender'] : -1),
                     "notes" => $app->xss($_POST['notes']),
@@ -293,6 +323,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     [["value" => "", "text" => $jatbi->lang("Chọn")]],
                     $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
                 );
+                $vars['province_new'] = array_merge(
+                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
+                    $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
+                );
                 echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
@@ -328,6 +362,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "province" => $app->xss($_POST['province']),
                         "district" => $app->xss($_POST['district']),
                         "ward" => $app->xss($_POST['ward']),
+                        "province-new" => $app->xss($_POST['province-new'] ?? 0),
+                        "ward-new" => $app->xss($_POST['ward-new'] ?? 0),
                         "nationality" => $app->xss($_POST['nationality']),
                         "nation" => $app->xss($_POST['nation']),
                         "idtype" => $app->xss($_POST['idtype']),
@@ -386,7 +422,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $vars['title'] = $jatbi->lang("Nhân viên: ") . $vars['data']['name'];
                 $vars['contracts'] = $app->select(
                     "personnels_contract",
-                    ["[>]offices" => ["offices" => "id"]],
+                    [
+                        "[>]offices" => ["offices" => "id"],
+                    ],
                     [
                         "personnels_contract.id",
                         "personnels_contract.code",

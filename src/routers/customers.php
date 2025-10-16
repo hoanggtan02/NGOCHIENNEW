@@ -1950,4 +1950,32 @@ $app->group($setting['manager'] . "/customers", function ($app) use ($setting, $
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
         }
     })->setPermissions(['customers-types.edit']);
+
+    $app->router("/search", ['GET','POST'], function($vars) use ($app, $jatbi,$setting) {
+        if ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $searchValue = isset($_POST['keyword']) ? $_POST['keyword'] : '';
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "customers.name[~]" => $searchValue,
+                        "customers.phone[~]" => $searchValue,
+                        "customers.code[~]" => $searchValue,
+                    ],
+                    "customers.status" => 'A',
+                    "customers.deleted" => 0,
+                    "customers.form" => 0,
+                ]
+            ];
+            $app->select("customers", "*", $where, function ($data) use (&$datas,$jatbi,$app) {
+                $datas[] = [
+                    "value" => $data['id'],
+                    "text" => $data['name'],
+                ];
+            });
+            echo json_encode($datas);
+        }
+    })->setPermissions(['customers']);
 })->middleware('login');

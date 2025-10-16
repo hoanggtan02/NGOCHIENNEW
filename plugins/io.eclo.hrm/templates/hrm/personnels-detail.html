@@ -130,6 +130,27 @@
 								<?=$data['name']?>
 							</td>
 						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Đơn thôi việc")?></td>
+							<td>
+								<?= !empty($data['off']) && $data['off'] == 1 ? "Có" : "Không" ?>
+							</td>
+						</tr>
+						<tr>
+							<td class="fw-bold text-nowrap"><?=$jatbi->lang("Tình trạng đơn thôi việc")?></td>
+							<td>
+								<?= 
+									!empty($data['type']) 
+										? ($data['type'] == 1 
+											? $jatbi->lang("Đơn phương chấm dứt hợp đồng") 
+											: ($data['type'] == 2 
+												? $jatbi->lang("Thỏa thuận chấm dứt hợp đồng") 
+												: '')
+										) 
+										: '' 
+								?>							
+							</td>
+						</tr>
 					</table>
 				</div>
 			</div>
