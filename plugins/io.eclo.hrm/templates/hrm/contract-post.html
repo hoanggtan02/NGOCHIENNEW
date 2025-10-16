@@ -65,7 +65,13 @@
                                 "placeholder"=>$jatbi->lang("Công việc"),
                                 "required" => 'true',
                             ])?>
-                     
+                         <?=$app->component('select',[
+                                "name"=>'positions',
+                                "options"=>$positions,
+                                "selected" => $data['positions'] ?? '',
+                                "placeholder"=>$jatbi->lang("Chức vụ"),
+                                "required" => 'true',
+                            ])?>
                         </div>
                         <div class="col-lg-6">
                             <?=$app->component('input',[
