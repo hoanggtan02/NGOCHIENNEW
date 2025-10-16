@@ -24,6 +24,11 @@ return [
                         "router" => '/hrm/insurrance',
                         "icon" => '<i class="ti ti-shield-check"></i>',
                     ],
+                        'positions' => [
+                        "name" => $jatbi->lang("Chức vụ"),
+                        "router" => '/hrm/positions',
+                        "icon" => '<i class="ti ti-clock"></i>',
+                    ],
                     'rosters' => [
                         "name" => $jatbi->lang("Bảng phân công"),
                         "router" => '/hrm/rosters',
@@ -59,6 +64,7 @@ return [
                         "router" => '/hrm/annual_leave',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+
                     'holiday' => [
                         "name" => $jatbi->lang("Ngày lễ"),
                         "router" => '/hrm/holiday',
@@ -129,6 +135,12 @@ return [
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
 
+
+
+                    'positions' => $jatbi->lang("Chức vụ"),
+                    'positions.add' => $jatbi->lang("Thêm chức vụ"),
+                    'positions.edit' => $jatbi->lang("Sửa chức vụ"),
+                    'positions.deleted' => $jatbi->lang("Xóa chức vụ"),
 
 
                     'decided' => $jatbi->lang("Quyết định thôi việc"),
