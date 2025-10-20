@@ -196,201 +196,182 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router("/personnels-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Thêm Nhân viên");
         if ($app->method() === 'GET') {
-            $vars['stores'] = array_merge(
-                [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-            );
-            $vars['offices'] = array_merge(
-                [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-            );
-            $vars['gender'] = [
-                ["value" => "", "text" => "Chọn"],
-                ["value" => 0, "text" => "Nữ"],
-                ["value" => 1, "text" => "Nam"],
-            ];
-            $vars['idtype'] = [
-                ["value" => "", "text" => "Chọn"],
-                ["value" => 1, "text" => "CMND"],
-                ["value" => 2, "text" => "CCCD"],
-                ["value" => 3, "text" => "CCCD gắn chíp"],
-                ["value" => 4, "text" => "Hộ chiếu"],
-            ];
-            $vars['data'] = [
-                "status" => 'A',
-            ];
-            $vars['province'] = array_merge(
-                [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
-            );
-
-            $vars['province_new'] = array_merge(
-                [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-            );
-
-
+            // ... (Phần GET không thay đổi)
+            $vars['stores'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
+            $vars['offices'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
+            $vars['gender'] = [ ["value" => "", "text" => "Chọn"], ["value" => 0, "text" => "Nữ"], ["value" => 1, "text" => "Nam"], ];
+            $vars['idtype'] = [ ["value" => "", "text" => "Chọn"], ["value" => 1, "text" => "CMND"], ["value" => 2, "text" => "CCCD"], ["value" => 3, "text" => "CCCD gắn chíp"], ["value" => 4, "text" => "Hộ chiếu"], ];
+            $vars['data'] = [ "status" => 'A', ];
+            $vars['province'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]]) );
+            $vars['province_new'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
             echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
-            if ($app->xss($_POST['name']) == '' || $app->xss($_POST['phone']) == '' || $app->xss($_POST['stores']) == '') {
-                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
-            } else {
-                if($app->xss($_POST['same_address'])==1){
-                	$permanent_address = $app->xss($_POST['address']);
-                	$permanent_province = $app->xss($_POST['province']);
-                	$permanent_district = $app->xss($_POST['district']);
-                	$permanent_ward = $app->xss($_POST['ward']);
-                    $permanent_address = $app->xss($_POST['address-new']);
-                	$permanent_province = $app->xss($_POST['province-new']);
-                	$permanent_ward = $app->xss($_POST['ward-new']);
-                }
-                else {
-                	$permanent_address = $app->xss($_POST['permanent_address']);
-                	$permanent_province = $app->xss($_POST['permanent_province']);
-                	$permanent_district = $app->xss($_POST['permanent_district']);
-                	$permanent_ward = $app->xss($_POST['permanent_ward']);
-                }
-                $insert = [
-                    // "active" 	=> $jatbi->random(32),
-                    "code" => $app->xss($_POST['code']),
-                    "name" => $app->xss($_POST['name']),
-                    "phone" => $app->xss($_POST['phone']),
-                    "email" => $app->xss($_POST['email']),
-                    "address" => $app->xss($_POST['address']),
-                    "province" => $app->xss($_POST['province'] ?? 0),
-                    "district" => $app->xss($_POST['district'] ?? 0),
-                    "ward" => $app->xss($_POST['ward'] ?? 0),
-                    "province-new" => $app->xss($_POST['province_new'] ?? 0),
-                    "ward-new" => $app->xss($_POST['ward_new'] ?? 0),
-                    "nationality" => $app->xss($_POST['nationality']),
-                    "nation" => $app->xss($_POST['nation']),
-                    "idtype" => $app->xss($_POST['idtype']),
-                    "idcode" => $app->xss($_POST['idcode']),
-                    "iddate" => $app->xss($_POST['iddate']),
-                    "idplace" => $app->xss($_POST['idplace']),
-                    "same_address"	=> $app->xss($_POST['same_address']),
-                    "permanent_address" 	=> $permanent_address,
-                    "permanent_province" 	=> $permanent_province,
-                    "permanent_district" 	=> $permanent_district,
-                    "permanent_ward" 		=> $permanent_ward,
-                    "birthday" => $app->xss($_POST['birthday']),
-                    "gender" => $app->xss(!empty($_POST['gender']) ? $_POST['gender'] : -1),
-                    "notes" => $app->xss($_POST['notes']),
-                    "status" => $app->xss($_POST['status']),
-                    "date" => date("Y-m-d H:i:s"),
-                    "user" => $app->getSession("accounts")['id'] ?? null,
-                    "stores" => $app->xss($_POST['stores']),
-                    "office" => $app->xss($_POST['office']),
-                ];
-                $app->insert("personnels", $insert);
-                $jatbi->logs('hrm', 'personnels-add', [$insert]);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            // ===== FIX: TOÀN BỘ LOGIC POST ĐÃ ĐƯỢC VIẾT LẠI =====
+            $app->header(['Content-Type' => 'application/json']);
+
+            if (empty($_POST['name']) || empty($_POST['phone']) || empty($_POST['stores'])) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")]);
+                return;
             }
+
+            $is_same_address = isset($_POST['same_address']) && $_POST['same_address'] == 1;
+
+            $insert_data = [
+                "code" => $app->xss($_POST['code']),
+                "name" => $app->xss($_POST['name']),
+                "phone" => $app->xss($_POST['phone']),
+                "email" => $app->xss($_POST['email']),
+                "address" => $app->xss($_POST['address']),
+                "province" => $app->xss($_POST['province'] ?? 0),
+                "district" => $app->xss($_POST['district'] ?? 0),
+                "ward" => $app->xss($_POST['ward'] ?? 0),
+                "address-new" => $app->xss($_POST['address-new']),
+                "province-new" => $app->xss($_POST['province-new'] ?? 0),
+                "ward-new" => $app->xss($_POST['ward-new'] ?? 0),
+                "nationality" => $app->xss($_POST['nationality']),
+                "nation" => $app->xss($_POST['nation']),
+                "idtype" => $app->xss($_POST['idtype']),
+                "idcode" => $app->xss($_POST['idcode']),
+                "iddate" => $app->xss($_POST['iddate']),
+                "idplace" => $app->xss($_POST['idplace']),
+                "same_address" => $is_same_address ? 1 : 0,
+                "birthday" => $app->xss($_POST['birthday']),
+                "gender" => !empty($_POST['gender']) ? $app->xss($_POST['gender']) : NULL,
+                "notes" => $app->xss($_POST['notes']),
+                "status" => $app->xss($_POST['status']),
+                "date" => date("Y-m-d H:i:s"),
+                "user" => $app->getSession("accounts")['id'] ?? null,
+                "stores" => $app->xss($_POST['stores']),
+                "office" => $app->xss($_POST['office']),
+            ];
+
+            if ($is_same_address) {
+                $insert_data['permanent_address'] = $insert_data['address'];
+                $insert_data['permanent_province'] = $insert_data['province'];
+                $insert_data['permanent_district'] = $insert_data['district'];
+                $insert_data['permanent_ward'] = $insert_data['ward'];
+                $insert_data['permanent_address_new'] = $insert_data['address-new'];
+                $insert_data['permanent_province_new'] = $insert_data['province-new'];
+                $insert_data['permanent_ward_new'] = $insert_data['ward-new'];
+            } else {
+                $insert_data['permanent_address'] = $app->xss($_POST['permanent_address']);
+                $insert_data['permanent_province'] = $app->xss($_POST['permanent_province'] ?? 0);
+                $insert_data['permanent_district'] = $app->xss($_POST['permanent_district'] ?? 0);
+                $insert_data['permanent_ward'] = $app->xss($_POST['permanent_ward'] ?? 0);
+                $insert_data['permanent_address_new'] = $app->xss($_POST['permanent_address_new']);
+                $insert_data['permanent_province_new'] = $app->xss($_POST['permanent_province_new'] ?? 0);
+                $insert_data['permanent_ward_new'] = $app->xss($_POST['permanent_ward_new'] ?? 0);
+            }
+
+            $app->insert("personnels", $insert_data);
+            $jatbi->logs('hrm', 'personnels-add', [$insert_data]);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới thành công")]);
         }
     })->setPermissions(['personnels.add']);
 
+    // Route sửa nhân viên
     $app->router("/personnels-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Sửa Nhân viên");
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
-                $vars['stores'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-                );
-                $vars['offices'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-                );
-                $vars['gender'] = [
-                    ["value" => "", "text" => "Chọn"],
-                    ["value" => 0, "text" => "Nữ"],
-                    ["value" => 1, "text" => "Nam"],
-                ];
-                $vars['idtype'] = [
-                    ["value" => "", "text" => "Chọn"],
-                    ["value" => 1, "text" => "CMND"],
-                    ["value" => 2, "text" => "CCCD"],
-                    ["value" => 3, "text" => "CCCD gắn chíp"],
-                    ["value" => 4, "text" => "Hộ chiếu"],
-                ];
+                // --- Dữ liệu chung không đổi ---
+                $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
+                $vars['offices'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
+                $vars['gender'] = [["value" => "", "text" => "Chọn"], ["value" => 0, "text" => "Nữ"], ["value" => 1, "text" => "Nam"]];
+                $vars['idtype'] = [["value" => "", "text" => "Chọn"], ["value" => 1, "text" => "CMND"], ["value" => 2, "text" => "CCCD"], ["value" => 3, "text" => "CCCD gắn chíp"], ["value" => 4, "text" => "Hộ chiếu"]];
+                
+                // --- Tải danh sách Tỉnh/Thành phố cho cả hai hệ thống ---
+                $vars['province'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]]));
+                $vars['province_new'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
+
+                // --- Tải danh sách cho ĐỊA CHỈ LIÊN LẠC (Hệ thống cũ) ---
                 $vars['district'] = $app->select("district", ["id(value)", "name(text)"], ["deleted" => 0, "province" => $vars['data']['province'], "ORDER" => ["name" => "ASC"]]);
                 $vars['ward'] = $app->select("ward", ["id(value)", "name(text)"], ["deleted" => 0, "district" => $vars['data']['district'], "ORDER" => ["name" => "ASC"]]);
-                $vars['province'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
-                );
-                $vars['province_new'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]])
-                );
+
+                // --- Tải danh sách cho ĐỊA CHỈ THƯỜNG TRÚ (Hệ thống cũ) ---
+                $vars['permanent_district'] = $app->select("district", ["id(value)", "name(text)"], ["deleted" => 0, "province" => $vars['data']['permanent_province'], "ORDER" => ["name" => "ASC"]]);
+                $vars['permanent_ward'] = $app->select("ward", ["id(value)", "name(text)"], ["deleted" => 0, "district" => $vars['data']['permanent_district'], "ORDER" => ["name" => "ASC"]]);
+                
+                // ===== FIX: Sửa lại logic tải dữ liệu cho HỆ THỐNG MỚI =====
+                // Sửa tên biến từ 'ward-new' thành 'ward_new'
+                // Truy vấn này sẽ lấy danh sách các mục (có vẻ là quận/huyện) dựa trên tỉnh/thành phố mới đã lưu
+                $vars['ward_new'] = $app->select("district_new", ["id(value)", "name(text)"], ["deleted" => 0, "province" => $vars['data']['province-new'], "ORDER" => ["name" => "ASC"]]);
+                // Tương tự, nếu bạn có địa chỉ thường trú mới, cũng cần tải ở đây
+                // Ví dụ:
+                // $vars['permanent_ward_new'] = $app->select("district_new", ["id(value)", "name(text)"], ["deleted" => 0, "province" => $vars['data']['permanent_province_new'], "ORDER" => ["name" => "ASC"]]);
+                // ==========================================================
+
                 echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             }
         } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
+            // ===== FIX: TOÀN BỘ LOGIC POST ĐÃ ĐƯỢC VIẾT LẠI =====
+            $app->header(['Content-Type' => 'application/json']);
             $data = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
-            if (!empty($data)) {
-                if ($app->xss($_POST['name']) == '' || $app->xss($_POST['phone']) == '' || $app->xss($_POST['stores']) == '') {
-                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
-                } else {
-                    // if($app->xss($_POST['same_address'])==1){
-                    // 	$permanent_address = $app->xss($_POST['address']);
-                    // 	$permanent_province = $app->xss($_POST['province']);
-                    // 	$permanent_district = $app->xss($_POST['district']);
-                    // 	$permanent_ward = $app->xss($_POST['ward']);
-                    // }
-                    // else {
-                    // 	$permanent_address = $app->xss($_POST['permanent_address']);
-                    // 	$permanent_province = $app->xss($_POST['permanent_province']);
-                    // 	$permanent_district = $app->xss($_POST['permanent_district']);
-                    // 	$permanent_ward = $app->xss($_POST['permanent_ward']);
-                    // }
-                    $insert = [
-                        // "active" 	=> $jatbi->random(32),
-                        "code" => $app->xss($_POST['code']),
-                        "name" => $app->xss($_POST['name']),
-                        "phone" => $app->xss($_POST['phone']),
-                        "email" => $app->xss($_POST['email']),
-                        "address" => $app->xss($_POST['address']),
-                        "province" => $app->xss($_POST['province']),
-                        "district" => $app->xss($_POST['district']),
-                        "ward" => $app->xss($_POST['ward']),
-                        "province-new" => $app->xss($_POST['province-new'] ?? 0),
-                        "ward-new" => $app->xss($_POST['ward-new'] ?? 0),
-                        "nationality" => $app->xss($_POST['nationality']),
-                        "nation" => $app->xss($_POST['nation']),
-                        "idtype" => $app->xss($_POST['idtype']),
-                        "idcode" => $app->xss($_POST['idcode']),
-                        "iddate" => $app->xss($_POST['iddate']),
-                        "idplace" => $app->xss($_POST['idplace']),
-                        // "same_address"	=> $app->xss($_POST['same_address']),
-                        // "permanent_address" 	=> $permanent_address,
-                        // "permanent_province" 	=> $permanent_province,
-                        // "permanent_district" 	=> $permanent_district,
-                        // "permanent_ward" 		=> $permanent_ward,
-                        "birthday" => $app->xss($_POST['birthday']),
-                        "gender" => $app->xss(!empty($_POST['gender']) ? $_POST['gender'] : -1),
-                        "notes" => $app->xss($_POST['notes']),
-                        "status" => $app->xss($_POST['status']),
-                        // "date" => date("Y-m-d H:i:s"),
-                        "user" => $app->getSession("accounts")['id'] ?? null,
-                        "stores" => $app->xss($_POST['stores']),
-                        "office" => $app->xss($_POST['office']),
-                    ];
-                    $app->update("personnels", $insert, ["id" => $data['id']]);
-                    $jatbi->logs('hrm', 'personnels-edit', [$insert]);
-                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                }
-            } else {
+
+            if (empty($data)) {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+                return;
             }
+
+            if (empty($_POST['name']) || empty($_POST['phone']) || empty($_POST['stores'])) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")]);
+                return;
+            }
+            
+            $is_same_address = isset($_POST['same_address']) && $_POST['same_address'] == 1;
+
+            $update_data = [
+                "code" => $app->xss($_POST['code']),
+                "name" => $app->xss($_POST['name']),
+                "phone" => $app->xss($_POST['phone']),
+                "email" => $app->xss($_POST['email']),
+                "address" => $app->xss($_POST['address']),
+                "province" => $app->xss($_POST['province']),
+                "district" => $app->xss($_POST['district']),
+                "ward" => $app->xss($_POST['ward']),
+                "address-new" => $app->xss($_POST['address-new']),
+                "province-new" => $app->xss($_POST['province-new'] ?? 0),
+                "ward-new" => $app->xss($_POST['ward-new'] ?? 0),
+                "nationality" => $app->xss($_POST['nationality']),
+                "nation" => $app->xss($_POST['nation']),
+                "idtype" => $app->xss($_POST['idtype']),
+                "idcode" => $app->xss($_POST['idcode']),
+                "iddate" => $app->xss($_POST['iddate']),
+                "idplace" => $app->xss($_POST['idplace']),
+                "same_address" => $is_same_address ? 1 : 0,
+                "birthday" => $app->xss($_POST['birthday']),
+                "gender" => !empty($_POST['gender']) ? $app->xss($_POST['gender']) : NULL,
+                "notes" => $app->xss($_POST['notes']),
+                "status" => $app->xss($_POST['status']),
+                "user" => $app->getSession("accounts")['id'] ?? null,
+                "stores" => $app->xss($_POST['stores']),
+                "office" => $app->xss($_POST['office']),
+            ];
+
+            if ($is_same_address) {
+                $update_data['permanent_address'] = $update_data['address'];
+                $update_data['permanent_province'] = $update_data['province'];
+                $update_data['permanent_district'] = $update_data['district'];
+                $update_data['permanent_ward'] = $update_data['ward'];
+                $update_data['permanent_address_new'] = $update_data['address-new'];
+                $update_data['permanent_province_new'] = $update_data['province-new'];
+                $update_data['permanent_ward_new'] = $update_data['ward-new'];
+            } else {
+                $update_data['permanent_address'] = $app->xss($_POST['permanent_address']);
+                $update_data['permanent_province'] = $app->xss($_POST['permanent_province'] ?? 0);
+                $update_data['permanent_district'] = $app->xss($_POST['permanent_district'] ?? 0);
+                $update_data['permanent_ward'] = $app->xss($_POST['permanent_ward'] ?? 0);
+                $update_data['permanent_address_new'] = $app->xss($_POST['permanent_address_new']);
+                $update_data['permanent_province_new'] = $app->xss($_POST['permanent_province_new'] ?? 0);
+                $update_data['permanent_ward_new'] = $app->xss($_POST['permanent_ward_new'] ?? 0);
+            }
+
+            $app->update("personnels", $update_data, ["id" => $data['id']]);
+            $jatbi->logs('hrm', 'personnels-edit', [$update_data]);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         }
     })->setPermissions(['personnels.edit']);
 
