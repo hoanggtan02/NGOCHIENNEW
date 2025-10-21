@@ -60,11 +60,11 @@
                 <p style="margin-left: 20px;"><i>- Căn cứ Bộ luật Lao động số 45/2019/QH14 ngày 20/11/2019;</i></p>
                 <p style="margin-left: 20px;"><i>- Căn cứ Nội quy lao động của Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú
                         Quốc;</i></p>
-                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản vi phạm kỷ luật lao động ngày ... tháng ... năm ...
+                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản vi phạm kỷ luật lao động ngày .... tháng .... năm ....
                         của Ông/Bà <span style="font-weight: bold; ">
                             <?=$per['name']?>
                         </span>;</i></p>
-                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản họp xử lý kỷ luật lao động ngày ... tháng ... năm ...
+                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản họp xử lý kỷ luật lao động ngày .... tháng .... năm ....
                         tại Công ty ............................................;</i></p>
                 <p style="margin-left: 20px;"><i>- Xét tính chất, mức độ vi phạm của người lao động.</i></p>
 
@@ -89,7 +89,7 @@
                     </div>
                     <div style="width: 50%;">
                         <?php
-                    // $database ở đây chính là $app được truyền từ route
+              
                     $latest_contract = $database->get("personnels_contract", ["position"], [ // Sửa "positions" -> "position"
                         "personnels" => $per['id'],
                         "deleted" => 0,
@@ -116,7 +116,7 @@
                 <p>Ông/Bà <span style="font-weight: bold; ">
                         <?=$per['name']?>
                     </span> có trách nhiệm bàn giao toàn bộ công việc, tài sản, hồ sơ, chứng từ liên quan cho các bộ
-                    phận trước ngày .../.../...</p>
+                    phận trước ngày ..../..../....</p>
 
                 <p><span style="font-weight: bold; " class="underline">Điều 3:</span></p>
                 <p>Ông/Bà <span style="font-weight: bold; ">

@@ -647,12 +647,12 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         $unit_name = $app->get("units", "name", ["id" => $data['units']]) ?? 'N/A';
         $_SESSION['ingredient_import']['ingredients'][$data['id']] = [
             "ingredient_id" => $data['id'],
-            "code" => $data['code'],
-            "name" => $data['name_ingredient'],
+            "code" => $data['code']??'',
+            "name" => $data['name_ingredient']??'',
             "selling_price" => $data['price'] ?? 0,
             "stock_quantity" => $data['amount'] ?? 0,
             "amount" => 1,
-            "price" => $data['price_purchase'] ?? 0,
+            "price" => $data['price'] ?? 0,
             "unit_name" => $unit_name,
             "notes" => $data['notes'] ?? '',
         ];
@@ -744,6 +744,11 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
 
 
 
+
+
+
+
+
     // --- API HOÀN TẤT VÀ LƯU PHIẾU NHẬP ---
 
     $app->router('/ingredient-import/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
@@ -803,6 +808,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
                 "active" => $jatbi->active(30),
                 "date_poster" => $current_time, // Sử dụng thời gian hiện tại
                 "stores" => $data['stores']['id'] ?? 0,
+                
             ];
 
             // 8. Insert vào bảng warehouses
@@ -876,6 +882,9 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
             ]);
         }
     })->setPermissions(['ingredient']);
+
+
+
 
 
     $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
