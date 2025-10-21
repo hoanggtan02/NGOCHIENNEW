@@ -2202,6 +2202,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             //     }
             // }
 
+            $app->update("personnels", [
+                "office" => $insert['offices'],
+                // "positions" => $insert['positions'], // Cập nhật luôn chức vụ cho nhân sự
+            ], ["id" => $insert['personnels']]);
+
             $jatbi->logs('hrm', 'contract-add', [$insert, "", $salary_details_logs ?? []]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         }
@@ -7300,12 +7305,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 'action' => ['data-url' => '/hrm/decided-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
                             ],
                             [
-                                'type' => 'link',
+                                'type' => 'button',
                                 'name' => $jatbi->lang("Xem"),
                                 'permission' => ['decided'],
-                                'action' => [
-                                    'href' => '/hrm/decided-views/' . $data['id'],
-                                ]
+                               'action' => ['data-url' => '/hrm/decided-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
                             ],
                         ]
                     ])),
@@ -7332,8 +7335,24 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         if ($app->method() === 'GET') {
 
-            $count = $app->count("contract_annex", "id", ["deleted" => 0, "type" => 2]);
-            $vars['data']['code'] = ($count + 1) . '/QĐ-XH';
+            // [ĐÃ SỬA] Logic tạo mã Quyết định theo "Ngọc Hiền"
+            // 1. Lấy năm hiện tại
+            $current_year = date('Y');
+
+            // 2. Tìm 'code' (số thứ tự) lớn nhất đã được dùng trong năm nay
+            // (Giả định 'code' chỉ lưu số, ví dụ: 50, 51...)
+            $max_code_number = $app->max("contract_annex", "code", [
+                "type" => 2, // 2 = Quyết định
+                "deleted" => 0,
+                "date[~]" => $current_year . '-%' // Lọc theo năm của 'date' (ngày ban hành)
+            ]);
+
+            // 3. Số mới = số lớn nhất + 1
+            $new_number = (int)$max_code_number + 1;
+            
+            // 4. Gán SỐ (ví dụ: 51) này vào form.
+            // File template in (decided-views.html) sẽ tự động thêm /NĂM/QĐ-NTNH
+            $vars['data']['code'] = $new_number;
             $vars['personnels'] = array_map(
                 fn($item) => ['value' => $item['id'], 'text' => $item['code'] . ' - ' . $item['name']],
                 $app->select("personnels", ["id", "code", "name"], ["deleted" => 0, "status" => "A"])
@@ -7726,4 +7745,44 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
         }
     })->setPermissions(['positions.edit']);
+
+
+$app->router('/decided-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) { // <-- Gỡ $database khỏi use()
+        $id = (int) ($vars['id'] ?? 0);
+        $vars['title'] = $jatbi->lang("In Quyết định thôi việc");
+
+        // 1. Lấy dữ liệu Quyết định (bảng contract_annex)
+        $data = $app->get("contract_annex", "*", [
+            "id" => $id,
+            "type" => 2,
+            "deleted" => 0
+        ]);
+
+        if (!$data) {
+            return $app->render($template . '/error.html', $vars, $jatbi->ajax());
+        }
+
+        // 2. Lấy thông tin nhân viên (bảng personnels)
+        $per = $app->get("personnels", "*", [
+            "id" => $data['contract'],
+            "deleted" => 0
+        ]);
+
+        if (!$per) {
+            $vars['error_message'] = "Không tìm thấy thông tin nhân viên.";
+            return $app->render($template . '/error.html', $vars, $jatbi->ajax());
+        }
+        
+        // 3. Truyền biến sang template
+        $vars['data'] = $data;
+        $vars['per'] = $per; 
+        
+        // [SỬA LỖI] Truyền đối tượng $app vào template dưới tên biến là 'database'
+        // Bây giờ $database->get() trong template sẽ hoạt động (vì nó chính là $app->get())
+        $vars['database'] = $app; 
+
+        // 4. Render file template
+        echo $app->render($template . '/hrm/decided-views.html', $vars, $jatbi->ajax());
+
+    })->setPermissions(['decided']);
 })->middleware('login');

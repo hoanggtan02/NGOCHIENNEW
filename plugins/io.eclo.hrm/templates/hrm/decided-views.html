@@ -1,0 +1,148 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">QUYẾT ĐỊNH KỶ LUẬT SA THẢI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body invoices-print "
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000;line-height:1.5; text-align:justify;">
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                            <img src="/assets/img/icon/logonh.png" alt="Logo" style="height:60px; margin-right:10px;">
+                            <div style="text-align:center;">
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">
+                                    CÔNG TY TNHH MTV NGỌC TRAI
+                                </p>
+                                <p style="font-weight:bold; margin:0; text-transform: uppercase;">
+                                    NGỌC HIỀN PHÚ QUỐC
+                                </p>
+                                <p style="text-decoration: underline; margin-top: 5px;">
+                                    <span>Số:</span>
+                                    <span>
+                                        <?=$data['code']?>
+                                    </span>/<span>
+                                        <?=date('Y', strtotime($data['date']))?>
+                                    </span>/QĐ-NTNH
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Cột bên phải: Quốc hiệu -->
+                    <div class="col-6 text-center">
+                        <p style="font-weight:bold; margin:0;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p style="margin:0;"><strong>Độc lập – Tự do – Hạnh phúc</strong></p>
+                        <p style="margin:0;">-----------o0o-----------</p>
+                        <p style="margin:0;"><em>Phú Quốc, ngày
+                                <?=date('d')?> tháng
+                                <?=date('m')?> năm
+                                <?=date('Y')?>
+                            </em></p>
+                    </div>
+                </div>
+
+                <table style="font-weight: bold; width: 100%; margin-top: 20px; ">
+                    <tbody>
+                        <tr style="border:none!important;">
+                            <td class="text-center" style=" border: none!important;">
+                                <span style="font-weight: bold; font-size: 16pt; ">QUYẾT ĐỊNH</span> <br>
+                                <span style="font-size: 14pt; font-weight: normal;">(Về việc xử lý kỷ luật lao động bằng
+                                    hình thức sa thải)</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 20px;"><b>Căn cứ:</b></p>
+                <p style="margin-left: 20px;"><i>- Căn cứ Bộ luật Lao động số 45/2019/QH14 ngày 20/11/2019;</i></p>
+                <p style="margin-left: 20px;"><i>- Căn cứ Nội quy lao động của Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú
+                        Quốc;</i></p>
+                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản vi phạm kỷ luật lao động ngày ... tháng ... năm ...
+                        của Ông/Bà <span style="font-weight: bold; ">
+                            <?=$per['name']?>
+                        </span>;</i></p>
+                <p style="margin-left: 20px;"><i>- Căn cứ Biên bản họp xử lý kỷ luật lao động ngày ... tháng ... năm ...
+                        tại Công ty ............................................;</i></p>
+                <p style="margin-left: 20px;"><i>- Xét tính chất, mức độ vi phạm của người lao động.</i></p>
+
+                <table style="font-weight: bold; width: 100%; margin-top: 10px!important;">
+                    <tbody>
+                        <tr style="border:none!important;">
+                            <td class="text-center" style="font-weight: bold;  border: none!important;">BAN GIÁM
+                                ĐỐC<br>CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC<br>QUYẾT ĐỊNH <br>-------------
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p style="margin-top: 15px;"><span style="font-weight: bold; " class="underline">Điều 1:</span> Áp dụng
+                    hình thức kỷ luật sa thải đối với:</p>
+
+                <div style="display: flex; width: 100%;">
+                    <div style="width: 50%;">
+                        <p style="margin-left: 20px;">- Ông/Bà : <span class="fw-bold" style="font-weight: bold;">
+                                <?=$per['name']?>
+                            </span></p>
+                    </div>
+                    <div style="width: 50%;">
+                        <?php
+                    // $database ở đây chính là $app được truyền từ route
+                    $latest_contract = $database->get("personnels_contract", ["position"], [ // Sửa "positions" -> "position"
+                        "personnels" => $per['id'],
+                        "deleted" => 0,
+                        "ORDER" => ["id" => "DESC"]
+                    ]);
+                    
+                    $position_id = $latest_contract['position'] ?? null; // Sửa "positions" -> "position"
+                    $position_name = $database->get("hrm_positions", "name", ["id" => $position_id]);
+                ?>
+                        <p>- Chức vụ : <span class="fw-bold">
+                                <?= $position_name ?? '' ?>
+                            </span></p>
+                    </div>
+                </div>
+
+                <p style="margin-left: 20px;">- Lý do:
+                    <?=$data['content']?>
+                </p>
+                <p style="margin-left: 20px;">- Thôi việc kể từ ngày:
+                    <?=date("d/m/Y",strtotime($data['date']))?>
+                </p>
+
+                <p><span style="font-weight: bold; " class="underline">Điều 2:</span></p>
+                <p>Ông/Bà <span style="font-weight: bold; ">
+                        <?=$per['name']?>
+                    </span> có trách nhiệm bàn giao toàn bộ công việc, tài sản, hồ sơ, chứng từ liên quan cho các bộ
+                    phận trước ngày .../.../...</p>
+
+                <p><span style="font-weight: bold; " class="underline">Điều 3:</span></p>
+                <p>Ông/Bà <span style="font-weight: bold; ">
+                        <?=$per['name']?>
+                    </span> cùng các bộ phận liên quan chịu trách nhiệm thi hành Quyết định này. Quyết định có hiệu lực
+                    kể từ ngày ký./.</p>
+
+                <div class="row" style="margin-top:2rem; font-weight:bold;">
+                    <div class="col-6">
+                        <p style="margin-bottom:0; font-weight: bold; font-size: 13pt;">Nơi nhận:</p>
+                        <p style="margin-bottom:0; font-style: italic;">- Như Điều 3;</p>
+                        <p style="margin-bottom:0; font-style: italic;">- Lưu: VT, HCNS.</p>
+                    </div>
+                    <div class="col-6" style="text-align:center;">
+                        <p style="margin-bottom:0; font-weight: bold; font-size: 13pt;">BAN GIÁM ĐỐC</p>
+                        <p style="height: 100px;"></p>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal"><?=$jatbi->lang("Hủy")?></button>
+                <button class="btn btn-success" onclick="window.print();">IN</button>
+            </div>
+        </div>
+    </div>
+</div>
