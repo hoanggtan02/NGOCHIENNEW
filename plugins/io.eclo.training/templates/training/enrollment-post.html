@@ -19,7 +19,12 @@
                             <?=$app->component('select', ['name' => 'employee_id', 'placeholder' => "Chọn nhân viên", 'options' => $employees ?? [], 'selected' => $data['employee_id'] ?? '', 'required' => true])?>
                         </div>
                         <div class="col-12">
-                            <?=$app->component('select', ['name' => 'session_id', 'placeholder' => "Chọn lớp học", 'options' => $sessions ?? [], 'selected' => $data['session_id'] ?? '', 'required' => true])?>
+                            <?=$app->component('select', [
+                            'name' => 'session_id', 
+                            'placeholder' => "Chọn lớp học", 
+                            'options' => $sessions ?? [], 
+                            'selected' => $session_id ?? '', 
+                            'required' => true])?>
                         </div>
                         <div class="col-12">
                             <?=$app->component('select', [

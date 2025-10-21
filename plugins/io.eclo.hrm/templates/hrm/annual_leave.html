@@ -21,9 +21,13 @@
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3">
-                            <?=$app->component('select-status',[
-                                "value" => $app->xss($_GET['status'] ?? ''),
+                            <?=$app->component('select',[
+                                "name"=>'year',
+                                "options"=>$years,
+                                "placeholder"=>$jatbi->lang("Năm"), 
+                                "class"=>"filter-name",
                             ])?>
+
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">

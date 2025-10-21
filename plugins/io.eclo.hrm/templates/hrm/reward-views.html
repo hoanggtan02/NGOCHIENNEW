@@ -1,0 +1,145 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">GIẤY ĐỀ NGHỊ KHEN THƯỞNG</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="printable-reward"
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.6;">
+
+                <div class="row mb-4">
+                    <div class="col-6 text-center">
+                        <p class="fw-bold text-uppercase mb-0">CÔNG TY TNHH MTV NGỌC TRAI</p>
+                        <p class="fw-bold text-uppercase mb-0"
+                            style="display: inline-block; border-bottom: 1px solid #000; padding-bottom: 1px;">NGỌC HIỀN
+                            PHÚ QUỐC</p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <p class="fw-bold text-uppercase mb-0">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                        <p class="mb-0"><strong style="border-bottom: 1px solid #000; padding-bottom: 1px;">Độc lập – Tự
+                                do – Hạnh phúc</strong></p>
+                    </div>
+                </div>
+
+                <div class="text-end mt-4 fst-italic">
+                    <p>Phú Quốc, ngày
+                        <?= date('d') ?> tháng
+                        <?= date('m') ?> năm
+                        <?= date('Y') ?>
+                    </p>
+                </div>
+
+                <div class="text-center my-4">
+                    <h4 class="fw-bold text-uppercase">GIẤY ĐỀ NGHỊ KHEN THƯỞNG</h4>
+                </div>
+
+
+                <!-- Thông tin người đề nghị -->
+                <div style="margin-bottom: 20px;">
+                    <p>Kính gửi: <b>Ban Giám đốc Công ty Ngọc Trai Ngọc Hiền Phú Quốc</b></p>
+                    <p>Người đề nghị: <b>
+                            <!-- <?php echo htmlspecialchars($datas[0]['user_name'] ?? ''); ?> -->
+                        </b> Bộ phận: <b>HCNS</b></p>
+                </div>
+
+                <!-- Bảng danh sách nhân viên được đề nghị khen thưởng -->
+                <p style="font-weight: bold; margin: 10px 0 5px 0;">Đề nghị Ban giám đốc và phòng HCNS xem xét khen
+                    thưởng cho:</p>
+                <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #f2f2f2;">
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">STT</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">TÊN NHÂN VIÊN</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">BỘ PHẬN</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">THƯỞNG</th>
+                            <th style="border: 1px solid #000; padding: 8px; text-align: center;">LÝ DO THƯỞNG</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($datas as $index => $data): ?>
+                        <tr>
+                            <td
+                                style="border: 1px solid #000; padding: 8px; text-align: center; vertical-align: middle;">
+                                <?php echo $index + 1; ?>
+                            </td>
+                            <td
+                                style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
+                                <?php echo htmlspecialchars($data['personnel_name'] ?? ''); ?>
+                            </td>
+                            <td
+                                style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
+                                <?php echo htmlspecialchars($app->get("office", "name", ["id" => $data['department_name']])); ?>
+                            </td>
+                            <td
+                                style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
+                                <?php echo number_format($data['price'] ?? 0); ?> VNĐ
+                            </td>
+                            <td
+                                style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
+                                <?php echo htmlspecialchars($data['content'] ?? ''); ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php for ($i = count($datas); $i < 4; $i++): ?>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">
+                                <?php echo $i + 1; ?>
+                            </td>
+                            <td style="border: 1px solid #000; padding: 8px;"></td>
+                            <td style="border: 1px solid #000; padding: 8px;"></td>
+                            <td style="border: 1px solid #000; padding: 8px;"></td>
+                            <td style="border: 1px solid #000; padding: 8px;"></td>
+                        </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                </table>
+
+                <!-- Ý kiến -->
+                <div style="margin-top: 20px;">
+                    <p style="font-weight: bold;">Ý kiến của HCNS:</p>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <p style="font-weight: bold;">Ý kiến của BGĐ:</p>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                    <div style="border-bottom: 1px dotted #000; height: 1.5em;"></div>
+                </div>
+
+                <!-- Chữ ký -->
+                <div style="margin-top: 40px; font-family: Arial, sans-serif; font-size: 14px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 25%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p style="font-weight: bold; margin-bottom: 5px;">Ban Giám đốc</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+                            <td style="width: 25%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p style="font-weight: bold; margin-bottom: 5px;">HCNS</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+                            <td style="width: 25%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p style="font-weight: bold; margin-bottom: 5px;">TBP/GS</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+                            <td style="width: 25%; padding: 10px; text-align: center; border: 1px solid #000;">
+                                <p style="font-weight: bold; margin-bottom: 5px;">Người đề nghị</p>
+                                <div style="height: 70px;"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In phiếu</button>
+            </div>
+        </div>
+    </div>
+</div>

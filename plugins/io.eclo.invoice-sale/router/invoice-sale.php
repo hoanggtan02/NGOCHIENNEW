@@ -784,17 +784,17 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         echo json_encode(['status' => 'success', 'content' => 'Cập nhật thành công']);
     })->setPermissions(['sales']);
 
-    $app->router('/invoices-update/{dispatch}/{action}/completed/sales', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {
+    $app->router('/invoices-update/{dispatch}/{action}/completed/sales', ['POST'], function ($vars) use ($app, $jatbi, $setting, $accStore) {   
         $app->header(['Content-Type' => 'application/json']);
         $dispatch = $vars['dispatch'];
         $action = $vars['action'];
         $sales_session = $app->getSession($dispatch) ?? [];
-        $datas = $sales_session[$action];
+        $datas = $sales_session[$action] ?? [];
         $total_products = 0;
         $total_vat = 0;
         $total_minus = 0;
         $total_prepay = 0;
-        $total_surcharge = 0;
+        $total_surcharge = 0;       
         $datas['products'] = $datas['products'] ?? [];
         $datas['vat'] = $datas['vat'] ?? [];
         $datas['minus'] = $datas['minus'] ?? [];

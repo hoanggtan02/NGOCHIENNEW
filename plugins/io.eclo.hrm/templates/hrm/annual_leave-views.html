@@ -1,0 +1,64 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" aria-label="Close"
+                    style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3">
+                    <?=$title?>
+                </h5>
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col"><?=$jatbi->lang("Tháng")?></th>
+                            <th scope="col" class="text-end"><?=$jatbi->lang("Số ngày đã nghỉ")?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                $total_taken = 0;
+                if (!empty($records)) {
+                    // Lặp qua từng bản ghi nghỉ phép đã lấy từ router
+                    foreach ($records as $record) {
+                        $days_taken = abs($record['amount']);
+                        $total_taken += $days_taken;
+                ?>
+                        <tr>
+                            <td><?=$jatbi->lang("Tháng")?>
+                                <?=$record['month']?>
+                            </td>
+                            <td class="text-end">
+                                <?=$days_taken?>
+                            </td>
+                        </tr>
+                        <?php
+                    }
+                } else {
+                ?>
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">
+                                <?=$jatbi->lang("Không có dữ liệu nghỉ phép trong năm này.")?></td>
+                        </tr>
+                        <?php
+                }
+                ?>
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th class="text-end fw-bold"><?=$jatbi->lang("Tổng cộng đã nghỉ")?></th>
+                            <th class="text-end fw-bold fs-5">
+                                <?= $total_taken ?>
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -72,6 +72,15 @@
                 </a>
             </li>
             <?php } ?>
+            <?php if($jatbi->permission(['reward-discipline']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-success width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-checkbox="input.checker"
+                    data-url="<?=$jatbi->url('/hrm/reward-discipline-views')?>" style="--width:50px;--height:50px;">
+                    <i class="ti ti-files fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
             <?php if($jatbi->permission(['reward-discipline.add']) == 'true'){ ?>
             <li class="my-2">
                 <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
@@ -101,15 +110,23 @@
                         <th data-name="type" data-orderable="false" data-class="text-nowrap"><?=$jatbi->lang("Loại")?>
                         </th>
                         <th data-name="personnel_name" data-orderable="false" data-class="text-nowrap">
-                            <?=$jatbi->lang("Nhân viên")?></th>
+                            <?=$jatbi->lang("Nhân viên")?>
+                        </th>
                         <th data-name="price" data-orderable="false" data-class="text-nowrap">
-                            <?=$jatbi->lang("Số tiền")?></th>
+                            <?=$jatbi->lang("Số tiền")?>
+                        </th>
                         <th data-name="date" data-orderable="false" data-class="text-start">
-                            <?=$jatbi->lang("Ngày áp dụng")?></th>
+                            <?=$jatbi->lang("Ngày áp dụng")?>
+                        </th>
                         <th data-name="content" data-orderable="false" data-class="text-nowrap">
-                            <?=$jatbi->lang("Nội dung")?></th>
+                            <?=$jatbi->lang("Nội dung")?>
+                        </th>
                         <th data-name="date_poster" data-orderable="false" data-class="text-nowrap">
-                            <?=$jatbi->lang("Ngày")?></th>
+                            <?=$jatbi->lang("Ngày")?>
+                        </th>
+                        <th data-name="user" data-orderable="false" data-class="text-nowrap">
+                            <?=$jatbi->lang("Tải khoản")?>
+                        </th>
                         <th data-name="action" data-orderable="false" class="text-nowrap" data-visible="true"
                             data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
                     </tr>

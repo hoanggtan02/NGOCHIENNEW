@@ -453,6 +453,7 @@ $app->group($setting['manager'] . "/training", function ($app) use ($jatbi, $set
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Lớp:") . $session_data['course_name'];
             $vars['session_data'] = $session_data;
+            $vars['session_id'] = $session_id;
             echo $app->render($template . '/training/enrollment_list.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
@@ -519,13 +520,12 @@ $app->group($setting['manager'] . "/training", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['enrollments']);
 
-    $app->router('/employee-enrollments-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/employee-enrollments-add/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         $vars['title'] = $jatbi->lang("Ghi danh Nhân viên");
 
         if ($app->method() === 'GET') {
-            if (isset($_GET['session_id'])) {
-                $vars['data']['session_id'] = (int) $_GET['session_id'];
-            }
+
+            $vars['session_id'] = (int) ($vars['id'] ?? 0);
 
             $empty_option = [['value' => '', 'text' => $jatbi->lang('')]];
 

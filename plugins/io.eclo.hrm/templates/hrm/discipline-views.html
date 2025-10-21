@@ -1,0 +1,136 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">BIÊN BẢN XỬ LÝ VI PHẠM</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body" id="printable-protocol"
+                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.6;">
+
+                <!-- Header: Công ty -->
+                <table class="border border-0 border-white"
+                    style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family:'Times New Roman', Times, serif; font-size:13pt; color:#000 ;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 8%; padding: 10px; vertical-align: middle;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <img src="<?$setting['url']?>/assets/img/logonh.png" alt="Logo"
+                                        style="height: 50px;">
+                                </div>
+                            </td>
+                            <td style="width: 46%; padding: 10px; vertical-align: middle;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <p class="fw-bold text-uppercase text-center mb-0">
+                                        CÔNG TY TNHH MTV NGỌC TRAI <br> NGỌC HIỀN PHÚ QUỐC
+                                    </p>
+                                </div>
+                            </td>
+                            <td style="width: 46%; padding: 10px; text-align: center; vertical-align: top;">
+                                <p class="fw-bold text-uppercase mb-0">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                                <p class="mb-0"><strong>Độc lập - Tự do - Hạnh phúc</strong></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="padding: 10px; text-align: center;">
+                                Số: 50/2025/NHP-BB
+                            </td>
+                            <td style="padding: 10px; text-align: center; font-style: italic;">
+                                Phú Quốc, ngày
+                                <?= date('d') ?> tháng
+                                <?= date('m') ?> năm
+                                <?= date('Y') ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Thành phần tham dự -->
+                <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                    <h4 style="font-weight: bold; margin: 0; text-transform: uppercase;">BIÊN BẢN</h4>
+                    <p style="margin: 0; font-style: italic;">(V/v xử lý vi phạm/kỷ luật)</p>
+                </div>
+
+                <div style="line-height: 1.8;">
+                    <p style="margin-bottom: 5px;"><strong>Đại diện:</strong></p>
+
+                    <p style="margin: 0 0 5px 40px;">- Ban Giám Đốc Công ty TNHH MTV Ngọc Trai Ngọc Hiền Phú Quốc</p>
+                    <p style="margin: 0 0 5px 40px;">- Phòng Hành chánh – Nhân sự</p>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                    <p style="margin: 0;">
+                        <strong>Người lập biên bản:</strong>
+                        <?= htmlspecialchars($data['user_name'] ?? '') ?>
+                        <span style="margin-left: 40px;">
+                            <strong>Bộ phận:</strong>
+                            <?= htmlspecialchars($data['creator_dept'] ?? '') ?>
+                        </span>
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <p style="margin: 0;">
+                        <strong>Người nhận biên bản:</strong>
+                        <?= htmlspecialchars($data['personnel_name'] ?? '') ?>
+                        <span style="margin-left: 40px;">
+                            <strong>Bộ phận:</strong>
+                            <?= htmlspecialchars($data['department_name'] ?? '') ?>
+                        </span>
+                    </p>
+                </div>
+
+                <!-- Nội dung vi phạm -->
+                <div style="margin-bottom: 20px; text-align: justify;">
+                    <p style="margin: 0;"><strong>Tiến hành lập biên bản với những nội dung sau:</strong></p>
+                    <p style="margin: 10px 0 0; padding-left: 20px; text-align: justify;">
+                        <?= nl2br(htmlspecialchars($data['content'] ?? '')) ?>
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <p style="margin: 0;">
+                        <strong>Hình thức xử lý/ kỷ luật:</strong>
+                        <?= htmlspecialchars($data['price'] ?? '') ?>
+                    </p>
+                </div>
+
+                <!-- Chữ ký -->
+                <div style="display: flex; justify-content: space-between; margin-top: 50px; font-size: 14px;">
+                    <div style="text-align: center; width: 30%;">
+                        <p style="font-weight: bold; margin: 0 0 5px;">Người lập biên bản</p>
+                        <p style="font-style: italic; margin: 0 0 10px;">(Ký tên ghi rõ họ tên)</p>
+                        <div style="height: 70px; display: flex; align-items: end; justify-app: center;">
+
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; width: 30%;">
+                        <p style="font-weight: bold; margin: 0 0 5px;">BGĐ</p>
+                        <p style="font-style: italic; margin: 0 0 10px;">(Ký tên ghi rõ họ tên)</p>
+                        <div style="height: 70px; display: flex; align-items: end; justify-content: center;">
+
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; width: 30%;">
+                        <p style="font-weight: bold; margin: 0 0 5px;">Người vi phạm</p>
+                        <p style="font-style: italic; margin: 0 0 10px;">(Ký tên ghi rõ họ tên)</p>
+                        <div style="height: 70px; display: flex; align-items: end; justify-content: center;">
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In biên bản</button>
+            </div>
+        </div>
+    </div>
+</div>
