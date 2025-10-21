@@ -463,7 +463,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         exit;
     });
 
-    $app->router("/candidates-print/{id}", ['GET'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/candidates-print/{id}", ['GET'], function ($vars) use ($app,$setting ,$jatbi, $template) {
         $id = $vars['id'];
 
         $candidate = $app->get(
@@ -476,7 +476,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                 "candidates.full_name",
                 "candidates.email",
                 "candidates.phone",
-                "candidates.source",
+                "candidates.source",            
                 "candidates.created_date",
                 "job_postings.title(job_title)"
             ],
@@ -490,6 +490,8 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         }
 
         $vars['candidate'] = $candidate;
+        $vars['setting'] = $setting;
+        
         echo $app->render($template . '/recruitment/candidates-print-view.html', $vars, $jatbi->ajax());
     })->setPermissions(['candidates']);
 

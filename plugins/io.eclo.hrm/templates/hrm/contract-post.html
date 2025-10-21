@@ -36,13 +36,9 @@
                                 <label class="form-label"><?=$jatbi->lang("Thời hạn hợp đồng")?> <span
                                         class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="number" name="duration"
-                                        class="form-control rounded-start-4 p-3 bg-body" placeholder="<?=$jatbi->lang("
-                                        Thời hạn hợp đồng")?>"
-                                    value="
-                                    <?=$data['duration'] ?? ''?>" required>
-                                    <span
-                                        class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
+                                    <input type="number" name="duration" class="form-control rounded-start-4 p-3 bg-body" placeholder="<?=$jatbi->lang("Thời hạn hợp đồng")?>" 
+                                    value="<?=$data['duration'] ?? ''?>" required>
+                                    <span class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
                                 </div>
                             </div>
                             <?=$app->component('select',[
@@ -55,7 +51,7 @@
                             <?=$app->component('input',[
                                 "name"=>'code',
                                 "placeholder"=>$jatbi->lang("Số hợp đồng"),
-                                "value" => $data['code'] ?? '',
+                                "value" => $data['code'] ?? '', 
                                 "required" => 'true',
                             ])?>
                             <?=$app->component('select',[
@@ -68,7 +64,7 @@
                          <?=$app->component('select',[
                                 "name"=>'positions',
                                 "options"=>$positions,
-                                "selected" => $data['positions'] ?? '',
+                                "selected" => $data['position'] ?? '',
                                 "placeholder"=>$jatbi->lang("Chức vụ"),
                                 "required" => 'true',
                             ])?>

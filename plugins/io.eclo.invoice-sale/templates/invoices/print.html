@@ -160,7 +160,7 @@
                             <?php endif; ?>
 
                             <tr class="fs-5 table-light">
-                                <td colspan="8" class="text-end fw-bold">Tổng cộng thanh toán</td>
+                                <td colspan="8" class="text-end me-4 fs-5">Tổng cộng thanh toán</td>
                                 <td class="text-end fw-bold text-success">
                                     <?=number_format($data['payments'] ?? 0)?>
                                 </td>
@@ -172,7 +172,7 @@
                 <!-- Ngày lập phiếu -->
                 <div class="row mt-3 text-dark">
                     <div class="col-md-8"></div>
-                    <div class="col-md-4 text-center">
+                    <div class="col-md-4 text-end">
                         <p><i>Ngày
                                 <?=date("d",strtotime($data['date']))?> Tháng
                                 <?=date("m",strtotime($data['date']))?> Năm
