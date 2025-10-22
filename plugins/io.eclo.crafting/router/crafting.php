@@ -3149,7 +3149,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $resultData = [];
             foreach ($datas as $data) {
                 $resultData[] = [
-                    "code" => '<a class="info" data-action="modal" data-url="/warehouses/ingredient-history-views/' . $data['id'] . '/">#' . $data['code'] . $data['id'] . '</a>',
+                    "code" => '<a class="info" data-action="modal" data-url="/warehouses/ingredient-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
                     "content" => $data['content'],
                     "date" => $jatbi->datetime($data['date_poster']),
                     "user" => $data['user_name'],
@@ -4177,7 +4177,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             $resultData = [];
             foreach ($datas as $data) {
                 $resultData[] = [
-                    "id" => '<a data-action="modal" data-url="/crafting/split-history-views/' . $data['id'] . '/">#' . $data['id'] . '</a>',
+                    "id" => '<a data-action="modal" data-url="/crafting/split-history-views/' . $data['id'] . '">#' . $data['id'] . '</a>',
                     "product" => ($data['product_code'] ?? '') . ' - ' . ($data['product_name'] ?? ''),
                     "content" => $data['content'],
                     "date" => $jatbi->datetime($data['date']),
@@ -5355,6 +5355,9 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                     break;
                 }
             }
+        }
+        if(empty($data['content'])) {
+            $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập nội dung')];
         }
 
         if (empty($error)) {
