@@ -36,7 +36,10 @@
                     <nav class="mb-3" data-pos-sales>
                         <div class="nav nav-tabs nav-pills-eclo" role="tablist">
                             <?php
-                            $sales = $_SESSION['sales'] ?? [];
+                            $sales = json_decode($app->getCookie('sales') ?? json_encode([]), true) ?? [];
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                $sales = [];
+                            }
                             $nextKey = !empty($sales) ? max(array_keys($sales)) + 1 : 1;
                             ?>
 

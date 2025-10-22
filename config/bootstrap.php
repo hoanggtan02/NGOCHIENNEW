@@ -30,6 +30,7 @@ $config['app']['district'] = $getsetting['district'];
 $config['app']['province'] = $getsetting['province'];
 $config['app']['ward'] = $getsetting['ward'];
 $config['app']['phone'] = $getsetting['phone'];
+$config['app']['site_datetime'] = $getsetting['datetime'];
 
 // Set vào app
 $app->setValueData('setting', $config['app']);

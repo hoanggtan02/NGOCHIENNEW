@@ -209,6 +209,39 @@ $ingredient_cookie_config = [
     'expire' => time() + 86400, // Hết hạn sau 1 ngày
 ];
 
+$Status_warehouser_move = [
+    "1"=>[
+        "id"=>1,
+        "main"=>0,
+        "name"=> "Chưa nhận hàng",
+        "color"=>"warning"
+    ],
+    "2"=>[
+        "id"=>2,
+        "main"=>0,
+        "name"=> "Đã nhận hàng",
+        "color"=>"primary"
+    ],
+    "3"=>[
+        "id"=>3,
+        "main"=>0,
+        "name"=> "Trả hàng",
+        "color"=>"danger"
+    ],
+    "4"=>[
+        "id"=>4,
+        "main"=>0,
+        "name"=> "Đã trả hàng",
+        "color"=>"success"
+    ],
+    "5"=>[
+        "id"=>5,
+        "main"=>0,
+        "name"=>"Không nhận hàng",
+        "color"=>"danger"
+    ],
+];
+
 
 if (!function_exists('get_ingredient_cookie_data')) {
     function get_ingredient_cookie_data($app) {
@@ -275,6 +308,7 @@ return [
         "Status_invoices" => $Status_invoices,
         "Status_purchase" => $Status_purchase,
         "ticket_types" => $type_ticket,
+        "Status_warehouser_move" => $Status_warehouser_move,
         "site_vat" => '10',
         "ingredient_cookie" => $ingredient_cookie_config,
     ]
