@@ -6388,13 +6388,12 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
     $vars['title'] = $jatbi->lang("Nhập kho nguyên liệu");
     $vars['is_crafting_import'] = false;
 
-    // SỬA DÒNG NÀY (gọi hàm helper mới từ config.php):
-    // $cookie_data = get_ingredient_cookie_data($app, $cookie_name); 
+ 
 
-    // THÀNH DÒNG NÀY (Hàm này tự động đọc config từ $setting):
+
     $cookie_data = get_ingredient_cookie_data($app);
 
-    // Dòng 6380 của bạn bây giờ sẽ chạy đúng
+  
     $vars['SelectIngredients'] = $cookie_data['ingredients'] ?? [];
 
     echo $app->render($template . '/warehouses/ingredient-import.html', $vars);
@@ -6403,7 +6402,7 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
     $app->router('/products-error/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $id = $vars['id'] ?? 0;
 
-        // TỐI ƯU: Lấy dữ liệu sản phẩm và tên đơn vị bằng JOIN
+
         $product = $app->get("products", ["[<]units" => ["units" => "id"]], [
             "products.id",
             "products.code",
@@ -9396,8 +9395,8 @@ $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, 
                 continue;
             }
 
-            $amount = str_replace(',', '', $row_data['I'] ?? '');
-            $price = str_replace(',', '', $row_data['K'] ?? '');
+            $amount = (float)str_replace(',', '', $row_data['I'] ?? '');
+            $price = (float)str_replace(',', '', $row_data['K'] ?? '');
             $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
 
        
@@ -9406,6 +9405,7 @@ $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, 
                 "code" => $ingredient_data['code'],
                 "name" => $ingredient_data['name_ingredient'] ?? '', 
                 "selling_price" => $price,
+                "price" => $price,
                 "stock_quantity" => $ingredient_data['amount'],
                 "amount" => $amount,
                 "unit_name" => $unit_name,
