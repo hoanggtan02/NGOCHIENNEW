@@ -9236,101 +9236,214 @@ $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, 
         }
     })->setPermissions(['ingredient.add']);
 
-    $app->router('/warehouse-ingredient-excel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    // $app->router('/warehouse-ingredient-excel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
 
-        if ($app->method() === 'GET') {
-            $vars['title'] = $jatbi->lang('Nhập kho nguyên liệu từ Excel');
-            echo $app->render($template . '/warehouses/warehouse-ingredient-excel.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+    //     if ($app->method() === 'GET') {
+    //         $vars['title'] = $jatbi->lang('Nhập kho nguyên liệu từ Excel');
+    //         echo $app->render($template . '/warehouses/warehouse-ingredient-excel.html', $vars, $jatbi->ajax());
+    //     } elseif ($app->method() === 'POST') {
+    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-            if (!isset($_FILES['files']) || $_FILES['files']['error'] != UPLOAD_ERR_OK) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng chọn file')]);
-                return;
-            }
-            $handle = $app->upload($_FILES['files']);
-            if ($handle->uploaded) {
-                $handle->allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
-                $handle->process('datas/');
-            }
-            if (!$handle->processed) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi upload') . ': ' . $handle->error]);
-                return;
-            }
-            $inputFileName = 'datas/' . $handle->file_dst_name;
-            try {
-                $spreadsheet = IOFactory::load($inputFileName);
-                $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-            } catch (\Exception $e) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi đọc file Excel') . ': ' . $e->getMessage()]);
-                return;
-            } finally {
-                @unlink($inputFileName);
-            }
+    //         if (!isset($_FILES['files']) || $_FILES['files']['error'] != UPLOAD_ERR_OK) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng chọn file')]);
+    //             return;
+    //         }
+    //         $handle = $app->upload($_FILES['files']);
+    //         if ($handle->uploaded) {
+    //             $handle->allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    //             $handle->process('datas/');
+    //         }
+    //         if (!$handle->processed) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi upload') . ': ' . $handle->error]);
+    //             return;
+    //         }
+    //         $inputFileName = 'datas/' . $handle->file_dst_name;
+    //         try {
+    //             $spreadsheet = IOFactory::load($inputFileName);
+    //             $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+    //         } catch (\Exception $e) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi đọc file Excel') . ': ' . $e->getMessage()]);
+    //             return;
+    //         } finally {
+    //             @unlink($inputFileName);
+    //         }
 
-            $errors = [];
-            $valid_ingredients_session = [];
-            $success_count = 0;
+    //         $errors = [];
+    //         $valid_ingredients_session = [];
+    //         $success_count = 0;
 
-            unset($_SESSION['ingredient_import']['ingredients']);
+    //         unset($_SESSION['ingredient_import']['ingredients']);
 
-            foreach ($sheetData as $key => $value) {
-                if ($key <= 1 || empty($value['A']))
-                    continue;
+    //         foreach ($sheetData as $key => $value) {
+    //             if ($key <= 1 || empty($value['A']))
+    //                 continue;
 
-                $current_row = $key;
-                $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
-                $ingredient_data = $app->get("ingredient", "*", ["code" => $app->xss($row_data['A']), "deleted" => 0]);
+    //             $current_row = $key;
+    //             $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
+    //             $ingredient_data = $app->get("ingredient", "*", ["code" => $app->xss($row_data['A']), "deleted" => 0]);
 
-                if (!$ingredient_data) {
+    //             if (!$ingredient_data) {
 
-                    $errors[] = "Dòng $current_row: Không tìm thấy nguyên liệu có mã '{$row_data['A']}'.";
-                    continue;
-                }
+    //                 $errors[] = "Dòng $current_row: Không tìm thấy nguyên liệu có mã '{$row_data['A']}'.";
+    //                 continue;
+    //             }
 
-                $amount = str_replace(',', '', $row_data['I'] ?? '');
-                $price = str_replace(',', '', $row_data['K'] ?? '');
+    //             $amount = str_replace(',', '', $row_data['I'] ?? '');
+    //             $price = str_replace(',', '', $row_data['K'] ?? '');
 
-                /*
-            if (!is_numeric($amount) || !is_numeric($price)) {
-                $errors[] = "Dòng $current_row: Số lượng (Cột I) hoặc Đơn giá (Cột K) không phải là số.";
+    //             /*
+    //         if (!is_numeric($amount) || !is_numeric($price)) {
+    //             $errors[] = "Dòng $current_row: Số lượng (Cột I) hoặc Đơn giá (Cột K) không phải là số.";
+    //             continue;
+    //         }
+    //         */
+
+    //             $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
+
+    //             $valid_ingredients_session[$ingredient_data['id']] = [
+    //                 "ingredient_id" => $ingredient_data['id'],
+    //                 "code" => $ingredient_data['code'],
+    //                 "name" => $ingredient_data['name'] ?? '',
+    //                 "selling_price" => $price,
+    //                 "stock_quantity" => $ingredient_data['amount'],
+    //                 "amount" => $amount,
+    //                 "unit_name" => $unit_name,
+    //                 "notes" => $ingredient_data['notes'],
+    //             ];
+    //             $success_count++;
+    //         }
+
+    //         if (empty($errors)) {
+    //             $_SESSION['ingredient_import']['ingredients'] = $valid_ingredients_session;
+    //             $content = "Đã thêm thành công $success_count nguyên liệu vào phiếu! ";
+    //             echo json_encode([
+    //                 'status' => 'success',
+    //                 'content' => $jatbi->lang($content),
+    //                 'url' => $_SERVER['HTTP_REFERER']
+    //             ]);
+    //         } else {
+    //             $content = "Thêm thất bại! Vui lòng kiểm tra các lỗi chi tiết.";
+    //             echo json_encode([
+    //                 'status' => 'error',
+    //                 'content' => $jatbi->lang($content),
+    //                 'errors' => $errors
+    //             ]);
+    //         }
+    //     }
+    // })->setPermissions(['ingredient.add']);
+
+
+    $app->router('/warehouse-ingredient-excel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+
+    if ($app->method() === 'GET') {
+        $vars['title'] = $jatbi->lang('Nhập kho nguyên liệu từ Excel');
+        echo $app->render($template . '/warehouses/warehouse-ingredient-excel.html', $vars, $jatbi->ajax());
+    } 
+    elseif ($app->method() === 'POST') {
+        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+    
+        // Lấy config và đọc cookie hiện tại
+        $cookie_config = $setting['ingredient_cookie'];
+        $cookie_data = get_ingredient_cookie_data($app);
+    
+
+        
+        if (!isset($_FILES['files']) || $_FILES['files']['error'] != UPLOAD_ERR_OK) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng chọn file')]);
+            return;
+        }
+        $handle = $app->upload($_FILES['files']);
+        if ($handle->uploaded) {
+            $handle->allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+            $handle->process('datas/');
+        }
+        if (!$handle->processed) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi upload') . ': ' . $handle->error]);
+            return;
+        }
+
+
+        $inputFileName = 'datas/' . $handle->file_dst_name;
+        try {
+            $spreadsheet = IOFactory::load($inputFileName);
+            $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+        } catch (\Exception $e) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi đọc file Excel') . ': ' . $e->getMessage()]);
+            return;
+        } finally {
+            @unlink($inputFileName);
+        }
+
+        $errors = [];
+   
+        $new_ingredients = []; 
+        $success_count = 0;
+
+
+
+  
+        foreach ($sheetData as $key => $value) {
+            if ($key <= 1 || empty($value['A']))
+                continue;
+
+            $current_row = $key;
+            $row_data = array_map(fn($cell) => trim($cell ?? ''), $value);
+            $ingredient_data = $app->get("ingredient", "*", ["code" => $app->xss($row_data['A']), "deleted" => 0]);
+
+            if (!$ingredient_data) {
+                $errors[] = "Dòng $current_row: Không tìm thấy nguyên liệu có mã '{$row_data['A']}'.";
                 continue;
             }
-            */
 
-                $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
+            $amount = str_replace(',', '', $row_data['I'] ?? '');
+            $price = str_replace(',', '', $row_data['K'] ?? '');
+            $unit_name = $app->get('units', 'name', ['id' => $ingredient_data['units']]);
 
-                $valid_ingredients_session[$ingredient_data['id']] = [
-                    "ingredient_id" => $ingredient_data['id'],
-                    "code" => $ingredient_data['code'],
-                    "name" => $ingredient_data['name'] ?? '',
-                    "selling_price" => $price,
-                    "stock_quantity" => $ingredient_data['amount'],
-                    "amount" => $amount,
-                    "unit_name" => $unit_name,
-                    "notes" => $ingredient_data['notes'],
-                ];
-                $success_count++;
-            }
-
-            if (empty($errors)) {
-                $_SESSION['ingredient_import']['ingredients'] = $valid_ingredients_session;
-                $content = "Đã thêm thành công $success_count nguyên liệu vào phiếu! ";
-                echo json_encode([
-                    'status' => 'success',
-                    'content' => $jatbi->lang($content),
-                    'url' => $_SERVER['HTTP_REFERER']
-                ]);
-            } else {
-                $content = "Thêm thất bại! Vui lòng kiểm tra các lỗi chi tiết.";
-                echo json_encode([
-                    'status' => 'error',
-                    'content' => $jatbi->lang($content),
-                    'errors' => $errors
-                ]);
-            }
+       
+            $new_ingredients[$ingredient_data['id']] = [
+                "ingredient_id" => $ingredient_data['id'],
+                "code" => $ingredient_data['code'],
+                "name" => $ingredient_data['name_ingredient'] ?? '', 
+                "selling_price" => $price,
+                "stock_quantity" => $ingredient_data['amount'],
+                "amount" => $amount,
+                "unit_name" => $unit_name,
+                "notes" => $ingredient_data['notes'],
+            ];
+            $success_count++;
         }
-    })->setPermissions(['ingredient.add']);
+
+        if (empty($errors)) {
+  
+            $cookie_data['ingredients'] = $new_ingredients;
+
+           
+            $app->setCookie(
+                $cookie_config['name'],
+                json_encode($cookie_data),
+                $cookie_config['expire'],
+                $cookie_config['path']
+            );
+    
+            
+            $content = "Đã thêm thành công $success_count nguyên liệu vào phiếu! ";
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang($content),
+                // 'url' => $_SERVER['HTTP_REFERER']
+            ]);
+        } else {
+     
+            $content = "Thêm thất bại! Vui lòng kiểm tra các lỗi chi tiết.";
+            echo json_encode([
+                'status' => 'error',
+                'content' => $jatbi->lang($content),
+                'errors' => $errors
+            ]);
+        }
+    }
+})->setPermissions(['ingredient.add']);
 
 
     $app->router('/products-import-history', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore, $setting) {
