@@ -201,7 +201,32 @@ $type_ticket = [
         "name" => "Vé trải nghiệm",
         "price" => 1250000,
     ],
+];  
+
+$ingredient_cookie_config = [
+    'name' => 'ingredient_import',
+    'path' => '/',
+    'expire' => time() + 86400, // Hết hạn sau 1 ngày
 ];
+
+
+if (!function_exists('get_ingredient_cookie_data')) {
+    function get_ingredient_cookie_data($app) {
+        // Lấy $setting (là mảng 'app' từ config)
+        $setting = $app->getValueData('setting'); 
+
+        // Tự động đọc tên cookie từ config
+        $cookie_name = $setting['ingredient_cookie']['name'] ?? 'ingredient_import'; 
+
+        $cookie_json = $app->getCookie($cookie_name); 
+        $cookie_data = $cookie_json ? json_decode($cookie_json, true) : null;
+
+        if (!is_array($cookie_data) || !isset($cookie_data['ingredients'])) {
+            $cookie_data = ['ingredients' => [], 'content' => ''];
+        }
+        return $cookie_data;
+    }
+}
 
 
 return [
@@ -251,5 +276,8 @@ return [
         "Status_purchase" => $Status_purchase,
         "ticket_types" => $type_ticket,
         "site_vat" => '10',
+        "ingredient_cookie" => $ingredient_cookie_config,
     ]
 ];
+
+

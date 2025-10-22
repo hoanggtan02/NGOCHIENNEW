@@ -31,20 +31,7 @@
                 <div class="card-body p-3">
                     <div class=" d-flex justify-content-between align-items-center px-2 mb-3">
                         <h6 class=" fw-bold mb-0">Danh sách nguyên liệu trong phiếu</h6>
-                        <div class="ms-3">
-                            <button data-action="modal" type="button"
-                                class="mt-1 btn btn-sm btn-danger text-white btn-outline-danger" data-bs-toggle="modal"
-                                data-url="/warehouses/warehouse-ingredient-excel">
-                                <i class="ti ti-file-import me-1"></i> <?=$jatbi->lang('Import Excel')?>
-                            </button>
-                            <button class=" ms-3 mt-1 click-update btn btn-sm btn-outline-danger" data-action="modal"
-                                data-url="/api/ingredient-import/cancel" data-selector="[ingredient-list-result]"
-                                data-load="this">
-                                <i class="fa fa-times me-1"></i> Xóa phiếu
-                            </button>
                         </div>
-
-                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small">
                             <thead class="table-light">
@@ -61,8 +48,22 @@
                             </thead>
                             <tbody>
                                 <?php
-                                // Lấy danh sách nguyên liệu từ session mới
-                                $SelectIngredients = $_SESSION['ingredient_import']['ingredients'] ?? [];
+                               
+                                $cookie_name = 'ingredient_import';
+                                
+                                // 2. Đọc và giải mã cookie bằng $app->getCookie()
+                               
+                                $cookie_json = $app->getCookie($cookie_name);
+                                $cookie_data = $cookie_json ? json_decode($cookie_json, true) : null;
+
+                                if (!is_array($cookie_data) || !isset($cookie_data['ingredients'])) {
+                                    $cookie_data = ['ingredients' => [], 'content' => ''];
+                                }
+                                
+                                // 3. Lấy danh sách nguyên liệu từ dữ liệu cookie
+                                $SelectIngredients = $cookie_data['ingredients'] ?? [];
+                                
+
                                 if (empty($SelectIngredients)):
                                 ?>
                                 <tr>
@@ -75,14 +76,12 @@
                                     $total_amount = 0;
                                     $total = 0;
                                     foreach ($SelectIngredients as $key => $item):
-                                        // Tính toán thành tiền và tổng cộng
-                               
-
+                                  
                                         $selling_price = floatval($item['selling_price'] ?? 0);
                                         $stock_quantity = floatval($item['stock_quantity'] ?? 0);
                                         $amount = floatval($item['amount'] ?? 0);
                                         $total_price = $amount * $selling_price;
-                                        $total_selling_price += $selling_price; // Tổng giá bán (có thể điều chỉnh logic nếu không cần)
+                                        $total_selling_price += $selling_price; 
                                         $total_stock_quantity += $stock_quantity;
                                         $total_amount += $amount;
                                         $total += $total_price;
@@ -111,7 +110,7 @@
                                             value="<?= htmlspecialchars($amount) ?>" min="1" data-load="this">
                                     </td>
                                     <td>
-                                        <?= htmlspecialchars($item['unit_name'] ?? 'N/A') ?>
+                                        <?= htmlspecialchars($item['unit_name'] ?? '') ?>
                                     </td>
                                     <td class="text-end fw-bold">
                                         <?= number_format($total_price) ?>
@@ -122,7 +121,7 @@
                                             data-action="blur" id="notes-<?= $key; ?>"
                                             data-form='{"value": "#notes-<?=$key;?>.val"}'
                                             value="<?= htmlspecialchars($item['notes'] ?? '') ?>"
-                                            placeholder="Ghi chú..." data-load="this">
+                                            placeholder="Ghi chú..." >
                                     </td>
                                     <td class="text-center">
                                         <a class="click-update text-danger" data-load="this" data-action="modal"
@@ -162,15 +161,15 @@
                     </div>
                     <?php if(!empty($SelectIngredients)): ?>
                     <?php
-                        // Lấy nội dung từ session mới
-                        $import_content = $_SESSION['ingredient_import']['content'] ?? '';
+                        // --- ĐỌC NỘI DUNG TỪ COOKIE (Đã dùng $cookie_data ở trên) ---
+                        $import_content = $cookie_data['content'] ?? '';
                         ?>
                     <div class="mb-3 mt-3">
                         <label class="col-form-label">Nội dung phiếu nhập <span class="text-danger">*</span></label>
                         <textarea  class="form-control form-control-sm" id="import_content"
                             data-url="/api/ingredient-import/set-content" data-action="blur"
-                            data-form='{"value": "#import_content.val"}' value="<?=htmlspecialchars($import_content)?>"
-                            placeholder="Nhập nội dung phiếu nhập..."></textarea>
+                            data-form='{"value": "#import_content.val"}'
+                            placeholder="Nhập nội dung phiếu nhập..."><?=htmlspecialchars($import_content)?></textarea>
                     </div>
 
                     <div class="mt-4">

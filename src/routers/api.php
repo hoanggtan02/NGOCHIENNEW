@@ -623,296 +623,848 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $setting)
         echo json_encode($datas);
     });
 
-    // --- API THÊM NGUYÊN LIỆU VÀO PHIẾU ---
-    $app->router('/ingredient-import-add/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
-        $app->header(['Content-Type' => 'application/json']);
-        $id = (int) ($vars['id'] ?? 0);
-        if ($id === 0) {
-            echo json_encode(['status' => 'error', 'content' => 'ID không hợp lệ.']);
-            return;
-        }
-        if (!isset($_SESSION['ingredient_import']['ingredients'])) {
-            $_SESSION['ingredient_import']['ingredients'] = [];
-        }
-        if (isset($_SESSION['ingredient_import']['ingredients'][$id])) {
-            $_SESSION['ingredient_import']['ingredients'][$id]['amount']++;
-            echo json_encode(['status' => 'success', 'content' => 'Đã cập nhật số lượng.']);
-            return;
-        }
-        $data = $app->get("ingredient", "*", ["id" => $id, "status" => 'A', "deleted" => 0]);
-        if (!$data) {
-            echo json_encode(['status' => 'error', 'content' => 'Nguyên liệu không tồn tại.']);
-            return;
-        }
-        $unit_name = $app->get("units", "name", ["id" => $data['units']]) ?? 'N/A';
-        $_SESSION['ingredient_import']['ingredients'][$data['id']] = [
-            "ingredient_id" => $data['id'],
-            "code" => $data['code']??'',
-            "name" => $data['name_ingredient']??'',
-            "selling_price" => $data['price'] ?? 0,
-            "stock_quantity" => $data['amount'] ?? 0,
-            "amount" => 1,
-            "price" => $data['price'] ?? 0,
-            "unit_name" => $unit_name,
-            "notes" => $data['notes'] ?? '',
-        ];
-        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm nguyên liệu thành công')]);
-    });
+    // // --- API THÊM NGUYÊN LIỆU VÀO PHIẾU ---
+    // $app->router('/ingredient-import-add/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
+    //     $app->header(['Content-Type' => 'application/json']);
+    //     $id = (int) ($vars['id'] ?? 0);
+    //     if ($id === 0) {
+    //         echo json_encode(['status' => 'error', 'content' => 'ID không hợp lệ.']);
+    //         return;
+    //     }
+    //     if (!isset($_SESSION['ingredient_import']['ingredients'])) {
+    //         $_SESSION['ingredient_import']['ingredients'] = [];
+    //     }
+    //     if (isset($_SESSION['ingredient_import']['ingredients'][$id])) {
+    //         $_SESSION['ingredient_import']['ingredients'][$id]['amount']++;
+    //         echo json_encode(['status' => 'success', 'content' => 'Đã cập nhật số lượng.']);
+    //         return;
+    //     }
+    //     $data = $app->get("ingredient", "*", ["id" => $id, "status" => 'A', "deleted" => 0]);
+    //     if (!$data) {
+    //         echo json_encode(['status' => 'error', 'content' => 'Nguyên liệu không tồn tại.']);
+    //         return;
+    //     }
+    //     $unit_name = $app->get("units", "name", ["id" => $data['units']]) ?? 'N/A';
+    //     $_SESSION['ingredient_import']['ingredients'][$data['id']] = [
+    //         "ingredient_id" => $data['id'],
+    //         "code" => $data['code']??'',
+    //         "name" => $data['name_ingredient']??'',
+    //         "selling_price" => $data['price'] ?? 0,
+    //         "stock_quantity" => $data['amount'] ?? 0,
+    //         "amount" => 1,
+    //         "price" => $data['price'] ?? 0,
+    //         "unit_name" => $unit_name,
+    //         "notes" => $data['notes'] ?? '',
+    //     ];
+    //     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm nguyên liệu thành công')]);
+    // });
 
-    // --- API CẬP NHẬT SỐ LƯỢNG ---
-    $app->router('/ingredient-import/update-amount/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
-        $app->header(['Content-Type' => 'application/json']);
-        $id = $vars['id'] ?? '';
-        $value = $_POST['value'] ?? '';
-        if (!isset($_SESSION['ingredient_import']['ingredients'][$id])) {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
-            return;
-        }
-        $value = (int) str_replace([','], '', $app->xss($value));
-        if ($value < 1) {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0.')]);
-        } else {
-            $_SESSION['ingredient_import']['ingredients'][$id]['amount'] = $value;
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
-        }
-    });
+    // // --- API CẬP NHẬT SỐ LƯỢNG ---
+    // $app->router('/ingredient-import/update-amount/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
+    //     $app->header(['Content-Type' => 'application/json']);
+    //     $id = $vars['id'] ?? '';
+    //     $value = $_POST['value'] ?? '';
+    //     if (!isset($_SESSION['ingredient_import']['ingredients'][$id])) {
+    //         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+    //         return;
+    //     }
+    //     $value = (int) str_replace([','], '', $app->xss($value));
+    //     if ($value < 1) {
+    //         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0.')]);
+    //     } else {
+    //         $_SESSION['ingredient_import']['ingredients'][$id]['amount'] = $value;
+    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+    //     }
+    // });
 
-    // --- API CẬP NHẬT GHI CHÚ ---
-    $app->router('/ingredient-import/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
-        $app->header(['Content-Type' => 'application/json']);
-        $id = $vars['id'] ?? '';
-        $value = $_POST['value'] ?? '';
-        if (!isset($_SESSION['ingredient_import']['ingredients'][$id])) {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
-            return;
-        }
-        $_SESSION['ingredient_import']['ingredients'][$id]['notes'] = $app->xss($value);
-        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
-    });
+    // // --- API CẬP NHẬT GHI CHÚ ---
+    // $app->router('/ingredient-import/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
+    //     $app->header(['Content-Type' => 'application/json']);
+    //     $id = $vars['id'] ?? '';
+    //     $value = $_POST['value'] ?? '';
+    //     if (!isset($_SESSION['ingredient_import']['ingredients'][$id])) {
+    //         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+    //         return;
+    //     }
+    //     $_SESSION['ingredient_import']['ingredients'][$id]['notes'] = $app->xss($value);
+    //     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+    // });
 
-    // --- API CẬP NHẬT NỘI DUNG PHIẾU NHẬP ---
-    $app->router('/ingredient-import/set-content', ['POST'], function ($vars) use ($app, $jatbi) {
-        $app->header(['Content-Type' => 'application/json']);
-        $value = $_POST['value'] ?? '';
-        if (!isset($_SESSION['ingredient_import'])) {
-            $_SESSION['ingredient_import'] = ['ingredients' => [], 'content' => ''];
-        }
-        $_SESSION['ingredient_import']['content'] = $app->xss($value);
-        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
-    });
+    // // --- API CẬP NHẬT NỘI DUNG PHIẾU NHẬP ---
+    // $app->router('/ingredient-import/set-content', ['POST'], function ($vars) use ($app, $jatbi) {
+    //     $app->header(['Content-Type' => 'application/json']);
+    //     $value = $_POST['value'] ?? '';
+    //     if (!isset($_SESSION['ingredient_import'])) {
+    //         $_SESSION['ingredient_import'] = ['ingredients' => [], 'content' => ''];
+    //     }
+    //     $_SESSION['ingredient_import']['content'] = $app->xss($value);
+    //     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+    // });
 
-    $app->router('/ingredient-import/delete/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-
-
-        if ($app->method() === 'GET') {
-
-            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json']);
+    // $app->router('/ingredient-import/delete/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
 
 
-            $id = $vars['id'] ?? 0;
-            if ($id === 0) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('ID nguyên liệu không hợp lệ.')]);
-                return;
-            }
+    //     if ($app->method() === 'GET') {
+
+    //         echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+    //     } elseif ($app->method() === 'POST') {
+    //         $app->header(['Content-Type' => 'application/json']);
 
 
-            if (!isset($_SESSION['ingredient_import']['ingredients']) || !isset($_SESSION['ingredient_import']['ingredients'][$id])) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
-                return;
-            }
+    //         $id = $vars['id'] ?? 0;
+    //         if ($id === 0) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('ID nguyên liệu không hợp lệ.')]);
+    //             return;
+    //         }
 
 
-            $ingredient = $_SESSION['ingredient_import']['ingredients'][$id];
-            $name = $ingredient['code'];
+    //         if (!isset($_SESSION['ingredient_import']['ingredients']) || !isset($_SESSION['ingredient_import']['ingredients'][$id])) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+    //             return;
+    //         }
 
 
-            unset($_SESSION['ingredient_import']['ingredients'][$id]);
+    //         $ingredient = $_SESSION['ingredient_import']['ingredients'][$id];
+    //         $name = $ingredient['code'];
 
 
-            $jatbi->logs('ingredient_import', 'ingredient-import-delete', [$ingredient]);
-            $jatbi->trash('/warehouses/ingredient-import-restore', "Xóa nguyên liệu trong phiếu: " . $name, ["app" => 'ingredient_import', "data" => [$id]]);
+    //         unset($_SESSION['ingredient_import']['ingredients'][$id]);
 
 
-            echo json_encode([
-                'status' => 'success',
-                'content' => $jatbi->lang('Cập nhật thành công'),
-            ]);
-        }
-    })->setPermissions(['ingredient']);
+    //         $jatbi->logs('ingredient_import', 'ingredient-import-delete', [$ingredient]);
+    //         $jatbi->trash('/warehouses/ingredient-import-restore', "Xóa nguyên liệu trong phiếu: " . $name, ["app" => 'ingredient_import', "data" => [$id]]);
 
 
-
-
-
+    //         echo json_encode([
+    //             'status' => 'success',
+    //             'content' => $jatbi->lang('Cập nhật thành công'),
+    //         ]);
+    //     }
+    // })->setPermissions(['ingredient']);
 
 
 
     // --- API HOÀN TẤT VÀ LƯU PHIẾU NHẬP ---
 
-    $app->router('/ingredient-import/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-        if ($app->method() === 'GET') {
+    // $app->router('/ingredient-import/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    //     if ($app->method() === 'GET') {
 
-            echo $app->render($setting['template'] . '/common/confirm.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
+    //         echo $app->render($setting['template'] . '/common/confirm.html', $vars, $jatbi->ajax());
+    //     } elseif ($app->method() === 'POST') {
 
-            $app->header(['Content-Type' => 'application/json']);
-            $action = 'import';
+    //         $app->header(['Content-Type' => 'application/json']);
+    //         $action = 'import';
 
-            $current_time = date("Y-m-d H:i:s");
-            // 3. Kiểm tra session có tồn tại
-            if (!isset($_SESSION['ingredient_import']['ingredients']) || empty($_SESSION['ingredient_import']['ingredients'])) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có nguyên liệu trong phiếu.')]);
-                return;
-            }
+    //         $current_time = date("Y-m-d H:i:s");
+    //         // 3. Kiểm tra session có tồn tại
+    //         if (!isset($_SESSION['ingredient_import']['ingredients']) || empty($_SESSION['ingredient_import']['ingredients'])) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có nguyên liệu trong phiếu.')]);
+    //             return;
+    //         }
 
-            // 4. Lấy dữ liệu từ session
-            $data = $_SESSION['ingredient_import'];
-            $ingredients = $data['ingredients'] ?? [];
-            $content = $data['content'] ?? '';
-            $date = $data['date'] ?? $current_time;
+    //         // 4. Lấy dữ liệu từ session
+    //         $data = $_SESSION['ingredient_import'];
+    //         $ingredients = $data['ingredients'] ?? [];
+    //         $content = $data['content'] ?? '';
+    //         $date = $data['date'] ?? $current_time;
 
-            // 5. Kiểm tra dữ liệu hợp lệ
-            if (empty($content)) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nội dung không được để trống.')]);
-                return;
-            }
+    //         // 5. Kiểm tra dữ liệu hợp lệ
+    //         if (empty($content)) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nội dung không được để trống.')]);
+    //             return;
+    //         }
 
-            $error_warehouses = false;
-            $total_products = 0;
-            foreach ($ingredients as $ingredient) {
-                if (!isset($ingredient['amount']) || $ingredient['amount'] <= 0 || $ingredient['amount'] < 0) {
-                    $error_warehouses = true;
-                    break;
-                }
-                $total_products += $ingredient['amount'] * ($ingredient['price'] ?? 0);
-            }
+    //         $error_warehouses = false;
+    //         $total_products = 0;
+    //         foreach ($ingredients as $ingredient) {
+    //             if (!isset($ingredient['amount']) || $ingredient['amount'] <= 0 || $ingredient['amount'] < 0) {
+    //                 $error_warehouses = true;
+    //                 break;
+    //             }
+    //             $total_products += $ingredient['amount'] * ($ingredient['price'] ?? 0);
+    //         }
 
-            if ($error_warehouses) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng hợp lệ.')]);
-                return;
-            }
+    //         if ($error_warehouses) {
+    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng hợp lệ.')]);
+    //             return;
+    //         }
 
 
-            $code = 'PN';
+    //         $code = 'PN';
 
-            // 7. Chuẩn bị dữ liệu để insert vào bảng warehouses
-            $insert = [
-                "code" => $code,
-                "type" => $action,
-                "data" => 'ingredient',
-                "content" => $app->xss($content),
-                "user" => $app->getSession("accounts")['id'] ?? 0,
-                "date" => $date,
-                "active" => $jatbi->active(30),
-                "date_poster" => $current_time, // Sử dụng thời gian hiện tại
-                "stores" => $data['stores']['id'] ?? 0,
+    //         // 7. Chuẩn bị dữ liệu để insert vào bảng warehouses
+    //         $insert = [
+    //             "code" => $code,
+    //             "type" => $action,
+    //             "data" => 'ingredient',
+    //             "content" => $app->xss($content),
+    //             "user" => $app->getSession("accounts")['id'] ?? 0,
+    //             "date" => $date,
+    //             "active" => $jatbi->active(30),
+    //             "date_poster" => $current_time, // Sử dụng thời gian hiện tại
+    //             "stores" => $data['stores']['id'] ?? 0,
                 
-            ];
+    //         ];
 
-            // 8. Insert vào bảng warehouses
-            $app->insert("warehouses", $insert);
-            $orderId = $app->id();
+    //         // 8. Insert vào bảng warehouses
+    //         $app->insert("warehouses", $insert);
+    //         $orderId = $app->id();
 
-            // 9. Lưu chi tiết nguyên liệu vào warehouses_details và warehouses_logs
-            $pro_logs = [];
-            foreach ($ingredients as $ingredient) {
-                if ($ingredient['ingredient_id'] > 0) {
-                    // Cập nhật số lượng trong bảng ingredient
-                    $current_product = $app->get("ingredient", ["id", "amount"], ["id" => $ingredient['ingredient_id']]);
-                    $app->update("ingredient", [
-                        "amount" => $current_product['amount'] + $ingredient['amount']
-                    ], ["id" => $current_product['id']]);
+    //         // 9. Lưu chi tiết nguyên liệu vào warehouses_details và warehouses_logs
+    //         $pro_logs = [];
+    //         foreach ($ingredients as $ingredient) {
+    //             if ($ingredient['ingredient_id'] > 0) {
+    //                 // Cập nhật số lượng trong bảng ingredient
+    //                 $current_product = $app->get("ingredient", ["id", "amount"], ["id" => $ingredient['ingredient_id']]);
+    //                 $app->update("ingredient", [
+    //                     "amount" => $current_product['amount'] + $ingredient['amount']
+    //                 ], ["id" => $current_product['id']]);
 
-                    // Chuẩn bị dữ liệu cho warehouses_details
-                    $pro = [
-                        "warehouses" => $orderId,
-                        "data" => $insert['data'],
-                        "type" => $insert['type'],
-                        "vendor" => $ingredient['vendor'] ?? 0,
-                        "ingredient" => $ingredient['ingredient_id'],
-                        "amount_buy" => $ingredient['amount_buy'] ?? 0,
-                        "amount" => str_replace([','], '', $ingredient['amount']),
-                        "amount_total" => str_replace([','], '', $ingredient['amount']),
-                        "price" => $ingredient['price'] ?? 0,
-                        "cost" => $ingredient['cost'] ?? 0,
-                        "notes" => $ingredient['notes'],
-                        "date" => $current_time,
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                    ];
+    //                 // Chuẩn bị dữ liệu cho warehouses_details
+    //                 $pro = [
+    //                     "warehouses" => $orderId,
+    //                     "data" => $insert['data'],
+    //                     "type" => $insert['type'],
+    //                     "vendor" => $ingredient['vendor'] ?? 0,
+    //                     "ingredient" => $ingredient['ingredient_id'],
+    //                     "amount_buy" => $ingredient['amount_buy'] ?? 0,
+    //                     "amount" => str_replace([','], '', $ingredient['amount']),
+    //                     "amount_total" => str_replace([','], '', $ingredient['amount']),
+    //                     "price" => $ingredient['price'] ?? 0,
+    //                     "cost" => $ingredient['cost'] ?? 0,
+    //                     "notes" => $ingredient['notes'],
+    //                     "date" => $current_time,
+    //                     "user" => $app->getSession("accounts")['id'] ?? 0,
+    //                     "stores" => $insert['stores'],
+    //                 ];
 
-                    // Insert vào warehouses_details
-                    $app->insert("warehouses_details", $pro);
-                    $detailId = $app->id();
+    //                 // Insert vào warehouses_details
+    //                 $app->insert("warehouses_details", $pro);
+    //                 $detailId = $app->id();
 
-                    // Chuẩn bị dữ liệu cho warehouses_logs
-                    $warehouses_logs = [
-                        "type" => $insert['type'],
-                        "data" => $insert['data'],
-                        "warehouses" => $orderId,
-                        "details" => $detailId,
-                        "ingredient" => $ingredient['ingredient_id'],
-                        "price" => $ingredient['price'] ?? 0,
-                        "cost" => $ingredient['cost'] ?? 0,
-                        "amount" => str_replace([','], '', $ingredient['amount']),
-                        "total" => $ingredient['amount'] * ($ingredient['price'] ?? 0),
-                        "notes" => $ingredient['notes'],
-                        "date" => $current_time,
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                    ];
+    //                 // Chuẩn bị dữ liệu cho warehouses_logs
+    //                 $warehouses_logs = [
+    //                     "type" => $insert['type'],
+    //                     "data" => $insert['data'],
+    //                     "warehouses" => $orderId,
+    //                     "details" => $detailId,
+    //                     "ingredient" => $ingredient['ingredient_id'],
+    //                     "price" => $ingredient['price'] ?? 0,
+    //                     "cost" => $ingredient['cost'] ?? 0,
+    //                     "amount" => str_replace([','], '', $ingredient['amount']),
+    //                     "total" => $ingredient['amount'] * ($ingredient['price'] ?? 0),
+    //                     "notes" => $ingredient['notes'],
+    //                     "date" => $current_time,
+    //                     "user" => $app->getSession("accounts")['id'] ?? 0,
+    //                     "stores" => $insert['stores'],
+    //                 ];
 
 
-                    $app->insert("warehouses_logs", $warehouses_logs);
-                    $pro_logs[] = $pro;
-                }
-            }
+    //                 $app->insert("warehouses_logs", $warehouses_logs);
+    //                 $pro_logs[] = $pro;
+    //             }
+    //         }
 
-            // 10. Ghi log và xóa session
-            $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $data]);
-            unset($_SESSION['ingredient_import']);
+    //         // 10. Ghi log và xóa session
+    //         $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $data]);
+    //         unset($_SESSION['ingredient_import']);
 
-            // 11. Trả về kết quả thành công
-            echo json_encode([
-                'status' => 'success',
-                'content' => $jatbi->lang('Cập nhật thành công'),
+    //         // 11. Trả về kết quả thành công
+    //         echo json_encode([
+    //             'status' => 'success',
+    //             'content' => $jatbi->lang('Cập nhật thành công'),
 
-            ]);
+    //         ]);
+    //     }
+    // })->setPermissions(['ingredient']);
+
+
+
+
+
+    // $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+    //     if ($app->method() === 'GET') {
+
+    //         echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+    //     } elseif ($app->method() === 'POST') {
+
+    //         $app->header(['Content-Type' => 'application/json']);
+    //         $action = 'import';
+
+
+    //         if (isset($_SESSION['ingredient_import'])) {
+    //             unset($_SESSION['ingredient_import']);
+    //         }
+
+
+    //         $jatbi->logs('ingredient_import', 'cancel', ['action' => $action, 'data' => $_SESSION['ingredient_import'] ?? []]);
+
+
+    //         echo json_encode([
+    //             'status' => 'success',
+    //             'content' => $jatbi->lang('Cập nhật thành công'),
+    //             'redirect' => '/warehouses/ingredient-import'
+    //         ]);
+    //     }
+    // })->setPermissions(['ingredient']);
+
+
+
+//     // --- API THÊM NGUYÊN LIỆU VÀO PHIẾU ---
+// $app->router('/ingredient-import-add/{id}', ['POST'], function ($vars) use ($app, $jatbi, $cookie_name, $cookie_path, $cookie_expire) {
+//     $app->header(['Content-Type' => 'application/json']);
+//     $id = (int) ($vars['id'] ?? 0);
+//     if ($id === 0) {
+//         echo json_encode(['status' => 'error', 'content' => 'ID không hợp lệ.']);
+//         return;
+//     }
+
+//     // 1. Đọc cookie bằng $app
+//     $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+
+//     // 2. Xử lý logic
+//     if (isset($cookie_data['ingredients'][$id])) {
+//         $cookie_data['ingredients'][$id]['amount']++;
+        
+//         // 3. Lưu cookie bằng $app
+//         $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+//         echo json_encode(['status' => 'success', 'content' => 'Đã cập nhật số lượng.']);
+//         return;
+//     }
+
+//     $data = $app->get("ingredient", "*", ["id" => $id, "status" => 'A', "deleted" => 0]);
+//     if (!$data) {
+//         echo json_encode(['status' => 'error', 'content' => 'Nguyên liệu không tồn tại.']);
+//         return;
+//     }
+//     $unit_name = $app->get("units", "name", ["id" => $data['units']]) ?? 'N/A';
+    
+//     $cookie_data['ingredients'][$data['id']] = [
+//         "ingredient_id" => $data['id'],
+//         "code" => $data['code']??'',
+//         "name" => $data['name_ingredient']??'',
+//         "selling_price" => $data['price'] ?? 0,
+//         "stock_quantity" => $data['amount'] ?? 0,
+//         "amount" => 1,
+//         "price" => $data['price'] ?? 0,
+//         "unit_name" => $unit_name,
+//         "notes" => $data['notes'] ?? '',
+//     ];
+
+//     // 3. Lưu cookie bằng $app
+//     $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+//     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm nguyên liệu thành công')]);
+// });
+
+// // --- API CẬP NHẬT SỐ LƯỢNG ---
+// $app->router('/ingredient-import/update-amount/{id}', ['POST'], function ($vars) use ($app, $jatbi, $cookie_name, $cookie_path, $cookie_expire) {
+//     $app->header(['Content-Type' => 'application/json']);
+//     $id = $vars['id'] ?? '';
+//     $value = $_POST['value'] ?? '';
+
+//     $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+
+//     if (!isset($cookie_data['ingredients'][$id])) {
+//         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+//         return;
+//     }
+//     $value = (int) str_replace([','], '', $app->xss($value));
+//     if ($value < 1) {
+//         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0.')]);
+//     } else {
+//         $cookie_data['ingredients'][$id]['amount'] = $value;
+
+//         // Lưu cookie bằng $app
+//         $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+//         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+//     }
+// });
+
+// // --- API CẬP NHẬT GHI CHÚ ---
+// $app->router('/ingredient-import/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi, $cookie_name, $cookie_path, $cookie_expire) {
+//     $app->header(['Content-Type' => 'application/json']);
+//     $id = $vars['id'] ?? '';
+//     $value = $_POST['value'] ?? '';
+
+//     $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+
+//     if (!isset($cookie_data['ingredients'][$id])) {
+//         echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+//         return;
+//     }
+
+//     $cookie_data['ingredients'][$id]['notes'] = $app->xss($value);
+
+//     // Lưu cookie bằng $app
+//     $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+//     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+// });
+
+// // --- API CẬP NHẬT NỘI DUNG PHIẾU NHẬP ---
+// $app->router('/ingredient-import/set-content', ['POST'], function ($vars) use ($app, $jatbi, $cookie_name, $cookie_path, $cookie_expire) {
+//     $app->header(['Content-Type' => 'application/json']);
+//     $value = $_POST['value'] ?? '';
+
+//     $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+//     $cookie_data['content'] = $app->xss($value);
+
+//     // Lưu cookie bằng $app
+//     $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+//     echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+// });
+
+// // --- API XÓA 1 MỤC KHỎI PHIẾU ---
+// $app->router('/ingredient-import/delete/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $cookie_name, $cookie_path, $cookie_expire) {
+//     if ($app->method() === 'GET') {
+//         echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+//     } elseif ($app->method() === 'POST') {
+//         $app->header(['Content-Type' => 'application/json']);
+//         $id = $vars['id'] ?? 0;
+//         if ($id === 0) {
+//             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('ID nguyên liệu không hợp lệ.')]);
+//             return;
+//         }
+
+//         $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+
+//         if (!isset($cookie_data['ingredients']) || !isset($cookie_data['ingredients'][$id])) {
+//             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+//             return;
+//         }
+
+//         $ingredient = $cookie_data['ingredients'][$id];
+//         $name = $ingredient['code'];
+//         unset($cookie_data['ingredients'][$id]); // Xóa mục
+
+//         $jatbi->logs('ingredient_import', 'ingredient-import-delete', [$ingredient]);
+//         $jatbi->trash('/warehouses/ingredient-import-restore', "Xóa nguyên liệu trong phiếu: " . $name, ["app" => 'ingredient_import', "data" => [$id]]);
+
+//         // Lưu cookie bằng $app
+//         $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_expire, $cookie_path);
+
+//         echo json_encode([
+//             'status' => 'success',
+//             'content' => $jatbi->lang('Cập nhật thành công'),
+//         ]);
+//     }
+// })->setPermissions(['ingredient']);
+
+// // --- API HOÀN TẤT VÀ LƯU PHIẾU NHẬP ---
+// $app->router('/ingredient-import/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $cookie_name) {
+//     if ($app->method() === 'GET') {
+//         echo $app->render($setting['template'] . '/common/confirm.html', $vars, $jatbi->ajax());
+//     } elseif ($app->method() === 'POST') {
+//         $app->header(['Content-Type' => 'application/json']);
+//         $action = 'import';
+
+//         // 1. Đọc cookie bằng $app
+//         $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+//         $current_time = date("Y-m-d H:i:s");
+        
+//         // 3. Kiểm tra cookie
+//         if (!isset($cookie_data['ingredients']) || empty($cookie_data['ingredients'])) {
+//             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có nguyên liệu trong phiếu.')]);
+//             return;
+//         }
+
+//         // 4. Lấy dữ liệu từ cookie
+//         $data = $cookie_data;
+//         $ingredients = $data['ingredients'] ?? [];
+//         $content = $data['content'] ?? '';
+//         $date = $data['date'] ?? $current_time;
+
+//         // 5. Kiểm tra dữ liệu hợp lệ
+//         if (empty($content)) {
+//             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nội dung không được để trống.')]);
+//             return;
+//         }
+
+
+//         $error_warehouses = false;
+//         $total_products = 0;
+//         foreach ($ingredients as $ingredient) {
+//             if (!isset($ingredient['amount']) || $ingredient['amount'] <= 0 || $ingredient['amount'] < 0) {
+//                 $error_warehouses = true;
+//                 break;
+//             }
+//             $total_products += $ingredient['amount'] * ($ingredient['price'] ?? 0);
+//         }
+
+//         if ($error_warehouses) {
+//             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng hợp lệ.')]);
+//             return;
+//         }
+
+//         $code = 'PN';
+
+//         // 7. Chuẩn bị dữ liệu insert (không đổi)
+//         $insert = [
+//             "code" => $code,
+//             "type" => $action,
+//             "data" => 'ingredient',
+//             "content" => $app->xss($content),
+//             "user" => $app->getSession("accounts")['id'] ?? 0,
+//             "date" => $date,
+//             "active" => $jatbi->active(30),
+//             "date_poster" => $current_time, 
+//             "stores" => $data['stores']['id'] ?? 0,
+//         ];
+
+//         // 8. Insert vào 'warehouses' (không đổi)
+//         $app->insert("warehouses", $insert);
+//         $orderId = $app->id();
+
+//         // 9. Lưu chi tiết (không đổi)
+//         $pro_logs = [];
+//         foreach ($ingredients as $ingredient) {
+//             if ($ingredient['ingredient_id'] > 0) {
+//                 // ... (Logic insert 'warehouses_details' và 'warehouses_logs' không đổi) ...
+//                 $current_product = $app->get("ingredient", ["id", "amount"], ["id" => $ingredient['ingredient_id']]);
+//                 $app->update("ingredient", [
+//                     "amount" => $current_product['amount'] + $ingredient['amount']
+//                 ], ["id" => $current_product['id']]);
+//                 $pro = [
+//                     "warehouses" => $orderId,
+//                     "data" => $insert['data'],
+//                     "type" => $insert['type'],
+//                     "vendor" => $ingredient['vendor'] ?? 0,
+//                     "ingredient" => $ingredient['ingredient_id'],
+//                     "amount_buy" => $ingredient['amount_buy'] ?? 0,
+//                     "amount" => str_replace([','], '', $ingredient['amount']),
+//                     "amount_total" => str_replace([','], '', $ingredient['amount']),
+//                     "price" => $ingredient['price'] ?? 0,
+//                     "cost" => $ingredient['cost'] ?? 0,
+//                     "notes" => $ingredient['notes'],
+//                     "date" => $current_time,
+//                     "user" => $app->getSession("accounts")['id'] ?? 0,
+//                     "stores" => $insert['stores'],
+//                 ];
+//                 $app->insert("warehouses_details", $pro);
+//                 $detailId = $app->id();
+//                 $warehouses_logs = [
+//                     "type" => $insert['type'],
+//                     "data" => $insert['data'],
+//                     "warehouses" => $orderId,
+//                     "details" => $detailId,
+//                     "ingredient" => $ingredient['ingredient_id'],
+//                     "price" => $ingredient['price'] ?? 0,
+//                     "cost" => $ingredient['cost'] ?? 0,
+//                     "amount" => str_replace([','], '', $ingredient['amount']),
+//                     "total" => $ingredient['amount'] * ($ingredient['price'] ?? 0),
+//                     "notes" => $ingredient['notes'],
+//                     "date" => $current_time,
+//                     "user" => $app->getSession("accounts")['id'] ?? 0,
+//                     "stores" => $insert['stores'],
+//                 ];
+//                 $app->insert("warehouses_logs", $warehouses_logs);
+//                 $pro_logs[] = $pro;
+//             }
+//         }
+        
+//         // 10. Ghi log và XÓA COOKIE bằng $app
+//         $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $data]);
+//         $app->deleteCookie($cookie_name);
+
+//         // 11. Trả về kết quả
+//         echo json_encode([
+//             'status' => 'success',
+//             'content' => $jatbi->lang('Cập nhật thành công'),
+//         ]);
+//     }
+// })->setPermissions(['ingredient']);
+
+// // --- API HỦY PHIẾU ---
+// $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $cookie_name) {
+//     if ($app->method() === 'GET') {
+//         echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+//     } elseif ($app->method() === 'POST') {
+//         $app->header(['Content-Type' => 'application/json']);
+//         $action = 'import';
+
+//         // 1. Đọc cookie (để log) bằng $app
+//         $cookie_data = get_ingredient_cookie_data($app, $cookie_name);
+
+//         // 2. Xóa cookie bằng $app
+//         $app->deleteCookie($cookie_name);
+
+//         // 3. Log
+//         $jatbi->logs('ingredient_import', 'cancel', ['action' => $action, 'data' => $cookie_data ?? []]);
+
+//         echo json_encode([
+//             'status' => 'success',
+//             'content' => $jatbi->lang('Cập nhật thành công'),
+//             'redirect' => '/warehouses/ingredient-import'
+//         ]);
+//     }
+// })->setPermissions(['ingredient']);
+
+
+
+$app->router('/ingredient-import-add/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->header(['Content-Type' => 'application/json']);
+    $id = (int) ($vars['id'] ?? 0);
+    if ($id === 0) {
+        echo json_encode(['status' => 'error', 'content' => 'ID không hợp lệ.']);
+        return;
+    }
+
+
+    $cookie_config = $setting['ingredient_cookie'];
+   
+    $cookie_data = get_ingredient_cookie_data($app);
+
+
+    if (isset($cookie_data['ingredients'][$id])) {
+        $cookie_data['ingredients'][$id]['amount']++;
+        
+
+        $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+        echo json_encode(['status' => 'success', 'content' => 'Đã cập nhật số lượng.']);
+        return;
+    }
+
+    $data = $app->get("ingredient", "*", ["id" => $id, "status" => 'A', "deleted" => 0]);
+    if (!$data) {
+        echo json_encode(['status' => 'error', 'content' => 'Nguyên liệu không tồn tại.']);
+        return;
+    }
+    $unit_name = $app->get("units", "name", ["id" => $data['units']]) ?? 'N/A';
+    
+    $cookie_data['ingredients'][$data['id']] = [
+        "ingredient_id" => $data['id'],
+        "code" => $data['code']??'',
+        "name" => $data['name_ingredient']??'',
+        "selling_price" => $data['price'] ?? 0,
+        "stock_quantity" => $data['amount'] ?? 0,
+        "amount" => 1,
+        "price" => $data['price'] ?? 0,
+        "unit_name" => $unit_name,
+        "notes" => $data['notes'] ?? '',
+    ];
+
+
+    $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+    echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm nguyên liệu thành công')]);
+});
+
+// --- API CẬP NHẬT SỐ LƯỢNG ---
+
+$app->router('/ingredient-import/update-amount/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->header(['Content-Type' => 'application/json']);
+    $id = $vars['id'] ?? '';
+    $value = $_POST['value'] ?? '';
+
+    $cookie_config = $setting['ingredient_cookie'];
+    $cookie_data = get_ingredient_cookie_data($app);
+
+    if (!isset($cookie_data['ingredients'][$id])) {
+        echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+        return;
+    }
+    $value = (int) str_replace([','], '', $app->xss($value));
+    if ($value < 1) {
+        echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0.')]);
+    } else {
+        $cookie_data['ingredients'][$id]['amount'] = $value;
+
+
+        $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+    }
+});
+
+// --- API CẬP NHẬT GHI CHÚ ---
+
+$app->router('/ingredient-import/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->header(['Content-Type' => 'application/json']);
+    $id = $vars['id'] ?? '';
+    $value = $_POST['value'] ?? '';
+
+    $cookie_config = $setting['ingredient_cookie'];
+    $cookie_data = get_ingredient_cookie_data($app);
+
+    if (!isset($cookie_data['ingredients'][$id])) {
+        echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+        return;
+    }
+
+    $cookie_data['ingredients'][$id]['notes'] = $app->xss($value);
+
+
+    $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+    echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+});
+
+// --- API CẬP NHẬT NỘI DUNG PHIẾU NHẬP ---
+
+$app->router('/ingredient-import/set-content', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->header(['Content-Type' => 'application/json']);
+    $value = $_POST['value'] ?? '';
+
+    $cookie_config = $setting['ingredient_cookie'];
+    $cookie_data = get_ingredient_cookie_data($app);
+    $cookie_data['content'] = $app->xss($value);
+
+   
+    $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+    echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+});
+
+// --- API XÓA 1 MỤC KHỎI PHIẾU ---
+
+$app->router('/ingredient-import/delete/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    if ($app->method() === 'GET') {
+        echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+    } elseif ($app->method() === 'POST') {
+        $app->header(['Content-Type' => 'application/json']);
+        $id = $vars['id'] ?? 0;
+        if ($id === 0) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('ID nguyên liệu không hợp lệ.')]);
+            return;
         }
-    })->setPermissions(['ingredient']);
 
+        $cookie_config = $setting['ingredient_cookie'];
+        $cookie_data = get_ingredient_cookie_data($app);
 
-
-
-
-    $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
-
-        if ($app->method() === 'GET') {
-
-            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-
-            $app->header(['Content-Type' => 'application/json']);
-            $action = 'import';
-
-
-            if (isset($_SESSION['ingredient_import'])) {
-                unset($_SESSION['ingredient_import']);
-            }
-
-
-            $jatbi->logs('ingredient_import', 'cancel', ['action' => $action, 'data' => $_SESSION['ingredient_import'] ?? []]);
-
-
-            echo json_encode([
-                'status' => 'success',
-                'content' => $jatbi->lang('Cập nhật thành công'),
-                'redirect' => '/warehouses/ingredient-import'
-            ]);
+        if (!isset($cookie_data['ingredients']) || !isset($cookie_data['ingredients'][$id])) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nguyên liệu không tồn tại trong phiếu.')]);
+            return;
         }
-    })->setPermissions(['ingredient']);
+
+        $ingredient = $cookie_data['ingredients'][$id];
+        $name = $ingredient['code'];
+        unset($cookie_data['ingredients'][$id]); 
+
+        $jatbi->logs('ingredient_import', 'ingredient-import-delete', [$ingredient]);
+        $jatbi->trash('/warehouses/ingredient-import-restore', "Xóa nguyên liệu trong phiếu: " . $name, ["app" => 'ingredient_import', "data" => [$id]]);
+
+      
+        $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+
+        echo json_encode([
+            'status' => 'success',
+            'content' => $jatbi->lang('Cập nhật thành công'),
+        ]);
+    }
+})->setPermissions(['ingredient']);
+
+// --- API HOÀN TẤT VÀ LƯU PHIẾU NHẬP ---
+
+$app->router('/ingredient-import/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    if ($app->method() === 'GET') {
+        echo $app->render($setting['template'] . '/common/confirm.html', $vars, $jatbi->ajax());
+    } elseif ($app->method() === 'POST') {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = 'import';
+
+      
+        $cookie_config = $setting['ingredient_cookie'];
+        $cookie_data = get_ingredient_cookie_data($app);
+        $current_time = date("Y-m-d H:i:s");
+        
+       
+        if (!isset($cookie_data['ingredients']) || empty($cookie_data['ingredients'])) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có nguyên liệu trong phiếu.')]);
+            return;
+        }
+        $data = $cookie_data;
+        $ingredients = $data['ingredients'] ?? [];
+        $content = $data['content'] ?? '';
+        $date = $data['date'] ?? $current_time;
+        if (empty($content)) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nội dung không được để trống.')]);
+            return;
+        }
+        $error_warehouses = false;
+        $total_products = 0;
+        foreach ($ingredients as $ingredient) {
+            if (!isset($ingredient['amount']) || $ingredient['amount'] <= 0 || $ingredient['amount'] < 0) {
+                $error_warehouses = true;
+                break;
+            }
+            $total_products += $ingredient['amount'] * ($ingredient['price'] ?? 0);
+        }
+        if ($error_warehouses) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng hợp lệ.')]);
+            return;
+        }
+        $code = 'PN';
+        $insert = [
+            "code" => $code, "type" => $action, "data" => 'ingredient', "content" => $app->xss($content),
+            "user" => $app->getSession("accounts")['id'] ?? 0, "date" => $date, "active" => $jatbi->active(30),
+            "date_poster" => $current_time, "stores" => $data['stores']['id'] ?? 0,
+        ];
+        $app->insert("warehouses", $insert);
+        $orderId = $app->id();
+        $pro_logs = [];
+        foreach ($ingredients as $ingredient) {
+            if ($ingredient['ingredient_id'] > 0) {
+                $current_product = $app->get("ingredient", ["id", "amount"], ["id" => $ingredient['ingredient_id']]);
+                $app->update("ingredient", ["amount" => $current_product['amount'] + $ingredient['amount']], ["id" => $current_product['id']]);
+                $pro = [
+                    "warehouses" => $orderId, "data" => $insert['data'], "type" => $insert['type'],
+                    "vendor" => $ingredient['vendor'] ?? 0, "ingredient" => $ingredient['ingredient_id'],
+                    "amount_buy" => $ingredient['amount_buy'] ?? 0, "amount" => str_replace([','], '', $ingredient['amount']),
+                    "amount_total" => str_replace([','], '', $ingredient['amount']), "price" => $ingredient['price'] ?? 0,
+                    "cost" => $ingredient['cost'] ?? 0, "notes" => $ingredient['notes'], "date" => $current_time,
+                    "user" => $app->getSession("accounts")['id'] ?? 0, "stores" => $insert['stores'],
+                ];
+                $app->insert("warehouses_details", $pro);
+                $detailId = $app->id();
+                $warehouses_logs = [
+                    "type" => $insert['type'], "data" => $insert['data'], "warehouses" => $orderId,
+                    "details" => $detailId, "ingredient" => $ingredient['ingredient_id'],
+                    "price" => $ingredient['price'] ?? 0, "cost" => $ingredient['cost'] ?? 0,
+                    "amount" => str_replace([','], '', $ingredient['amount']),
+                    "total" => $ingredient['amount'] * ($ingredient['price'] ?? 0), "notes" => $ingredient['notes'],
+                    "date" => $current_time, "user" => $app->getSession("accounts")['id'] ?? 0, "stores" => $insert['stores'],
+                ];
+                $app->insert("warehouses_logs", $warehouses_logs);
+                $pro_logs[] = $pro;
+            }
+        }
+        
+ 
+        $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $data]);
+        
+
+        $app->deleteCookie($cookie_config['name']);
+
+      
+        echo json_encode([
+            'status' => 'success',
+            'content' => $jatbi->lang('Cập nhật thành công'),
+        ]);
+    }
+})->setPermissions(['ingredient']);
+
+// --- API HỦY PHIẾU ---
+
+$app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    if ($app->method() === 'GET') {
+        echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+    } elseif ($app->method() === 'POST') {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = 'import';
+
+
+        $cookie_config = $setting['ingredient_cookie'];
+        $cookie_data = get_ingredient_cookie_data($app);
+
+    
+        $app->deleteCookie($cookie_config['name']);
+
+     
+        $jatbi->logs('ingredient_import', 'cancel', ['action' => $action, 'data' => $cookie_data ?? []]);
+
+        echo json_encode([
+            'status' => 'success',
+            'content' => $jatbi->lang('Cập nhật thành công'),
+            'redirect' => '/warehouses/ingredient-import'
+        ]);
+    }
+})->setPermissions(['ingredient']);
 
     // --- API CẬP NHẬT GHI CHÚ CHO CRAFTING ---
     $app->router('/ingredient-crafting/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
