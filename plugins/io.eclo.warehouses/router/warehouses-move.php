@@ -272,7 +272,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 	$app->router('/warehouses-updatee-2/move/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
 		$action = "move";
 		if ($app->method() === 'GET') {
-			echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+			echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
 		} elseif ($app->method() === 'POST') {
 			$app->header([
 				'Content-Type' => 'application/json',
@@ -287,7 +287,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 		$router['4'] = 'moves';
 		if ($app->method() === 'GET') {
 			$vars['url'] = "/warehouses/warehouses-history/move";
-			echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+			echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
 		} elseif ($app->method() === 'POST') {
 			$app->header([
 				'Content-Type' => 'application/json',
@@ -441,8 +441,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 								"content"		=> $value['content'] ?? "",
 								"vendor" 		=> $getProducts['vendor'],
 								"group" 		=> $getProducts['group'],
-								"price" 		=> $app->xss(str_replace([','], '', $getProducts['price'])),
-								"cost" 			=> $app->xss(str_replace([','], '', $getProducts['cost'])),
+								"price" 		=> $app->xss(str_replace([','], '', $getProducts['price'] ?? '0')),
+								"cost" 			=> $app->xss(str_replace([','], '', $getProducts['cost'] ?? '0')),
 								"units" 		=> $getProducts['units'],
 								"notes" 		=> $app->xss($crafting['notes'] ?? ""),
 								"active"		=> $jatbi->active(32),
@@ -1034,7 +1034,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 		if ($app->method() === 'GET') {
 			$vars['modalContent'] = $jatbi->lang("Bạn có thật sự muốn trả sản phẩm về kho cũ");
 
-			echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+			echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
 		} elseif ($app->method() === 'POST') {
 			$app->header(['Content-Type' => 'application/json']);
 			$router['2'] = $app->xss($vars['id']);
