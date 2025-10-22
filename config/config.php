@@ -206,7 +206,7 @@ $type_ticket = [
 $ingredient_cookie_config = [
     'name' => 'ingredient_import',
     'path' => '/',
-    'expire' => time() + 86400, // Hết hạn sau 1 ngày
+    'expire' => time() + 3600, // Hết hạn sau 1 ngày
 ];
 
 $Status_warehouser_move = [
@@ -262,6 +262,82 @@ if (!function_exists('get_ingredient_cookie_data')) {
 }
 
 
+$ingredient_move_cookie_config = [
+    'name' => 'ingredient_move', 
+    'path' => '/',
+    'expire' => time() + 3600, 
+];
+
+
+if (!function_exists('get_ingredient_move_cookie_data')) {
+    function get_ingredient_move_cookie_data($app) {
+        $setting = $app->getValueData('setting'); 
+        
+        // Tự động đọc tên cookie từ config
+        $cookie_name = $setting['ingredient_move_cookie']['name'] ?? 'ingredient_move'; 
+        
+        $cookie_json = $app->getCookie($cookie_name); 
+        $cookie_data = $cookie_json ? json_decode($cookie_json, true) : null;
+        
+        // Cấu trúc mặc định cho phiếu chuyển kho
+        $defaults = [
+            'ingredients' => [],
+            'content' => '',
+            'store_id' => null,
+            'branch_id' => null,
+            'date' => date("Y-m-d"),
+        ];
+
+        if (!is_array($cookie_data)) {
+            $cookie_data = $defaults;
+        } else {
+            // Đảm bảo tất cả các key đều tồn tại
+            $cookie_data = array_merge($defaults, $cookie_data);
+        }
+        
+        return $cookie_data;
+    }
+}
+
+
+
+$ingredient_export_cookie_config = [
+    'name' => 'ingredient_export', 
+    'path' => '/',
+    'expire' => time() + 3600, 
+];
+
+
+if (!function_exists('get_ingredient_export_cookie_data')) {
+    function get_ingredient_export_cookie_data($app) {
+        $setting = $app->getValueData('setting'); 
+        
+        // Tự động đọc tên cookie từ config
+        $cookie_name = $setting['ingredient_export_cookie']['name'] ?? 'ingredient_export'; 
+        
+        $cookie_json = $app->getCookie($cookie_name); 
+        $cookie_data = $cookie_json ? json_decode($cookie_json, true) : null;
+        
+        // Cấu trúc mặc định cho phiếu xuất kho
+        $defaults = [
+            'ingredients' => [],
+            'content' => '',
+            'group_crafting' => '', 
+            'date' => date("Y-m-d"),
+        ];
+
+        if (!is_array($cookie_data)) {
+            $cookie_data = $defaults;
+        } else {
+            // Đảm bảo tất cả các key đều tồn tại
+            $cookie_data = array_merge($defaults, $cookie_data);
+        }
+        
+        return $cookie_data;
+    }
+}
+
+
 return [
     "db" => [
         'type' => $env['DB_TYPE'] ?? 'mysql',
@@ -311,6 +387,8 @@ return [
         "Status_warehouser_move" => $Status_warehouser_move,
         "site_vat" => '10',
         "ingredient_cookie" => $ingredient_cookie_config,
+        "ingredient_move_cookie" => $ingredient_move_cookie_config,
+        "ingredient_export_cookie" => $ingredient_export_cookie_config,
     ]
 ];
 

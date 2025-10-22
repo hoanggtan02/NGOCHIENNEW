@@ -8159,92 +8159,166 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
         echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
     })->setPermissions(['ingredient']);
 
-    $app->router('/ingredient-move', ['GET'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores) {
-        $vars['title'] = $jatbi->lang("Chuyển qua kho thành phẩm");
+    // $app->router('/ingredient-move', ['GET'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores) {
+    //     $vars['title'] = $jatbi->lang("Chuyển qua kho thành phẩm");
 
-        // Khởi tạo session nếu chưa có
-        if (!isset($_SESSION['ingredient_move'])) {
-            $_SESSION['ingredient_move'] = [
-                'ingredients' => [],
-                'content' => '',
-                'store_id' => null,
-                'branch_id' => null,
-                'date' => date("Y-m-d"),
-            ];
+    //     // Khởi tạo session nếu chưa có
+    //     if (!isset($_SESSION['ingredient_move'])) {
+    //         $_SESSION['ingredient_move'] = [
+    //             'ingredients' => [],
+    //             'content' => '',
+    //             'store_id' => null,
+    //             'branch_id' => null,
+    //             'date' => date("Y-m-d"),
+    //         ];
+    //     }
+
+    //     if (count($stores) == 1) {
+    //         $_SESSION['ingredient_move']['store_id'] = ["id" => $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]])];
+    //     }
+
+
+    //     $vars['move_data'] = $_SESSION['ingredient_move'];
+
+
+    //     // $store_options = [];
+    //     // if (!empty($stores)) {
+    //     //     foreach ($stores as $store) {
+    //     //         if (isset($store['value']) && isset($store['text'])) {
+    //     //             $store_options[] = ['value' => $store['value'], 'text' => $store['text']];
+    //     //         }
+    //     //     }
+    //     // }
+    //     // $vars['store_options'] = $store_options;
+
+    //     // $branchs = $app->select("branch", ["id(value)", "name (text)", "code"], ["deleted" => 0, "stores" => $_SESSION['ingredient_move']['store_id'], "status" => 'A']);
+    //     // $vars['branch_options'] = $branchs;
+
+
+
+    //     $store_options = [['value' => '', 'text' => $jatbi->lang("Chọn cửa hàng")]];
+    //     if (!empty($stores)) {
+    //         foreach ($stores as $store) {
+    //             if (isset($store['value']) && isset($store['text'])) {
+    //                 $store_options[] = [
+    //                     'value' => $store['value'],
+    //                     'text' => $store['text']
+    //                 ];
+    //             }
+    //         }
+    //     }
+    //     $vars['store_options'] = $store_options;
+
+    //     // branch
+    //     $branchs = $app->select("branch", ["id(value)", "name (text)", "code"], [
+    //         "deleted" => 0,
+    //         "stores" => $_SESSION['ingredient_move']['store_id'],
+    //         "status" => 'A'
+    //     ]);
+    //     $branch_options = [['value' => '', 'text' => $jatbi->lang("Chọn quầy hàng")]];
+    //     if (!empty($branchs)) {
+    //         foreach ($branchs as $branch) {
+    //             $branch_options[] = $branch;
+    //         }
+    //     }
+    //     $vars['branch_options'] = $branch_options;
+
+    //     echo $app->render($template . '/warehouses/ingredient-move.html', $vars);
+    // })->setPermissions(['ingredient']);
+
+
+
+    $app->router('/ingredient-move', ['GET'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores, $setting) {
+    $vars['title'] = $jatbi->lang("Chuyển qua kho thành phẩm");
+
+    // Lấy config và đọc cookie
+    $cookie_config = $setting['ingredient_move_cookie'];
+    $cookie_data = get_ingredient_move_cookie_data($app);
+    $needs_update = false; 
+
+    // Nếu chỉ có 1 cửa hàng và cookie chưa set, tự động chọn
+    if (count($stores) == 1 && $cookie_data['store_id'] === null) {
+        $store_id_val = $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+        if ($store_id_val) {
+            $cookie_data['store_id'] = $store_id_val; 
+            $needs_update = true;
         }
+    }
 
-        if (count($stores) == 1) {
-            $_SESSION['ingredient_move']['store_id'] = ["id" => $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]])];
-        }
+    $vars['move_data'] = $cookie_data;
 
-
-        $vars['move_data'] = $_SESSION['ingredient_move'];
-
-
-        // $store_options = [];
-        // if (!empty($stores)) {
-        //     foreach ($stores as $store) {
-        //         if (isset($store['value']) && isset($store['text'])) {
-        //             $store_options[] = ['value' => $store['value'], 'text' => $store['text']];
-        //         }
-        //     }
-        // }
-        // $vars['store_options'] = $store_options;
-
-        // $branchs = $app->select("branch", ["id(value)", "name (text)", "code"], ["deleted" => 0, "stores" => $_SESSION['ingredient_move']['store_id'], "status" => 'A']);
-        // $vars['branch_options'] = $branchs;
-
-
-
-        $store_options = [['value' => '', 'text' => $jatbi->lang("Chọn cửa hàng")]];
-        if (!empty($stores)) {
-            foreach ($stores as $store) {
-                if (isset($store['value']) && isset($store['text'])) {
-                    $store_options[] = [
-                        'value' => $store['value'],
-                        'text' => $store['text']
-                    ];
-                }
+    // Lấy danh sách cửa hàng
+    $store_options = [['value' => '', 'text' => $jatbi->lang("Chọn cửa hàng")]];
+    if (!empty($stores)) {
+        foreach ($stores as $store) {
+            if (isset($store['value']) && isset($store['text'])) {
+                $store_options[] = [
+                    'value' => $store['value'],
+                    'text' => $store['text']
+                ];
             }
         }
-        $vars['store_options'] = $store_options;
+    }
+    $vars['store_options'] = $store_options;
 
-        // branch
-        $branchs = $app->select("branch", ["id(value)", "name (text)", "code"], [
-            "deleted" => 0,
-            "stores" => $_SESSION['ingredient_move']['store_id'],
-            "status" => 'A'
-        ]);
-        $branch_options = [['value' => '', 'text' => $jatbi->lang("Chọn quầy hàng")]];
-        if (!empty($branchs)) {
-            foreach ($branchs as $branch) {
-                $branch_options[] = $branch;
-            }
+    // Lấy danh sách quầy hàng dựa trên cửa hàng đã chọn từ cookie
+    $branchs = $app->select("branch", ["id(value)", "name (text)", "code"], [
+        "deleted" => 0,
+        "stores" => $cookie_data['store_id'], 
+        "status" => 'A'
+    ]);
+    $branch_options = [['value' => '', 'text' => $jatbi->lang("Chọn quầy hàng")]];
+    if (!empty($branchs)) {
+        foreach ($branchs as $branch) {
+            $branch_options[] = $branch;
         }
-        $vars['branch_options'] = $branch_options;
+    }
+    $vars['branch_options'] = $branch_options;
 
-        echo $app->render($template . '/warehouses/ingredient-move.html', $vars);
-    })->setPermissions(['ingredient']);
+    // Nếu có cập nhật (như tự chọn cửa hàng), set lại cookie
+    if ($needs_update) {
+        $app->setCookie($cookie_config['name'], json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+    }
 
-    $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, $template) {
-        $jatbi->permission('ingredient-export');
+    echo $app->render($template . '/warehouses/ingredient-move.html', $vars);
+})->setPermissions(['ingredient']);
 
-        // Khởi tạo session cho phiếu xuất kho nếu chưa có
-        if (!isset($_SESSION['ingredient_export'])) {
-            $_SESSION['ingredient_export'] = [
-                'ingredients' => [],
-                'content' => '',
-                'group_crafting' => '',
-                'date' => date("Y-m-d"),
-            ];
-        }
+    // $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, $template) {
+    //     $jatbi->permission('ingredient-export');
 
-        $vars['title'] = $jatbi->lang("Xuất kho nguyên liệu");
-        $vars['export_data'] = $_SESSION['ingredient_export'];
+    //     // Khởi tạo session cho phiếu xuất kho nếu chưa có
+    //     if (!isset($_SESSION['ingredient_export'])) {
+    //         $_SESSION['ingredient_export'] = [
+    //             'ingredients' => [],
+    //             'content' => '',
+    //             'group_crafting' => '',
+    //             'date' => date("Y-m-d"),
+    //         ];
+    //     }
 
-        // Render file HTML
-        echo $app->render($template . '/warehouses/ingredient-export.html', $vars);
-    })->setPermissions(['ingredient']);
+    //     $vars['title'] = $jatbi->lang("Xuất kho nguyên liệu");
+    //     $vars['export_data'] = $_SESSION['ingredient_export'];
+
+    //     // Render file HTML
+    //     echo $app->render($template . '/warehouses/ingredient-export.html', $vars);
+    // })->setPermissions(['ingredient']);
+
+
+$app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, $template, $setting) {
+    $jatbi->permission('ingredient-export');
+
+ 
+    $cookie_data = get_ingredient_export_cookie_data($app);
+
+    $vars['title'] = $jatbi->lang("Xuất kho nguyên liệu");
+    
+
+    $vars['export_data'] = $cookie_data;
+
+
+    echo $app->render($template . '/warehouses/ingredient-export.html', $vars);
+})->setPermissions(['ingredient']);
+
 
     $app->router('/ingredient-cancel/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $jatbi->permission('ingredient');

@@ -12,34 +12,26 @@
             <div class="card bg-body bg-opacity-50 shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-3">
                     <div class="row g-3">
-
-
-
-
-                        <?=$app->component('select', [
-                    'name' => 'stores',
-                    'placeholder' => $jatbi->lang("Cửa hàng"),
-                    'required' => true,
-                    'options' => $store_options,
-                    'selected' => $move_data['store_id'] ?? '',
-                    'class' => 'select2-ajax change-update',
-                   
-                    'attr' => 'id="move_store_id" data-action="change" data-form=\'{"value": "#move_store_id.val"}\' data-url="/api/ingredient-move-product/move/stores" data-load="this"'
-                ])?>
+<?=$app->component('select', [
+                            'name' => 'stores',
+                            'placeholder' => $jatbi->lang("Cửa hàng"),
+                            'required' => true,
+                            'options' => $store_options,
+                            'selected' => $move_data['store_id'] ?? '',
+                            'class' => 'select2-ajax change-update',
+                            'attr' => 'id="move_store_id" data-action="change" data-form=\'{"value": "#move_store_id.val"}\' data-url="/api/ingredient-move-product/move/stores" data-load="this"'
+                        ])?>
 
 
                         <?=$app->component('select', [
-            'name' => 'branch_id',
-            'placeholder' => $jatbi->lang("Quầy hàng"),
-            'required' => true,
-            'options' => $branch_options, // Use the options fetched in the controller
-            'selected' => $move_data['branch_id'] ?? '', 
-            'class' => 'select2-ajax change-update',
-            // This attr will call the API to save the branch_id to the session
-            'attr' => 'id="move_branch_id" data-action="change" data-form=\'{"value": "#move_branch_id.val"}\' data-url="/api/ingredient-move-product/move/branch" data-load="this"'
-        ])?>
-
-
+                            'name' => 'branch_id',
+                            'placeholder' => $jatbi->lang("Quầy hàng"),
+                            'required' => true,
+                            'options' => $branch_options, 
+                            'selected' => $move_data['branch_id'] ?? '', 
+                            'class' => 'select2-ajax change-update',
+                            'attr' => 'id="move_branch_id" data-action="change" data-form=\'{"value": "#move_branch_id.val"}\' data-url="/api/ingredient-move-product/move/branch" data-load="this"'
+                        ])?>
 
                     </div>
                 </div>
@@ -63,8 +55,11 @@
                 </template>
             </div>
 
+
             <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mt-4" ingredient-list-result>
-                <?php $SelectIngredients = $_SESSION['ingredient_move']['ingredients'] ?? []; ?>
+                
+                <?php $SelectIngredients = $move_data['ingredients'] ?? []; ?>
+                
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-center px-2 mb-3">
                         <h6 class="fw-bold mb-0">Danh sách nguyên liệu chuyển kho</h6>
@@ -177,11 +172,11 @@
                     <?php if(!empty($SelectIngredients)): ?>
                     <div class="mb-3 mt-3">
                         <label class="col-form-label">Nội dung phiếu chuyển <span class="text-danger">*</span></label>
+                        
                         <textarea type="text" class="form-control blur-update" id="move_content"
                             data-url="/api/ingredient-move-product/move/content" data-action="blur"
                             data-form='{"field": "content", "value": "#move_content.val"}'
-                            value="<?=htmlspecialchars($_SESSION['ingredient_move']['content'] ?? '')?>"
-                            placeholder="Nhập nội dung phiếu nhập..."></textarea>
+                            placeholder="Nhập nội dung phiếu nhập..."><?=htmlspecialchars($move_data['content'] ?? '')?></textarea>
                     </div>
                     <div class="mt-4">
                         <button class="btn btn-eclo w-100 p-2 fs-5" data-action="modal" type="button"
@@ -197,3 +192,6 @@
         </div>
     </div>
 </div>
+
+
+
