@@ -558,6 +558,93 @@ $app->group($setting['manager'] . "/customers", function ($app) use ($setting, $
         }
     })->setPermissions(['customers.add']);
 
+    $app->router('/customers-add-v2/{dispatch}/{action}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores_from_cookie) {
+        // Set page title for the template
+        $vars['title'] = $jatbi->lang("Thêm Khách hàng & NCC");
+
+        if ($app->method() === 'GET') {
+            // Prepare data for dropdowns
+            $vars['types'] = $app->select("customers_types", ["id(value)", "name(text)"], ["deleted" => 0]) ?? [];
+            $vars['sources'] = $app->select("sources", ["id(value)", "name(text)"], ["deleted" => 0]) ?? [];
+
+            // Pass stores from cookie to the template
+            $vars['stores'] = $stores_from_cookie;
+            $vars['fields'] = $app->select("custom_fields", "*", ["data" => "customers", "status" => "A"]) ?? [];
+
+            // Render the customer add template
+            echo $app->render($setting['template'] . '/customers/customers-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            // Set response header to JSON
+            $app->header(['Content-Type' => 'application/json']);
+
+            // Sanitize POST data
+            $post = array_map([$app, 'xss'], $_POST);
+
+            // --- VALIDATION ---
+            if (empty($post['name']) || empty($post['type'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng điền đủ thông tin bắt buộc')]);
+                return;
+            }
+
+            // --- PREPARE DATA AND INSERT ---
+            $insert = [
+                "code" => $post['code'] ?? '',
+                "payments" => $post['payments'] ?? '',
+                "number" => $post['number'] ?? '',
+                "type" => $post['type'],
+                "name" => $post['name'],
+                "company" => $post['company'] ?? '',
+                "phone" => $post['phone'] ?? '',
+                "email" => $post['email'] ?? '',
+                "gender" => $post['gender'] ?? '',
+                "address" => $post['address'] ?? '',
+                "province" => $post['province'] ?? 0,
+                "district" => $post['district'] ?? 0,
+                "ward" => $post['ward'] ?? 0,
+                "source" => $post['source'] ?? '',
+                "notes" => $post['notes'] ?? '',
+                "status" => $post['status'] ?? 'A',
+                "date" => date("Y-m-d H:i:s"),
+                "user" => json_decode($app->getCookie("accounts") ?? json_encode([]), true)['id'] ?? 0,
+                "follow" => json_decode($app->getCookie("accounts") ?? json_encode([]), true)['id'] ?? 0,
+                "active" => $jatbi->active(32),
+                "stores" => $post['stores'] ?? $stores_from_cookie,
+            ];
+
+            // Insert customer data into the database
+            $app->insert("customers", $insert);
+            $get_id = $app->id();
+
+            // Retrieve and decode cookie data, default to empty array if unset or invalid
+            $dispatch = $vars['dispatch'];
+            $action = $vars['action'];
+            $sales_session = json_decode($app->getCookie($dispatch) ?? json_encode([]), true) ?? [];
+
+            // Initialize action array if not set
+            if (!isset($sales_session[$action])) {
+                $sales_session[$action] = [];
+            }
+
+            // Update customer data in cookie
+            $sales_session[$action]['customers'] = [
+                "id" => $get_id,
+                "name" => $insert['name'],
+                "phone" => $insert['phone'],
+                "email" => $insert['email'],
+                "card" => $getCard ?? 0, // Note: $getCard is undefined in the original code; retained for compatibility
+            ];
+
+            // Save updated data to cookie
+            $app->setCookie($dispatch, json_encode($sales_session), time() + $setting['cookie'], '/');
+
+            // Log the customer addition
+            $jatbi->logs('customers', 'add', $insert);
+
+            // Return success response
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Thêm mới thành công')]);
+        }
+    })->setPermissions(['customers.add']);
+
 
     $app->router("/customers-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores_from_cookie) {
         $vars['title'] = $jatbi->lang("Sửa Khách hàng");
