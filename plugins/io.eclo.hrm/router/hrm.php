@@ -197,13 +197,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         $vars['title'] = $jatbi->lang("Thêm Nhân viên");
         if ($app->method() === 'GET') {
             // ... (Phần GET không thay đổi)
-            $vars['stores'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
-            $vars['offices'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
-            $vars['gender'] = [ ["value" => "", "text" => "Chọn"], ["value" => 0, "text" => "Nữ"], ["value" => 1, "text" => "Nam"], ];
-            $vars['idtype'] = [ ["value" => "", "text" => "Chọn"], ["value" => 1, "text" => "CMND"], ["value" => 2, "text" => "CCCD"], ["value" => 3, "text" => "CCCD gắn chíp"], ["value" => 4, "text" => "Hộ chiếu"], ];
-            $vars['data'] = [ "status" => 'A', ];
-            $vars['province'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]]) );
-            $vars['province_new'] = array_merge( [["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]) );
+            $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
+            $vars['offices'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
+            $vars['gender'] = [["value" => "", "text" => "Chọn"], ["value" => 0, "text" => "Nữ"], ["value" => 1, "text" => "Nam"],];
+            $vars['idtype'] = [["value" => "", "text" => "Chọn"], ["value" => 1, "text" => "CMND"], ["value" => 2, "text" => "CCCD"], ["value" => 3, "text" => "CCCD gắn chíp"], ["value" => 4, "text" => "Hộ chiếu"],];
+            $vars['data'] = ["status" => 'A',];
+            $vars['province'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]]));
+            $vars['province_new'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
             echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             // ===== FIX: TOÀN BỘ LOGIC POST ĐÃ ĐƯỢC VIẾT LẠI =====
@@ -280,7 +280,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $vars['offices'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
                 $vars['gender'] = [["value" => "", "text" => "Chọn"], ["value" => 0, "text" => "Nữ"], ["value" => 1, "text" => "Nam"]];
                 $vars['idtype'] = [["value" => "", "text" => "Chọn"], ["value" => 1, "text" => "CMND"], ["value" => 2, "text" => "CCCD"], ["value" => 3, "text" => "CCCD gắn chíp"], ["value" => 4, "text" => "Hộ chiếu"]];
-                
+
                 // --- Tải danh sách Tỉnh/Thành phố cho cả hai hệ thống ---
                 $vars['province'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province", ["id(value)", "name(text)"], ["deleted" => 0, "ORDER" => ["name" => "ASC"]]));
                 $vars['province_new'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
@@ -292,7 +292,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 // --- Tải danh sách cho ĐỊA CHỈ THƯỜNG TRÚ (Hệ thống cũ) ---
                 $vars['permanent_district'] = $app->select("district", ["id(value)", "name(text)"], ["deleted" => 0, "province" => $vars['data']['permanent_province'], "ORDER" => ["name" => "ASC"]]);
                 $vars['permanent_ward'] = $app->select("ward", ["id(value)", "name(text)"], ["deleted" => 0, "district" => $vars['data']['permanent_district'], "ORDER" => ["name" => "ASC"]]);
-                
+
                 // ===== FIX: Sửa lại logic tải dữ liệu cho HỆ THỐNG MỚI =====
                 // Sửa tên biến từ 'ward-new' thành 'ward_new'
                 // Truy vấn này sẽ lấy danh sách các mục (có vẻ là quận/huyện) dựa trên tỉnh/thành phố mới đã lưu
@@ -370,7 +370,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")]);
                 return;
             }
-            
+
             $is_same_address = isset($_POST['same_address']) && $_POST['same_address'] == 1;
 
             $update_data = [
@@ -2212,6 +2212,168 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['contract.add']);
 
+    $app->router("/contract-add/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
+        $vars['title'] = $jatbi->lang("Thêm Hợp đồng lao động");
+        if ($app->method() === 'GET') {
+
+            $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0,"id"=>$vars['id'] ,"status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
+            $vars['offices'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Chọn")]],
+                $app->select("offices", ["id (value)", "name (text)"], [
+                    "deleted" => 0,
+                    "status" => "A",
+                    "ORDER" => ["name" => "ASC"]
+                ])
+            );
+
+            $vars['positions'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Chọn chức vụ")]],
+                $app->select("hrm_positions", ["id (value)", "name (text)"], [
+                    "deleted" => 0,
+                    "status" => "A",
+                    "ORDER" => ["name" => "ASC"]
+                ])
+            );
+            $vars['contract_type'] = [
+                ["value" => "", "text" => $jatbi->lang("Chọn")],
+                ["value" => 1, "text" => $jatbi->lang("Thử việc")],
+                ["value" => 2, "text" => $jatbi->lang("Chính thức lần 1")],
+                ["value" => 3, "text" => $jatbi->lang("Chính thức lần 2")],
+                ["value" => 4, "text" => $jatbi->lang("Không xác định thời hạn")],
+            ];
+            $vars['salary_categorys'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Chọn")]],
+                $app->select("salary_categorys", ["id (value)", "name (text)", "type"], [
+                    "type" => 1,
+                    "deleted" => 0,
+                    "status" => "A",
+                    "ORDER" => ["name" => "ASC"]
+                ])
+            );
+            $vars['allowance_categorys'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Chọn")]],
+                $app->select("salary_categorys", ["id (value)", "name (text)"], [
+                    "type" => 2,
+                    "deleted" => 0,
+                    "status" => "A",
+                    "ORDER" => ["name" => "ASC"]
+                ])
+            );
+            $vars['data'] = [];
+            echo $app->render($template . '/hrm/contract-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $date_contract = $app->xss($_POST['date_contract']);
+            $duration = (int) $app->xss($_POST['duration']);
+
+            // Tính toán ngày kết thúc
+            $date_end = date('Y-m-d', strtotime($date_contract . " + " . $duration . " months"));
+            if ($app->xss($_POST['personnels']) == '' || $app->xss($_POST['date_contract']) == '' || $app->xss($_POST['type']) == '' || $app->xss($_POST['code']) == '' || $app->xss($_POST['offices']) == '' || $app->xss($_POST['positions']) == '') {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+                return;
+            }
+            // if ($app->xss($_POST['date_contract']) > $app->xss($_POST['date_end'])) {
+            //     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày kết thúc phải lơn hơn ngày hợp đoòng")]);
+            //     return;
+            // }
+            $is_overlapping = $app->has("personnels_contract", [
+                "AND" => [
+                    "personnels" => $app->xss($_POST['personnels']),
+                    "deleted" => 0,
+                    "date_contract[<=]" => $date_end,
+                    "date_end[>=]" => $date_contract,
+                ]
+            ]);
+
+            if ($is_overlapping) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Thời hạn hợp đồng bị trùng với hợp đồng trước đó")]);
+                return;
+            }
+            // $values = [];
+            // foreach ($_POST['salary_content'] as $key => $value) {
+            //     if ($_POST['salary_content'][$key] != '' && $_POST['salary_deleted'][$key] == '') {
+            //         if ($_POST['salary_price'][$key] < 0) {
+            //             echo json_encode(["status" => "error", "content" => $jatbi->lang("Số tiền không hợp lệ")]);
+            //             return;
+            //         }
+            //         if (in_array($_POST['salary_content'][$key], $values)) {
+            //             echo json_encode(["status" => "error", "content" => $jatbi->lang("Loại tiền lương bị trùng") . $key]);
+            //             return;
+            //         }
+            //         $values[] = $_POST['salary_content'][$key];
+            //     }
+            // }
+
+
+            $insert = [
+                "personnels" => $app->xss($_POST['personnels']),
+                "offices" => $app->xss($_POST['offices']),
+                "position" => $app->xss($_POST['positions']),
+                "degree" => $app->xss($_POST['degree']),
+                "certificate" => $app->xss($_POST['certificate']),
+                "health" => $app->xss($_POST['health']),
+                "workday" => $app->xss($_POST['workday']),
+                "interview" => $app->xss($_POST['interview']),
+                "type" => $app->xss($_POST['type']),
+                "code" => $app->xss($_POST['code']),
+                "date_contract" => $app->xss($_POST['date_contract']),
+                "duration" => $app->xss($_POST['duration']),
+                "date_end" => $date_end,
+                // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
+                "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
+                // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
+                // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
+                // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
+                "notes" => $app->xss($_POST['notes']),
+                "date" => date("Y-m-d H:i:s"),
+                "user" => $app->getSession("accounts")['id'] ?? null,
+            ];
+            $app->insert("personnels_contract", $insert);
+
+            $GetID = $app->id();
+            // $salary = [
+            //     "personnels" => $app->xss($_POST['personnels']),
+            //     "contract" => $GetID,
+            //     "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
+            //     "date_poster" => date("Y-m-d H:i:s"),
+            //     "user" => $app->getSession("accounts")['id'] ?? null,
+            // ];
+            // $app->insert("personnels_contract_salary", $salary);
+            $GetIDSalary = $app->id();
+            // foreach ($_POST['salary_content'] as $key => $value) {
+            //     $getSalary = $app->get("salary_categorys", "*", ["id" => $value, "deleted" => 0]);
+            //     if ($getSalary > 1) {
+            //         if ($_POST['salary_deleted'][$key] == '') {
+            //             $salary_details = [
+            //                 "contract" => $GetID,
+            //                 "salary" => $GetIDSalary,
+            //                 "type" => $getSalary['type'],
+            //                 "duration" => $getSalary['duration'],
+            //                 "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
+            //                 "personnels" => $app->xss($_POST['personnels']),
+            //                 "content" => $getSalary['id'],
+            //                 "price" => $app->xss(str_replace([','], '', $_POST['salary_price'][$key])),
+            //                 // "date"			=> $_POST['salary_detail_date'][$key],
+            //                 "notes" => $_POST['salary_notes'][$key],
+            //             ];
+            //             $salary_details_logs[] = $salary_details;
+            //             $app->insert("personnels_contract_salary_details", $salary_details);
+            //         }
+            //     }
+            // }
+
+            $app->update("personnels", [
+                "office" => $insert['offices'],
+                // "positions" => $insert['positions'], // Cập nhật luôn chức vụ cho nhân sự
+            ], ["id" => $insert['personnels']]);
+
+            $jatbi->logs('hrm', 'contract-add', [$insert, "", $salary_details_logs ?? []]);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    })->setPermissions(['contract.add']);
+
     $app->router("/contract-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Sửa Hợp đồng lao động");
@@ -2415,8 +2577,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['data'] = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
                 $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
-                $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                // $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                // $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
                 $vars['personnels_contracts'] = $setting['personnels_contracts'][$vars['data']['type']]['name'];
                 $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]);
                 echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
@@ -4053,7 +4215,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "date" => $data['date'],
                     "content" => $data['content'],
                     "date_poster" => $data['date_poster'],
-                    "user"=> $data['user_name'],
+                    "user" => $data['user_name'],
                     "action" => $app->component("action", [
                         "button" => array_merge(
                             $data['type'] != 1 ? [[
@@ -6980,9 +7142,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $year = (int)($app->xss($_POST['year'] ?? date('Y')));
 
-            $furloughCategory = $app->get("furlough_categorys", ["amount"], ["id" => 11, "deleted" => 0]);
-            $totalEntitledLeave = ($furloughCategory['amount'] ?? 1);
-
 
             $join = [
                 "[>]personnels" => ["personnels" => "id"]
@@ -7008,7 +7167,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $count = $app->count("annual_leave", $join, "annual_leave.id", $where);
 
-            $where["GROUP"] = "annual_leave.personnels";
             $where["LIMIT"] = [$start, $length];
             $where["ORDER"] = [$orderName => strtoupper($orderDir)];
 
@@ -7026,24 +7184,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     'personnels.name(personnel_name)',
                 ],
                 $where,
-                function ($data) use (&$datas, $jatbi, $app, $year, $totalEntitledLeave) {
+                function ($data) use (&$datas, $jatbi, $app, $year) {
 
-                    $sumOfAmounts = $app->sum("annual_leave", "amount", [
-                        "personnels" => $data['personnel_id'],
-                        "year" => $year,
-                        "deleted" => 0
-                    ]);
-                    $takenLeave = abs($sumOfAmounts ?? 0);
-
-                    // TÍNH SỐ PHÉP CÒN LẠI
-                    $remainingLeave = $totalEntitledLeave - $takenLeave;
 
                     $datas[] = [
                         "checkbox" => $app->component('box', ["data" => $data['id']]),
                         "type" => $data['type'] == 1 ? $jatbi->lang('Phép năm tồn') : $jatbi->lang('Hưởng nghỉ việc'),
                         "personnel_code" => $data['personnel_code'],
                         "personnel_name" => $data['personnel_name'],
-                        "amount" => $remainingLeave,
+                        "amount" => $data['amount'],
                         "action" => $app->component("action", [
                             "button" => [
                                 [
@@ -7308,7 +7457,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Xem"),
                                 'permission' => ['decided'],
-                               'action' => ['data-url' => '/hrm/decided-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                                'action' => ['data-url' => '/hrm/decided-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
                             ],
                         ]
                     ])),
@@ -7349,7 +7498,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // 3. Số mới = số lớn nhất + 1
             $new_number = (int)$max_code_number + 1;
-            
+
             // 4. Gán SỐ (ví dụ: 51) này vào form.
             // File template in (decided-views.html) sẽ tự động thêm /NĂM/QĐ-NTNH
             $vars['data']['code'] = $new_number;
@@ -7747,7 +7896,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['positions.edit']);
 
 
-$app->router('/decided-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) { // <-- Gỡ $database khỏi use()
+    $app->router('/decided-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) { // <-- Gỡ $database khỏi use()
         $id = (int) ($vars['id'] ?? 0);
         $vars['title'] = $jatbi->lang("In Quyết định thôi việc");
 
@@ -7772,17 +7921,16 @@ $app->router('/decided-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $
             $vars['error_message'] = "Không tìm thấy thông tin nhân viên.";
             return $app->render($template . '/error.html', $vars, $jatbi->ajax());
         }
-        
+
         // 3. Truyền biến sang template
         $vars['data'] = $data;
-        $vars['per'] = $per; 
-        
+        $vars['per'] = $per;
+
         // [SỬA LỖI] Truyền đối tượng $app vào template dưới tên biến là 'database'
         // Bây giờ $database->get() trong template sẽ hoạt động (vì nó chính là $app->get())
-        $vars['database'] = $app; 
+        $vars['database'] = $app;
 
         // 4. Render file template
         echo $app->render($template . '/hrm/decided-views.html', $vars, $jatbi->ajax());
-
     })->setPermissions(['decided']);
 })->middleware('login');

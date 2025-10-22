@@ -109,6 +109,8 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                 "job_postings.description",
                 "job_postings.requirements",
                 "job_postings.status",
+                "job_postings.jobs",
+                "job_postings.interest",
                 "job_postings.active",
                 "job_postings.created_date",
                 "accounts.name(user_name)",
@@ -116,11 +118,30 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             ];
             $datas = [];
             $app->select("job_postings", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $app) {
+                $job_names_html = '';
+                $job_ids = @unserialize($data['jobs']);
+                if (is_array($job_ids) && !empty($job_ids)) {
+
+                    $position_names = $app->select("hrm_positions", "name", [
+                        "id" => $job_ids,
+                        "ORDER" => ["name" => "ASC"]
+                    ]);
+
+                    if (!empty($position_names)) {
+                        $badges = [];
+                        foreach ($position_names as $name) {
+                            $badges[] = '<span class="badge bg-light-secondary text-body-secondary fw-semibold">' . htmlspecialchars($name) . '</span>';
+                        }
+                        $job_names_html = implode(' ', $badges);
+                    }
+                }
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['active']]),
                     "title" => $data['title'],
+                    "jobs" => $job_names_html,
                     "description" => substr($data['description'], 0, 100) . '...',
                     "requirements" => substr($data['requirements'], 0, 100) . '...',
+                    "interest" => substr($data['interest'], 0, 100) . '...',
                     "status" => $app->component("status", [
                         "url" => "/recruitment/job_postings-status/" . $data['active'],
                         "data" => $data['status'],
@@ -131,6 +152,15 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "created_date" => $data['created_date'],
                     "action" => $app->component("action", [
                         "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem"),
+                                'permission' => ['job_postings'],
+                                'action' => [
+                                    'data-url' => '/recruitment/job_postings-views/' . $data['active'],
+                                    'data-action' => 'modal'
+                                ]
+                            ],
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Sửa"),
@@ -163,11 +193,51 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         }
     })->setPermissions(['job_postings']);
 
+    $app->router('/job_postings-views/{active}', ['GET'], function ($vars) use ($app, $setting, $jatbi, $template) {
+        $active_id = $vars['active'];
+
+        $columns = [
+            "job_postings.title",
+            "job_postings.requirements",
+            "job_postings.interest",
+            "job_postings.jobs"
+        ];
+
+        $where = [
+            "job_postings.active" => $active_id,
+            "job_postings.deleted" => 0
+        ];
+
+        $data = $app->get("job_postings", $columns, $where);
+
+        if (!$data) {
+            $vars['modalContent'] = $jatbi->lang("Tin tuyển dụng không tồn tại");
+            echo $app->render($setting['template'] . '/common/reward.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        $job_list = [];
+        $job_ids = @unserialize($data['jobs']);
+
+        if (is_array($job_ids) && !empty($job_ids)) {
+            $job_list = $app->select("hrm_positions", "name", [
+                "id" => $job_ids
+            ]);
+        }
+
+        $vars['title'] = $jatbi->lang("Chi tiết tin tuyển dụng");
+        $vars['data'] = $data;
+        $vars['job_list'] = $job_list;
+
+        echo $app->render($template . '/recruitment/job_postings-views.html', $vars, $jatbi->ajax());
+    })->setPermissions(['job_postings']);
+
     // Route: Thêm tin tuyển dụng
     $app->router("/job_postings-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Thêm tin tuyển dụng");
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
+            $vars['job_postings'] = $app->select("hrm_positions", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
             echo $app->render($template . '/recruitment/job_postings-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -179,10 +249,14 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             }
             if (empty($error)) {
                 $input_stores = count($stores) > 1 ? $app->xss($_POST['stores']) : $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0]);
+                $jobs_array = $_POST['jobs'];
+                $data_to_save = serialize($jobs_array);
                 $insert = [
                     "title" => $app->xss($_POST['title']),
                     "description" => $app->xss($_POST['description']),
                     "requirements" => $app->xss($_POST['requirements']),
+                    "jobs" => $data_to_save,
+                    "interest" => $app->xss($_POST['interest']),
                     "status" => 'A',
                     "user" => $app->getSession("accounts")['id'],
                     "created_date" => date("Y-m-d H:i:s"),
@@ -201,12 +275,15 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     // Route: Sửa tin tuyển dụng
     $app->router("/job_postings-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Sửa tin tuyển dụng");
+        $vars['job_postings'] = $app->select("hrm_positions", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+
         $data = $app->get("job_postings", "*", ["active" => $vars['id'], "deleted" => 0]);
         if (!$data) {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             return;
         }
         $vars['data'] = $data;
+        $vars['data']['jobs'] = @unserialize($data['jobs']);
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
             echo $app->render($template . '/recruitment/job_postings-post.html', $vars, $jatbi->ajax());
@@ -220,10 +297,14 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             }
             if (empty($error)) {
                 $input_stores = count($stores) > 1 ? $app->xss($_POST['stores']) : $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0]);
+                $jobs_array = $_POST['jobs'];
+                $data_to_save = serialize($jobs_array);
                 $update = [
                     "title" => $app->xss($_POST['title']),
                     "description" => $app->xss($_POST['description']),
                     "requirements" => $app->xss($_POST['requirements']),
+                    "interest" => $app->xss($_POST['interest']),
+                    "jobs" => $data_to_save,
                     "stores" => $input_stores,
                 ];
                 $app->update("job_postings", $update, ["id" => $data['id']]);
@@ -463,7 +544,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         exit;
     });
 
-    $app->router("/candidates-print/{id}", ['GET'], function ($vars) use ($app,$setting ,$jatbi, $template) {
+    $app->router("/candidates-print/{id}", ['GET'], function ($vars) use ($app, $setting, $jatbi, $template) {
         $id = $vars['id'];
 
         $candidate = $app->get(
@@ -476,7 +557,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                 "candidates.full_name",
                 "candidates.email",
                 "candidates.phone",
-                "candidates.source",            
+                "candidates.source",
                 "candidates.created_date",
                 "job_postings.title(job_title)"
             ],
@@ -491,7 +572,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
 
         $vars['candidate'] = $candidate;
         $vars['setting'] = $setting;
-        
+
         echo $app->render($template . '/recruitment/candidates-print-view.html', $vars, $jatbi->ajax());
     })->setPermissions(['candidates']);
 

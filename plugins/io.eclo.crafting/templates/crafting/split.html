@@ -109,14 +109,16 @@
 
             <div class="mt-3">
                 <?=$app->component('textarea', [
-                    "name" => 'content', "placeholder" => "Nội dung", "value" => $session_data['content'] ?? '', "rows" => 3,
+                    "name" => 'content', 
+                    "required" => true,
+                    "placeholder" => "Nội dung", "value" => $session_data['content'] ?? '', "rows" => 3,
                     "attr" => 'data-action="blur" data-load="false" data-url="/crafting/crafting-split-update/'.$action.'/content" data-form=\'{"value": "this.val"}\''
                 ])?>
             </div>
         </div>
         <div class="card-footer bg-transparent border-0 py-3 text-end">
             <button class="btn btn-eclo rounded-pill px-5" data-action="click" data-alert="true"
-                data-load="/crafting/pairing-export-history"
+                data-load="/crafting/split-history"
                 data-url="/crafting/crafting-split-update/<?=$action?>/completed"><?=$jatbi->lang('Hoàn tất')?></button>
         </div>
     </div>

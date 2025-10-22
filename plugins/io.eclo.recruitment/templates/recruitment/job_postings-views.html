@@ -1,0 +1,109 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title">THÔNG BÁO TUYỂN DỤNG</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" id="printable-recruitment" style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000; line-height:1.8; padding: 1.5cm;">
+
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h4 style="font-weight: bold; margin: 0; text-transform: uppercase; font-size: 16pt;">
+                        CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC
+                    </h4>
+                </div>
+
+                <div style="text-align: center; margin: 25px 0;">
+                    <h5 style="font-weight: bold; text-transform: uppercase; font-size: 16pt; margin: 0;">
+                        TUYỂN DỤNG: 
+                    </h5>
+                </div>
+
+                <div style="margin: 20px 0; text-align: center;">
+                    <?php if (!empty($job_list)): ?>
+                        <?php foreach ($job_list as $job_name): ?>
+                            <p style="font-size: 15pt; margin: 8px 0; font-weight: 500;">
+                                <?= htmlspecialchars($job_name) ?>
+                            </p>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p style="font-size: 15pt; margin: 8px 0; font-weight: 500;"></p>
+                    <?php endif; ?>
+                </div>
+
+                <div style="margin: 25px 0;">
+                    <p style="font-weight: bold; margin: 0 0 10px;">Quyền lợi:</p>
+                    
+                    <ul style="margin: 0; padding-left: 45px; list-style: disc;">
+                        <?php
+                        // Tách chuỗi thành mảng dựa trên ký tự xuống dòng
+                        $lines = preg_split('/\\r\\n|\\r|\\n/', $data['interest'] ?? '');
+                        
+                        // Lặp qua từng dòng và tạo thẻ <li>
+                        foreach ($lines as $line) {
+                            $line_trimmed = trim($line);
+                            if (!empty($line_trimmed)) {
+                                echo '<li style="margin-bottom: 5px;">' . htmlspecialchars($line_trimmed) . '</li>';
+                            }
+                        }
+                        ?>
+                    </ul>
+                </div>
+
+                <div style="margin: 25px 0;">
+                    <p style="font-weight: bold; margin: 0 0 10px;">Yêu cầu chung:</p>
+                    
+                    <ul style="margin: 0; padding-left: 45px; list-style: disc;">
+                        <?php
+                        // Tách chuỗi thành mảng dựa trên ký tự xuống dòng
+                        $lines = preg_split('/\\r\\n|\\r|\\n/', $data['requirements'] ?? '');
+                        
+                        // Lặp qua từng dòng và tạo thẻ <li>
+                        foreach ($lines as $line) {
+                            $line_trimmed = trim($line);
+                            if (!empty($line_trimmed)) {
+                                echo '<li style="margin-bottom: 5px;">' . htmlspecialchars($line_trimmed) . '</li>';
+                            }
+                        }
+                        ?>
+                    </ul>
+                </div>
+                
+                <div style="margin: 25px 0;">
+                    <p style="font-weight: bold; margin: 0 0 10px;">Mô tả công việc:</p>
+                    
+                    <ul style="margin: 0; padding-left: 45px; list-style: disc;">
+                        <?php
+                        // Tách chuỗi thành mảng dựa trên ký tự xuống dòng
+                        $lines = preg_split('/\\r\\n|\\r|\\n/', $data['description'] ?? '');
+                        
+                        // Lặp qua từng dòng và tạo thẻ <li>
+                        foreach ($lines as $line) {
+                            $line_trimmed = trim($line);
+                            if (!empty($line_trimmed)) {
+                                echo '<li style="margin-bottom: 5px;">' . htmlspecialchars($line_trimmed) . '</li>';
+                            }
+                        }
+                        ?>
+                    </ul>
+                </div>
+
+                <div style="margin: 30px 0; background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; border-radius: 4px;">
+                    <p style="font-weight: bold; margin: 0 0 8px; color: #007bff;">Thông tin liên hệ:</p>
+                    <ul style="margin: 0; padding-left: 20px; list-style: none;">
+                        <li style="margin: 5px 0;"><strong>Hotline:</strong> 0907 556 156 (Ms Phương)</li>
+                        <li style="margin: 5px 0;"><strong>Gửi hồ sơ trực tiếp tại:</strong> Công ty Ngọc Trai Ngọc Hiền – Tổ 1, ấp Dương Tơ, xã Dương Tơ, Phú Quốc, Kiên Giang</li>
+                        <li style="margin: 5px 0;"><strong>Hoặc gửi CV qua mail:</strong> <a href="mailto:hcns@ngochienpearl.com" style="color: #007bff; text-decoration: none;">hcns@ngochienpearl.com</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In</button>
+            </div>
+        </div>
+    </div>
+</div>
