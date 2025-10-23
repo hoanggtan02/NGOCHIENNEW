@@ -3504,6 +3504,97 @@ $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use 
         echo json_encode($datas);
     });
 
+    $app->router("/ingredient-search/{action}/{stock_column}", ['POST'], function ($vars) use ($app, $jatbi) {
+        $app->header([
+            'Content-Type' => 'application/json',
+        ]);
+
+        $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
+        $stores_json = $app->getCookie('stores') ?? json_encode([]);
+        $stores = json_decode($stores_json, true);
+        $store = $stores[0]['value'];
+
+        $where = [
+            "AND" => [
+                "OR" => [
+                    "code[~]" => $searchValue,
+                ],
+                "{$vars['stock_column']}[>]" => 0,
+                "status" => 'A',
+                "deleted" => 0,
+            ],
+            "LIMIT" => 10 // Giới hạn số lượng kết quả để tối ưu
+        ];
+
+        $datas = [];
+        $app->select("ingredient", [
+            "id",
+            "code",
+            "type"
+        ], $where, function ($data) use (&$datas, $app, $vars) {
+            // Xác định text loại
+            $type_label = match ((int)$data['type']) {
+                1 => $jatbi->lang("Đại"),
+                2 => $jatbi->lang('Ngọc'),
+                3 => $jatbi->lang('Khác'),
+            };
+            $datas[] = [
+                "value" => $data['id'],
+                "text" => $data['code'],
+                "text-1"  => $data['code'] . ' - ' . $type_label,
+                "url" => "/crafting/crafting-move-products/update/" . $vars['action'] . "/ingredient/add/" . $data['id'],
+                "url-2" => "/crafting/crafting-update/" . $vars['action'] . "/ingredient/add/" . $data['id'],
+                "url-3" => "/crafting/crafting-from-to/update/" . $vars['action'] . "/ingredient/add/" . $data['id'],
+                "url-4" => "/crafting/crafting-cancel/update/" . $vars['action'] . "/ingredient/add/" . $data['id'],
+            ];
+        });
+
+        echo json_encode($datas);
+    });
+
+    $app->router("/ingredient-search/{action}", ['POST'], function ($vars) use ($app, $jatbi) {
+        $app->header([
+            'Content-Type' => 'application/json',
+        ]);
+
+        $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
+        $stores_json = $app->getCookie('stores') ?? json_encode([]);
+        $stores = json_decode($stores_json, true);
+        $store = $stores[0]['value'];
+
+        $where = [
+            "AND" => [
+                "OR" => [
+                    "code[~]" => $searchValue,
+                ],
+                "status" => 'A',
+                "deleted" => 0,
+            ],
+            "LIMIT" => 10 // Giới hạn số lượng kết quả để tối ưu
+        ];
+
+        $datas = [];
+        $app->select("ingredient", [
+            "id",
+            "code",
+            "type"
+        ], $where, function ($data) use (&$datas, $app, $vars, $jatbi) {
+            // Xác định text loại
+            $type_label = match ((int)$data['type']) {
+                1 => $jatbi->lang("Đai"),
+                2 => $jatbi->lang('Ngọc'),
+                3 => $jatbi->lang('Khác'),
+            };
+            $datas[] = [
+                "value" => $data['id'],
+                "text" => $data['code'] . ' - ' . $type_label,
+                "url" => "/crafting/pairing-crafting-edit/" . $vars['action'] . "/ingredient/add/" . $data['id'],
+            ];
+        });
+
+        echo json_encode($datas);
+    });
+
 })->middleware(names: 'login');
 
 

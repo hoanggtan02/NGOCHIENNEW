@@ -3410,6 +3410,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 "[<]accounts" => ["user" => "id"],
                 "[<]stores" => ["stores" => "id"],
                 "[<]branch" => ["branch" => "id"],
+                "[<]stores(stores_receive)" => ["stores_receive" => "id"],
+                "[<]branch(branch_receive)" => ["branch_receive" => "id"],
             ];
 
 
@@ -3427,11 +3429,13 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 "warehouses.type",
                 "warehouses.receive_status",
                 "warehouses.receive_date",
+                "warehouses.branch_receive",
+                "warehouses.stores_receive",
                 "accounts.name(user_name)",
                 "stores.name(store_name)",
                 "branch.name(branch_name)",
-                // "receive_store.name(receive_store_name)",
-                // "receive_branch.name(receive_branch_name)",
+                "stores_receive.name(stores_receive)",
+                "branch_receive.name(branch_receive)",
             ];
 
 
@@ -3440,9 +3444,9 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $resultData = [];
             foreach ($datas as $data) {
                 $store_info = ($data['store_name'] ?? '') . ' - ' . ($data['branch_name'] ?? '');
-                // if ($data['receive_store_name']) {
-                //     $store_info .= ' -> ' . ($data['receive_store_name']) . ' - ' . ($data['receive_branch_name'] ?? '');
-                // }
+                if ($data['stores_receive']) {
+                    $store_info .= ' -> ' . ($data['stores_receive']) . ' - ' . ($data['branch_receive'] ?? '');
+                }
 
                 // Xử lý hiển thị trạng thái
                 $status_html = '';
@@ -3451,10 +3455,14 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 elseif ($data['type'] == 'cancel')
                     $status_html = '<span class="badge bg-danger">' . $jatbi->lang('Đã hủy hàng') . '</span>';
                 elseif (in_array($data['type'], ['move', 'return'])) {
-                    // Giả sử có mảng $Status_warehouser_move
-                    $status_info = $setting['Status_warehouser_move'][$data['receive_status']] ?? ['color' => 'secondary', 'name' => 'Không rõ'];
-                    $status_html = '<span class="badge bg-' . $status_info['color'] . '">' . $status_info['name'] . '</span>';
+                    // Xử lý giống code cũ
+                    $status_html = '<span class="btn fw-bold p-1 rounded-3 small btn-' . $setting['Status_warehouser_move'][$data['receive_status']]['color'] . '">' . $setting['Status_warehouser_move'][$data['receive_status']]['name'] . '</span>';
+
+                    if (!empty($data['receive_status']) && $data['receive_status'] == 2) {  
+                        $status_html .= '<small class="d-block mt-2">' . date($setting['site_datetime'], strtotime($data['receive_date'])) . '</small>';
+                    }
                 }
+
 
                 $resultData[] = [
                     "code" => '<a data-action="modal" data-url="/warehouses/history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
@@ -3566,7 +3574,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         $vars['total_amount'] = $total_amount ?? 0;
         $vars['total_sum'] = $total_sum ?? 0;
         // $vars['total_in_words'] = ucfirst(docso($vars['total_sum'])) . ' đồng.'; // Bạn có thể kích hoạt lại dòng này nếu cần
-        $vars['status_map'] = [1 => ['name' => 'Chờ nhận hàng', 'color' => 'warning'], 2 => ['name' => 'Đã nhận hàng', 'color' => 'success'], 3 => ['name' => 'Nhận một phần', 'color' => 'info']];
+        $vars['status_map'] = [1 => ['name' => 'Chưa nhận hàng', 'color' => 'warning'], 2 => ['name' => 'Đã nhận hàng', 'color' => 'success'], 3 => ['name' => 'Nhận một phần', 'color' => 'info']];
 
         echo $app->render($template . '/warehouses/history-view.html', $vars, $jatbi->ajax());
     })->setPermissions(['warehouses-move-history']);

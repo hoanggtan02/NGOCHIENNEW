@@ -49,7 +49,6 @@
                                     <td>
                                         <input type="text" name="notes" class="form-control form-control-sm"
                                             value="<?=htmlspecialchars($item['notes'])?>" data-action="blur"
-                                            data-load="this"
                                             data-url="/crafting/crafting-update/<?=$action?>/ingredient/notes/<?=$key?>"
                                             data-form='{"value": "this.val"}'>
                                     </td>
@@ -69,7 +68,7 @@
                     </div>
                     <?=$app->component('textarea', [
                     "name" => 'content', "placeholder" => $jatbi->lang('Nội dung'), "value" => $data['content'] ?? '',
-                    "attr" => 'data-action="blur" data-load="this" data-url="/crafting/crafting-update/'.$action.'/content" data-form=\'{"value": "this.val"}\''
+                    "attr" => 'data-action="blur" data-url="/crafting/crafting-update/'.$action.'/content" data-form=\'{"value": "this.val"}\''
                     ])?>
                 </div>
                 <div class="card-footer text-end bg-transparent border-0 py-3">

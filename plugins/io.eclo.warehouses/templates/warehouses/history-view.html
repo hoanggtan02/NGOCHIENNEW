@@ -51,27 +51,27 @@
                         <td>
                             <strong>Trạng thái:</strong>
                             <?php
-                $type = $data['type'];
-                $receive_status = $data['receive_status'] ?? 0;
-                
-                if ($type === 'move' || $type === 'return') {
-                    $status_info = $status_map[$receive_status] ?? ['name' => 'Không xác định', 'color' => 'secondary'];
-                    echo '<span class="fw-bold p-1 rounded-3 small text-' . $status_info['color'] . '">' . $status_info['name'] . '</span>';
-                    if ($receive_status == 2 && !empty($data['receive_date'])) {
-                        echo '<small class="d-block">' . date($setting['site_datetime'] ?? 'd/m/Y H:i', strtotime($data['receive_date'])) . '</small>';
-                    }
-                } elseif ($type === 'import') {
-                    echo '<span class="fw-bold p-1 rounded-3 small text-primary">Đã nhập hàng</span>';
-                } elseif ($type === 'pairing') {
-                    echo '<span class="fw-bold p-1 rounded-3 small text-primary">Đã chỉnh sửa</span>';
-                } elseif ($type === 'cancel') {
-                    echo '<span class="fw-bold p-1 rounded-3 small text-danger">Đã hủy hàng</span>';
-                } elseif ($type === 'error' && $receive_status == 3) {
-                    echo '<span class="fw-bold p-1 rounded-3 small text-danger">Xuất kiểm kê</span>';
-                } else {
-                    echo '<span class="fw-bold p-1 rounded-3 small text-success">Đã hoàn thành</span>';
-                }
-            ?>
+                                $type = $data['type'];
+                                $receive_status = $data['receive_status'] ?? 0;
+                                
+                                if ($type === 'move' || $type === 'return') {
+                                    $status_info = $status_map[$receive_status] ?? ['name' => 'Không xác định', 'color' => 'secondary'];
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-' . $status_info['color'] . '">' . $status_info['name'] . '</span>';
+                                    if ($receive_status == 2 && !empty($data['receive_date'])) {
+                                        echo '<small class="d-block">' . date($setting['site_datetime'] ?? 'd/m/Y H:i', strtotime($data['receive_date'])) . '</small>';
+                                    }
+                                } elseif ($type === 'import') {
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-primary">Đã nhập hàng</span>';
+                                } elseif ($type === 'pairing') {
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-primary">Đã chỉnh sửa</span>';
+                                } elseif ($type === 'cancel') {
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-danger">Đã hủy hàng</span>';
+                                } elseif ($type === 'error' && $receive_status == 3) {
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-danger">Xuất kiểm kê</span>';
+                                } else {
+                                    echo '<span class="fw-bold p-1 rounded-3 small text-success">Đã hoàn thành</span>';
+                                }
+                            ?>
                         </td>
                     </tr>
                     <?php if(!empty($data['stores_receive'])): ?>
