@@ -1466,6 +1466,11 @@ $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use 
     }
 })->setPermissions(['ingredient']);
 
+
+
+
+
+
     // --- API CẬP NHẬT GHI CHÚ CHO CRAFTING ---
     $app->router('/ingredient-crafting/update-notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json']);
@@ -3112,7 +3117,7 @@ $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use 
 
 
 
-    $app->router('/warehouses/ingredient-update/cancel/notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
+    $app->router('/ingredient-update/cancel/notes/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
         $id = $vars['id'] ?? '';
         $value = $_POST['notes'] ?? '';
 
@@ -3310,6 +3315,11 @@ $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use 
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Hủy hàng thành công.")]);
         }
     });
+
+
+
+
+
     $app->router('/purchase-import/update-amount/{id}', ['POST'], function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json']);
         $id = $vars['id'] ?? '';
