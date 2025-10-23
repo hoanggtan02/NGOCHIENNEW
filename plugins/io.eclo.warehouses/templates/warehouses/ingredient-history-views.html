@@ -245,11 +245,13 @@ function docso($number) {
                             ............................................................</p>
                     </div>
                     <div style="display: flex;justify-content: space-between;color:#000">
-	                <div class="font-weight-bold" style="display: inline-block;text-transform: uppercase;; width: 60%"></div>
-	                <div class="text-center" style="display: inline-block;; width: 40%">
-	                    <p><span class="font-weight-bold font-italic"><i>Ngày .... Tháng .... Năm .....</i></span></p>
-	                </div>
-	            </div>
+                        <div class="font-weight-bold"
+                            style="display: inline-block;text-transform: uppercase;; width: 60%"></div>
+                        <div class="text-center" style="display: inline-block;; width: 40%">
+                            <p><span class="font-weight-bold font-italic"><i>Ngày .... Tháng .... Năm .....</i></span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 <div class="mt-4">
                     <table style="width: 100%;">
@@ -281,9 +283,11 @@ function docso($number) {
                     <?php echo htmlspecialchars($jatbi->lang('In') ?? 'In'); ?>
                 </button>
             </div> -->
-                   <div class="modal-footer d-print-none border-0">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
-                <button class="btn btn-success rounded-pill px-4 btn-print" ><i class="ti ti-printer me-2"></i><?=$jatbi->lang('IN')?></button>
+            <div class="modal-footer d-print-none border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4"
+                    data-bs-dismiss="modal"><?=$jatbi->lang('Hủy')?></button>
+                <button class="btn btn-success rounded-pill px-4 btn-print"><i
+                        class="ti ti-printer me-2"></i><?=$jatbi->lang('IN')?></button>
             </div>
         </div>
     </div>

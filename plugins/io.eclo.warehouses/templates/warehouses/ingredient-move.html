@@ -75,10 +75,11 @@
                         <table class="table table-hover align-middle small">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="p-2">Nguyên liệu</th>
+                                    <th class="p-2">Loại</th>
+                                    <th class="p-2">Sản phẩm</th>
                                     <th width="12%" class="text-end p-2">Giá bán</th>
-                                    <th width="12%" class="text-center p-2">Tồn kho</th>
-                                    <th width="12%" class="text-center p-2">SL Chuyển</th>
+                                    <th width="12%" class="text-center p-2">Số lượng tồn</th>
+                                    <th width="12%" class="text-center p-2">Số lượng</th>
                                     <th width="10%" class="p-2">Đơn vị</th>
                                     <th width="12%" class="text-end p-2">Thành tiền</th>
                                     <th width="15%" class="p-2">Ghi chú</th>
@@ -105,6 +106,17 @@
                                     $total_amount += (float)($item['amount'] ?? 0);
                             ?>
                                 <tr>
+                                    <td>
+                                        <?php
+                                            if (isset($item['type']) && $item['type'] == 1) {
+                                                echo 'Đai';
+                                            } elseif (isset($item['type']) && $item['type'] == 2) {
+                                                echo 'Ngọc';
+                                            } else {
+                                                echo 'Khác';
+                                            }
+                                        ?>
+                                    </td>
                                     <td><strong>
                                             <?= htmlspecialchars($item['code']) ?>
                                         </strong><br><small>
@@ -148,10 +160,10 @@
                                 <?php endforeach; endif; ?>
                             </tbody>
                             <?php if (!empty($SelectIngredients)): ?>
-                            <tfoot class="table-light">
-                                                           <tr>
+                        <tfoot class="table-light">
+                                <tr>
                                     <td class="text-end fw-bold p-2">Tổng cộng</td>
-                                    <td class="text-end fw-bold p-2">
+                                    <td class="p-2"></td> <td class="text-end fw-bold p-2">
                                         <?= number_format($total_selling_price) ?>
                                     </td>
                                     <td class="text-center fw-bold p-2">
@@ -160,10 +172,12 @@
                                     <td class="text-center fw-bold p-2">
                                         <?= number_format($total_amount) ?>
                                     </td>
-                                    <td class="p-2"></td> <td class="text-end fw-bold p-2">
+                                    <td class="p-2"></td>
+                                    <td class="text-end fw-bold p-2">
                                         <?= number_format($total) ?>
                                     </td>
-                                    <td colspan="2" class="p-2"></td> </tr>
+                                    <td colspan="2" class="p-2"></td>
+                                </tr>
                             </tfoot>
                             <?php endif; ?>
                         </table>
