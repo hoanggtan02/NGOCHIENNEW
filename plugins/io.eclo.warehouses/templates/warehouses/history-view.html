@@ -1,6 +1,12 @@
 <div class="modal fade modal-load" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-4 border-0 shadow">
+               <div class="modal-header d-print-none">
+                <h5 class="modal-title">
+                    <?php echo htmlspecialchars($title); ?>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
             <div class="modal-body">
                 <div class="d-flex justify-content-between text-dark">
                     <div class="fw-bold text-uppercase" style="width: 60%;">
@@ -36,7 +42,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <strong>Từ Cửa hàng:</strong>
+                            <strong>Cửa hàng:</strong>
                             <?=htmlspecialchars($data['store_name'])?>
                             <?php if(!empty($data['branch_name'])): ?> - <strong>Quầy:</strong>
                             <?=htmlspecialchars($data['branch_name'])?>
