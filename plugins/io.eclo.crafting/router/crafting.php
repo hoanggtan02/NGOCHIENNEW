@@ -1535,93 +1535,290 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         echo $app->render($template . '/crafting/history-crafting-ingredient.html', $vars, $jatbi->ajax());
     });
 
-    $app->router('/pairing-import/{type}', 'GET', function ($vars) use ($app, $jatbi, $template) {
-        $router[2] = $vars['type'];
+    $app->router('/pairing-import/{type}', 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
+        $type = $vars['type'] ?? '';
         $action = 'add';
+
+        // Safely get pairing data from cookie
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
         $nguyenlieu = [];
         $total_price = 0;
         $total_cost = 0;
-        if ($router['2'] == 'gold') {
-            if (($_SESSION['pairing'][$action]['group_crafting'] ?? null) != 1) {
-                unset($_SESSION['pairing'][$action]);
-                $_SESSION['pairing'][$action]['group_crafting'] = 1;
+
+        // Initialize group_crafting if not set or mismatched
+        $currentGroup = (int) ($pairing[$action]['group_crafting'] ?? 0);
+
+        if ($type == 'gold') {
+            if ($currentGroup != 1) {
+                unset($pairing[$action]);
+                $pairing[$action]['group_crafting'] = 1;
             }
-            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], ["deleted" => 0, "status" => "A", "crafting[>]" => 0]);
+            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], [
+                "deleted" => 0,
+                "status" => "A",
+                "crafting[>]" => 0
+            ]);
         }
-        if ($router['2'] == 'silver') {
-            if (($_SESSION['pairing'][$action]['group_crafting'] ?? null) != 2) {
-                unset($_SESSION['pairing'][$action]);
-                $_SESSION['pairing'][$action]['group_crafting'] = 2;
+
+        if ($type == 'silver') {
+            if ($currentGroup != 2) {
+                unset($pairing[$action]);
+                $pairing[$action]['group_crafting'] = 2;
             }
-            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], ["deleted" => 0, "status" => "A", "craftingsilver[>]" => 0]);
+            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], [
+                "deleted" => 0,
+                "status" => "A",
+                "craftingsilver[>]" => 0
+            ]);
         }
-        if ($router['2'] == 'chain') {
-            if (($_SESSION['pairing'][$action]['group_crafting'] ?? null) != 3) {
-                unset($_SESSION['pairing'][$action]);
-                $_SESSION['pairing'][$action]['group_crafting'] = 3;
+
+        if ($type == 'chain') {
+            if ($currentGroup != 3) {
+                unset($pairing[$action]);
+                $pairing[$action]['group_crafting'] = 3;
             }
-            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], ["deleted" => 0, "status" => "A", "craftingchain[>]" => 0]);
+            $nguyenlieu = $app->select("ingredient", ["id", "code", "type"], [
+                "deleted" => 0,
+                "status" => "A",
+                "craftingchain[>]" => 0
+            ]);
         }
-        if (!isset($_SESSION['pairing'][$action]['date'])) {
-            $_SESSION['pairing'][$action]['date'] = date("Y-m-d H:i:s");
+
+        // Ensure date is set
+        if (!isset($pairing[$action]['date'])) {
+            $pairing[$action]['date'] = date("Y-m-d H:i:s");
         }
-        $_SESSION['pairing'][$action]['stores']['id'] = 0;
-        if (!isset($_SESSION['pairing'][$action]['amount'])) {
-            $_SESSION['pairing'][$action]['amount'] = 1;
+
+        // Default store
+        $pairing[$action]['stores']['id'] = 0;
+
+        // Default amount
+        if (!isset($pairing[$action]['amount'])) {
+            $pairing[$action]['amount'] = 1;
         }
-        foreach (($_SESSION['pairing'][$action]['ingredient'] ?? []) as $key => $getprice) {
-            $total_price += (float) $getprice['amount'] * (float) $getprice['price'];
-            $total_cost += (float) $getprice['amount'] * (float) $getprice['cost'];
+
+        // Calculate total price and cost from ingredients
+        $ingredients = $pairing[$action]['ingredient'] ?? [];
+        foreach ($ingredients as $key => $getprice) {
+            $amount = (float) ($getprice['amount'] ?? 0);
+            $price = (float) ($getprice['price'] ?? 0);
+            $cost = (float) ($getprice['cost'] ?? 0);
+            $total_price += $amount * $price;
+            $total_cost += $amount * $cost;
         }
-        $_SESSION['pairing'][$action]['price'] = $total_price;
-        $_SESSION['pairing'][$action]['cost'] = $total_cost;
+
+        $pairing[$action]['price'] = $total_price;
+        $pairing[$action]['cost'] = $total_cost;
+
+        // Save back to cookie after calculation
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+
+        // Prepare data for view
         $data = [
-            "group_crafting" => $_SESSION['pairing'][$action]['group_crafting'] ?? "",
-            "date" => $_SESSION['pairing'][$action]['date'] ?? "",
-            "code" => $_SESSION['pairing'][$action]['code'] ?? "",
-            "content" => $_SESSION['pairing'][$action]['content'] ?? "",
-            "price" => $_SESSION['pairing'][$action]['price'] ?? "",
-            "cost" => $_SESSION['pairing'][$action]['cost'] ?? 0,
-            "amount" => $_SESSION['pairing'][$action]['amount'] ?? 1,
-            "name" => $_SESSION['pairing'][$action]['name'] ?? "",
-            "categorys" => $_SESSION['pairing'][$action]['categorys'] ?? "",
-            "group" => $_SESSION['pairing'][$action]['group'] ?? "",
-            "default_code" => $_SESSION['pairing'][$action]['default_code'] ?? "",
-            "units" => $_SESSION['pairing'][$action]['units'] ?? "",
-            "personnels" => $_SESSION['pairing'][$action]['personnels'] ?? "",
+            "group_crafting" => $pairing[$action]['group_crafting'] ?? "",
+            "date" => $pairing[$action]['date'] ?? "",
+            "code" => $pairing[$action]['code'] ?? "",
+            "content" => $pairing[$action]['content'] ?? "",
+            "price" => $pairing[$action]['price'] ?? "",
+            "cost" => $pairing[$action]['cost'] ?? 0,
+            "amount" => $pairing[$action]['amount'] ?? 1,
+            "name" => $pairing[$action]['name'] ?? "",
+            "categorys" => $pairing[$action]['categorys'] ?? "",
+            "group" => $pairing[$action]['group'] ?? "",
+            "default_code" => $pairing[$action]['default_code'] ?? "",
+            "units" => $pairing[$action]['units'] ?? "",
+            "personnels" => $pairing[$action]['personnels'] ?? "",
         ];
-        $SelectProducts = $_SESSION['pairing'][$action]['ingredient'] ?? [];
+
+        $SelectProducts = $pairing[$action]['ingredient'] ?? [];
+
         $vars['title'] = $jatbi->lang("Nhập liệu chế tác");
+
+        // Build ingredient options
         $options = [];
         $options[] = [
             "value" => "",
             "text" => "Chọn nguyên liệu"
         ];
         foreach ($nguyenlieu as $row) {
-            $typeName = ($row['type'] == 1) ? $jatbi->lang('Đai')
-                : (($row['type'] == 2) ? $jatbi->lang('Ngọc') : 'Khác');
+            $rowType = (int) ($row['type'] ?? 0);
+            $typeName = ($rowType == 1) ? $jatbi->lang('Đai')
+                : (($rowType == 2) ? $jatbi->lang('Ngọc') : 'Khác');
 
             $options[] = [
-                "value" => $row['id'],
-                "text" => $row['code'] . " - " . $typeName
+                "value" => $row['id'] ?? '',
+                "text" => ($row['code'] ?? '') . " - " . $typeName
             ];
         }
         $vars['nguyenlieu'] = $options;
+
+        // Assign view variables
         $vars['data'] = $data;
         $vars['SelectProducts'] = $SelectProducts;
         $vars['action'] = $action;
+
+        // Groups dropdown
         $groups = $app->select("products_group", ['id(value)', 'code', 'name (text)'], ["deleted" => 0, "status" => 'A']);
         $vars['groups'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn nhóm sản phẩm')]], $groups);
+
+        // Categories dropdown
         $categorys = $app->select("categorys", ['id(value)', 'code', 'name (text)'], ["deleted" => 0, "status" => 'A']);
         $vars['categorys'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn danh mục')]], $categorys);
+
+        // Default codes dropdown
         $default_codes = $app->select("default_code", ['id(value)', 'code', 'name (text)'], ["deleted" => 0, "status" => 'A']);
         $vars['default_codes'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn mã')]], $default_codes);
+
+        // Units dropdown
         $units = $app->select("units", ['id(value)', 'name(text)'], ["deleted" => 0, "status" => 'A']);
         $vars['units'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn đơn vị tính')]], $units);
+
+        // Personnels dropdown
         $personnels = $app->select("personnels", ['id(value)', 'code', 'name (text)'], ["deleted" => 0, "status" => 'A']);
         $vars['personnels'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn nhân viên')]], $personnels);
+
+        // Render template
         echo $app->render($template . '/crafting/pairing-import.html', $vars);
     })->setPermissions(['crafting.add']);
+
+    $app->router('/pairing-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            // bảo vệ $_GET['box']
+            $boxParam = $_GET['box'] ?? '';
+            $boxid = $boxParam === '' ? [] : explode(',', $app->xss($boxParam));
+
+            // đảm bảo select trả về mảng
+            $datas = $app->select("crafting", "*", ["id" => $boxid, "deleted" => 0]) ?? [];
+            if (!is_array($datas)) $datas = [];
+
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $craftingId = $data['id'] ?? 0;
+                    if (!$craftingId) continue;
+
+                    $app->update("crafting", ["deleted" => 1], ["id" => $craftingId]);
+
+                    $code_ware = strtotime(date("Y-m-d H:i:s"));
+                    $insert = [
+                        "code"           => $code_ware,
+                        "type"           => 'pairing',
+                        "data"           => 'crafting',
+                        "crafting"       => $craftingId,
+                        "content"        => 'Xóa sản phẩm chế tác',
+                        "user"           => $app->getSession("accounts")['id'] ?? 0,
+                        "date"           => date("Y-m-d H:i:s"),
+                        "active"         => $jatbi->active(30),
+                        "date_poster"    => date("Y-m-d H:i:s"),
+                        "group_crafting" => $data['group_crafting'] ?? 0,
+                    ];
+                    $app->insert("warehouses", $insert);
+                    $orderId = $app->id() ?? 0;
+
+                    // Lấy chi tiết chế tác (đảm bảo mảng)
+                    $cra_details = $app->select("crafting_details", "*", ["crafting" => $craftingId, "deleted" => 0]) ?? [];
+                    if (!is_array($cra_details) || count($cra_details) === 0) {
+                        // không có chi tiết -> tiếp
+                        $app->update("crafting_details", ["deleted" => 1], ["crafting" => $craftingId]);
+                        continue;
+                    }
+
+                    foreach ($cra_details as $cra_detail) {
+                        $ingredId = $cra_detail["ingredient"] ?? 0;
+                        if (!$ingredId) continue;
+
+                        $ingred_cra = $app->get("ingredient", "*", ["id" => $ingredId]) ?? [];
+                        if (!is_array($ingred_cra) || empty($ingred_cra) || empty($ingred_cra['id'])) continue;
+
+                        // amount_total và amount có thể không tồn tại -> default 0
+                        $data_amount_total = (float)($data['amount_total'] ?? 0);
+                        $cra_amount = (float)($cra_detail["amount"] ?? 0);
+
+                        if ($data_amount_total > 0) {
+                            $calcAmount = $cra_amount * $data_amount_total;
+
+                            $insert_wadetail = [
+                                "warehouses"    => $orderId,
+                                "type"          => "import",
+                                "data"          => "crafting",
+                                "ingredient"    => $ingred_cra["id"],
+                                "vendor"        => $ingred_cra["vendor"] ?? null,
+                                "price"         => $ingred_cra["price"] ?? 0,
+                                "cost"          => $ingred_cra["cost"] ?? 0,
+                                "amount"        => $calcAmount,
+                                "amount_total"  => $calcAmount,
+                                "deleted"       => 0,
+                                "user"          => $app->getSession("accounts")['id'] ?? 0,
+                                "date"          => $insert['date_poster'],
+                                "group_crafting" => $insert["group_crafting"],
+                            ];
+                            $app->insert("warehouses_details", $insert_wadetail);
+                            $getwadetail = $app->id() ?? 0;
+
+                            // giữ nguyên logic cũ (có nhân thêm theo code gốc)
+                            $insert_warelogs = [
+                                "type"           => $insert_wadetail['type'],
+                                "data"           => $insert_wadetail['data'],
+                                "warehouses"     => $insert_wadetail['warehouses'] ?? $orderId,
+                                "details"        => $getwadetail,
+                                "ingredient"     => $insert_wadetail["ingredient"] ?? $ingred_cra["id"],
+                                "amount"         => ($insert_wadetail['amount'] ?? 0) * $data_amount_total,
+                                "price"          => $insert_wadetail['price'] ?? 0,
+                                "cost"           => $insert_wadetail['cost'] ?? 0,
+                                "total"          => ($insert_wadetail['amount'] ?? 0) * $data_amount_total * ($insert_wadetail['price'] ?? 0),
+                                "date"           => $insert['date'],
+                                "user"           => $app->getSession("accounts")['id'] ?? 0,
+                                "notes"          => 'Nhập từ xóa sản phẩm chế tác',
+                                "group_crafting" => $insert_wadetail["group_crafting"] ?? $insert["group_crafting"],
+                            ];
+                            $app->insert("warehouses_logs", $insert_warelogs);
+
+                            // Cập nhật tồn kho nguyên liệu theo group_crafting (giữ nguyên logic)
+                            $group = (int)($data['group_crafting'] ?? 0);
+                            if ($group === 1) {
+                                $app->update("ingredient", [
+                                    "crafting" => (float)($ingred_cra["crafting"] ?? 0) + $calcAmount
+                                ], ["id" => $ingred_cra['id']]);
+                            }
+                            if ($group === 2) {
+                                $app->update("ingredient", [
+                                    "craftingsilver" => (float)($ingred_cra["craftingsilver"] ?? 0) + $calcAmount
+                                ], ["id" => $ingred_cra['id']]);
+                            }
+                            if ($group === 3) {
+                                $app->update("ingredient", [
+                                    "craftingchain" => (float)($ingred_cra["craftingchain"] ?? 0) + $calcAmount
+                                ], ["id" => $ingred_cra['id']]);
+                            }
+                        }
+                    }
+
+                    // đánh dấu chi tiết đã xóa (giữ logic)
+                    $app->update("crafting_details", ["deleted" => 1], ["crafting" => $craftingId]);
+                }
+
+                // giữ nguyên gọi logs & trash như code gốc
+                $jatbi->logs('financial_paper', 'delete', $datas);
+                $jatbi->trash('/accountants/financial_paper-restore', "Xóa chứng từ kế toán: ", ["database" => 'expenditure', "data" => $boxid]);
+
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra")]);
+            }
+        }
+    })->setPermissions(['goldsmithing.deleted']);
+
 
     $app->router('/pairing-ingredient/{action}', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json']);
@@ -1723,9 +1920,10 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
 
     $app->router('/pairing-export/{type}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $action = "export";
-        $vars['action'] = $action;
         $type = $vars['type'] ?? 'gold';
+        $vars['action'] = $action;
 
+        // Determine group_crafting_id
         switch ($type) {
             case 'silver':
                 $vars['title'] = $jatbi->lang("Xuất kho Bạc");
@@ -1742,48 +1940,82 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 break;
         }
 
-        if (($_SESSION['pairing'][$action]['group_crafting'] ?? null) != $group_crafting_id) {
-            unset($_SESSION['pairing'][$action]);
-            $_SESSION['pairing'][$action]['group_crafting'] = $group_crafting_id;
+        // Safely get pairing data from cookie
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
         }
 
-        if (empty($_SESSION['pairing'][$action]['date'])) {
-            $_SESSION['pairing'][$action]['date'] = date("Y-m-d");
+        // Reset if group_crafting doesn't match
+        $currentGroup = (int) ($pairing[$action]['group_crafting'] ?? 0);
+        if ($currentGroup != $group_crafting_id) {
+            unset($pairing[$action]);
+            $pairing[$action]['group_crafting'] = $group_crafting_id;
         }
 
-        $data = $_SESSION['pairing'][$action] ?? [];
+        // Set default date
+        if (empty($pairing[$action]['date'])) {
+            $pairing[$action]['date'] = date("Y-m-d");
+        }
+
+        // Save back to cookie
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+
+        $data = $pairing[$action] ?? [];
         $vars['data'] = $data;
 
+        // Fetch available craftings
         $craftings_data = $app->select(
             "crafting",
             ["id", "code", "name"],
-            ["deleted" => 0, "amount_total[>]" => 0, "group_crafting" => $data["group_crafting"] ?? $group_crafting_id]
+            [
+                "deleted" => 0,
+                "amount_total[>]" => 0,
+                "group_crafting" => $data["group_crafting"] ?? $group_crafting_id
+            ]
         );
+
         $vars['craftings'] = array_map(function ($item) {
-            return ['value' => $item['id'], 'text' => $item['code'] . ' - ' . $item['name']];
+            return [
+                'value' => $item['id'] ?? '',
+                'text'  => ($item['code'] ?? '') . ' - ' . ($item['name'] ?? '')
+            ];
         }, $craftings_data);
 
-
         $empty_option = [['value' => '', 'text' => $jatbi->lang('Tất cả')]];
-
         $vars['stores'] = array_merge($empty_option, $stores);
 
+        $storeId = $data['stores']['id'] ?? $accStore;
         $branchs_data = $app->select(
             "branch",
             ["id(value)", "name(text)"],
-            ["deleted" => 0, "status" => "A", "stores" => $data['stores']['id'] ?? $accStore]
+            [
+                "deleted" => 0,
+                "status" => "A",
+                "stores" => $storeId
+            ]
         );
-
         $vars['branchs'] = array_merge($empty_option, $branchs_data);
 
         $session_products = $data['crafting'] ?? [];
         if (!empty($session_products)) {
             $unit_ids = array_column($session_products, 'units');
-            $units_map = array_column($app->select("units", ["id", "name"], ["id" => $unit_ids]), 'name', 'id');
-            foreach ($session_products as &$item) {
-                $item['unit_name'] = $units_map[$item['units']] ?? 'N/A';
+            $unit_ids = array_filter($unit_ids);
+
+            if (!empty($unit_ids)) {
+                $units_data = $app->select("units", ["id", "name"], ["id" => $unit_ids]);
+                $units_map = array_column($units_data, 'name', 'id');
+
+                foreach ($session_products as &$item) {
+                    $unitId = $item['units'] ?? '';
+                    $item['unit_name'] = $units_map[$unitId] ?? 'N/A';
+                }
+                unset($item);
             }
-            unset($item);
         }
 
         $vars['SelectProducts'] = $session_products;
@@ -1791,132 +2023,256 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         echo $app->render($template . '/crafting/pairing-export.html', $vars);
     });
 
-    $app->router('/pairing/export/update/date', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/date', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
-        $_SESSION['pairing'][$action]['date'] = $app->xss($_POST['value'] ?? '');
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        $pairing[$action]['date'] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/pairing/export/update/content', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/content', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
-        $_SESSION['pairing'][$action]['content'] = $app->xss($_POST['value'] ?? '');
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        $pairing[$action]['content'] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/pairing/export/update/stores', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/stores', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        $storeId = $app->xss($_POST['value'] ?? 0);
         $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'] ?? 0)]);
-        if ($data) {
-            $_SESSION['pairing'][$action]['stores'] = ["id" => $data['id'], "name" => $data['name']];
+
+        if ($data && isset($data['id'])) {
+            $pairing[$action]['stores'] = ["id" => $data['id'], "name" => $data['name']];
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+        }
+    });
+    $app->router('/pairing/export/update/branch', 'POST', function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+        $action = 'export';
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        $branchId = $app->xss($_POST['value'] ?? 0);
+        $data = $app->get("branch", ["id", "name"], ["id" => $branchId]);
+
+        if ($data && isset($data['id'])) {
+            $pairing[$action]['branch'] = ["id" => $data['id'], "name" => $data['name']];
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
         }
     });
 
-    $app->router('/pairing/export/update/branch', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/craftings/add', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
-        $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'] ?? 0)]);
-        if ($data) {
-            $_SESSION['pairing'][$action]['branch'] = ["id" => $data['id'], "name" => $data['name']];
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } else {
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-        }
-    });
 
-    $app->router('/pairing/export/update/craftings/add', 'POST', function ($vars) use ($app, $jatbi) {
-        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-        $action = 'export';
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
         $post_value = $app->xss($_POST['value'] ?? '');
-
         $data = $app->get("crafting", "*", ["id" => $post_value]);
-        if ($data) {
-            if (($data['amount_total'] ?? 0) <= 0) {
+
+        if ($data && isset($data['id'])) {
+            $amount_total = (float) ($data['amount_total'] ?? 0);
+            if ($amount_total <= 0) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
                 return;
             }
-            if (!isset($_SESSION['pairing'][$action]['crafting'][$data['id']])) {
-                $_SESSION['pairing'][$action]['crafting'][$data['id']] = [
+
+            if (!isset($pairing[$action]['crafting'][$data['id']])) {
+                $pairing[$action]['crafting'][$data['id']] = [
                     "crafting" => $data['id'],
-                    "name" => $data['name'],
+                    "name" => $data['name'] ?? '',
                     "amount" => 0,
-                    "code" => $data['code'],
-                    "categorys" => $data['categorys'],
-                    "price" => $data['price'],
-                    "cost" => $data['cost'],
-                    "group" => $data['group'],
-                    "default_code" => $data['default_code'],
-                    "units" => $data['units'],
-                    "notes" => $data['notes'],
-                    "warehouses" => $data['amount_total'],
+                    "code" => $data['code'] ?? '',
+                    "categorys" => $data['categorys'] ?? '',
+                    "price" => $data['price'] ?? 0,
+                    "cost" => $data['cost'] ?? 0,
+                    "group" => $data['group'] ?? '',
+                    "default_code" => $data['default_code'] ?? '',
+                    "units" => $data['units'] ?? '',
+                    "notes" => $data['notes'] ?? '',
+                    "warehouses" => $amount_total,
                 ];
             }
+
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
         }
     });
 
-    $app->router('/pairing/export/update/craftings/deleted/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/craftings/deleted/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
         $item_key = $vars['key'] ?? 0;
-        unset($_SESSION['pairing'][$action]['crafting'][$item_key]);
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        unset($pairing[$action]['crafting'][$item_key]);
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/pairing/export/update/craftings/amount/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/craftings/amount/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-        $action = 'export';
+        $action   = 'export';
         $item_key = $vars['key'] ?? 0;
-        $value = str_replace(',', '', $_POST['value'] ?? 0);
+        $value    = str_replace(',', '', $_POST['value'] ?? 0);
+        $value    = (float)$value;
 
+        // Lấy dữ liệu từ cookie
+        $pairing_json = $app->getCookie('pairing');
+        $pairing_data = json_decode($pairing_json, true) ?? [];
+
+        // Bảo vệ tránh lỗi undefined
+        $crafting_id = $pairing_data[$action]['crafting'][$item_key]['crafting'] ?? 0;
+
+        // Validate
         if ($value < 0) {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
             return;
         }
-        $getAmount = $app->get("crafting", "amount_total", ["id" => $_SESSION['pairing'][$action]['crafting'][$item_key]['crafting']]);
-        if ($value > ($getAmount ?? 0)) {
-            $_SESSION['pairing'][$action]['crafting'][$item_key]['amount'] = $getAmount;
+
+        $getAmount = $app->get("crafting", "amount_total", ["id" => $crafting_id]) ?? 0;
+
+        if ($value > $getAmount) {
+            // Giới hạn theo số lượng có
+            $pairing_data[$action]['crafting'][$item_key]['amount'] = $getAmount;
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
         } else {
-            $_SESSION['pairing'][$action]['crafting'][$item_key]['amount'] = $app->xss($value);
+            // Gán số lượng mới
+            $pairing_data[$action]['crafting'][$item_key]['amount'] = $app->xss($value);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         }
+
+        // Lưu lại cookie pairing
+        $pairing_json_new = json_encode($pairing_data, JSON_UNESCAPED_UNICODE);
+        $app->setCookie('pairing', $pairing_json_new, time() + ($setting['cookie'] ?? 3600), '/');
     });
 
-    $app->router('/pairing/export/update/craftings/notes/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/craftings/notes/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
         $item_key = $vars['key'] ?? 0;
-        $_SESSION['pairing'][$action]['crafting'][$item_key]['notes'] = $app->xss($_POST['value'] ?? '');
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        if (isset($pairing[$action]['crafting'][$item_key])) {
+            $pairing[$action]['crafting'][$item_key]['notes'] = $app->xss($_POST['value'] ?? '');
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+        }
+
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/pairing/export/update/cancel', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/cancel', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
-        unset($_SESSION['pairing'][$action]);
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        unset($pairing[$action]);
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Đã hủy")]);
     });
 
-    $app->router('/pairing/export/update/completed', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing/export/update/completed', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'export';
-        $data = $_SESSION['pairing'][$action] ?? [];
+
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+
+        $data = $pairing[$action] ?? [];
         $error = [];
 
-
-        if (empty($data['content']) || empty($data['crafting']) || empty($data['stores']['id']) || empty($data['branch']['id'])) {
+        if (empty($data['content']) || empty($data['crafting']) || empty($data['stores']['id'] ?? '') || empty($data['branch']['id'] ?? '')) {
             $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
         } else {
             foreach ($data['crafting'] as $value) {
-                if (empty($value['amount']) || $value['amount'] <= 0) {
+                $amount = (float) ($value['amount'] ?? 0);
+                if ($amount <= 0) {
                     $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập số lượng')];
                     break;
                 }
@@ -1924,7 +2280,18 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
 
         if (empty($error)) {
-            $insert = ["code" => 'PX', "type" => 'export', "data" => 'pairing', "content" => $data['content'], "stores" => $data['stores']['id'], "branch" => $data['branch']['id'], "user" => $app->getSession("accounts")['id'] ?? 0, "date" => $data['date'], "active" => $jatbi->active(30), "date_poster" => date("Y-m-d H:i:s")];
+            $insert = [
+                "code" => 'PX',
+                "type" => 'export',
+                "data" => 'pairing',
+                "content" => $data['content'] ?? '',
+                "stores" => $data['stores']['id'] ?? 0,
+                "branch" => $data['branch']['id'] ?? 0,
+                "user" => $app->getSession("accounts")['id'] ?? 0,
+                "date" => $data['date'] ?? date("Y-m-d"),
+                "active" => $jatbi->active(30),
+                "date_poster" => date("Y-m-d H:i:s")
+            ];
             $app->insert("warehouses", $insert);
             $orderId = $app->id();
 
@@ -1934,25 +2301,33 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                     "warehouses" => $orderId,
                     "data" => $insert['data'],
                     "type" => $insert['type'],
-                    "vendor" => $value['vendor'] ?? NULL,
-                    "crafting" => $value['crafting'],
-                    "amount" => $value['amount'],
-                    "amount_total" => $value['amount'],
-                    "price" => $value['price'],
-                    "cost" => $value['cost'],
-                    "notes" => $value['notes'],
+                    "vendor" => $value['vendor'] ?? null,
+                    "crafting" => $value['crafting'] ?? 0,
+                    "amount" => (float) ($value['amount'] ?? 0),
+                    "amount_total" => (float) ($value['amount'] ?? 0),
+                    "price" => $value['price'] ?? 0,
+                    "cost" => $value['cost'] ?? 0,
+                    "notes" => $value['notes'] ?? '',
                     "date" => date("Y-m-d H:i:s"),
                     "user" => $app->getSession("accounts")['id'] ?? 0,
                     "stores" => $insert['stores'],
                     "branch" => $insert['branch']
                 ];
-                $app->update("crafting", ["amount_total[-]" => $value['amount'], "amount_export[+]" => $value['amount']], ["id" => $value['crafting']]);
+
+                $app->update("crafting", [
+                    "amount_total[-]" => (float) ($value['amount'] ?? 0),
+                    "amount_export[+]" => (float) ($value['amount'] ?? 0)
+                ], ["id" => $value['crafting'] ?? 0]);
             }
-            if (!empty($details_to_insert))
+
+            if (!empty($details_to_insert)) {
                 $app->insert("warehouses_details", $details_to_insert);
+            }
 
             $jatbi->logs('warehouses', $action, []);
-            unset($_SESSION['pairing'][$action]);
+            unset($pairing[$action]);
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
             echo json_encode($error);
@@ -5634,19 +6009,25 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
     });
 
-    $app->router("/crafting-split", 'GET', function ($vars) use ($app, $jatbi, $template) {
-
+    $app->router("/crafting-split", 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
         $action = "split";
         $vars['title'] = $jatbi->lang("Tách dây ngọc");
         $vars['action'] = $action;
 
-        // --- BƯỚC 1: XỬ LÝ SESSION ---
-        if (empty($_SESSION['split'][$action]['group_crafting'])) {
-            $_SESSION['split'][$action]['group_crafting'] = 1;
+        // --- LẤY DỮ LIỆU TỪ COOKIE ---
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
+
+        // --- KHỞI TẠO NẾU TRỐNG ---
+        if (empty($cookie_data['group_crafting'])) {
+            $cookie_data['group_crafting'] = 1;
         }
-        $vars['session_data'] = $_SESSION['split'][$action] ?? [];
 
+        // Lưu lại cookie sau khởi tạo
+        $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
+        $vars['session_data'] = $cookie_data;
 
+        // --- DANH SÁCH SẢN PHẨM XÓA ---
         $remove_products_db = $app->select(
             "remove_products",
             ["[>]products" => ["products" => "id"]],
@@ -5655,14 +6036,13 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         );
         $vars['remove_products_options'] = $remove_products_db;
 
-        // --- BƯỚC 3: TỐI ƯU HÓA - LẤY VÀ XỬ LÝ DỮ LIỆU CHO BẢNG ---
-        $session_products = $_SESSION['split'][$action]['products'] ?? [];
+        // --- LẤY DỮ LIỆU SẢN PHẨM ĐANG LƯU ---
+        $session_products = $cookie_data['products'] ?? [];
         $enriched_products = [];
 
         if (!empty($session_products)) {
             $product_ids = array_column($session_products, 'products');
 
-            // Lấy thông tin sản phẩm chính và đơn vị trong 1 lần query
             $main_products_info = $app->select(
                 "products",
                 ["[>]units" => ["units" => "id"]],
@@ -5671,14 +6051,12 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
             );
             $main_products_map = array_column($main_products_info, null, 'id');
 
-            // Lấy tất cả nguyên liệu của tất cả sản phẩm trong 1 lần query
             $all_materials = $app->select("products_details", "*", ["products" => $product_ids, "deleted" => 0]);
             $materials_by_product = [];
             foreach ($all_materials as $material) {
                 $materials_by_product[$material['products']][] = $material;
             }
 
-            // Gộp dữ liệu lại
             foreach ($session_products as $key => $item) {
                 $p_id = $item['products'];
                 if (isset($main_products_map[$p_id])) {
@@ -5691,41 +6069,55 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         }
         $vars['SelectProducts'] = $enriched_products;
 
-        // --- BƯỚC 4: RENDER VIEW ---
         echo $app->render($template . '/crafting/split.html', $vars);
     })->setPermissions(['split']);
 
-    $app->router('/crafting-split-update/{action}/group_crafting', 'POST', function ($vars) use ($app, $jatbi) {
+
+    // ================== UPDATE CÁC TRƯỜNG ==================
+
+    $app->router('/crafting-split-update/{action}/group_crafting', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
-        $post_value = $app->xss($_POST['value'] ?? '');
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
 
-        $_SESSION['split'][$action]['group_crafting'] = $post_value;
+        $post_value = $app->xss($_POST['value'] ?? '');
+        $cookie_data['group_crafting'] = $post_value;
+
+        $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/crafting-split-update/{action}/content', 'POST', function ($vars) use ($app, $jatbi) {
+
+    $app->router('/crafting-split-update/{action}/content', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
-        $post_value = $app->xss($_POST['value'] ?? '');
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
 
-        $_SESSION['split'][$action]['content'] = $post_value;
+        $post_value = $app->xss($_POST['value'] ?? '');
+        $cookie_data['content'] = $post_value;
+
+        $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/crafting-split-update/{action}/products/add', 'POST', function ($vars) use ($app, $jatbi) {
+
+    $app->router('/crafting-split-update/{action}/products/add', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
-        $post_value = $app->xss($_POST['value'] ?? '');
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
 
+        $post_value = $app->xss($_POST['value'] ?? '');
         $data = $app->get("remove_products", "*", ["id" => $post_value]);
         if ($data) {
             if (($data['amount'] ?? 0) <= 0) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
                 return;
             }
-            if (!isset($_SESSION['split'][$action]['products'][$data['id']])) {
-                $_SESSION['split'][$action]['products'][$data['id']] = [
+            if (!isset($cookie_data['products'][$data['id']])) {
+                $cookie_data['products'][$data['id']] = [
                     "remove_products" => $data['id'],
                     "products" => $data['products'],
                     "amount" => $data['amount'],
@@ -5734,59 +6126,77 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                     "warehouses" => $data['amount'],
                 ];
             }
+
+            $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
         }
     });
 
-    $app->router('/crafting-split-update/{action}/products/deleted/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+
+    $app->router('/crafting-split-update/{action}/products/deleted/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
-        $product_key = $vars['key'] ?? 0;
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
 
-        unset($_SESSION['split'][$action]['products'][$product_key]);
+        $product_key = $vars['key'] ?? 0;
+        unset($cookie_data['products'][$product_key]);
+
+        $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/crafting-split-update/{action}/products/amount/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+
+    $app->router('/crafting-split-update/{action}/products/amount/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = 'split';
+        $cookie_key = "split_" . $action;
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
+
         $product_key = $vars['key'] ?? 0;
         $post_value = $app->xss($_POST['value'] ?? '');
-
         $value = (float) str_replace(',', '', $post_value);
+
         if ($value <= 0) {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0')]);
             return;
         }
 
-        $remove_product_id = $_SESSION["split"][$action]['products'][$product_key]['remove_products'] ?? 0;
+        $remove_product_id = $cookie_data["products"][$product_key]['remove_products'] ?? 0;
         $getAmount = $app->get("remove_products", "amount", ["id" => $remove_product_id]);
 
         if ($value > ($getAmount ?? 0)) {
-            $_SESSION["split"][$action]['products'][$product_key]['amount'] = $getAmount;
+            $cookie_data["products"][$product_key]['amount'] = $getAmount;
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
         } else {
-            $_SESSION["split"][$action]['products'][$product_key]['amount'] = $value;
+            $cookie_data["products"][$product_key]['amount'] = $value;
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         }
+
+        $app->setCookie($cookie_key, json_encode($cookie_data), time() + $setting['cookie'], '/');
     });
+
 
     $app->router('/crafting-split-update/cancel', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-        $action = 'split';
-
-        unset($_SESSION['split'][$action]);
+        setcookie('split_split', '', time() - 3600, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Đã hủy phiếu")]);
     });
 
-    $app->router('/crafting-split-update/{action}/completed', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/crafting-split-update/{action}/completed', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
         $action = 'split';
-        $data = $_SESSION['split'][$action] ?? [];
+        $cookie_key = "split_" . $action;
+
+        // Lấy dữ liệu từ cookie
+        $cookie_data = json_decode($app->getCookie($cookie_key) ?? "{}", true);
+        $data = $cookie_data ?? [];
         $error = [];
 
+        // --- Kiểm tra dữ liệu ---
         if (empty($data['products'])) {
             $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập sản phẩm')];
         } else {
@@ -5797,49 +6207,132 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 }
             }
         }
-        if(empty($data['content'])) {
+
+        if (empty($data['content'])) {
             $error = ['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập nội dung')];
         }
 
+        // --- Nếu không có lỗi ---
         if (empty($error)) {
-            $insert = ["code" => 'PN', "type" => 'import_split', "data" => 'crafting', "content" => $data['content'], "user" => $app->getSession("accounts")['id'] ?? 0, "date" => date('Y-m-d'), "active" => $jatbi->active(30), "date_poster" => date("Y-m-d H:i:s"), "export_status" => 2, "group_crafting" => $data['group_crafting']];
+            $insert = [
+                "code"           => 'PN',
+                "type"           => 'import_split',
+                "data"           => 'crafting',
+                "content"        => $data['content'],
+                "user"           => $app->getSession("accounts")['id'] ?? 0,
+                "date"           => date('Y-m-d'),
+                "active"         => $jatbi->active(30),
+                "date_poster"    => date("Y-m-d H:i:s"),
+                "export_status"  => 2,
+                "group_crafting" => $data['group_crafting'] ?? 1
+            ];
+
+            // Thêm phiếu nhập kho
             $app->insert("warehouses", $insert);
             $orderId = $app->id();
 
+            // --- Duyệt từng sản phẩm ---
             foreach ($data['products'] as $value) {
                 $get_remove = $app->get("remove_products", "*", ["products" => $value["products"]]);
+
+                // Cập nhật lại số lượng đã tách
                 $app->update("remove_products", ["amount[-]" => $value["amount"]], ["id" => $get_remove["id"]]);
 
-                $history_split = ["user" => $app->getSession("accounts")['id'] ?? 0, "date" => date("Y-m-d H:i:s"), "group_crafting" => $data['group_crafting'], "products" => $value['products'], "amount" => $value['amount'], "content" => $insert['content']];
+                // Ghi lịch sử tách
+                $history_split = [
+                    "user"           => $app->getSession("accounts")['id'] ?? 0,
+                    "date"           => date("Y-m-d H:i:s"),
+                    "group_crafting" => $data['group_crafting'],
+                    "products"       => $value['products'],
+                    "amount"         => $value['amount'],
+                    "content"        => $insert['content']
+                ];
                 $app->insert("history_split", $history_split);
                 $history_id = $app->id();
 
-                $products_details = $app->select("products_details", "*", ["products" => $value["products"], "deleted" => 0]);
+                // --- Lấy chi tiết nguyên liệu của sản phẩm ---
+                $products_details = $app->select("products_details", "*", [
+                    "products" => $value["products"],
+                    "deleted"  => 0
+                ]);
+
                 $logs_to_insert = [];
 
                 foreach ($products_details as $details) {
                     $new_amount = $details['amount'] * $value['amount'];
-                    $pro1 = ["warehouses" => $orderId, "data" => $insert['data'], "type" => 'import', "ingredient" => $details['ingredient'], "amount" => $new_amount, "amount_total" => $new_amount, "price" => $details['price'], "notes" => 'Nhập từ tách đai ngọc', "date" => $insert['date_poster'], "user" => $app->getSession("accounts")['id'] ?? 0, "group_crafting" => $insert['group_crafting']];
+
+                    // Nhập kho nguyên liệu
+                    $pro1 = [
+                        "warehouses"    => $orderId,
+                        "data"          => $insert['data'],
+                        "type"          => 'import',
+                        "ingredient"    => $details['ingredient'],
+                        "amount"        => $new_amount,
+                        "amount_total"  => $new_amount,
+                        "price"         => $details['price'],
+                        "notes"         => 'Nhập từ tách đai ngọc',
+                        "date"          => $insert['date_poster'],
+                        "user"          => $app->getSession("accounts")['id'] ?? 0,
+                        "group_crafting"=> $insert['group_crafting']
+                    ];
+
                     $app->insert("warehouses_details", $pro1);
                     $iddetails1 = $app->id();
 
-                    $logs_to_insert[] = ["type" => 'import', "data" => $insert['data'], "warehouses" => $orderId, "details" => $iddetails1, "ingredient" => $details['ingredient'], "price" => $details['price'], "amount" => $pro1['amount'], "total" => $pro1['amount'] * $details['price'], "notes" => 'Nhập từ sửa chế tác', "date" => $insert['date_poster'], "user" => $app->getSession("accounts")['id'] ?? 0, "group_crafting" => $insert['group_crafting']];
+                    // Log nhập kho
+                    $logs_to_insert[] = [
+                        "type"           => 'import',
+                        "data"           => $insert['data'],
+                        "warehouses"     => $orderId,
+                        "details"        => $iddetails1,
+                        "ingredient"     => $details['ingredient'],
+                        "price"          => $details['price'],
+                        "amount"         => $pro1['amount'],
+                        "total"          => $pro1['amount'] * $details['price'],
+                        "notes"          => 'Nhập từ sửa chế tác',
+                        "date"           => $insert['date_poster'],
+                        "user"           => $app->getSession("accounts")['id'] ?? 0,
+                        "group_crafting" => $insert['group_crafting']
+                    ];
 
-                    $update_col = ($insert['group_crafting'] == 1) ? "crafting[+]" : (($insert['group_crafting'] == 2) ? "craftingsilver[+]" : "craftingchain[+]");
+                    // Cập nhật tồn kho theo nhóm chế tác
+                    $update_col = ($insert['group_crafting'] == 1)
+                        ? "crafting[+]"
+                        : (($insert['group_crafting'] == 2) ? "craftingsilver[+]" : "craftingchain[+]");
+
                     $app->update("ingredient", [$update_col => $pro1['amount']], ["id" => $details['ingredient']]);
 
-                    $app->insert("history_split_ingredient", ["history_split" => $history_id, "ingredient" => $details['ingredient'], "amount" => $pro1['amount'], "price" => $details['price'], "total" => $pro1['amount'] * $details['price'], "user" => $app->getSession("accounts")['id'] ?? 0, "date" => date("Y-m-d H:i:s")]);
+                    // Lưu lịch sử nguyên liệu
+                    $app->insert("history_split_ingredient", [
+                        "history_split" => $history_id,
+                        "ingredient"    => $details['ingredient'],
+                        "amount"        => $pro1['amount'],
+                        "price"         => $details['price'],
+                        "total"         => $pro1['amount'] * $details['price'],
+                        "user"          => $app->getSession("accounts")['id'] ?? 0,
+                        "date"          => date("Y-m-d H:i:s")
+                    ]);
                 }
-                if (!empty($logs_to_insert))
+
+                // Lưu logs vào bảng warehouses_logs
+                if (!empty($logs_to_insert)) {
                     $app->insert("warehouses_logs", $logs_to_insert);
+                }
             }
+
+            // Ghi logs hệ thống
             $jatbi->logs('split', $action, $insert);
-            unset($_SESSION['split'][$action]);
+
+            // Xóa cookie sau khi hoàn thành
+            setcookie($cookie_key, '', time() - 3600, '/');
+
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
+            // Nếu có lỗi
             echo json_encode($error);
         }
     });
+
 
     $app->router('/pairing-update/add/amount', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json']);
@@ -5870,218 +6363,422 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/date', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/amount', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["date"] = $app->xss($_POST['value']);
+        
+        // Get cookie and safely decode JSON
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $value = (float) ($_POST['value'] ?? 0);
+
+        if ($value <= 0) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0')]);
+            return;
+        }
+
+        $error = 0;
+        $ingredients = $pairing[$action]['ingredient'] ?? [];
+        foreach ($ingredients as $key => $pro) {
+            $proAmount = (float) ($pro['amount'] ?? 0);
+            $proWarehouses = (float) ($pro['warehouses'] ?? 0);
+            if (($value * $proAmount) > $proWarehouses) {
+                $error += 1;
+            }
+        }
+
+        if ($error > 0) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
+        } else {
+            $pairing[$action]["amount"] = $app->xss($_POST['value'] ?? '');
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+        }
+    });
+
+    $app->router('/pairing-update/add/code', 'POST', function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = 'add';
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["code"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/content', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/date', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["content"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["date"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/name', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/content', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["name"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["content"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/categorys', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/name', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["categorys"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["name"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/group', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/categorys', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["group"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["categorys"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/units', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/group', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["units"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["group"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/default_code', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/units', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["default_code"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["units"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/personnels', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/default_code', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["personnels"] = $app->xss($_POST['value']);
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["default_code"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/pairing-update/add/price', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/personnels', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $_SESSION['pairing'][$action]["price"] = str_replace(",", "", $app->xss($_POST['value']));
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["personnels"] = $app->xss($_POST['value'] ?? '');
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
+    });
+
+    $app->router('/pairing-update/add/price', 'POST', function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = 'add';
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        $pairing[$action]["price"] = str_replace(",", "", $app->xss($_POST['value'] ?? ''));
+        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
     $app->router('/pairing-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
-            // $vars['url'] = "/purchases/purchase";
             echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
-            unset($_SESSION['pairing'][$action]);
+            
+            $cookieData = $app->getCookie('pairing') ?? '';
+            $pairing = [];
+            if ($cookieData !== '') {
+                $decoded = json_decode($cookieData, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $pairing = $decoded;
+                }
+            }
+            
+            unset($pairing[$action]);
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
         }
     });
 
-    $app->router('/pairing-update/add/ingredient/{req}/{id}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-update/add/ingredient/{req}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = 'add';
-        $router['4'] = $vars['req'] ?? '';
-        $router['5'] = $vars['id'] ?? '';
-        if ($router['4'] == 'add') {
-            $data = $app->get("ingredient", "*", ["id" => $app->xss($_POST['value']), "deleted" => 0]);
-            if ($data > 1) {
-                if ($_SESSION['pairing'][$action]['group_crafting'] == 1) {
-                    $warehouses = $data['crafting'];
-                } elseif ($_SESSION['pairing'][$action]['group_crafting'] == 2) {
-                    $warehouses = $data['craftingsilver'];
-                } elseif ($_SESSION['pairing'][$action]['group_crafting'] == 3) {
-                    $warehouses = $data['craftingchain'];
+        $req = $vars['req'] ?? '';
+        $id = $vars['id'] ?? '';
+        
+        $cookieData = $app->getCookie('pairing') ?? '';
+        $pairing = [];
+        if ($cookieData !== '') {
+            $decoded = json_decode($cookieData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $pairing = $decoded;
+            }
+        }
+        
+        if ($req == 'add') {
+            $ingredientId = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("ingredient", "*", ["id" => $ingredientId, "deleted" => 0]);
+            
+            if (is_array($data) && count($data) > 0) {
+                $groupCrafting = (int) ($pairing[$action]['group_crafting'] ?? 0);
+                $warehouses = 0;
+                if ($groupCrafting == 1) {
+                    $warehouses = (float) ($data['crafting'] ?? 0);
+                } elseif ($groupCrafting == 2) {
+                    $warehouses = (float) ($data['craftingsilver'] ?? 0);
+                } elseif ($groupCrafting == 3) {
+                    $warehouses = (float) ($data['craftingchain'] ?? 0);
                 }
+                
+                $error = null;
                 if ($warehouses <= 0) {
                     $error = $jatbi->lang('Số lượng không đủ');
                 }
-                if (!isset($error)) {
-                    if (
-                        !in_array(
-                            $data['id'],
-                            $_SESSION['pairing'][$action]['ingredient'][$data['id']] ?? []
-                        )
-                    ) {
-                        if ($data['type'] == 1) {
-                            $_SESSION['pairing'][$action]['ingredient']['dai'] = [
-                                "ingredient" => $data['id'],
-                                "type" => $data['type'],
-                                "amount" => 1,
-                                "code" => $data['code'],
-                                "group" => $data['group'],
-                                "categorys" => $data['categorys'],
-                                "pearl" => $data['pearl'],
-                                "sizes" => $data['sizes'],
-                                "colors" => $data['colors'],
-                                "units" => $data['units'],
-                                "notes" => $data['notes'],
-                                "price" => $data['price'],
-                                "cost" => $data['cost'],
-                                "warehouses" => $warehouses > 0 ? $warehouses : 0,
-                            ];
-                        } else {
-                            $_SESSION['pairing'][$action]['ingredient'][$data['id']] = [
-                                "ingredient" => $data['id'],
-                                "type" => $data['type'],
-                                "amount" => 1,
-                                "code" => $data['code'],
-                                "group" => $data['group'],
-                                "categorys" => $data['categorys'],
-                                "pearl" => $data['pearl'],
-                                "sizes" => $data['sizes'],
-                                "colors" => $data['colors'],
-                                "units" => $data['units'],
-                                "notes" => $data['notes'],
-                                "price" => $data['price'],
-                                "cost" => $data['cost'],
-                                "warehouses" => $warehouses > 0 ? $warehouses : 0,
-                            ];
-                        }
-                        $_SESSION['pairing'][$action]['code'] = trim($jatbi->getcode($_SESSION['pairing'][$action]['ingredient']));
-                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công'), 'test' => $_SESSION['pairing'][$action]['ingredient'],]);
+                
+                if (!$error) {
+                    $ingredientKey = $data['type'] == 1 ? 'dai' : $data['id'];
+                    $existing = $pairing[$action]['ingredient'][$ingredientKey] ?? null;
+                    
+                    if (!$existing) {
+                        $newIngredient = [
+                            "ingredient" => $data['id'],
+                            "type" => $data['type'],
+                            "amount" => 1,
+                            "code" => $data['code'] ?? '',
+                            "group" => $data['group'] ?? '',
+                            "categorys" => $data['categorys'] ?? '',
+                            "pearl" => $data['pearl'] ?? '',
+                            "sizes" => $data['sizes'] ?? '',
+                            "colors" => $data['colors'] ?? '',
+                            "units" => $data['units'] ?? '',
+                            "notes" => $data['notes'] ?? '',
+                            "price" => $data['price'] ?? 0,
+                            "cost" => $data['cost'] ?? 0,
+                            "warehouses" => $warehouses > 0 ? $warehouses : 0,
+                        ];
+                        $pairing[$action]['ingredient'][$ingredientKey] = $newIngredient;
+                        $pairing[$action]['code'] = trim($jatbi->getcode($pairing[$action]['ingredient'] ?? []));
+                        $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công'), 'test' => $pairing[$action]['ingredient']]);
                     } else {
-                        $getPro = $_SESSION['pairing'][$action]['ingredient'][$data['id']];
-                        $value = $getPro['amount'] + 1;
-                        if ($value > $warehouses) {
-                            $_SESSION['pairing'][$action]['ingredient'][$data['id']]['amount'] = $warehouses;
-                            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ'),]);
+                        $currentAmount = (float) ($existing['amount'] ?? 0);
+                        $newAmount = $currentAmount + 1;
+                        if ($newAmount > $warehouses) {
+                            $pairing[$action]['ingredient'][$ingredientKey]['amount'] = $warehouses;
+                            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+                            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
                         } else {
-                            $_SESSION['pairing'][$action]['ingredient'][$data['id']]['amount'] = $value;
+                            $pairing[$action]['ingredient'][$ingredientKey]['amount'] = $newAmount;
+                            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
                             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
                         }
                     }
                 } else {
-                    echo json_encode(['status' => 'error', 'content' => $error,]);
+                    echo json_encode(['status' => 'error', 'content' => $error]);
                 }
             } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Cập nhật thất bại'),]);
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Cập nhật thất bại')]);
             }
-        } elseif ($router['4'] == 'deleted') {
-            unset($_SESSION['pairing'][$action]['ingredient'][$router['5']]);
-            $_SESSION['pairing'][$action]['code'] = trim($jatbi->getcode($_SESSION['pairing'][$action]['ingredient']));
+        } elseif ($req == 'deleted') {
+            unset($pairing[$action]['ingredient'][$id]);
+            $pairing[$action]['code'] = trim($jatbi->getcode($pairing[$action]['ingredient'] ?? []));
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
-        } elseif ($router['4'] == 'amount') {
+        } elseif ($req == 'amount') {
             $value = (float) ($_POST['value'] ?? 0);
-            $pairingAmount = (float) ($_SESSION['pairing'][$action]['amount'] ?? 0);
-            $groupCrafting = (int) ($_SESSION['pairing'][$action]['group_crafting'] ?? 0);
-
-            $getAmount = $app->get("ingredient", "*", ["id" => $_SESSION['pairing'][$action]['ingredient'][$router['5']]['ingredient']]);
-
+            $pairingAmount = (float) ($pairing[$action]['amount'] ?? 0);
+            $groupCrafting = (int) ($pairing[$action]['group_crafting'] ?? 0);
+            
+            $ingredientData = $pairing[$action]['ingredient'][$id] ?? null;
+            if (!$ingredientData) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Cập nhật thất bại')]);
+                return;
+            }
+            
+            $getAmount = $app->get("ingredient", "*", ["id" => $ingredientData['ingredient'] ?? 0]);
             $crafting = (float) ($getAmount['crafting'] ?? 0);
             $craftingsilver = (float) ($getAmount['craftingsilver'] ?? 0);
             $craftingchain = (float) ($getAmount['craftingchain'] ?? 0);
-
+            
             if ($value < 0) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng phải lớn hơn 0')]);
             } elseif (($value * $pairingAmount) > $crafting && $groupCrafting == 1) {
-                $_SESSION['pairing'][$action]['ingredient'][$router['5']]['amount'] = $crafting / $pairingAmount;
+                $pairing[$action]['ingredient'][$id]['amount'] = $crafting / max($pairingAmount, 1);
+                $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
             } elseif (($value * $pairingAmount) > $craftingsilver && $groupCrafting == 2) {
-                $_SESSION['pairing'][$action]['ingredient'][$router['5']]['amount'] = $craftingsilver / $pairingAmount;
+                $pairing[$action]['ingredient'][$id]['amount'] = $craftingsilver / max($pairingAmount, 1);
+                $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
             } elseif (($value * $pairingAmount) > $craftingchain && $groupCrafting == 3) {
-                $_SESSION['pairing'][$action]['ingredient'][$router['5']]['amount'] = $craftingchain / $pairingAmount;
+                $pairing[$action]['ingredient'][$id]['amount'] = $craftingchain / max($pairingAmount, 1);
+                $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Số lượng không đủ')]);
             } else {
-                $_SESSION['pairing'][$action]['ingredient'][$router['5']]['amount'] = $app->xss($value);
+                $pairing[$action]['ingredient'][$id]['amount'] = $app->xss($value);
+                $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
             }
         } else {
-            $_SESSION['pairing'][$action]['ingredient'][$router['5']][$router['4']] = $app->xss($_POST['value']);
+            if (isset($pairing[$action]['ingredient'][$id])) {
+                $pairing[$action]['ingredient'][$id][$req] = $app->xss($_POST['value'] ?? '');
+                $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+            }
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
         }
     });
 
     $app->router('/pairing-update/add/completed/{rou}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
-            $rou = $vars['rou'];
-
+            $rou = $vars['rou'] ?? '';
             $vars['url'] = "/crafting/" . $rou;
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
-            $data = $_SESSION['pairing'][$action];
+            
+            $cookieData = $app->getCookie('pairing') ?? '';
+            $pairing = [];
+            if ($cookieData !== '') {
+                $decoded = json_decode($cookieData, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $pairing = $decoded;
+                }
+            }
+            
+            $data = $pairing[$action] ?? [];
             $error = [];
             $error_warehouses = 'false';
             $total_products = 0;
-
-            foreach ($data['ingredient'] as $value) {
-                $total_products += $value['amount'] * $value['price'];
-                if ($value['amount'] == '' || $value['amount'] == 0 || $value['amount'] < 0) {
+            
+            $ingredients = $data['ingredient'] ?? [];
+            foreach ($ingredients as $value) {
+                $amount = (float) ($value['amount'] ?? 0);
+                $price = (float) ($value['price'] ?? 0);
+                $total_products += $amount * $price;
+                if ($amount == '' || $amount == 0 || $amount < 0) {
                     $error_warehouses = 'true';
                 }
             }
-            $check = $app->count("crafting", "id", ["code" => $data['code'], "price[!]" => $data['price'], "deleted" => 0, "group_crafting" => $data["group_crafting"]]);
-            if (empty($data['content']) || empty($data['name']) || empty($data['code']) || empty($data['price']) || empty($data['group']) || empty($data['categorys']) || empty($data['default_code']) || empty($data['units']) || empty($data['personnels']) || empty($data['ingredient'])) {
+            
+            $check = $app->count("crafting", "id", [
+                "code" => $data['code'] ?? '',
+                "price[!]" => $data['price'] ?? '',
+                "deleted" => 0,
+                "group_crafting" => $data["group_crafting"] ?? 0
+            ]);
+            
+            if (
+                empty($data['content']) || empty($data['name']) || empty($data['code']) || 
+                empty($data['price']) || empty($data['group']) || empty($data['categorys']) || 
+                empty($data['default_code']) || empty($data['units']) || empty($data['personnels']) || 
+                empty($data['ingredient'])
+            ) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng nhập đầy đủ thông tin')]);
                 return;
             } elseif ($error_warehouses == 'true') {
@@ -6091,262 +6788,293 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Mã sản phẩm đã tồn tại')]);
                 return;
             }
-            if (count($error) == 0) {
-                $check_crafting = $app->get("crafting", ["code", "price", "id", "amount", "amount_total", "group_crafting"], ["code" => $data['code'], "price" => $data['price'], "deleted" => 0, "group_crafting" => $data["group_crafting"], "ORDER" => ["id" => "DESC"]]);
-                if (
-                    ($check_crafting['code'] ?? null) === ($data['code'] ?? null) &&
-                    (float) ($check_crafting['price'] ?? 0) === (float) ($data['price'] ?? 0) &&
-                    (int) ($check_crafting['group_crafting'] ?? 0) === (int) ($data['group_crafting'] ?? 0)
-                ) {
-                    $update_crafting = [
-                        "amount" => $check_crafting['amount'] + $data['amount'],
-                        "amount_total" => $check_crafting['amount_total'] + $data['amount'],
-                        "date" => date("Y-m-d H:i:s"),
-                        "user" => $app->getSession("accounts")['id'],
-                        "content" => $data['content'],
-                    ];
-                    $app->update("crafting", $update_crafting, ["id" => $check_crafting['id']]);
-                    $history_crafting = [
-                        "code" => $data['code'],
-                        "name" => $data['name'],
-                        "notes" => $data['content'],
-                        "amount" => $data['amount'],
-                        "price" => $data['price'],
-                        "total" => $data['amount'] * $data['price'],
-                        "user" => $app->getSession("accounts")['id'],
-                        "date" => date("Y-m-d H:i:s"),
-                        "personnels" => $data['personnels'],
-                        "group_crafting" => $data['group_crafting'],
-                        "crafting" => $check_crafting['id'],
-                        "unit" => $data['units'],
-                        "type" => 1,
-                    ];
-                    $app->insert("history_crafting", $history_crafting);
-                    $history = $app->id();
-                    $code = strtotime(date("Y-m-d H:i:s"));
-                    $insert = [
-                        "code" => $code,
-                        "type" => 'pairing',
+            
+            $check_crafting = $app->get("crafting", [
+                "code", "price", "id", "amount", "amount_total", "group_crafting"
+            ], [
+                "code" => $data['code'] ?? '',
+                "price" => $data['price'] ?? '',
+                "deleted" => 0,
+                "group_crafting" => $data["group_crafting"] ?? 0,
+                "ORDER" => ["id" => "DESC"]
+            ]);
+            
+            $pro_logs = [];
+            
+            if (
+                isset($check_crafting['code']) && ($check_crafting['code'] ?? '') === ($data['code'] ?? '') &&
+                (float) ($check_crafting['price'] ?? 0) === (float) ($data['price'] ?? 0) &&
+                (int) ($check_crafting['group_crafting'] ?? 0) === (int) ($data['group_crafting'] ?? 0)
+            ) {
+                $update_crafting = [
+                    "amount" => (float) ($check_crafting['amount'] ?? 0) + (float) ($data['amount'] ?? 0),
+                    "amount_total" => (float) ($check_crafting['amount_total'] ?? 0) + (float) ($data['amount'] ?? 0),
+                    "date" => date("Y-m-d H:i:s"),
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "content" => $data['content'] ?? '',
+                ];
+                $app->update("crafting", $update_crafting, ["id" => $check_crafting['id']]);
+                
+                $history_crafting = [
+                    "code" => $data['code'] ?? '',
+                    "name" => $data['name'] ?? '',
+                    "notes" => $data['content'] ?? '',
+                    "amount" => $data['amount'] ?? 0,
+                    "price" => $data['price'] ?? 0,
+                    "total" => (float) ($data['amount'] ?? 0) * (float) ($data['price'] ?? 0),
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => date("Y-m-d H:i:s"),
+                    "personnels" => $data['personnels'] ?? '',
+                    "group_crafting" => $data['group_crafting'] ?? 0,
+                    "crafting" => $check_crafting['id'],
+                    "unit" => $data['units'] ?? '',
+                    "type" => 1,
+                ];
+                $app->insert("history_crafting", $history_crafting);
+                $history = $app->id();
+                
+                $code = strtotime(date("Y-m-d H:i:s"));
+                $insert = [
+                    "code" => $code,
+                    "type" => 'pairing',
+                    "data" => 'crafting',
+                    "content" => $data['content'] ?? '',
+                    "vendor" => $data['vendor']['id'] ?? 0,
+                    "stores" => $data['stores']['id'] ?? 0,
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => $data['date'] ?? date("Y-m-d"),
+                    "active" => $jatbi->active(30),
+                    "date_poster" => date("Y-m-d H:i:s"),
+                    "group_crafting" => $data['group_crafting'] ?? 0,
+                ];
+                $app->insert("warehouses", $insert);
+                $orderId = $app->id();
+                
+                foreach ($ingredients as $key => $value) {
+                    $pro = [
+                        "warehouses" => $orderId,
                         "data" => 'crafting',
-                        "content" => $data['content'],
-                        "vendor" => $data['vendor']['id'],
-                        "stores" => $data['stores']['id'],
-                        "user" => $app->getSession("accounts")['id'],
-                        "date" => $data['date'],
-                        "active" => $jatbi->active(30),
-                        "date_poster" => date("Y-m-d H:i:s"),
-                        "group_crafting" => $data['group_crafting'],
+                        "type" => 'export',
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "amount" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0),
+                        "amount_total" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0),
+                        "price" => $value['price'] ?? 0,
+                        "cost" => $value['cost'] ?? 0,
+                        "notes" => 'Xuất chế tác',
+                        "date" => date("Y-m-d H:i:s"),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "stores" => $insert['stores'] ?? 0,
+                        "group_crafting" => $insert['group_crafting'] ?? 0,
                     ];
-                    $app->insert("warehouses", $insert);
-                    $orderId = $app->id();
-                    foreach ($data['ingredient'] as $key => $value) {
-                        $pro = [
-                            "warehouses" => $orderId,
-                            "data" => 'crafting',
-                            "type" => 'export',
-                            "ingredient" => $value['ingredient'],
-                            "amount" => $value['amount'] * $data['amount'],
-                            "amount_total" => $value['amount'] * $data['amount'],
-                            "price" => $value['price'],
-                            "cost" => $value['cost'],
-                            "notes" => 'Xuất chế tác',
-                            "date" => date("Y-m-d H:i:s"),
-                            "user" => $app->getSession("accounts")['id'],
-                            "stores" => $insert['stores'],
-                            "group_crafting" => $insert['group_crafting'],
-                        ];
-                        $app->insert("warehouses_details", $pro);
-                        $details = $app->id();
-                        $warehouses_logs = [
-                            "type" => 'export',
-                            "data" => 'crafting',
-                            "warehouses" => $orderId,
-                            "details" => $details,
-                            "ingredient" => $value['ingredient'],
-                            "amount" => $app->xss($value['amount'] * $data['amount']),
-                            "price" => $value['price'],
-                            "cost" => $value['cost'],
-                            "total" => $value['amount'] * $data['amount'] * $value['price'],
-                            "date" => date('Y-m-d H:i:s'),
-                            "user" => $app->getSession("accounts")['id'],
-                            "notes" => 'Xuất chế tác',
-                            "stores" => $insert['stores'],
-                            "group_crafting" => $insert['group_crafting'],
-                        ];
-                        $app->insert("warehouses_logs", $warehouses_logs);
-                        $getProducts = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $value['ingredient']]);
-                        if ($insert['group_crafting'] == 1) {
-                            $app->update("ingredient", ["crafting" => $getProducts['crafting'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        } elseif ($insert['group_crafting'] == 2) {
-                            $app->update("ingredient", ["craftingsilver" => $getProducts['craftingsilver'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        } elseif ($insert['group_crafting'] == 3) {
-                            $app->update("ingredient", ["craftingchain" => $getProducts['craftingchain'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        }
-                        $history_crafting_ingredient = [
-                            "history_crafting" => $history,
-                            "crafting" => $check_crafting['id'],
-                            "ingredient" => $value['ingredient'],
-                            "code" => $value['code'],
-                            "type" => $value['type'],
-                            "amount" => $value['amount'],
-                            "price" => $value['price'],
-                            "total" => $value['amount'] * $value['price'],
-                            "user" => $app->getSession("accounts")['id'],
-                            "date" => date("Y-m-d H:i:s"),
-                        ];
-                        $app->insert("history_crafting_ingredient", $history_crafting_ingredient);
+                    $app->insert("warehouses_details", $pro);
+                    $details = $app->id();
+                    
+                    $warehouses_logs = [
+                        "type" => 'export',
+                        "data" => 'crafting',
+                        "warehouses" => $orderId,
+                        "details" => $details,
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "amount" => $app->xss((float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0)),
+                        "price" => $value['price'] ?? 0,
+                        "cost" => $value['cost'] ?? 0,
+                        "total" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0) * (float) ($value['price'] ?? 0),
+                        "date" => date('Y-m-d H:i:s'),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "notes" => 'Xuất chế tác',
+                        "stores" => $insert['stores'] ?? 0,
+                        "group_crafting" => $insert['group_crafting'] ?? 0,
+                    ];
+                    $app->insert("warehouses_logs", $warehouses_logs);
+                    
+                    $getProducts = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $value['ingredient'] ?? 0]);
+                    if (($insert['group_crafting'] ?? 0) == 1) {
+                        $app->update("ingredient", ["crafting" => (float) ($getProducts['crafting'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
+                    } elseif (($insert['group_crafting'] ?? 0) == 2) {
+                        $app->update("ingredient", ["craftingsilver" => (float) ($getProducts['craftingsilver'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
+                    } elseif (($insert['group_crafting'] ?? 0) == 3) {
+                        $app->update("ingredient", ["craftingchain" => (float) ($getProducts['craftingchain'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
                     }
-                } else {
-                    $crafting = [
-                        "code" => $data['code'],
-                        "name" => $data['name'],
-                        "content" => $data['content'],
-                        "notes" => $data['notes'] ?? "",
-                        "amount" => $data['amount'],
-                        "amount_total" => $data['amount'],
-                        "price" => $data['price'],
-                        "cost" => $data['cost'],
-                        "total" => $data['amount'] * $data['price'],
-                        "categorys" => $data['categorys'],
-                        "group" => $data['group'],
-                        "units" => $data['units'],
-                        "user" => $app->getSession("accounts")['id'],
+                    
+                    $history_crafting_ingredient = [
+                        "history_crafting" => $history,
+                        "crafting" => $check_crafting['id'],
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "code" => $value['code'] ?? '',
+                        "type" => $value['type'] ?? 0,
+                        "amount" => $value['amount'] ?? 0,
+                        "price" => $value['price'] ?? 0,
+                        "total" => (float) ($value['amount'] ?? 0) * (float) ($value['price'] ?? 0),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
                         "date" => date("Y-m-d H:i:s"),
-                        "status" => 1,
-                        "personnels" => $data['personnels'],
-                        "group_crafting" => $data['group_crafting'],
-                        "default_code" => $data['default_code'],
                     ];
-                    $app->insert("crafting", $crafting);
-                    $getID = $app->id();
-                    $history_crafting = [
-                        "code" => $data['code'],
-                        "name" => $data['name'],
-                        "notes" => $data['content'],
-                        "amount" => $data['amount'],
-                        "price" => $data['price'],
-                        "total" => $data['amount'] * $data['price'],
-                        "user" => $app->getSession("accounts")['id'],
-                        "date" => date("Y-m-d H:i:s"),
-                        "personnels" => $data['personnels'],
-                        "group_crafting" => $data['group_crafting'],
-                        "crafting" => $getID,
-                        "unit" => $data['units'],
-                        "type" => 1,
-                    ];
-                    $app->insert("history_crafting", $history_crafting);
-                    $history = $app->id();
-                    $code = strtotime(date("Y-m-d H:i:s"));
-                    $insert = [
-                        "code" => $code,
-                        "type" => 'pairing',
+                    $app->insert("history_crafting_ingredient", $history_crafting_ingredient);
+                }
+            } else {
+                $crafting = [
+                    "code" => $data['code'] ?? '',
+                    "name" => $data['name'] ?? '',
+                    "content" => $data['content'] ?? '',
+                    "notes" => $data['notes'] ?? "",
+                    "amount" => $data['amount'] ?? 0,
+                    "amount_total" => $data['amount'] ?? 0,
+                    "price" => $data['price'] ?? 0,
+                    "cost" => $data['cost'] ?? 0,
+                    "total" => (float) ($data['amount'] ?? 0) * (float) ($data['price'] ?? 0),
+                    "categorys" => $data['categorys'] ?? '',
+                    "group" => $data['group'] ?? '',
+                    "units" => $data['units'] ?? '',
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => date("Y-m-d H:i:s"),
+                    "status" => 1,
+                    "personnels" => $data['personnels'] ?? '',
+                    "group_crafting" => $data['group_crafting'] ?? 0,
+                    "default_code" => $data['default_code'] ?? '',
+                ];
+                $app->insert("crafting", $crafting);
+                $getID = $app->id();
+                
+                $history_crafting = [
+                    "code" => $data['code'] ?? '',
+                    "name" => $data['name'] ?? '',
+                    "notes" => $data['content'] ?? '',
+                    "amount" => $data['amount'] ?? 0,
+                    "price" => $data['price'] ?? 0,
+                    "total" => (float) ($data['amount'] ?? 0) * (float) ($data['price'] ?? 0),
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => date("Y-m-d H:i:s"),
+                    "personnels" => $data['personnels'] ?? '',
+                    "group_crafting" => $data['group_crafting'] ?? 0,
+                    "crafting" => $getID,
+                    "unit" => $data['units'] ?? '',
+                    "type" => 1,
+                ];
+                $app->insert("history_crafting", $history_crafting);
+                $history = $app->id();
+                
+                $code = strtotime(date("Y-m-d H:i:s"));
+                $insert = [
+                    "code" => $code,
+                    "type" => 'pairing',
+                    "data" => 'crafting',
+                    "content" => $data['content'] ?? '',
+                    "vendor" => $data['vendor']['id'] ?? 0,
+                    "stores" => $data['stores']['id'] ?? 0,
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => $data['date'] ?? date("Y-m-d"),
+                    "active" => $jatbi->active(30),
+                    "date_poster" => date("Y-m-d H:i:s"),
+                    "group_crafting" => $data['group_crafting'] ?? 0,
+                ];
+                $app->insert("warehouses", $insert);
+                $orderId = $app->id();
+                
+                foreach ($ingredients as $key => $value) {
+                    $pro = [
+                        "warehouses" => $orderId,
                         "data" => 'crafting',
-                        "content" => $data['content'],
-                        "vendor" => $data['vendor']['id'] ?? 0,
-                        "stores" => $data['stores']['id'],
-                        "user" => $app->getSession("accounts")['id'],
-                        "date" => $data['date'],
-                        "active" => $jatbi->active(30),
-                        "date_poster" => date("Y-m-d H:i:s"),
-                        "group_crafting" => $data['group_crafting'],
+                        "type" => 'export',
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "amount" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0),
+                        "amount_total" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0),
+                        "price" => $value['price'] ?? 0,
+                        "cost" => $value['cost'] ?? 0,
+                        "notes" => 'Xuất chế tác',
+                        "date" => date("Y-m-d H:i:s"),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "stores" => $insert['stores'] ?? 0,
+                        "group_crafting" => $insert['group_crafting'] ?? 0,
                     ];
-                    $app->insert("warehouses", $insert);
-                    $orderId = $app->id();
-                    foreach ($data['ingredient'] as $key => $value) {
-                        $pro = [
-                            "warehouses" => $orderId,
-                            "data" => 'crafting',
-                            "type" => 'export',
-                            "ingredient" => $value['ingredient'],
-                            "amount" => $value['amount'] * $data['amount'],
-                            "amount_total" => $value['amount'] * $data['amount'],
-                            "price" => $value['price'],
-                            "cost" => $value['cost'],
-                            "notes" => 'Xuất chế tác',
-                            "date" => date("Y-m-d H:i:s"),
-                            "user" => $app->getSession("accounts")['id'],
-                            "stores" => $insert['stores'],
-                            "group_crafting" => $insert['group_crafting'],
-                        ];
-                        $app->insert("warehouses_details", $pro);
-                        $details = $app->id();
-                        $warehouses_logs = [
-                            "type" => 'export',
-                            "data" => 'crafting',
-                            "warehouses" => $orderId,
-                            "details" => $details,
-                            "ingredient" => $value['ingredient'],
-                            "amount" => $app->xss($value['amount'] * $data['amount']),
-                            "price" => $value['price'],
-                            "cost" => $value['cost'],
-                            "total" => $value['amount'] * $data['amount'] * $value['price'],
-                            "date" => date('Y-m-d H:i:s'),
-                            "user" => $app->getSession("accounts")['id'],
-                            "notes" => 'Xuất chế tác',
-                            "stores" => $insert['stores'],
-                            "group_crafting" => $insert['group_crafting'],
-                        ];
-                        $app->insert("warehouses_logs", $warehouses_logs);
-                        $crafting_details = [
-                            "crafting" => $getID,
-                            "ingredient" => $value['ingredient'],
-                            "code" => $value['code'],
-                            "type" => $value['type'],
-                            "group" => $value['group'],
-                            "categorys" => $value['categorys'],
-                            "pearl" => $value['pearl'],
-                            "sizes" => $value['sizes'],
-                            "colors" => $value['colors'],
-                            "units" => $value['units'],
-                            "amount" => $value['amount'],
-                            "price" => $value['price'],
-                            "cost" => $value['cost'],
-                            "total" => $value['amount'] * $value['price'],
-                            "user" => $app->getSession("accounts")['id'],
-                            "date" => date("Y-m-d H:i:s"),
-                        ];
-                        $app->insert("crafting_details", $crafting_details);
-                        $pro_logs[] = $crafting_details;
-                        $history_crafting_ingredient = [
-                            "history_crafting" => $history,
-                            "crafting" => $getID,
-                            "ingredient" => $value['ingredient'],
-                            "code" => $value['code'],
-                            "type" => $value['type'],
-                            "amount" => $value['amount'],
-                            "price" => $value['price'],
-                            "total" => $value['amount'] * $value['price'],
-                            "user" => $app->getSession("accounts")['id'],
-                            "date" => date("Y-m-d H:i:s"),
-                        ];
-                        $app->insert("history_crafting_ingredient", $history_crafting_ingredient);
-                        $getProducts = $app->get("ingredient", "*", ["id" => $value['ingredient']]);
-                        if ($insert['group_crafting'] == 1) {
-                            $app->update("ingredient", ["crafting" => $getProducts['crafting'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        } elseif ($insert['group_crafting'] == 2) {
-                            $app->update("ingredient", ["craftingsilver" => $getProducts['craftingsilver'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        } elseif ($insert['group_crafting'] == 3) {
-                            $app->update("ingredient", ["craftingchain" => $getProducts['craftingchain'] - $warehouses_logs['amount'],], ["id" => $getProducts['id']]);
-                        }
+                    $app->insert("warehouses_details", $pro);
+                    $details = $app->id();
+                    
+                    $warehouses_logs = [
+                        "type" => 'export',
+                        "data" => 'crafting',
+                        "warehouses" => $orderId,
+                        "details" => $details,
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "amount" => $app->xss((float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0)),
+                        "price" => $value['price'] ?? 0,
+                        "cost" => $value['cost'] ?? 0,
+                        "total" => (float) ($value['amount'] ?? 0) * (float) ($data['amount'] ?? 0) * (float) ($value['price'] ?? 0),
+                        "date" => date('Y-m-d H:i:s'),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "notes" => 'Xuất chế tác',
+                        "stores" => $insert['stores'] ?? 0,
+                        "group_crafting" => $insert['group_crafting'] ?? 0,
+                    ];
+                    $app->insert("warehouses_logs", $warehouses_logs);
+                    
+                    $crafting_details = [
+                        "crafting" => $getID,
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "code" => $value['code'] ?? '',
+                        "type" => $value['type'] ?? 0,
+                        "group" => $value['group'] ?? '',
+                        "categorys" => $value['categorys'] ?? '',
+                        "pearl" => $value['pearl'] ?? '',
+                        "sizes" => $value['sizes'] ?? '',
+                        "colors" => $value['colors'] ?? '',
+                        "units" => $value['units'] ?? '',
+                        "amount" => $value['amount'] ?? 0,
+                        "price" => $value['price'] ?? 0,
+                        "cost" => $value['cost'] ?? 0,
+                        "total" => (float) ($value['amount'] ?? 0) * (float) ($value['price'] ?? 0),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "date" => date("Y-m-d H:i:s"),
+                    ];
+                    $app->insert("crafting_details", $crafting_details);
+                    $pro_logs[] = $crafting_details;
+                    
+                    $history_crafting_ingredient = [
+                        "history_crafting" => $history,
+                        "crafting" => $getID,
+                        "ingredient" => $value['ingredient'] ?? 0,
+                        "code" => $value['code'] ?? '',
+                        "type" => $value['type'] ?? 0,
+                        "amount" => $value['amount'] ?? 0,
+                        "price" => $value['price'] ?? 0,
+                        "total" => (float) ($value['amount'] ?? 0) * (float) ($value['price'] ?? 0),
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "date" => date("Y-m-d H:i:s"),
+                    ];
+                    $app->insert("history_crafting_ingredient", $history_crafting_ingredient);
+                    
+                    $getProducts = $app->get("ingredient", "*", ["id" => $value['ingredient'] ?? 0]);
+                    if (($insert['group_crafting'] ?? 0) == 1) {
+                        $app->update("ingredient", ["crafting" => (float) ($getProducts['crafting'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
+                    } elseif (($insert['group_crafting'] ?? 0) == 2) {
+                        $app->update("ingredient", ["craftingsilver" => (float) ($getProducts['craftingsilver'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
+                    } elseif (($insert['group_crafting'] ?? 0) == 3) {
+                        $app->update("ingredient", ["craftingchain" => (float) ($getProducts['craftingchain'] ?? 0) - (float) $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
                     }
                 }
-                $jatbi->logs('pairing', $action, [$crafting, $pro_logs, $_SESSION['pairing'][$action]]);
-                unset($_SESSION['pairing'][$action]);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
-            } else {
-                echo json_encode(['status' => 'error', 'content' => $error['content']]);
             }
+            
+            $jatbi->logs('pairing', $action, [$crafting ?? [], $pro_logs, $pairing[$action] ?? []]);
+            unset($pairing[$action]);
+            $app->setCookie('pairing', json_encode($pairing), time() + 86400, '/');
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
         }
     });
+
 
     $app->router('/pairing-crafting/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Sửa chế tác");
         $dispatch = "crafting";
         $action = $vars['id'];
 
-        // Khởi tạo session crafting nếu chưa có
-        if (empty($_SESSION['crafting'][$action]['date'])) {
-            $_SESSION['crafting'][$action]['date'] = date("Y-m-d H:i:s");
+        // Cookie name
+        $cookie_name = "crafting_data";
+        $crafting_data = $app->getCookie($cookie_name);
+        $crafting_data = $crafting_data ? json_decode($crafting_data, true) : [];
+        $crafting_data[$action] = $crafting_data[$action] ?? [];
+
+        // Khởi tạo date nếu chưa có
+        if (empty($crafting_data[$action]['date'])) {
+            $crafting_data[$action]['date'] = date("Y-m-d H:i:s");
+            $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
         }
 
         // Lấy thông tin chế tác
@@ -6358,9 +7086,10 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
 
         if (!empty($get_crafting) && is_array($get_crafting)) {
 
-            // Nếu session hiện tại không cùng bản ghi, reset
-            if (($_SESSION['crafting'][$action]['crafting'] ?? null) !== $crafting_id) {
-                unset($_SESSION['crafting'][$action]);
+            // Nếu cookie không cùng bản ghi → reset
+            if (($crafting_data[$action]['crafting'] ?? null) !== $crafting_id) {
+                unset($crafting_data[$action]);
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
             }
 
             $details = $app->select("crafting_details", "*", [
@@ -6368,10 +7097,10 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 "deleted" => 0
             ]);
 
-            if (empty($_SESSION[$dispatch][$action]['crafting'])) {
+            if (empty($crafting_data[$action]['crafting'])) {
 
                 // Gán thông tin cơ bản
-                $_SESSION['crafting'][$action] = [
+                $crafting_data[$action] = [
                     'price'          => $get_crafting['price'],
                     'categorys'      => $get_crafting['categorys'],
                     'group'          => $get_crafting['group'],
@@ -6390,7 +7119,6 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                 foreach ($details as $value) {
                     $warehouses = null;
 
-                    // Xác định bảng lấy nguyên liệu
                     switch ((int)$get_crafting['group_crafting']) {
                         case 1:
                             $warehouses = $app->get("ingredient", "crafting", ["id" => $value["ingredient"]]);
@@ -6403,48 +7131,49 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                             break;
                     }
 
-                    // Chuẩn hóa dữ liệu nguyên liệu
                     $ingredient_data = [
-                        "crafting"   => $value['crafting']   ?? null,
+                        "crafting"   => $value['crafting'] ?? null,
                         "ingredient" => $value['ingredient'] ?? null,
-                        "type"       => $value['type']       ?? null,
-                        "amount"     => $value['amount']     ?? 0,
-                        "code"       => $value['code']       ?? null,
-                        "group"      => $value['group']      ?? null,
-                        "categorys"  => $value['categorys']  ?? null,
-                        "pearl"      => $value['pearl']      ?? null,
-                        "sizes"      => $value['sizes']      ?? null,
-                        "colors"     => $value['colors']     ?? null,
-                        "units"      => $value['units']      ?? null,
-                        "price"      => $value['price']      ?? 0,
-                        "cost"       => $value['cost']       ?? 0,
-                        "notes"      => $value['notes']      ?? '',
+                        "type"       => $value['type'] ?? null,
+                        "amount"     => $value['amount'] ?? 0,
+                        "code"       => $value['code'] ?? null,
+                        "group"      => $value['group'] ?? null,
+                        "categorys"  => $value['categorys'] ?? null,
+                        "pearl"      => $value['pearl'] ?? null,
+                        "sizes"      => $value['sizes'] ?? null,
+                        "colors"     => $value['colors'] ?? null,
+                        "units"      => $value['units'] ?? null,
+                        "price"      => $value['price'] ?? 0,
+                        "cost"       => $value['cost'] ?? 0,
+                        "notes"      => $value['notes'] ?? '',
                         "warehouses" => $warehouses ?? [],
                         "deleted"    => 0,
                     ];
 
                     if ((int)$value['type'] === 1) {
-                        $_SESSION['crafting'][$action]['ingredient']['dai'] = $ingredient_data;
-                        $_SESSION['crafting'][$action]['ingredient-old']['dai'] = $ingredient_data;
+                        $crafting_data[$action]['ingredient']['dai'] = $ingredient_data;
+                        $crafting_data[$action]['ingredient-old']['dai'] = $ingredient_data;
                     } else {
                         $key = $value['ingredient'];
-                        $_SESSION['crafting'][$action]['ingredient'][$key] = $ingredient_data;
-                        $_SESSION['crafting'][$action]['ingredient-old'][$key] = $ingredient_data;
+                        $crafting_data[$action]['ingredient'][$key] = $ingredient_data;
+                        $crafting_data[$action]['ingredient-old'][$key] = $ingredient_data;
                     }
                 }
 
                 // Sinh mã code
-                $_SESSION['crafting'][$action]['code'] = $jatbi->getcode($_SESSION['crafting'][$action]['ingredient']);
+                $crafting_data[$action]['code'] = $jatbi->getcode($crafting_data[$action]['ingredient']);
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
             }
 
             // Lấy dữ liệu đã lưu
-            $data = $_SESSION[$dispatch][$action];
+            $data = $crafting_data[$action] ?? [];
             $ingredient = $app->select("ingredient", "*", [
                 "deleted" => 0,
                 "status" => 'A',
             ]);
             $SelectProducts = $data['ingredient'] ?? [];
         }
+
         $vars['dispatch'] = $dispatch;
         $vars['action'] = $action;
         $vars['SelectProducts'] = $SelectProducts;
@@ -6458,59 +7187,62 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
         $vars['units'] = $app->select("units", ['id', 'name'], ["deleted" => 0, "status" => 'A']);
         $vars['personnels'] = $app->select("personnels", ['id', 'code', 'name'], ["deleted" => 0, "status" => 'A']);
 
-        // Render view
         echo $app->render($template . '/crafting/pairing-crafting.html', $vars);
     });
 
-
-    $app->router('/pairing-crafting-edit/{action}/{req}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-crafting-edit/{action}/{req}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-        // đảm bảo các biến cần thiết tồn tại an toàn
         $action = $vars['action'] ?? '';
-        $router = [];
-        $router['3'] = $vars['req'] ?? '';
-        $router['2'] = $router['2'] ?? $action; // fallback giống logic ban đầu nếu cần
+        $req = $vars['req'] ?? '';
+        $cookie_name = "crafting_data";
+
+        $crafting_data = $app->getCookie($cookie_name);
+        $crafting_data = $crafting_data ? json_decode($crafting_data, true) : [];
+        $crafting_data[$action] = $crafting_data[$action] ?? [];
+
         $error = 0;
         $error_warehouses = '';
         $total_products = 0;
         $check = null;
-        $pro_logs = $pro_logs ?? [];
-        $insert_warehouses = $insert_warehouses ?? [];
-        $warehouses_logs_pro_logs = $warehouses_logs_pro_logs ?? [];
-        $account = $account ?? ['id' => 0];
+        $pro_logs = [];
+        $insert_warehouses = [];
+        $warehouses_logs_pro_logs = [];
+        $account = $account ?? ['id' => 0]; // giả sử đã có
 
-        if (
-            $router['3'] == 'date' || $router['3'] == 'content' || $router['3'] == 'name' ||
-            $router['3'] == 'code' || $router['3'] == 'categorys' || $router['3'] == 'group' ||
-            $router['3'] == 'default_code' || $router['3'] == 'units' || $router['3'] == 'personnels'
-        ) {
-            $_SESSION['crafting'][$action][$router['3']] = $app->xss($_POST['value'] ?? '');
+        if (in_array($req, ['date', 'content', 'name', 'code', 'categorys', 'group', 'default_code', 'units', 'personnels'])) {
+            $crafting_data[$action][$req] = $app->xss($_POST['value'] ?? '');
+            $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            return;
         }
-        elseif ($router['3'] == 'price') {
-            $_SESSION['crafting'][$action][$router['3']] = str_replace(",", "", $app->xss($_POST['value'] ?? '0'));
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        }
-        elseif ($router['3'] == 'cancel') {
-            unset($_SESSION['crafting'][$action]);
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        }
-        elseif ($router['3'] == 'completed') {
 
-            $data = $_SESSION['crafting'][$action] ?? [];
+        if ($req === 'price') {
+            $crafting_data[$action][$req] = str_replace(",", "", $app->xss($_POST['value'] ?? '0'));
+            $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            return;
+        }
 
-            // đảm bảo ingredient là mảng
+        if ($req === 'cancel') {
+            unset($crafting_data[$action]);
+            $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            return;
+        }
+
+        if ($req === 'completed') {
+            $data = $crafting_data[$action] ?? [];
+
             if (!isset($data['ingredient']) || !is_array($data['ingredient'])) {
                 $data['ingredient'] = [];
             }
 
-            // tính tổng và kiểm tra số lượng
             foreach ($data['ingredient'] as $value) {
                 $amount = isset($value['amount']) ? (float)$value['amount'] : 0.0;
                 $price = isset($value['price']) ? (float)$value['price'] : 0.0;
                 $total_products += $amount * $price;
-                if ($amount === '' || $amount == 0 || $amount < 0) {
+                if ($amount === '' || $amount <= 0) {
                     $error_warehouses = 'true';
                 }
             }
@@ -6526,34 +7258,26 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
 
             if ($data['content'] == '' || count($data['ingredient']) == 0 || $data['group_crafting'] == '') {
                 $error = ["status" => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")];
-            }
-            elseif ($error_warehouses == 'true') {
+            } elseif ($error_warehouses === 'true') {
                 $error = ['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập số lượng")];
             }
 
-            // kiểm tra mã trùng
-            if (isset($_SESSION['crafting'][$router['2']]['code']) && $_SESSION['crafting'][$router['2']]['code'] != $check_data) {
+            if (isset($crafting_data[$action]['code']) && $crafting_data[$action]['code'] != $check_data) {
                 $check = $app->get("crafting", "code", [
-                    "code" => $_SESSION['crafting'][$router['2']]['code'],
+                    "code" => $crafting_data[$action]['code'],
                     "deleted" => 0,
                     "group_crafting" => $data["group_crafting"]
                 ]);
             }
 
-            if ($check == ($_SESSION['crafting'][$router['2']]['code'] ?? null)) {
+            if ($check === ($crafting_data[$action]['code'] ?? null)) {
                 $error = ['status' => 'error', 'content' => 'Mã sản phẩm này đã có !'];
             }
 
-            if (!is_array($error)) {
-                $error = [];
-            }
-
-            if (count($error) == 0) {
-
+            if (empty($error)) {
                 $data['amount'] = isset($data['amount']) ? (float)$data['amount'] : 0.0;
 
                 if ($data['amount'] <= 0) {
-                    // Trường hợp amount <= 0 (giữ nguyên logic, chỉ thêm kiểm tra tồn tại key)
                     $crafting = [
                         "code" => $data['code'] ?? '',
                         "name" => $data['name'] ?? '',
@@ -6569,13 +7293,13 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         "group_crafting" => $data['group_crafting'],
                         "default_code" => $data['default_code'] ?? '',
                     ];
-                    $app->update("crafting", $crafting, ['id' => $data['crafting'] ?? 0]);
-                    $app->update("crafting_details", ['deleted' => 1], ['crafting' => $data['crafting'] ?? 0]);
+                    $app->update("crafting", $crafting, ['id' => $data['crafting']]);
+                    $app->update("crafting_details", ['deleted' => 1], ['crafting' => $data['crafting']]);
 
                     foreach ($data['ingredient'] as $key => $value) {
                         if (($value['deleted'] ?? 0) == 0) {
                             $crafting_details = [
-                                "crafting" => $data['crafting'] ?? 0,
+                                "crafting" => $data['crafting'],
                                 "ingredient" => $value['ingredient'] ?? 0,
                                 "code" => $value['code'] ?? '',
                                 "type" => $value['type'] ?? '',
@@ -6596,7 +7320,6 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         }
                     }
                 } else {
-                    // Trường hợp amount > 0 (giữ nguyên logic, thêm ??, isset và ép kiểu)
                     $crafting = [
                         "code" => $data['code'] ?? '',
                         "name" => $data['name'] ?? '',
@@ -6606,7 +7329,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         "amount_total" => $data['amount'],
                         "price" => $data['price'] ?? 0,
                         "cost" => $data['cost'] ?? 0,
-                        "total" => ((float)($data['amount'])) * ((float)($data['price'] ?? 0)),
+                        "total" => (float)$data['amount'] * (float)($data['price'] ?? 0),
                         "categorys" => $data['categorys'] ?? '',
                         "group" => $data['group'] ?? '',
                         "units" => $data['units'] ?? '',
@@ -6615,9 +7338,9 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                         "group_crafting" => $data['group_crafting'],
                         "default_code" => $data['default_code'] ?? '',
                     ];
-                    $app->update("crafting", $crafting, ['id' => $data['crafting'] ?? 0]);
+                    $app->update("crafting", $crafting, ['id' => $data['crafting']]);
 
-                    $getID = $data['crafting'] ?? 0;
+                    $getID = $data['crafting'];
                     $code_ware = strtotime(date("Y-m-d H:i:s"));
 
                     $insert = [
@@ -6657,35 +7380,29 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
 
                     $app->update("crafting_details", ["deleted" => 1], ["crafting" => $getID]);
 
-                    // đảm bảo ingredient-old là mảng có cùng số phần tử (nếu không có thì fallback [])
-                    if (!isset($data['ingredient-old']) || !is_array($data['ingredient-old'])) {
-                        $data['ingredient-old'] = [];
-                    }
+                    $data['ingredient-old'] = $data['ingredient-old'] ?? [];
 
                     foreach ($data['ingredient'] as $key => $value) {
-                        // lấy giá trị cũ an toàn
                         $old = $data['ingredient-old'][$key] ?? [];
 
-                        // xác định amount thay đổi (giữ nguyên logic ban đầu)
+                        $amount_change = 0;
                         if (($value['ingredient'] ?? null) != ($old['ingredient'] ?? null)) {
-                            $amount = isset($value['amount']) ? (float)$value['amount'] : 0.0;
-                        }
-                        if (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && (float)($value['amount'] ?? 0) < (float)($old['amount'] ?? 0)) {
-                            $amount = (float)($old['amount'] ?? 0) - (float)($value['amount'] ?? 0);
-                        }
-                        if (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && (float)($value['amount'] ?? 0) > (float)($old['amount'] ?? 0)) {
-                            $amount = (float)($value['amount'] ?? 0) - (float)($old['amount'] ?? 0);
+                            $amount_change = (float)($value['amount'] ?? 0);
+                        } elseif ((float)($value['amount'] ?? 0) < (float)($old['amount'] ?? 0)) {
+                            $amount_change = (float)($old['amount'] ?? 0) - (float)($value['amount'] ?? 0);
+                        } elseif ((float)($value['amount'] ?? 0) > (float)($old['amount'] ?? 0)) {
+                            $amount_change = (float)($value['amount'] ?? 0) - (float)($old['amount'] ?? 0);
                         }
 
-                        // trường hợp amount giảm (nhập vào kho orderId)
+                        // Giảm số lượng → nhập kho
                         if (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && (float)($value['amount'] ?? 0) < (float)($old['amount'] ?? 0)) {
                             $pro1 = [
                                 "warehouses" => $orderId,
                                 "data" => 'crafting',
                                 "type" => 'import',
                                 "ingredient" => $old['ingredient'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "amount_total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
+                                "amount" => $amount_change * (float)($data['amount'] ?? 0),
+                                "amount_total" => $amount_change * (float)($data['amount'] ?? 0),
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
                                 "notes" => 'Nhập từ sửa chế tác',
@@ -6704,8 +7421,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 "ingredient" => $old['ingredient'] ?? 0,
                                 "price" => $old['price'] ?? 0,
                                 "cost" => $old['cost'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)) * ((float)($old['price'] ?? 0)),
+                                "amount" => $amount_change * (float)($data['amount'] ?? 0),
+                                "total" => $amount_change * (float)($data['amount'] ?? 0) * (float)($old['price'] ?? 0),
                                 "notes" => 'Nhập từ sửa chế tác',
                                 "date" => date('Y-m-d H:i:s'),
                                 "user" => $account['id'],
@@ -6713,7 +7430,7 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                             ];
                             $app->insert("warehouses_logs", $warehouses_logs1);
 
-                            $getProducts = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $value['ingredient'] ?? 0]);
+                            $getProducts = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $old['ingredient'] ?? 0]);
                             if ($data['group_crafting'] == 1) {
                                 $app->update("ingredient", ["crafting" => ($getProducts['crafting'] ?? 0) + $warehouses_logs1['amount']], ["id" => $getProducts['id'] ?? 0]);
                             } elseif ($data['group_crafting'] == 2) {
@@ -6722,15 +7439,15 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 $app->update("ingredient", ["craftingchain" => ($getProducts['craftingchain'] ?? 0) + $warehouses_logs1['amount']], ["id" => $getProducts['id'] ?? 0]);
                             }
                         }
-                        // trường hợp amount tăng (xuất kho orderId1)
+                        // Tăng số lượng → xuất kho
                         elseif (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && (float)($value['amount'] ?? 0) > (float)($old['amount'] ?? 0)) {
                             $pro = [
                                 "warehouses" => $orderId1,
                                 "data" => 'crafting',
                                 "type" => 'export',
                                 "ingredient" => $value['ingredient'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "amount_total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
+                                "amount" => $amount_change * (float)($data['amount'] ?? 0),
+                                "amount_total" => $amount_change * (float)($data['amount'] ?? 0),
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
                                 "notes" => 'Xuất sửa chế tác',
@@ -6749,8 +7466,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 "ingredient" => $value['ingredient'] ?? 0,
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)) * ((float)($value['price'] ?? 0)),
+                                "amount" => $amount_change * (float)($data['amount'] ?? 0),
+                                "total" => $amount_change * (float)($data['amount'] ?? 0) * (float)($value['price'] ?? 0),
                                 "notes" => 'Xuất sửa chế tác',
                                 "date" => date('Y-m-d H:i:s'),
                                 "user" => $account['id'],
@@ -6767,15 +7484,15 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 $app->update("ingredient", ["craftingchain" => ($getProducts['craftingchain'] ?? 0) - $warehouses_logs['amount']], ["id" => $getProducts['id'] ?? 0]);
                             }
                         }
-                        // trường hợp ingredient thay đổi (xuất mới + nhập cũ)
+                        // Thay đổi nguyên liệu
                         elseif (($value['ingredient'] ?? null) != ($old['ingredient'] ?? null)) {
                             $pro = [
                                 "warehouses" => $orderId1,
                                 "data" => 'crafting',
                                 "type" => 'export',
                                 "ingredient" => $value['ingredient'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "amount_total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
+                                "amount" => (float)($value['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "amount_total" => (float)($value['amount'] ?? 0) * (float)($data['amount'] ?? 0),
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
                                 "notes" => 'Xuất sửa chế tác',
@@ -6794,8 +7511,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 "ingredient" => $value['ingredient'] ?? 0,
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
-                                "amount" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "total" => ((float)($amount ?? 0)) * ((float)($data['amount'] ?? 0)) * ((float)($value['price'] ?? 0)),
+                                "amount" => (float)($value['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "total" => (float)($value['amount'] ?? 0) * (float)($data['amount'] ?? 0) * (float)($value['price'] ?? 0),
                                 "notes" => 'Xuất sửa chế tác',
                                 "date" => date("Y-m-d H:i:s"),
                                 "user" => $account['id'],
@@ -6808,8 +7525,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 "data" => 'crafting',
                                 "type" => 'import',
                                 "ingredient" => $old['ingredient'] ?? 0,
-                                "amount" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "amount_total" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
+                                "amount" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "amount_total" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
                                 "price" => $value['price'] ?? 0,
                                 "cost" => $value['cost'] ?? 0,
                                 "notes" => 'Nhập từ sửa chế tác',
@@ -6828,8 +7545,8 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                                 "ingredient" => $old['ingredient'] ?? 0,
                                 "price" => $old['price'] ?? 0,
                                 "cost" => $old['cost'] ?? 0,
-                                "amount" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                "total" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)) * ((float)($old['price'] ?? 0)),
+                                "amount" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "total" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0) * (float)($old['price'] ?? 0),
                                 "notes" => 'Nhập từ sửa chế tác',
                                 "date" => date("Y-m-d H:i:s"),
                                 "user" => $account['id'],
@@ -6852,43 +7569,40 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                             }
                         }
 
-                        // nếu ingredient vẫn giống nhưng đã đánh dấu deleted != 0 (xử lý nhập trả)
-                        if (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && ($value['deleted'] ?? 0) != 0) {
-                            if ((float)($value['amount'] ?? 0) > 0) {
-                                $pro1 = [
-                                    "warehouses" => $orderId,
-                                    "data" => $insert['data'] ?? 'crafting',
-                                    "type" => 'import',
-                                    "ingredient" => $old['ingredient'] ?? 0,
-                                    "amount" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                    "amount_total" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                    "price" => $old['price'] ?? 0,
-                                    "cost" => $old['cost'] ?? 0,
-                                    "notes" => 'Nhập từ sửa chế tác',
-                                    "date" => date("Y-m-d H:i:s"),
-                                    "user" => $account['id'],
-                                    "group_crafting" => $data['group_crafting'],
-                                ];
-                                $app->insert("warehouses_details", $pro1);
-                                $iddetails1 = $app->id();
+                        if (($value['ingredient'] ?? null) == ($old['ingredient'] ?? null) && ($value['deleted'] ?? 0) != 0 && (float)($value['amount'] ?? 0) > 0) {
+                            $pro1 = [
+                                "warehouses" => $orderId,
+                                "data" => 'crafting',
+                                "type" => 'import',
+                                "ingredient" => $old['ingredient'] ?? 0,
+                                "amount" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "amount_total" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "price" => $old['price'] ?? 0,
+                                "cost" => $old['cost'] ?? 0,
+                                "notes" => 'Nhập từ sửa chế tác',
+                                "date" => date("Y-m-d H:i:s"),
+                                "user" => $account['id'],
+                                "group_crafting" => $data['group_crafting'],
+                            ];
+                            $app->insert("warehouses_details", $pro1);
+                            $iddetails1 = $app->id();
 
-                                $warehouses_logs1 = [
-                                    "type" => 'import',
-                                    "data" => $insert['data'] ?? 'crafting',
-                                    "warehouses" => $orderId,
-                                    "details" => $iddetails1,
-                                    "ingredient" => $old['ingredient'] ?? 0,
-                                    "price" => $old['price'] ?? 0,
-                                    "cost" => $old['cost'] ?? 0,
-                                    "amount" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)),
-                                    "total" => ((float)($old['amount'] ?? 0)) * ((float)($data['amount'] ?? 0)) * ((float)($old['price'] ?? 0)),
-                                    "notes" => 'Nhập từ sửa chế tác',
-                                    "date" => date("Y-m-d H:i:s"),
-                                    "user" => $account['id'],
-                                    "group_crafting" => $data['group_crafting'],
-                                ];
-                                $app->insert("warehouses_logs", $warehouses_logs1);
-                            }
+                            $warehouses_logs1 = [
+                                "type" => 'import',
+                                "data" => 'crafting',
+                                "warehouses" => $orderId,
+                                "details" => $iddetails1,
+                                "ingredient" => $old['ingredient'] ?? 0,
+                                "price" => $old['price'] ?? 0,
+                                "cost" => $old['cost'] ?? 0,
+                                "amount" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0),
+                                "total" => (float)($old['amount'] ?? 0) * (float)($data['amount'] ?? 0) * (float)($old['price'] ?? 0),
+                                "notes" => 'Nhập từ sửa chế tác',
+                                "date" => date("Y-m-d H:i:s"),
+                                "user" => $account['id'],
+                                "group_crafting" => $data['group_crafting'],
+                            ];
+                            $app->insert("warehouses_logs", $warehouses_logs1);
 
                             $getProducts1 = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $value['ingredient'] ?? 0]);
                             if ($data['group_crafting'] == 1) {
@@ -6900,7 +7614,6 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                             }
                         }
 
-                        // cuối cùng nếu deleted == 0 thì insert crafting_details
                         if (($value['deleted'] ?? 0) == 0) {
                             $crafting_details = [
                                 "crafting" => $getID,
@@ -6922,146 +7635,141 @@ $app->group($setting['manager'] . "/crafting", function ($app) use ($jatbi, $set
                             ];
                             $app->insert("crafting_details", $crafting_details);
                         }
-                    } // end foreach ingredient
-                } // end else amount > 0
+                    }
+                }
 
-                // giữ nguyên logs ban đầu (đã khởi tạo mặc định đầu hàm nếu chưa tồn tại)
-                $jatbi->logs('pairing', $action, [$crafting ?? [], $pro_logs ?? [], $_SESSION['crafting'][$action] ?? [], $insert_warehouses ?? [], $warehouses_logs_pro_logs ?? []]);
+                $jatbi->logs('pairing', $action, [$crafting ?? [], $pro_logs, $crafting_data[$action] ?? [], $insert_warehouses, $warehouses_logs_pro_logs]);
 
-                unset($_SESSION['crafting'][$action]);
+                unset($crafting_data[$action]);
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
-                echo json_encode(['status' => 'error', 'content' => $error['content'] ?? 'Lỗi không xác định']);
+                echo json_encode($error);
             }
         }
     });
 
-
-    $app->router('/pairing-crafting-edit/{action}/ingredient/{req}/{key}', 'POST', function ($vars) use ($app, $jatbi) {
+    $app->router('/pairing-crafting-edit/{action}/ingredient/{req}/{key}', 'POST', function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $action = $vars['action'] ?? '';
-        $router = [];
-        $router['4'] = $vars['req'] ?? '';
-        $router['5'] = $vars['key'] ?? '';
+        $req = $vars['req'] ?? '';
+        $key = $vars['key'] ?? '';
+        $cookie_name = "crafting_data";
 
-        // Khởi tạo session crafting nếu chưa có
-        if (!isset($_SESSION['crafting'][$action])) {
-            $_SESSION['crafting'][$action] = [];
-        }
-        if (!isset($_SESSION['crafting'][$action]['ingredient']) || !is_array($_SESSION['crafting'][$action]['ingredient'])) {
-            $_SESSION['crafting'][$action]['ingredient'] = [];
-        }
+        $crafting_data = $app->getCookie($cookie_name);
+        $crafting_data = $crafting_data ? json_decode($crafting_data, true) : [];
+        $crafting_data[$action] = $crafting_data[$action] ?? [];
+        $crafting_data[$action]['ingredient'] = $crafting_data[$action]['ingredient'] ?? [];
 
-        $error = '';
-
-        if ($router['4'] == 'add') {
-            $value_post = $app->xss($router['5'] ?? 0);
+        if ($req === 'add') {
+            $value_post = $app->xss($key);
             $data = $app->get("ingredient", "*", ["id" => $value_post, "deleted" => 0]);
 
-            // kiểm tra tồn tại dữ liệu
             if (!empty($data) && isset($data['id'])) {
-                $group_crafting = $_SESSION['crafting'][$action]['group_crafting'] ?? 0;
+                $group_crafting = $crafting_data[$action]['group_crafting'] ?? 0;
 
-                if ($group_crafting == 1) {
-                    $warehouses = (float)($data['crafting'] ?? 0);
-                } elseif ($group_crafting == 2) {
-                    $warehouses = (float)($data['craftingsilver'] ?? 0);
-                } elseif ($group_crafting == 3) {
-                    $warehouses = (float)($data['craftingchain'] ?? 0);
-                } else {
-                    $warehouses = 0;
-                }
+                $warehouses = match ((int)$group_crafting) {
+                    1 => (float)($data['crafting'] ?? 0),
+                    2 => (float)($data['craftingsilver'] ?? 0),
+                    3 => (float)($data['craftingchain'] ?? 0),
+                    default => 0,
+                };
 
                 if ($warehouses <= 0) {
-                    $error = $jatbi->lang("Số lượng không đủ");
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                    return;
                 }
 
-                if ($error == '') {
-                    // Kiểm tra ingredient đã tồn tại chưa
-                    $exist = array_key_exists($data['id'], $_SESSION['crafting'][$action]['ingredient']);
+                $exist = array_key_exists($data['id'], $crafting_data[$action]['ingredient']);
 
-                    if (!$exist) {
-                        $ingredient_data = [
-                            "ingredient" => $data['id'],
-                            "type" => $data['type'] ?? '',
-                            "amount" => 1,
-                            "code" => $data['code'] ?? '',
-                            "group" => $data['group'] ?? '',
-                            "categorys" => $data['categorys'] ?? '',
-                            "pearl" => $data['pearl'] ?? '',
-                            "sizes" => $data['sizes'] ?? '',
-                            "colors" => $data['colors'] ?? '',
-                            "units" => $data['units'] ?? '',
-                            "notes" => $data['notes'] ?? '',
-                            "price" => (float)($data['price'] ?? 0),
-                            "cost" => (float)($data['cost'] ?? 0),
-                            "warehouses" => max(0, $warehouses),
-                        ];
+                if (!$exist) {
+                    $ingredient_data = [
+                        "ingredient" => $data['id'],
+                        "type" => $data['type'] ?? '',
+                        "amount" => 1,
+                        "code" => $data['code'] ?? '',
+                        "group" => $data['group'] ?? '',
+                        "categorys" => $data['categorys'] ?? '',
+                        "pearl" => $data['pearl'] ?? '',
+                        "sizes" => $data['sizes'] ?? '',
+                        "colors" => $data['colors'] ?? '',
+                        "units" => $data['units'] ?? '',
+                        "notes" => $data['notes'] ?? '',
+                        "price" => (float)($data['price'] ?? 0),
+                        "cost" => (float)($data['cost'] ?? 0),
+                        "warehouses" => max(0, $warehouses),
+                    ];
 
-                        if (($data['type'] ?? 0) == 1) {
-                            $_SESSION['crafting'][$action]['ingredient']['dai'] = $ingredient_data;
-                        } else {
-                            $_SESSION['crafting'][$action]['ingredient'][$data['id']] = $ingredient_data;
-                        }
-
-                        $_SESSION['crafting'][$action]['code'] = $jatbi->getcode($_SESSION['crafting'][$action]['ingredient']);
-                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                    if (($data['type'] ?? 0) == 1) {
+                        $crafting_data[$action]['ingredient']['dai'] = $ingredient_data;
                     } else {
-                        $getPro = $_SESSION['crafting'][$action]['ingredient'][$data['id']] ?? [];
-                        $currentAmount = isset($getPro['amount']) ? (float)$getPro['amount'] : 0;
-                        $value = $currentAmount + 1;
-
-                        if ($value > $warehouses) {
-                            $_SESSION['crafting'][$action]['ingredient'][$data['id']]['amount'] = $warehouses;
-                            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                        } else {
-                            $_SESSION['crafting'][$action]['ingredient'][$data['id']]['amount'] = $value;
-                            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                        }
+                        $crafting_data[$action]['ingredient'][$data['id']] = $ingredient_data;
                     }
+
+                    $crafting_data[$action]['code'] = $jatbi->getcode($crafting_data[$action]['ingredient']);
+                    $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
                 } else {
-                    echo json_encode(['status' => 'error', 'content' => $error]);
+                    $getPro = $crafting_data[$action]['ingredient'][$data['id']] ?? [];
+                    $currentAmount = (float)($getPro['amount'] ?? 0);
+                    $value = $currentAmount + 1;
+
+                    if ($value > $warehouses) {
+                        $crafting_data[$action]['ingredient'][$data['id']]['amount'] = $warehouses;
+                        $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                    } else {
+                        $crafting_data[$action]['ingredient'][$data['id']]['amount'] = $value;
+                        $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                    }
                 }
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($router['4'] == 'deleted') {
-            if (isset($_SESSION['crafting'][$action]['ingredient'][$router['5']])) {
-                $_SESSION['crafting'][$action]['ingredient'][$router['5']]['deleted'] = 1;
+        } elseif ($req === 'deleted') {
+            if (isset($crafting_data[$action]['ingredient'][$key])) {
+                $crafting_data[$action]['ingredient'][$key]['deleted'] = 1;
+                $crafting_data[$action]['code'] = $jatbi->getcode($crafting_data[$action]['ingredient']);
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
             }
-            $_SESSION['crafting'][$action]['code'] = $jatbi->getcode($_SESSION['crafting'][$action]['ingredient']);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($router['4'] == 'amount') {
-            $value = isset($_POST['value']) ? (float)$_POST['value'] : 0;
+        } elseif ($req === 'amount') {
+            $value = (float)($_POST['value'] ?? 0);
 
             if ($value < 0) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
+                return;
+            }
+
+            $ingredient_info = $crafting_data[$action]['ingredient'][$key] ?? [];
+            $ingredient_id = $ingredient_info['ingredient'] ?? 0;
+            $crafting_id = $crafting_data[$action]['crafting'] ?? 0;
+            $group_crafting = $crafting_data[$action]['group_crafting'] ?? 0;
+            $amount_main = (float)($crafting_data[$action]['amount'] ?? 1);
+
+            $getAmount = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $ingredient_id]);
+            $sou = (float)$app->get("crafting_details", "amount", ["ingredient" => $getAmount['id'] ?? 0, "crafting" => $crafting_id]);
+
+            $max_amount = match ($group_crafting) {
+                1 => ($getAmount['crafting'] ?? 0) + $sou,
+                2 => ($getAmount['craftingsilver'] ?? 0) + $sou,
+                3 => ($getAmount['craftingchain'] ?? 0) + $sou,
+                default => 0,
+            };
+
+            if (($value * $amount_main) > $max_amount) {
+                $crafting_data[$action]['ingredient'][$key]['amount'] = $max_amount / max(1, $amount_main);
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
             } else {
-                $ingredient_info = $_SESSION['crafting'][$action]['ingredient'][$router['5']] ?? [];
-                $ingredient_id = $ingredient_info['ingredient'] ?? 0;
-                $crafting_id = $_SESSION['crafting'][$action]['crafting'] ?? 0;
-                $group_crafting = $_SESSION['crafting'][$action]['group_crafting'] ?? 0;
-                $amount_main = (float)($_SESSION['crafting'][$action]['amount'] ?? 1);
-
-                $getAmount = $app->get("ingredient", ["id", "crafting", "craftingchain", "craftingsilver"], ["id" => $ingredient_id]);
-                $sou = (float)$app->get("crafting_details", "amount", ["ingredient" => $getAmount['id'] ?? 0, "crafting" => $crafting_id]);
-
-                if (($value * $amount_main) > (($getAmount['crafting'] ?? 0) + $sou) && $group_crafting == 1) {
-                    $_SESSION['crafting'][$action]['ingredient'][$router['5']]['amount'] = (($getAmount['crafting'] ?? 0) + $sou) / max(1, $amount_main);
-                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                } elseif (($value * $amount_main) > (($getAmount['craftingsilver'] ?? 0) + $sou) && $group_crafting == 2) {
-                    $_SESSION['crafting'][$action]['ingredient'][$router['5']]['amount'] = (($getAmount['craftingsilver'] ?? 0) + $sou) / max(1, $amount_main);
-                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                } elseif (($value * $amount_main) > (($getAmount['craftingchain'] ?? 0) + $sou) && $group_crafting == 3) {
-                    $_SESSION['crafting'][$action]['ingredient'][$router['5']]['amount'] = (($getAmount['craftingchain'] ?? 0) + $sou) / max(1, $amount_main);
-                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                } else {
-                    $_SESSION['crafting'][$action]['ingredient'][$router['5']]['amount'] = $app->xss($value);
-                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                }
+                $crafting_data[$action]['ingredient'][$key]['amount'] = $value;
+                $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             }
         } else {
-            $_SESSION['crafting'][$action]['ingredient'][$router['5']][$router['4']] = $app->xss($_POST['value'] ?? '');
+            $crafting_data[$action]['ingredient'][$key][$req] = $app->xss($_POST['value'] ?? '');
+            $app->setCookie($cookie_name, json_encode($crafting_data), time() + $setting['cookie'], '/');
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         }
     });

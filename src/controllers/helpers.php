@@ -1695,58 +1695,68 @@ class Jatbi
 			'quality' => [],
 		];
 		$getcode = '';
+
 		foreach ($datas as $key => $value) {
-			if (empty($value['deleted'])) {
-				if ($value['type'] == 1) {
-					$getdai = $app->get("ingredient", "code", ["id" => $value['ingredient']]);
+			if (empty($value['deleted'] ?? null)) {
+				if (($value['type'] ?? null) == 1) {
+					$getdai = $app->get("ingredient", "code", ["id" => $value['ingredient'] ?? 0]) ?? '';
 				}
-				if ($value['type'] == 2) {
+				if (($value['type'] ?? null) == 2) {
 					if (isset($value['pearl']))   $getngoc['pearl'][$value['pearl']] = $value['pearl'];
 					if (isset($value['sizes']))   $getngoc['sizes'][$value['sizes']] = $value['sizes'];
 					if (isset($value['colors']))  $getngoc['colors'][$value['colors']] = $value['colors'];
-
-					if (isset($value['number'])) {
-						$getngoc['number'][$value['number']] = $value['number'];
-					}
-
-					if (isset($value['quality'])) {
-						$getngoc['quality'][$value['quality']] = $value['quality'];
-					}
+					if (isset($value['number']))  $getngoc['number'][$value['number']] = $value['number'];
+					if (isset($value['quality'])) $getngoc['quality'][$value['quality']] = $value['quality'];
 				}
 			}
 		}
+
 		if (count($getngoc['pearl']) > 1 && count($getngoc['pearl']) <= 2) {
 			foreach ($getngoc['pearl'] as $key2 => $value2) {
-				$getcode .= $app->get("pearl", "code", ["id" => $value2])[0];
+				$tmp = $app->get("pearl", "code", ["id" => $value2 ?? 0]) ?? '';
+				if (is_array($tmp)) $tmp = reset($tmp);
+				$getcode .= $tmp ?? '';
 			}
 			$getPearl = $getcode;
 		} elseif (count($getngoc['pearl']) > 2) {
 			$getPearl = "ZZ";
 		} else {
-			$getPearl = $app->get("pearl", "code", ["id" => reset($getngoc['pearl'])]);
+			$tmp = $app->get("pearl", "code", ["id" => reset($getngoc['pearl']) ?? 0]) ?? '';
+			if (is_array($tmp)) $tmp = reset($tmp);
+			$getPearl = $tmp ?? '';
 		}
+
 		if (count($getngoc['sizes']) > 1) {
 			$getSize = "000";
 		} else {
-			$getSize = $app->get("sizes", "code", ["id" => reset($getngoc['sizes'])]);
+			$tmp = $app->get("sizes", "code", ["id" => reset($getngoc['sizes']) ?? 0]) ?? '';
+			if (is_array($tmp)) $tmp = reset($tmp);
+			$getSize = $tmp ?? '';
 		}
+
 		if (count($getngoc['colors']) > 1) {
 			$getColor = "Z";
 		} else {
-			$getColor = $app->get("colors", "code", ["id" => reset($getngoc['colors'])]);
+			$tmp = $app->get("colors", "code", ["id" => reset($getngoc['colors']) ?? 0]) ?? '';
+			if (is_array($tmp)) $tmp = reset($tmp);
+			$getColor = $tmp ?? '';
 		}
+
 		if (count($getngoc['number']) > 1) {
 			$getNumber = "Z";
 		} else {
-			$getNumber = $app->get("ingredient", "number", ["id" => $value['ingredient'], "type" => 2]);
+			$getNumber = $app->get("ingredient", "number", ["id" => ($value['ingredient'] ?? 0), "type" => 2]) ?? '';
 		}
+
 		if (count($getngoc['quality']) > 1) {
 			$getQuality = "Z";
 		} else {
-			$getQuality = $app->get("ingredient", "quality", ["id" => $value['ingredient'], "type" => 2]);
+			$getQuality = $app->get("ingredient", "quality", ["id" => ($value['ingredient'] ?? 0), "type" => 2]) ?? '';
 		}
-		return $getdai . $getPearl . $getColor . $getSize . $getNumber . $getQuality;
+
+		return (string)($getdai . $getPearl . $getColor . $getSize . $getNumber . $getQuality);
 	}
+
 	public function random($length = 16)
 	{
 		$random = bin2hex(random_bytes($length));

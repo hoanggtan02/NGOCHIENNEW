@@ -28,7 +28,7 @@
                     <?=$app->component('select', ['name' => 'branch', 'placeholder' => $jatbi->lang("Quầy hàng"), 'options' => $branchs ?? [], 'selected' => $data['branch']['id'] ?? '', 'required' => true, 'class' => 'change-update', 'attr' => 'data-parent="#stores-filter" data-url="/crafting/pairing/export/update/branch" data-action="change" data-form=\'{"value":"this.val"}\''])?>
                 </div>
                 <div class="col-md-4">
-                    <?=$app->component('input', ['name' => 'date', 'placeholder' => $jatbi->lang("Ngày"), 'type' => 'date', 'value' => $data['date'] ?? date('Y-m-d'), 'required' => true, 'attr' => 'data-action="change" data-load="this" data-url="/crafting/pairing/export/update/date" data-form=\'{"value":"this.val"}\''])?>
+                    <?=$app->component('input', ['name' => 'date', 'placeholder' => $jatbi->lang("Ngày"), 'type' => 'date', 'value' => $data['date'] ?? date('Y-m-d'), 'required' => true, 'attr' => 'data-action="change" data-url="/crafting/pairing/export/update/date" data-form=\'{"value":"this.val"}\''])?>
                 </div>
             </div>
 

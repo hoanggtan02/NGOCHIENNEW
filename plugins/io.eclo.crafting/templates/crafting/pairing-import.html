@@ -30,7 +30,7 @@
                             "placeholder" => $jatbi->lang('Mã sản phẩm'), 
                             "value" => $data['code'] ?? '', 
                             "required" => true, 
-                            "attr" => 'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                            "attr" => 'data-action = "blur" data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/code"'
                         ])?>
                         <?=$app->component('input', [
@@ -38,7 +38,7 @@
                             "placeholder" => $jatbi->lang('Tên sản phẩm'), 
                             "value" => $data['name'] ?? '', 
                             "required" => true, 
-                            "attr" => 'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                            "attr" => 'data-action = "blur" data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/name"'
                         ])?>
                         <?=$app->component('input', [
@@ -48,7 +48,7 @@
                             "value" => $data['price'] ?? 0, 
                             "required" => true, 
                             "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="." 
-                                    data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                                    data-action = "blur" data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/price"'
                         ])?>
                         <?=$app->component('select', [
@@ -101,7 +101,7 @@
                             "placeholder" => $jatbi->lang('Giới thiệu sản phẩm'), 
                             "value" => $data['content'] ?? '',
                             "required" => true, 
-                            "attr" =>'data-load="this" data-action = "blur" data-form=\'{"value": "this.val"}\'
+                            "attr" =>'data-action = "blur" data-form=\'{"value": "this.val"}\'
                                     data-url= "/crafting/pairing-update/add/content"'
                         ])?>
                     </div>

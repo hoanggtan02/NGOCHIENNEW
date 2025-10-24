@@ -245,7 +245,7 @@
                                     <td class="">
                                         <input type="number" name="amount" class="blur-update border-0 w-100  h-100 p-2 bg-transparent" 
                                         data-url="/crafting/pairing-crafting-edit/<?=$action?>/ingredient/amount/<?=$key?>" data-action="blur" data-form='{"value":"this.val"}'
-                                        value="<?=$SelectProduct['amount'] ?? '' ?>" data-load="this" min="0" data-selector="[data-pos-table]">
+                                        value="<?=$SelectProduct['amount'] ?? '' ?>" data-load="this" min="0">
                                     </td>
                                     <td class="pe-2 ps-2">
                                         <?= (float)($SelectProduct['amount'] ?? 0) * (float)($data['amount'] ?? 0) ?>
@@ -257,7 +257,7 @@
                                     </td>
                                     <td class="text-center">
                                         <a class="click-update text-danger" data-load="this" data-action="click"
-                                            data-alert="true" data-selector="[data-pos-table]"
+                                            data-alert="true" 
                                             data-url="/crafting/pairing-crafting-edit/<?=$action?>/ingredient/deleted/<?=$key?>">
                                             <i class="ti ti-trash"></i>
                                         </a>
