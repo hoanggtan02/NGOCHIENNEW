@@ -20,7 +20,7 @@
                                 <th><?=$jatbi->lang("Nội dung")?></th>
                                 <th><?=$jatbi->lang("Ghi chú")?></th>
                                 <th><?=$jatbi->lang("Ngày")?></th>
-                                <th width="1%"></th>
+                                <!-- <th width="1%"></th> -->
                             </tr>
                         </thead>
                         <tbody>
@@ -39,11 +39,11 @@
                                     </td>
                                     <td><?=$data['notes'] ?? ""?></td>
                                    <td><?=date('d/m/Y H:i:s', strtotime($data['date_poster']))?></td>
-                                    <td>
+                                    <!-- <td>
                                         <button class="btn btn-sm text-danger click-action" data-action="modal"
                                             data-url="/hrm/timekeeping-deleted/<?=$data['id']?>"><i class="ti ti-trash"></i>
                                         </button>
-                                    </td>
+                                    </td> -->
                                 </tr>
                             <?php } ?>
                         </tbody>
