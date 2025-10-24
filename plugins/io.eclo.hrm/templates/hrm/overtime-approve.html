@@ -1,0 +1,20 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1">
+    <div class="modal-dialog pt-standalone">
+        <div class="modal-content rounded-5">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative"></div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <p>Bạn có chắc chắn muốn xử lý đơn đăng ký tăng ca này?</p>
+                <form method="POST" action="/hrm/overtime-approve/<?=$data['active']?>">
+                    <div class="row g-3">
+                        <div class="col-12"><?=$app->component('textarea', ['name' => 'notes', 'placeholder' => $jatbi->lang("Ghi chú (nếu có)...")])?></div>
+                        <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                             <button type="submit" name="status" value="rejected" class="btn btn-outline-danger px-4" data-action="submit" data-alert="true"><?=$jatbi->lang("Từ chối")?></button>
+                             <button type="submit" name="status" value="approved" class="btn btn-eclo px-4" data-load="this" data-action="submit" data-alert="true"><?=$jatbi->lang("Đồng ý Phê duyệt")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
