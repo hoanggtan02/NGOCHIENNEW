@@ -9,7 +9,6 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 
 
-
 if (!defined(constant_name: 'ECLO'))
     die("Hacking attempt");
 
@@ -2421,9 +2420,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "ORDER" => ["name" => "ASC"]
                     ])
                 );
-                $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id']]);
-                $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                // $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id']]);
+                // $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                // $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
 
                 echo $app->render($template . '/hrm/contract-post.html', $vars, $jatbi->ajax());
             } else {
@@ -2681,6 +2680,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         $data = $app->get("personnels_contract", [
             "[>]personnels(p)" => ["personnels" => "id"],
             "[>]offices(o)" => ["offices" => "id"],
+            "[>]hrm_positions(pos)" => ["position" => "id"],
         ], [
             "personnels_contract.id",
             "personnels_contract.code",
@@ -2697,6 +2697,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             "personnels_contract.notes",
             "personnels_contract.personnels",
             "p.name(personnel_name)",
+            "pos.name(position)",
             "p.birthday",
             "p.address",
             "p.idcode",
@@ -2740,10 +2741,83 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             unset($item);
         }
+        $timework_details = [];
+        $timework_name = "Chưa phân công";
+
+        $roster = $app->get("rosters", ["timework"], [
+            "personnels" => $data['personnels'],
+            "date[<=]" => $data['date_contract'],
+            "deleted" => 0,
+            "ORDER" => ["date" => "DESC"]
+        ]);
+
+        if ($roster && $roster['timework']) {
+            $timework_id = $roster['timework'];
+            $timework_info = $app->get("timework", ["name"], ["id" => $timework_id, "deleted" => 0]);
+            if ($timework_info) {
+                $timework_name = $timework_info['name'];
+            }
+            $details = $app->select("timework_details", "*", [
+                "timework" => $timework_id,
+                "deleted" => 0,
+                "ORDER" => ["week" => "ASC"]
+            ]);
+            foreach ($details as $detail) {
+                $timework_details[$detail['week']] = $detail;
+            }
+        }
+
+        $work_schedule_line1 = "";
+        $work_schedule_line2 = "";
+        $days_map = [1 => 'Thứ Hai', 2 => 'Thứ Ba', 3 => 'Thứ Tư', 4 => 'Thứ Năm', 5 => 'Thứ Sáu', 6 => 'Thứ Bảy', 7 => 'Chủ Nhật'];
+        $work_schedule_summary = [];
+        $off_days = [];
+        $shift_counter = 1;
+
+        for ($i = 1; $i <= 7; $i++) {
+            if (isset($timework_details[$i])) {
+                $detail = $timework_details[$i];
+                if ($detail['off'] == 1) {
+                    $off_days[] = $days_map[$i];
+                } else {
+                    $start = date('H:i', strtotime($detail['time_from']));
+                    $end = date('H:i', strtotime($detail['time_to']));
+                    $schedule_key = "{$start} - {$end}";
+                    $work_schedule_summary[$schedule_key][] = $days_map[$i];
+                }
+            } else {
+                $off_days[] = $days_map[$i];
+            }
+        }
+
+        $first_line_text = "Từ ngày Thứ Hai đến ngày Chủ nhật hàng tuần:";
+        if (!empty($off_days)) {
+            $first_line_text .= " nghỉ ngày " . implode(', ', $off_days);
+        }
+        $work_schedule_line1 = $first_line_text;
+
+        $shift_lines = [];
+        if (!empty($work_schedule_summary)) {
+            foreach ($work_schedule_summary as $schedule => $days) {
+                list($start_time, $end_time) = explode(' - ', $schedule);
+                $shift_lines[] = "+ " . htmlspecialchars($timework_name) . ": Từ {$start_time} giờ đến {$end_time} giờ (bao gồm 1:30 giờ nghỉ trưa).";
+            }
+            $work_schedule_line2 = implode("\n", $shift_lines);
+        } elseif (empty($work_schedule_summary) && empty($off_days)) {
+            $work_schedule_line1 = "- Lịch làm việc chi tiết sẽ được thông báo sau.";
+            $work_schedule_line2 = "";
+        }
 
         $vars['data'] = $data;
         $vars['salarys'] = $salarys_db;
         $vars['allowances'] = $allowances_db;
+
+        $vars['work_schedule_line1'] = $work_schedule_line1;
+        $vars['work_schedule_line2'] = $work_schedule_line2;
+
+        var_dump($work_schedule_line1);
+        var_dump($work_schedule_line2);
+
         // $vars['personnels_contracts_map'] = $personnels_contracts;
 
         echo $app->render($template . '/hrm/contract-print.html', $vars, $jatbi->ajax());
@@ -3481,113 +3555,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough-categorys.deleted']);
 
-    // $app->router('/furlough', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
-    //     if ($app->method() === 'GET') {
-    //         $vars['title'] = $jatbi->lang("Nghỉ phép");
-    //         $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
-    //         $vars['furlough_categorys'] = $app->select("furlough_categorys", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]);
-    //         echo $app->render($template . '/hrm/furlough.html', $vars);
-    //     }
-    //     if ($app->method() === 'POST') {
-    //         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-
-    //         $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
-    //         $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-    //         $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
-    //         $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-    //         $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'furlough.id';
-    //         $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-    //         $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
-    //         $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
-    //         $furlough_categorys = isset($_POST['furlough_categorys']) ? $_POST['furlough_categorys'] : '';
-
-    //         $joins = [
-    //             "[>]furlough_categorys" => ["furlough" => "id"],
-    //             "[>]personnels" => ["personnels" => "id"],
-    //         ];
-    //         $where = [
-    //             "AND" => [
-    //                 "OR" => [
-    //                     "furlough_categorys.name[~]" => $searchValue,
-    //                     "personnels.name[~]" => $searchValue,
-    //                 ],
-    //                 "furlough.deleted" => 0,
-    //                 "furlough.status[<>]" => $status,
-    //             ],
-    //             "LIMIT" => [$start, $length],
-    //             "ORDER" => [$orderName => strtoupper($orderDir)],
-    //         ];
-    //         if (!empty($personnels)) {
-    //             $where['AND']['personnels.id'] = $personnels;
-    //         }
-    //         if (!empty($furlough_categorys)) {
-    //             $where['AND']['furlough_categorys.id'] = $furlough_categorys;
-    //         }
-
-    //         $count = $app->count("furlough", $joins, "furlough.id", $where['AND']);
-    //         $datas = [];
-
-    //         $app->select("furlough", $joins, [
-    //             'furlough.id',
-    //             'furlough_categorys.name(furlough_category_name)',
-    //             'personnels.name(personnel_name)',
-    //             'furlough.date_from',
-    //             'furlough.date_to',
-    //             'furlough.notes',
-    //             'furlough.status',
-    //             'furlough.date',
-    //         ], $where, function ($data) use (&$datas, $jatbi, $app) {
-    //             $from = new DateTime($data['date_from']);
-    //             $to = new DateTime($data['date_to']);
-    //             $interval = $from->diff($to);
-    //             $total_days_off = $interval->days + 1;
-    //             $datas[] = [
-    //                 "checkbox" => $app->component("box", ["data" => $data['id']]),
-    //                 "furlough_category_name" => $data['furlough_category_name'],
-    //                 "personnel_name" => $data['personnel_name'],
-    //                 "total_days_off" => $total_days_off,
-    //                 "date_from" => $data['date_from'],
-    //                 "date_to" => $data['date_to'],
-    //                 "status" => $app->component("clickable_approval", [
-    //                     "url" => "/hrm/furlough-status/" . $data['id'],
-    //                     "data" => $data['status'],
-    //                     "permission" => ['furlough.edit']
-    //                 ]),
-    //                 "date" => $data['date'],
-    //                 "notes" => $data['notes'],
-    //                 "action" => ($app->component("action", [
-    //                     "button" => [
-    //                         [
-    //                             'type' => 'button',
-    //                             'name' => $jatbi->lang("Sửa"),
-    //                             'permission' => ['furlough.edit'],
-    //                             'action' => ['data-url' => '/hrm/furlough-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
-    //                         ],
-    //                         [
-    //                             'type' => 'button',
-    //                             'name' => $jatbi->lang("Xóa"),
-    //                             'permission' => ['furlough.deleted'],
-    //                             'action' => ['data-url' => '/hrm/furlough-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
-    //                         ],
-    //                         [
-    //                             'type' => 'button',
-    //                             'name' => $jatbi->lang("In"),
-    //                             'permission' => ['furlough'],
-    //                             'action' => ['data-url' => '/hrm/furlough-print/' . ($data['id'] ?? ''), 'data-action' => 'modal']
-    //                         ],
-    //                     ]
-    //                 ]))
-    //             ];
-    //         });
-    //         echo json_encode([
-    //             "draw" => $draw,
-    //             "recordsTotal" => $count,
-    //             "recordsFiltered" => $count,
-    //             "data" => $datas,
-    //         ]);
-    //     }
-    // })->setPermissions(['furlough']);
-
     $app->router("/furlough", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nghỉ phép");
@@ -3910,8 +3877,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     continue;
                 }
                 $date_obj = date_create($date_str);
-                if (!$date_obj) continue; // Bỏ qua nếu định dạng ngày sai
-                $date_formatted = date_format($date_obj, 'Y-m-d'); // Chuẩn hóa định dạng
+                if (!$date_obj) continue;
+                $date_formatted = date_format($date_obj, 'Y-m-d');
 
                 // Lấy ngày hợp lệ đầu tiên
                 if ($first_valid_date === null) {
@@ -3929,27 +3896,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "date_from[<=]" => $date_formatted,
                         "date_to[>=]" => $date_formatted,
                         "deleted" => 0,
-                        "status" => "A" // Chỉ kiểm tra ngày lễ đang active
+                        "status" => "A"
                     ]
                 ]);
                 if ($is_holiday) {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày {$date_str} là ngày lễ, không thể xin nghỉ.")]);
                     return;
                 }
-
-                // b) Kiểm tra ngày làm việc (bảng timekeeping)
-                // Giả định: Có bản ghi trong timekeeping nghĩa là ngày đó CÓ ĐI LÀM (hoặc lẽ ra phải đi làm)
-                // Nếu KHÔNG có bản ghi -> có thể là ngày nghỉ theo lịch -> không cho xin phép
-                $is_working_day = $app->has("timekeeping", [
-                    "personnels" => $personnel_id,
-                    "date" => $date_formatted
-                    // Có thể cần thêm điều kiện kiểm tra checkin/checkout nếu logic phức tạp hơn
-                ]);
-                // Tạm thời bỏ qua kiểm tra này nếu logic chưa rõ ràng
-                // if (!$is_working_day) {
-                //     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày {$date_str} không phải là ngày làm việc theo lịch.")]);
-                //     return;
-                // }
 
                 // c) Kiểm tra trùng lặp đơn nghỉ phép khác (hrm_leave_requests & hrm_leave_request_details)
                 $overlap_check = $app->count("hrm_leave_request_details", [
@@ -3958,9 +3911,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "AND" => [
                         "hrm_leave_requests.profile_id" => $personnel_id,
                         "hrm_leave_requests.deleted" => 0,
-                        "hrm_leave_requests.status[!]" => ['rejected', 'cancelled'], // Chỉ kiểm tra đơn đang chờ hoặc đã duyệt
+                        "hrm_leave_requests.status" => ['A'], // Chỉ kiểm tra đơn đang chờ hoặc đã duyệt
                         "hrm_leave_request_details.leave_date" => $date_formatted,
-                        // Kiểm tra chồng chéo session:
                         "OR" => [
                             "hrm_leave_request_details.leave_session" => "full_day", // Nếu đã có đơn cả ngày
                             "leave_session" => "full_day",                      // Hoặc nếu đang xin cả ngày
@@ -3986,9 +3938,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // 4. KIỂM TRA SỐ DƯ (NẾU LÀ PHÉP NĂM)
             // Lấy thông tin loại phép đã chọn
-            $furlough_info = $app->get("furlough_categorys", ["code"], ["id" => $furlough_id]);
+            $furlough_info = $app->get("furlough_categorys", ["id", "code", "amount", "duration"], ["id" => $furlough_id]);
 
-            // Giả sử code 'PN' là Phép Năm
             if ($furlough_info && $furlough_info['code'] === 'NPN') {
                 $year = date('Y', strtotime($first_valid_date));
                 $balance = $app->get("annual_leave", ["total_accrued", "carried_over"], [
@@ -4008,12 +3959,66 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
             }
 
+            if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
+                $amount = (float)$furlough_info['amount'];
+                $duration = $furlough_info['duration']; // 4=tháng, 5=năm
+
+                $year = date('Y', strtotime($first_valid_date));
+                $month = date('m', strtotime($first_valid_date));
+
+                // DÙNG NAMED PARAMETER → KHÔNG LỖI bindValue
+                $sql = "
+                    SELECT COALESCE(SUM(
+                        CASE WHEN d.leave_session = 'full_day' THEN 1.0 ELSE 0.5 END
+                    ), 0) AS used_days
+                    FROM hrm_leave_request_details d
+                    INNER JOIN hrm_leave_requests r ON d.leave_request_id = r.id
+                    WHERE r.profile_id = :profile_id
+                    AND r.furlough_id = :furlough_id
+                    AND r.deleted = 0
+                    AND r.status != 'D'
+                    AND " . ($duration == 5
+                    ? "YEAR(d.leave_date) = :year"
+                    : "YEAR(d.leave_date) = :year AND MONTH(d.leave_date) = :month"
+                );
+
+                $params = [
+                    ':profile_id' => $personnel_id,
+                    ':furlough_id' => $furlough_id,
+                ];
+
+                if ($duration == 5) {
+                    $params[':year'] = $year;
+                } else {
+                    $params[':year'] = $year;
+                    $params[':month'] = $month;
+                }
+
+                try {
+                    $stmt = $app->query($sql, $params);
+                    $row = $stmt->fetch();
+                    $used_days = (float)($row['used_days'] ?? 0);
+                } catch (Exception $e) {
+                    $used_days = 0;
+                }
+
+                if (($used_days + $total_days) > $amount) {
+                    $cycle_text = $duration == 5 ? "năm {$year}" : "tháng {$month}/{$year}";
+                    echo json_encode([
+                        "status" => "error",
+                        "content" => $jatbi->lang("Loại phép này chỉ được nghỉ tối đa {$amount} ngày/{$cycle_text}. Đã dùng: {$used_days}, yêu cầu thêm: {$total_days}")
+                    ]);
+                    return;
+                }
+            }
+
+
             // 5. Lưu vào CSDL (Transaction)
             $app->action(function () use ($app, $jatbi, $personnel_id, $furlough_id, $total_days, $reason, $processed_dates) {
                 // Bảng hrm_leave_requests
                 $request_data = [
                     "active" => $jatbi->active(),
-                    "profile_id" => $personnel_id, // Đã sửa
+                    "profile_id" => $personnel_id,
                     "furlough_id" => $furlough_id,
                     "total_days" => $total_days,
                     "reason" => $reason,
@@ -4043,6 +4048,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
         }
     })->setPermissions(['furlough.add']);
+
 
     $app->router("/furlough-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         if ($app->method() === 'GET') {
@@ -5392,6 +5398,342 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     //     }
     // })->setPermissions(['timekeeping']);
 
+    $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
+        try {
+            $year = $_GET['year'] ?? date('Y');
+            $month = $_GET['month'] ?? date('m');
+            $personnelF = $_GET['personnel'] ?? '';
+            $officeF = $_GET['office'] ?? '';
+            $stores = $_GET['stores'] ?? $accStore;
+
+            $start_date_month = "$year-$month-01";
+            $end_date_month = date("Y-m-t", strtotime($start_date_month));
+            $totalDays = date("t", strtotime($start_date_month));
+
+            // --- Filter Personnel ---
+            $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
+            if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
+            if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
+
+            $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
+            if (empty($personnel_list)) {
+                exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
+            }
+            $personnel_ids = array_column($personnel_list, 'id');
+
+            // --- Pre-fetch Data ---
+            $timekeeping_data = $app->select("timekeeping", ["personnels", "date", "checkin", "checkout"], ["personnels" => $personnel_ids, "date[>=]" => $start_date_month, "date[<=]" => $end_date_month]);
+            $leaveRequestsAll = $app->select("hrm_leave_request_details", [
+                "[>]hrm_leave_requests(lr)" => ["leave_request_id" => "id"],
+                "[>]furlough_categorys(fc)" => ["lr.furlough_id" => "id"]
+            ], [
+                "lr.profile_id",
+                "hrm_leave_request_details.leave_date",
+                "hrm_leave_request_details.leave_session",
+                "fc.code(category_code)",
+                "fc.name(category_name)"
+            ], [
+                "lr.profile_id" => $personnel_ids,
+                "hrm_leave_request_details.leave_date[>=]" => $start_date_month,
+                "hrm_leave_request_details.leave_date[<=]" => $end_date_month,
+                "lr.deleted" => 0,
+                "lr.status" => 'A'
+            ]);
+            $rosters_data = $app->select("rosters", ["personnels", "timework", "date"], ["personnels" => $personnel_ids, "date[<=]" => $end_date_month, "deleted" => 0]);
+            $timework_ids = array_unique(array_filter(array_column($rosters_data, 'timework')));
+            $timework_details_data = [];
+            if (!empty($timework_ids)) {
+                $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids, "deleted" => 0]);
+            }
+            $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to"], [
+                "date_from[<=]" => $end_date_month,
+                "date_to[>=]" => $start_date_month,
+                "deleted" => 0,
+                "status" => 'A'
+            ]);
+            $office_map = array_column($app->select("offices", ["id", "name"], ["deleted" => 0, "status" => "A"]), 'name', 'id');
+
+            // --- Create Data Maps ---
+            $timekeeping_map = [];
+            foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
+            $leave_map = [];
+            foreach ($leaveRequestsAll as $l) $leave_map[$l['profile_id']][$l['leave_date']][] = $l;
+            $rosters_map = [];
+            foreach ($rosters_data as $roster) {
+                if (!isset($rosters_map[$roster['personnels']]) || strtotime($roster['date']) > strtotime($rosters_map[$roster['personnels']]['date'])) {
+                    $rosters_map[$roster['personnels']] = $roster;
+                }
+            }
+            $timework_details_map = [];
+            foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
+            $holidayMap = [];
+            foreach ($holidaysAll as $h) {
+                $start = strtotime($h['date_from']);
+                $end = strtotime($h['date_to']);
+                for ($d = $start; $d <= $end; $d += 86400) {
+                    $currentDateStr = date("Y-m-d", $d);
+                    if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
+                        $holidayMap[$currentDateStr] = $h['name'] ?? 'Lễ';
+                    }
+                }
+            }
+
+            // --- Process Data for Excel ---
+            $excelData = [];
+            $stt = 1;
+            foreach ($personnel_list as $personnel) {
+                $pid = $personnel['id'];
+                $dailyData = [];
+                $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
+                $leave_days_count = 0;
+
+                $active_roster = $rosters_map[$pid] ?? null;
+                $currentTimeworkId = $active_roster ? $active_roster['timework'] : null;
+
+                foreach (range(1, $totalDays) as $day) {
+                    $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
+                    $current_date_str = "$year-$month-$dayStr";
+                    $current_date_ts = strtotime($current_date_str);
+                    $week_day = date('N', $current_date_ts);
+                    $value = ''; // Final value for the Excel cell
+                    $workValue = null; // Calculated work value (e.g., 1, 0.5, K/L, V)
+
+                    $schedule = $currentTimeworkId ? ($timework_details_map[$currentTimeworkId][$week_day] ?? null) : null;
+                    $holidayName = $holidayMap[$current_date_str] ?? null;
+                    $leaveInfoArray = $leave_map[$pid][$current_date_str] ?? null;
+                    $tk = $timekeeping_map[$pid][$current_date_str] ?? null; // Timekeeping record for the day
+
+                    $is_full_day_leave = false;
+                    $day_leave_value = 0;
+                    $leaveTextValue = ''; // Text part for leave, e.g., "NPN (C)"
+
+                    // --- Determine Leave Status ---
+                    if ($leaveInfoArray) {
+                        $leaveTextParts = [];
+                        foreach ($leaveInfoArray as $leaveDetail) {
+                            $sessionText = '';
+                            if ($leaveDetail['leave_session'] === 'morning') {
+                                $sessionText = ' (S)';
+                                $day_leave_value += 0.5;
+                            } elseif ($leaveDetail['leave_session'] === 'afternoon') {
+                                $sessionText = ' (C)';
+                                $day_leave_value += 0.5;
+                            } else {
+                                $is_full_day_leave = true;
+                                $day_leave_value = 1.0;
+                            }
+                            $leaveTextParts[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
+                        }
+                        $leaveTextValue = implode(', ', $leaveTextParts);
+                        if ($is_full_day_leave || $day_leave_value >= 1.0) $is_full_day_leave = true; // Mark as full day if total leave is >= 1
+                        $leave_days_count += $day_leave_value;
+                    }
+
+                    // --- START: MODIFIED Work Value Calculation ---
+                    // Calculate work hours and công IF checkin/out exists, REGARDLESS of schedule
+                    if (isset($tk) && !empty($tk['checkin']) && !empty($tk['checkout'])) {
+                        $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
+                        $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
+                        $hours = ($checkout_time - $checkin_time) / 3600;
+                        // $lunch_deduction = ($hours > 5) ? 1.5 : 0;
+                        $actual_hours = max(0, $hours /* - $lunch_deduction */); // Ensure non-negative
+
+                        // Always count work day and hours if checkin/out exists
+                        $work_days++;
+                        if ($week_day == 7) $total_sunday_hours += $actual_hours;
+                        else $total_day_hours += $actual_hours;
+
+                        $workValue = round($actual_hours / 8, 2); // Calculate công based on 8 hours/day
+
+                        // BUT, only calculate late/early IF they were actually scheduled to work
+                        if ($schedule && $schedule['off'] == 0) {
+                            $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
+                            $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
+                            if ($checkin_time > $expected_start) {
+                                $late_count++;
+                                $late_minutes += ($checkin_time - $expected_start) / 60;
+                            }
+                            if ($checkout_time < $expected_end) {
+                                $early_count++;
+                                $early_minutes += ($expected_end - $checkout_time) / 60;
+                            }
+                        }
+                        // No else needed here; if not scheduled, late/early remain 0 for the day
+                    }
+                    // Handle incomplete or absent based on schedule (as before)
+                    elseif (isset($tk)) { // Checkin exists but checkout is missing
+                        // Decide K/L based on schedule
+                        if ($schedule && $schedule['off'] == 0) {
+                            $workValue = 'K/L'; // Incomplete on a scheduled day
+                        } else {
+                            // Still incomplete, but wasn't scheduled, maybe different code?
+                            // Let's keep K/L for simplicity, or use another indicator like K/P?
+                            $workValue = 'K/L'; // Or 'K/P' ?
+                        }
+                    } else { // No timekeeping record
+                        if ($schedule && $schedule['off'] == 0 && $current_date_ts < time() && !$holidayName && !$leaveInfoArray) {
+                            $workValue = 'V'; // Absent on a past scheduled workday
+                        }
+                        // Otherwise $workValue remains null
+                    }
+                    // --- END: MODIFIED Work Value Calculation ---
+
+
+                    // --- Combine Values for Final Cell Output (Logic remains mostly the same) ---
+                    if ($holidayName) {
+                        $value = $holidayName;
+                    } elseif ($is_full_day_leave) {
+                        $value = $leaveTextValue;
+                    } elseif (!empty($leaveTextValue)) { // Half-day leave
+                        // Show leave + work value if work value was calculated
+                        $value = $leaveTextValue . (isset($workValue) && $workValue !== 'V' && $workValue !== 'K/L' ? " : " . $workValue : "");
+                    } elseif ($schedule && $schedule['off'] == 1) {
+                        $value = 'OFF';
+                    } elseif (isset($workValue)) { // Only work value (no leave, not OFF/Holiday)
+                        $value = $workValue;
+                    } else {
+                        $value = ''; // Default empty
+                    }
+
+                    $dailyData[$dayStr] = $value;
+                } // End daily loop
+
+                $excelData[] = [
+                    'STT' => $stt++,
+                    'MaNV' => $personnel['code'],
+                    'HoTen' => $personnel['name'],
+                    'BoPhan' => $office_map[$personnel['office']] ?? '',
+                    'DailyData' => $dailyData,
+                    'TongGio_Ngay' => round($total_day_hours, 2),
+                    'TongGio_Dem' => 0,
+                    'TongGio_CN' => round($total_sunday_hours, 2),
+                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours, 2),
+                    'CongLam_Ngay' => $work_days,
+                    'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours) / 8, 2),
+                    'CongPhep' => $leave_days_count,
+                    'DiMuon_Lan' => $late_count,
+                    'DiMuon_Phut' => round($late_minutes),
+                    'VeSom_Lan' => $early_count,
+                    'VeSom_Phut' => round($early_minutes)
+                ];
+            } // End personnel loop
+
+            // --- Generate Excel File ---
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle("BangCongThang_$month-$year");
+
+            // Set Headers and Styles (Similar to previous version, ensure 'CongPhep' column is handled)
+            $sheet->setCellValue('A2', 'CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC')->mergeCells('A2:D2');
+            $sheet->setCellValue('A3', 'BẢNG CHẤM CÔNG THÁNG ' . "$month/$year")->mergeCells('A3:F3');
+            $sheet->getStyle('A2:A3')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $headers_row6 = ['STT', 'Mã NV', 'Họ và tên', 'Bộ phận'];
+            $headers_row7 = ['', '', '', ''];
+            $days_of_week_map = ['1' => 'T2', '2' => 'T3', '3' => 'T4', '4' => 'T5', '5' => 'T6', '6' => 'T7', '7' => 'CN'];
+            foreach (range(1, $totalDays) as $day) {
+                $headers_row6[] = str_pad($day, 2, '0', STR_PAD_LEFT);
+                $week_day = date('N', strtotime("$year-$month-$day"));
+                $headers_row7[] = $days_of_week_map[$week_day];
+            }
+            $summary_headers = [
+                'Tổng giờ' => ['Ngày', 'CN', 'Tổng'],
+                'Tổng công' => ['Ngày làm', 'Công giờ', 'Phép'],
+                'Đi muộn' => ['Lần', 'Phút'],
+                'Về sớm' => ['Lần', 'Phút']
+            ];
+            foreach ($summary_headers as $main => $subs) {
+                $headers_row6[] = $main;
+                for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
+                foreach ($subs as $sub) $headers_row7[] = $sub;
+            }
+            $sheet->fromArray($headers_row6, null, 'A6');
+            $sheet->fromArray($headers_row7, null, 'A7');
+
+            $sheet->mergeCells('A6:A7');
+            $sheet->mergeCells('B6:B7');
+            $sheet->mergeCells('C6:C7');
+            $sheet->mergeCells('D6:D7');
+            $startMergeCol = 5 + $totalDays;
+            foreach ($summary_headers as $main => $subs) {
+                $endColIndex = $startMergeCol + count($subs) - 1;
+                $startColLetter = Coordinate::stringFromColumnIndex($startMergeCol);
+                $endColLetter = Coordinate::stringFromColumnIndex($endColIndex);
+                if ($startColLetter != $endColLetter) {
+                    $sheet->mergeCells($startColLetter . '6:' . $endColLetter . '6');
+                }
+                $startMergeCol = $endColIndex + 1;
+            }
+
+            // Write Data Rows
+            $rowIndex = 8;
+            $colIndexBase = 1; // Start column index
+            foreach ($excelData as $data) {
+                $colIndex = $colIndexBase;
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['STT']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['MaNV']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['HoTen']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['BoPhan']);
+                // Daily Data
+                foreach (range(1, $totalDays) as $day) {
+                    $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
+                }
+                // Summary Data
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongPhep']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
+                $rowIndex++;
+            }
+
+
+            // Apply Styles and Column Widths
+            $lastColLetter = Coordinate::stringFromColumnIndex($colIndex - 1);
+            $sheet->getStyle('A6:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
+            $sheet->getStyle('A8:' . $lastColLetter . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER); // Center data rows
+            $sheet->getStyle('C8:D' . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT); // Left align Name and Dept
+
+            $sheet->getColumnDimension('A')->setAutoSize(true);
+            $sheet->getColumnDimension('B')->setAutoSize(true);
+            $sheet->getColumnDimension('C')->setWidth(30);
+            $sheet->getColumnDimension('D')->setAutoSize(true);
+            for ($i = 1; $i <= $totalDays; $i++) {
+                $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
+                $sheet->getColumnDimension($colLetter)->setWidth(12);
+            } // Wider daily columns
+            $summaryStartColIndex = 4 + $totalDays + 1;
+            $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
+            for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
+                $colLetter = Coordinate::stringFromColumnIndex($i);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            }
+
+
+            // --- Output Excel File ---
+            ob_end_clean();
+            $filename = "BangCong_Thang_{$month}_{$year}.xlsx";
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (Exception $e) {
+            ob_end_clean();
+            http_response_code(500);
+            exit("Lỗi khi tạo file Excel: " . $e->getMessage());
+        }
+    })->setPermissions(['timekeeping']);
 
     $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
@@ -5675,890 +6017,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']);
 
             echo $app->render($template . '/hrm/timekeeping.html', $vars);
-        } // End GET method
-        // POST Method (if any)
-    })->setPermissions(['timekeeping']);
-
-    // $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $accStore) {
-    //     try {
-    //         $year = $_GET['year'] ?? date('Y');
-    //         $month = $_GET['month'] ?? date('m');
-    //         $personnelF = $_GET['personnel'] ?? '';
-    //         $officeF = $_GET['office'] ?? '';
-    //         $stores = $_GET['stores'] ?? $accStore;
-
-    //         $totalDays = date("t", strtotime("$year-$month-01"));
-    //         $from_date = "$year-$month-01";
-    //         $to_date = "$year-$month-$totalDays";
-
-    //         $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
-    //         if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
-    //         if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
-
-    //         $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
-    //         if (empty($personnel_list)) {
-    //             exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
-    //         }
-    //         $personnel_ids = array_column($personnel_list, 'id');
-
-    //         $timekeeping_data = $app->select("timekeeping", "*", ["personnels" => $personnel_ids, "date[<>]" => [$from_date, $to_date]]);
-    //         $furlough_data = $app->select("furlough", "*", ["personnels" => $personnel_ids, "date_from[<=]" => $to_date, "date_to[>=]" => $from_date, "deleted" => 0, "status" => 'A']);
-
-    //         $rosters_data = $app->select("rosters", ["personnels", "timework", "date"], ["personnels" => $personnel_ids, "date[<=]" => $to_date, "deleted" => 0]);
-    //         $timework_ids = array_unique(array_column($rosters_data, 'timework'));
-    //         $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids]);
-
-    //         $office_map = array_column($app->select("offices", ["id", "name"]), 'name', 'id');
-    //         $furlough_category_map = array_column($app->select("furlough_categorys", ["id", "code"]), 'code', 'id');
-
-    //         $timekeeping_map = [];
-    //         foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
-
-    //         $furlough_map = [];
-    //         foreach ($furlough_data as $f) {
-    //             for ($d = strtotime($f['date_from']); $d <= strtotime($f['date_to']); $d += 86400) {
-    //                 $furlough_map[$f['personnels']][date("Y-m-d", $d)] = $f;
-    //             }
-    //         }
-
-    //         $rosters_map = [];
-    //         foreach ($rosters_data as $roster) $rosters_map[$roster['personnels']][] = $roster;
-    //         foreach ($rosters_map as $pid => &$p_rosters) {
-    //             usort($p_rosters, fn($a, $b) => strtotime($b['date']) - strtotime($a['date']));
-    //         }
-
-    //         $timework_details_map = [];
-    //         foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
-
-    //         $excelData = [];
-    //         $stt = 1;
-    //         foreach ($personnel_list as $personnel) {
-    //             $pid = $personnel['id'];
-    //             $dailyData = [];
-    //             $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
-
-    //             foreach (range(1, $totalDays) as $day) {
-    //                 $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //                 $current_date_str = "$year-$month-$dayStr";
-    //                 $current_date_ts = strtotime($current_date_str);
-    //                 $week_day = date('N', $current_date_ts);
-    //                 $value = '';
-
-    //                 $active_roster = null;
-    //                 if (isset($rosters_map[$pid])) {
-    //                     foreach ($rosters_map[$pid] as $roster) {
-    //                         if (strtotime($roster['date']) <= $current_date_ts) {
-    //                             $active_roster = $roster;
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //                 $schedule = null;
-    //                 if ($active_roster) {
-    //                     $schedule = $timework_details_map[$active_roster['timework']][$week_day] ?? null;
-    //                 }
-
-    //                 if (isset($furlough_map[$pid][$current_date_str])) {
-    //                     $furlough_record = $furlough_map[$pid][$current_date_str];
-    //                     $value = $furlough_category_map[$furlough_record['furlough']] ?? 'P';
-    //                 } elseif ($schedule && $schedule['off'] == 1) {
-    //                     $value = 'OFF';
-    //                 } elseif (isset($timekeeping_map[$pid][$current_date_str])) {
-    //                     $tk = $timekeeping_map[$pid][$current_date_str];
-    //                     if (!empty($tk['checkin']) && !empty($tk['checkout'])) {
-    //                         $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
-    //                         $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
-    //                         $hours = ($checkout_time - $checkin_time) / 3600;
-    //                         $work_days++;
-
-    //                         if ($week_day == 7) $total_sunday_hours += $hours;
-    //                         else $total_day_hours += $hours;
-
-    //                         $value = round($hours / 8, 2);
-
-    //                         if ($schedule && $schedule['off'] == 0) {
-    //                             $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
-    //                             $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
-
-    //                             if ($checkin_time > $expected_start) {
-    //                                 $late_count++;
-    //                                 $late_minutes += ($checkin_time - $expected_start) / 60;
-    //                             }
-    //                             if ($checkout_time < $expected_end) {
-    //                                 $early_count++;
-    //                                 $early_minutes += ($expected_end - $checkout_time) / 60;
-    //                             }
-    //                         }
-    //                     } else {
-    //                         $value = 'K/L';
-    //                     }
-    //                 } else {
-    //                     if ($schedule && $schedule['off'] == 0) {
-    //                         $value = 'V';
-    //                     }
-    //                 }
-    //                 $dailyData[$dayStr] = $value;
-    //             }
-
-    //             $excelData[] = [
-    //                 'STT' => $stt++,
-    //                 'MaNV' => $personnel['code'],
-    //                 'HoTen' => $personnel['name'],
-    //                 'BoPhan' => $office_map[$personnel['office']] ?? '',
-    //                 'DailyData' => $dailyData,
-    //                 'TongGio_Ngay' => round($total_day_hours, 2),
-    //                 'TongGio_Dem' => 0,
-    //                 'TongGio_CN' => round($total_sunday_hours, 2),
-    //                 'TongGio_Tong' => round($total_day_hours + $total_sunday_hours, 2),
-    //                 'CongLam_Ngay' => $work_days,
-    //                 'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours) / 8, 2),
-    //                 'DiMuon_Lan' => $late_count,
-    //                 'DiMuon_Phut' => round($late_minutes),
-    //                 'VeSom_Lan' => $early_count,
-    //                 'VeSom_Phut' => round($early_minutes)
-    //             ];
-    //         }
-
-    //         $spreadsheet = new Spreadsheet();
-    //         $sheet = $spreadsheet->getActiveSheet();
-    //         $sheet->setTitle("BangCongThang_$month-$year");
-
-    //         $sheet->setCellValue('A2', 'CÔNG TY NGỌC TRAI NGỌC HIỀN PHÚ QUỐC')->mergeCells('A2:D2');
-    //         $sheet->setCellValue('A3', 'BẢNG CÔNG THÁNG ' . "$month/$year")->mergeCells('A3:D3');
-    //         $sheet->getStyle('A2:A3')->getFont()->setBold(true);
-
-    //         $headers_row6 = ['STT', 'Mã NV', 'Họ và tên', 'Bộ phận'];
-    //         $headers_row7 = ['', '', '', ''];
-    //         $col_index = 5;
-    //         $days_of_week_map = ['1' => 'T2', '2' => 'T3', '3' => 'T4', '4' => 'T5', '5' => 'T6', '6' => 'T7', '7' => 'CN'];
-    //         foreach (range(1, $totalDays) as $day) {
-    //             $headers_row6[] = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //             $week_day = date('N', strtotime("$year-$month-$day"));
-    //             $headers_row7[] = $days_of_week_map[$week_day];
-    //             $col_index++;
-    //         }
-    //         $summary_headers = [
-    //             'Tổng giờ' => ['Ngày', 'Đêm', 'CN', 'Tổng'],
-    //             'Công làm' => ['Ngày', 'Giờ'],
-    //             'Đi muộn' => ['Lần', 'Phút'],
-    //             'Về sớm' => ['Lần', 'Phút']
-    //         ];
-    //         foreach ($summary_headers as $main => $subs) {
-    //             $headers_row6[] = $main;
-    //             for ($i = 0; $i < count($subs) - 1; $i++)
-    //                 $headers_row6[] = '';
-    //             foreach ($subs as $sub)
-    //                 $headers_row7[] = $sub;
-    //         }
-
-    //         $sheet->fromArray($headers_row6, null, 'A6');
-    //         $sheet->fromArray($headers_row7, null, 'A7');
-
-    //         $sheet->mergeCells('A6:A7');
-    //         $sheet->mergeCells('B6:B7');
-    //         $sheet->mergeCells('C6:C7');
-    //         $sheet->mergeCells('D6:D7');
-    //         $col = 'E';
-    //         $startMergeCol = 5 + $totalDays;
-    //         foreach ($summary_headers as $main => $subs) {
-    //             $endCol = Coordinate::stringFromColumnIndex($startMergeCol + count($subs) - 1);
-    //             $startCol = Coordinate::stringFromColumnIndex($startMergeCol);
-    //             $sheet->mergeCells($startCol . '6:' . $endCol . '6');
-    //             $startMergeCol += count($subs);
-    //         }
-
-    //         $rowIndex = 8;
-    //         foreach ($excelData as $data) {
-    //             $colIndex = 1;
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['STT']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['MaNV']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['HoTen']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['BoPhan']);
-    //             foreach (range(1, $totalDays) as $day) {
-    //                 $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
-    //             }
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Dem']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
-    //             $rowIndex++;
-    //         }
-
-    //         $lastColLetter = $sheet->getHighestColumn();
-    //         $sheet->getStyle('A6:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-    //         $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-    //         $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
-
-    //         $sheet->getColumnDimension('A')->setAutoSize(true);
-    //         $sheet->getColumnDimension('B')->setAutoSize(true);
-    //         $sheet->getColumnDimension('C')->setAutoSize(true);
-    //         $sheet->getColumnDimension('D')->setAutoSize(true);
-
-    //         for ($i = 1; $i <= $totalDays; $i++) {
-    //             $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
-    //             $sheet->getColumnDimension($colLetter)->setWidth(5);
-    //         }
-
-    //         $summaryStartColIndex = 4 + $totalDays + 1;
-    //         $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
-    //         for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
-    //             $colLetter = Coordinate::stringFromColumnIndex($i);
-    //             $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-    //         }
-
-    //         ob_end_clean();
-    //         $filename = "BangCong_Thang_{$month}_{$year}.xlsx";
-    //         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    //         header('Content-Disposition: attachment;filename="' . $filename . '"');
-    //         header('Cache-Control: max-age=0');
-    //         $writer = new Xlsx($spreadsheet);
-    //         $writer->save('php://output');
-    //         exit;
-    //     } catch (Exception $e) {
-    //         ob_end_clean();
-    //         http_response_code(500);
-    //         exit("Lỗi khi tạo file Excel: " . $e->getMessage());
-    //     }
-    // })->setPermissions(['timekeeping']);
-
-    // $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
-    //     try {
-    //         $year = $_GET['year'] ?? date('Y');
-    //         $month = $_GET['month'] ?? date('m');
-    //         $personnelF = $_GET['personnel'] ?? '';
-    //         $officeF = $_GET['office'] ?? '';
-    //         $stores = $_GET['stores'] ?? $accStore;
-
-    //         $start_date_month = "$year-$month-01";
-    //         $end_date_month = date("Y-m-t", strtotime($start_date_month));
-    //         $totalDays = date("t", strtotime($start_date_month));
-
-    //         $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
-    //         if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
-    //         if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
-
-    //         $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
-    //         if (empty($personnel_list)) {
-    //             exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
-    //         }
-    //         $personnel_ids = array_column($personnel_list, 'id');
-
-    //         $timekeeping_data = $app->select("timekeeping", ["personnels", "date", "checkin", "checkout"], ["personnels" => $personnel_ids, "date[>=]" => $start_date_month, "date[<=]" => $end_date_month]);
-
-    //         $leaveRequestsAll = $app->select("hrm_leave_request_details", [
-    //             "[>]hrm_leave_requests(lr)" => ["leave_request_id" => "id"],
-    //             "[>]furlough_categorys(fc)" => ["lr.furlough_id" => "id"]
-    //         ], [
-    //             "lr.profile_id",
-    //             "hrm_leave_request_details.leave_date",
-    //             "hrm_leave_request_details.leave_session",
-    //             "fc.code(category_code)",
-    //             "fc.name(category_name)"
-    //         ], [
-    //             "lr.profile_id" => $personnel_ids,
-    //             "hrm_leave_request_details.leave_date[>=]" => $start_date_month,
-    //             "hrm_leave_request_details.leave_date[<=]" => $end_date_month,
-    //             "lr.deleted" => 0,
-    //             "lr.status" => 'A'
-    //         ]);
-
-    //         $rosters_data = $app->select("rosters", ["personnels", "timework", "date"], ["personnels" => $personnel_ids, "date[<=]" => $end_date_month, "deleted" => 0]);
-    //         $timework_ids = array_unique(array_filter(array_column($rosters_data, 'timework')));
-
-    //         $timework_details_data = [];
-    //         if (!empty($timework_ids)) {
-    //             $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids, "deleted" => 0]);
-    //         }
-
-    //         $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to"], [
-    //             "date_from[<=]" => $end_date_month,
-    //             "date_to[>=]" => $start_date_month,
-    //             "deleted" => 0,
-    //             "status" => 'A'
-    //         ]);
-
-    //         $office_map = array_column($app->select("offices", ["id", "name"], ["deleted" => 0, "status" => "A"]), 'name', 'id');
-
-    //         $timekeeping_map = [];
-    //         foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
-
-    //         $leave_map = [];
-    //         foreach ($leaveRequestsAll as $l) {
-    //             $leave_map[$l['profile_id']][$l['leave_date']][] = $l;
-    //         }
-
-    //         $rosters_map = [];
-    //         foreach ($rosters_data as $roster) {
-    //             if (!isset($rosters_map[$roster['personnels']]) || strtotime($roster['date']) > strtotime($rosters_map[$roster['personnels']]['date'])) {
-    //                 $rosters_map[$roster['personnels']] = $roster;
-    //             }
-    //         }
-
-    //         $timework_details_map = [];
-    //         foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
-
-    //         $holidayMap = [];
-    //         foreach ($holidaysAll as $h) {
-    //             $start = strtotime($h['date_from']);
-    //             $end = strtotime($h['date_to']);
-    //             for ($d = $start; $d <= $end; $d += 86400) {
-    //                 $currentDateStr = date("Y-m-d", $d);
-    //                 if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-    //                     $holidayMap[$currentDateStr] = $h['name'] ?? 'Lễ';
-    //                 }
-    //             }
-    //         }
-
-    //         $excelData = [];
-    //         $stt = 1;
-    //         foreach ($personnel_list as $personnel) {
-    //             $pid = $personnel['id'];
-    //             $dailyData = [];
-    //             $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
-    //             $leave_days_count = 0; // Initialize leave days count
-
-    //             $active_roster = $rosters_map[$pid] ?? null;
-    //             $currentTimeworkId = $active_roster ? $active_roster['timework'] : null;
-
-    //             foreach (range(1, $totalDays) as $day) {
-    //                 $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //                 $current_date_str = "$year-$month-$dayStr";
-    //                 $current_date_ts = strtotime($current_date_str);
-    //                 $week_day = date('N', $current_date_ts);
-    //                 $value = '';
-
-    //                 $schedule = $currentTimeworkId ? ($timework_details_map[$currentTimeworkId][$week_day] ?? null) : null;
-    //                 $holidayName = $holidayMap[$current_date_str] ?? null;
-    //                 $leaveInfo = $leave_map[$pid][$current_date_str] ?? null;
-
-    //                 if ($holidayName) {
-    //                     $value = $holidayName;
-    //                 } elseif ($leaveInfo) {
-    //                     $leaveText = [];
-    //                     $day_leave_value = 0; // Calculate leave value for summary
-    //                     foreach ($leaveInfo as $leaveDetail) {
-    //                         $sessionText = '';
-    //                         if ($leaveDetail['leave_session'] === 'morning') {
-    //                             $sessionText = ' (S)';
-    //                             $day_leave_value += 0.5;
-    //                         } elseif ($leaveDetail['leave_session'] === 'afternoon') {
-    //                             $sessionText = ' (C)';
-    //                             $day_leave_value += 0.5;
-    //                         } else { // full_day
-    //                             $day_leave_value = 1.0; // Assume full day if session is full_day or unknown but exists
-    //                         }
-    //                         $leaveText[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
-    //                     }
-    //                     $value = implode(', ', $leaveText);
-    //                     $leave_days_count += $day_leave_value; // Add to leave summary
-    //                 } elseif ($schedule && $schedule['off'] == 1) {
-    //                     $value = 'OFF';
-    //                 } elseif (isset($timekeeping_map[$pid][$current_date_str])) {
-    //                     $tk = $timekeeping_map[$pid][$current_date_str];
-    //                     if (!empty($tk['checkin']) && !empty($tk['checkout'])) {
-    //                         $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
-    //                         $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
-    //                         $hours = ($checkout_time - $checkin_time) / 3600;
-
-    //                         // Basic lunch break deduction (adjust if needed)
-    //                         $lunch_deduction = ($hours > 5) ? 1.5 : 0; // Simple example: 1.5 hours break if worked > 5 hours
-    //                         $actual_hours = max(0, $hours - $lunch_deduction);
-
-    //                         $work_days++;
-    //                         if ($week_day == 7) $total_sunday_hours += $actual_hours;
-    //                         else $total_day_hours += $actual_hours;
-
-    //                         $value = round($actual_hours / 8, 2); // Calculate công based on 8 hours/day
-
-    //                         if ($schedule && $schedule['off'] == 0) {
-    //                             $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
-    //                             $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
-
-    //                             if ($checkin_time > $expected_start + 60) { // Allow 1 minute grace period
-    //                                 $late_count++;
-    //                                 $late_minutes += ($checkin_time - $expected_start) / 60;
-    //                             }
-    //                             if ($checkout_time < $expected_end - 60) { // Allow 1 minute grace period
-    //                                 $early_count++;
-    //                                 $early_minutes += ($expected_end - $checkout_time) / 60;
-    //                             }
-    //                         }
-    //                     } else {
-    //                         $value = 'K/L'; // Incomplete checkin/out
-    //                     }
-    //                 } else { // No timekeeping record
-    //                     if ($schedule && $schedule['off'] == 0 && $current_date_ts < time()) {
-    //                         $value = 'V'; // Absent on a scheduled workday in the past
-    //                     } else {
-    //                         $value = ''; // Future date or non-scheduled day
-    //                     }
-    //                 }
-    //                 $dailyData[$dayStr] = $value;
-    //             }
-
-    //             $excelData[] = [
-    //                 'STT' => $stt++,
-    //                 'MaNV' => $personnel['code'],
-    //                 'HoTen' => $personnel['name'],
-    //                 'BoPhan' => $office_map[$personnel['office']] ?? '',
-    //                 'DailyData' => $dailyData,
-    //                 'TongGio_Ngay' => round($total_day_hours, 2),
-    //                 'TongGio_Dem' => 0, // Assuming no night shift calculation needed
-    //                 'TongGio_CN' => round($total_sunday_hours, 2),
-    //                 'TongGio_Tong' => round($total_day_hours + $total_sunday_hours, 2),
-    //                 'CongLam_Ngay' => $work_days, // Actual days with checkin/out
-    //                 'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours) / 8, 2), // Công based on hours
-    //                 'CongPhep' => $leave_days_count, // Added Leave Days
-    //                 'DiMuon_Lan' => $late_count,
-    //                 'DiMuon_Phut' => round($late_minutes),
-    //                 'VeSom_Lan' => $early_count,
-    //                 'VeSom_Phut' => round($early_minutes)
-    //             ];
-    //         }
-
-    //         $spreadsheet = new Spreadsheet();
-    //         $sheet = $spreadsheet->getActiveSheet();
-    //         $sheet->setTitle("BangCongThang_$month-$year");
-
-    //         $sheet->setCellValue('A2', 'CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC')->mergeCells('A2:D2');
-    //         $sheet->setCellValue('A3', 'BẢNG CHẤM CÔNG THÁNG ' . "$month/$year")->mergeCells('A3:F3');
-    //         $sheet->getStyle('A2:A3')->getFont()->setBold(true)->setSize(14);
-    //         $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-    //         $headers_row6 = ['STT', 'Mã NV', 'Họ và tên', 'Bộ phận'];
-    //         $headers_row7 = ['', '', '', ''];
-    //         $days_of_week_map = ['1' => 'T2', '2' => 'T3', '3' => 'T4', '4' => 'T5', '5' => 'T6', '6' => 'T7', '7' => 'CN'];
-    //         foreach (range(1, $totalDays) as $day) {
-    //             $headers_row6[] = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //             $week_day = date('N', strtotime("$year-$month-$day"));
-    //             $headers_row7[] = $days_of_week_map[$week_day];
-    //         }
-
-    //         // Updated Summary Headers
-    //         $summary_headers = [
-    //             'Tổng giờ' => ['Ngày', 'CN', 'Tổng'], // Removed Đêm
-    //             'Tổng công' => ['Ngày làm', 'Công giờ', 'Phép'], // Updated and added Phép
-    //             'Đi muộn' => ['Lần', 'Phút'],
-    //             'Về sớm' => ['Lần', 'Phút']
-    //         ];
-    //         foreach ($summary_headers as $main => $subs) {
-    //             $headers_row6[] = $main;
-    //             for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
-    //             foreach ($subs as $sub) $headers_row7[] = $sub;
-    //         }
-
-    //         $sheet->fromArray($headers_row6, null, 'A6');
-    //         $sheet->fromArray($headers_row7, null, 'A7');
-
-    //         $sheet->mergeCells('A6:A7');
-    //         $sheet->mergeCells('B6:B7');
-    //         $sheet->mergeCells('C6:C7');
-    //         $sheet->mergeCells('D6:D7');
-
-    //         $startMergeCol = 5 + $totalDays; // Column index after days
-    //         foreach ($summary_headers as $main => $subs) {
-    //             $endColIndex = $startMergeCol + count($subs) - 1;
-    //             $startColLetter = Coordinate::stringFromColumnIndex($startMergeCol);
-    //             $endColLetter = Coordinate::stringFromColumnIndex($endColIndex);
-    //             if ($startColLetter != $endColLetter) { // Only merge if more than one sub-column
-    //                 $sheet->mergeCells($startColLetter . '6:' . $endColLetter . '6');
-    //             }
-    //             $startMergeCol = $endColIndex + 1;
-    //         }
-
-    //         $rowIndex = 8;
-    //         foreach ($excelData as $data) {
-    //             $colIndex = 1;
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['STT']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['MaNV']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['HoTen']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['BoPhan']);
-    //             foreach (range(1, $totalDays) as $day) {
-    //                 $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-    //                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
-    //             }
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
-    //             // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Dem']); // Removed Đêm
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongPhep']); // Added Phép
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
-    //             $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
-    //             $rowIndex++;
-    //         }
-
-    //         $lastColLetter = Coordinate::stringFromColumnIndex($colIndex - 1);
-    //         $sheet->getStyle('A6:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-    //         $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-    //         $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
-    //         $sheet->getStyle('A8:' . $lastColLetter . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER); // Center data rows
-    //         $sheet->getStyle('C8:D' . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT); // Left align Name and Dept
-
-    //         $sheet->getColumnDimension('A')->setAutoSize(true);
-    //         $sheet->getColumnDimension('B')->setAutoSize(true);
-    //         $sheet->getColumnDimension('C')->setWidth(30); // Set fixed width for name
-    //         $sheet->getColumnDimension('D')->setAutoSize(true);
-
-    //         for ($i = 1; $i <= $totalDays; $i++) {
-    //             $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
-    //             $sheet->getColumnDimension($colLetter)->setWidth(5);
-    //         }
-
-    //         $summaryStartColIndex = 4 + $totalDays + 1;
-    //         $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
-    //         for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
-    //             $colLetter = Coordinate::stringFromColumnIndex($i);
-    //             $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-    //         }
-
-    //         ob_end_clean();
-    //         $filename = "BangCong_Thang_{$month}_{$year}.xlsx";
-    //         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    //         header('Content-Disposition: attachment;filename="' . $filename . '"');
-    //         header('Cache-Control: max-age=0');
-    //         $writer = new Xlsx($spreadsheet);
-    //         $writer->save('php://output');
-    //         exit;
-    //     } catch (Exception $e) {
-    //         ob_end_clean();
-    //         http_response_code(500);
-    //         exit("Lỗi khi tạo file Excel: " . $e->getMessage());
-    //     }
-    // })->setPermissions(['timekeeping']);
-
-    $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
-        try {
-            // --- Fetch Filter Parameters ---
-            $year = $_GET['year'] ?? date('Y');
-            $month = $_GET['month'] ?? date('m');
-            $personnelF = $_GET['personnel'] ?? '';
-            $officeF = $_GET['office'] ?? '';
-            $stores = $_GET['stores'] ?? $accStore;
-
-            $start_date_month = "$year-$month-01";
-            $end_date_month = date("Y-m-t", strtotime($start_date_month));
-            $totalDays = date("t", strtotime($start_date_month));
-
-            // --- Filter Personnel ---
-            $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
-            if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
-            if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
-
-            $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
-            if (empty($personnel_list)) {
-                exit("Không có nhân viên nào thỏa mãn điều kiện lọc.");
-            }
-            $personnel_ids = array_column($personnel_list, 'id');
-
-            // --- Pre-fetch Data ---
-            $timekeeping_data = $app->select("timekeeping", ["personnels", "date", "checkin", "checkout"], ["personnels" => $personnel_ids, "date[>=]" => $start_date_month, "date[<=]" => $end_date_month]);
-            $leaveRequestsAll = $app->select("hrm_leave_request_details", [
-                "[>]hrm_leave_requests(lr)" => ["leave_request_id" => "id"],
-                "[>]furlough_categorys(fc)" => ["lr.furlough_id" => "id"]
-            ], [
-                "lr.profile_id",
-                "hrm_leave_request_details.leave_date",
-                "hrm_leave_request_details.leave_session",
-                "fc.code(category_code)",
-                "fc.name(category_name)"
-            ], [
-                "lr.profile_id" => $personnel_ids,
-                "hrm_leave_request_details.leave_date[>=]" => $start_date_month,
-                "hrm_leave_request_details.leave_date[<=]" => $end_date_month,
-                "lr.deleted" => 0,
-                "lr.status" => 'A'
-            ]);
-            $rosters_data = $app->select("rosters", ["personnels", "timework", "date"], ["personnels" => $personnel_ids, "date[<=]" => $end_date_month, "deleted" => 0]);
-            $timework_ids = array_unique(array_filter(array_column($rosters_data, 'timework')));
-            $timework_details_data = [];
-            if (!empty($timework_ids)) {
-                $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids, "deleted" => 0]);
-            }
-            $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to"], [
-                "date_from[<=]" => $end_date_month,
-                "date_to[>=]" => $start_date_month,
-                "deleted" => 0,
-                "status" => 'A'
-            ]);
-            $office_map = array_column($app->select("offices", ["id", "name"], ["deleted" => 0, "status" => "A"]), 'name', 'id');
-
-            // --- Create Data Maps ---
-            $timekeeping_map = [];
-            foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
-            $leave_map = [];
-            foreach ($leaveRequestsAll as $l) $leave_map[$l['profile_id']][$l['leave_date']][] = $l;
-            $rosters_map = [];
-            foreach ($rosters_data as $roster) {
-                if (!isset($rosters_map[$roster['personnels']]) || strtotime($roster['date']) > strtotime($rosters_map[$roster['personnels']]['date'])) {
-                    $rosters_map[$roster['personnels']] = $roster;
-                }
-            }
-            $timework_details_map = [];
-            foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
-            $holidayMap = [];
-            foreach ($holidaysAll as $h) {
-                $start = strtotime($h['date_from']);
-                $end = strtotime($h['date_to']);
-                for ($d = $start; $d <= $end; $d += 86400) {
-                    $currentDateStr = date("Y-m-d", $d);
-                    if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-                        $holidayMap[$currentDateStr] = $h['name'] ?? 'Lễ';
-                    }
-                }
-            }
-
-            // --- Process Data for Excel ---
-            $excelData = [];
-            $stt = 1;
-            foreach ($personnel_list as $personnel) {
-                $pid = $personnel['id'];
-                $dailyData = [];
-                $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
-                $leave_days_count = 0;
-
-                $active_roster = $rosters_map[$pid] ?? null;
-                $currentTimeworkId = $active_roster ? $active_roster['timework'] : null;
-
-                foreach (range(1, $totalDays) as $day) {
-                    $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-                    $current_date_str = "$year-$month-$dayStr";
-                    $current_date_ts = strtotime($current_date_str);
-                    $week_day = date('N', $current_date_ts);
-                    $value = ''; // Final value for the Excel cell
-                    $workValue = null; // Calculated work value (e.g., 1, 0.5, K/L, V)
-
-                    $schedule = $currentTimeworkId ? ($timework_details_map[$currentTimeworkId][$week_day] ?? null) : null;
-                    $holidayName = $holidayMap[$current_date_str] ?? null;
-                    $leaveInfoArray = $leave_map[$pid][$current_date_str] ?? null;
-                    $tk = $timekeeping_map[$pid][$current_date_str] ?? null; // Timekeeping record for the day
-
-                    $is_full_day_leave = false;
-                    $day_leave_value = 0;
-                    $leaveTextValue = ''; // Text part for leave, e.g., "NPN (C)"
-
-                    // --- Determine Leave Status ---
-                    if ($leaveInfoArray) {
-                        $leaveTextParts = [];
-                        foreach ($leaveInfoArray as $leaveDetail) {
-                            $sessionText = '';
-                            if ($leaveDetail['leave_session'] === 'morning') {
-                                $sessionText = ' (S)';
-                                $day_leave_value += 0.5;
-                            } elseif ($leaveDetail['leave_session'] === 'afternoon') {
-                                $sessionText = ' (C)';
-                                $day_leave_value += 0.5;
-                            } else {
-                                $is_full_day_leave = true;
-                                $day_leave_value = 1.0;
-                            }
-                            $leaveTextParts[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
-                        }
-                        $leaveTextValue = implode(', ', $leaveTextParts);
-                        if ($is_full_day_leave || $day_leave_value >= 1.0) $is_full_day_leave = true; // Mark as full day if total leave is >= 1
-                        $leave_days_count += $day_leave_value;
-                    }
-
-                    // --- Determine Work Value (Checkin/Checkout or Absence) ---
-                    if (isset($tk) && !empty($tk['checkin']) && !empty($tk['checkout'])) {
-                        $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
-                        $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
-                        $hours = ($checkout_time - $checkin_time) / 3600;
-                        $lunch_deduction = ($hours > 5) ? 1.5 : 0;
-                        $actual_hours = max(0, $hours - $lunch_deduction);
-
-                        $work_days++;
-                        if ($week_day == 7) $total_sunday_hours += $actual_hours;
-                        else $total_day_hours += $actual_hours;
-
-                        $workValue = round($actual_hours / 8, 2); // Calculate công based on 8 hours/day
-
-                        if ($schedule && $schedule['off'] == 0) {
-                            $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
-                            $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
-                            if ($checkin_time > $expected_start + 60) {
-                                $late_count++;
-                                $late_minutes += ($checkin_time - $expected_start) / 60;
-                            }
-                            if ($checkout_time < $expected_end - 60) {
-                                $early_count++;
-                                $early_minutes += ($expected_end - $checkout_time) / 60;
-                            }
-                        }
-                    } elseif (isset($tk)) { // Checkin exists but checkout is missing
-                        $workValue = 'K/L'; // Incomplete
-                    } else { // No timekeeping record
-                        if ($schedule && $schedule['off'] == 0 && $current_date_ts < time() && !$holidayName && !$leaveInfoArray) {
-                            $workValue = 'V'; // Absent on a past scheduled workday without leave/holiday
-                        } else {
-                            // Could be future, scheduled off, holiday, or leave day without timekeeping
-                            // $workValue remains null initially
-                        }
-                    }
-
-                    // --- Combine Values for Final Cell Output ---
-                    if ($holidayName) {
-                        $value = $holidayName;
-                    } elseif ($is_full_day_leave) {
-                        $value = $leaveTextValue; // Full day leave overrides work value
-                    } elseif (!empty($leaveTextValue)) { // Half-day leave
-                        $value = $leaveTextValue . (isset($workValue) ? " : " . $workValue : ""); // Show leave + work value if available
-                    } elseif ($schedule && $schedule['off'] == 1) {
-                        $value = 'OFF';
-                    } elseif (isset($workValue)) { // Only work value (no leave)
-                        $value = $workValue;
-                    } else {
-                        $value = ''; // Default empty if no other condition met (e.g., future non-working day)
-                    }
-
-                    $dailyData[$dayStr] = $value;
-                } // End daily loop
-
-                $excelData[] = [
-                    'STT' => $stt++,
-                    'MaNV' => $personnel['code'],
-                    'HoTen' => $personnel['name'],
-                    'BoPhan' => $office_map[$personnel['office']] ?? '',
-                    'DailyData' => $dailyData,
-                    'TongGio_Ngay' => round($total_day_hours, 2),
-                    'TongGio_Dem' => 0,
-                    'TongGio_CN' => round($total_sunday_hours, 2),
-                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours, 2),
-                    'CongLam_Ngay' => $work_days,
-                    'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours) / 8, 2),
-                    'CongPhep' => $leave_days_count,
-                    'DiMuon_Lan' => $late_count,
-                    'DiMuon_Phut' => round($late_minutes),
-                    'VeSom_Lan' => $early_count,
-                    'VeSom_Phut' => round($early_minutes)
-                ];
-            } // End personnel loop
-
-            // --- Generate Excel File ---
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-            $sheet->setTitle("BangCongThang_$month-$year");
-
-            // Set Headers and Styles (Similar to previous version, ensure 'CongPhep' column is handled)
-            $sheet->setCellValue('A2', 'CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC')->mergeCells('A2:D2');
-            $sheet->setCellValue('A3', 'BẢNG CHẤM CÔNG THÁNG ' . "$month/$year")->mergeCells('A3:F3');
-            $sheet->getStyle('A2:A3')->getFont()->setBold(true)->setSize(14);
-            $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-            $headers_row6 = ['STT', 'Mã NV', 'Họ và tên', 'Bộ phận'];
-            $headers_row7 = ['', '', '', ''];
-            $days_of_week_map = ['1' => 'T2', '2' => 'T3', '3' => 'T4', '4' => 'T5', '5' => 'T6', '6' => 'T7', '7' => 'CN'];
-            foreach (range(1, $totalDays) as $day) {
-                $headers_row6[] = str_pad($day, 2, '0', STR_PAD_LEFT);
-                $week_day = date('N', strtotime("$year-$month-$day"));
-                $headers_row7[] = $days_of_week_map[$week_day];
-            }
-            $summary_headers = [
-                'Tổng giờ' => ['Ngày', 'CN', 'Tổng'],
-                'Tổng công' => ['Ngày làm', 'Công giờ', 'Phép'],
-                'Đi muộn' => ['Lần', 'Phút'],
-                'Về sớm' => ['Lần', 'Phút']
-            ];
-            foreach ($summary_headers as $main => $subs) {
-                $headers_row6[] = $main;
-                for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
-                foreach ($subs as $sub) $headers_row7[] = $sub;
-            }
-            $sheet->fromArray($headers_row6, null, 'A6');
-            $sheet->fromArray($headers_row7, null, 'A7');
-
-            $sheet->mergeCells('A6:A7');
-            $sheet->mergeCells('B6:B7');
-            $sheet->mergeCells('C6:C7');
-            $sheet->mergeCells('D6:D7');
-            $startMergeCol = 5 + $totalDays;
-            foreach ($summary_headers as $main => $subs) {
-                $endColIndex = $startMergeCol + count($subs) - 1;
-                $startColLetter = Coordinate::stringFromColumnIndex($startMergeCol);
-                $endColLetter = Coordinate::stringFromColumnIndex($endColIndex);
-                if ($startColLetter != $endColLetter) {
-                    $sheet->mergeCells($startColLetter . '6:' . $endColLetter . '6');
-                }
-                $startMergeCol = $endColIndex + 1;
-            }
-
-            // Write Data Rows
-            $rowIndex = 8;
-            $colIndexBase = 1; // Start column index
-            foreach ($excelData as $data) {
-                $colIndex = $colIndexBase;
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['STT']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['MaNV']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['HoTen']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['BoPhan']);
-                // Daily Data
-                foreach (range(1, $totalDays) as $day) {
-                    $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
-                }
-                // Summary Data
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongPhep']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
-                $rowIndex++;
-            }
-
-
-            // Apply Styles and Column Widths
-            $lastColLetter = Coordinate::stringFromColumnIndex($colIndex - 1);
-            $sheet->getStyle('A6:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
-            $sheet->getStyle('A8:' . $lastColLetter . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER); // Center data rows
-            $sheet->getStyle('C8:D' . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT); // Left align Name and Dept
-
-            $sheet->getColumnDimension('A')->setAutoSize(true);
-            $sheet->getColumnDimension('B')->setAutoSize(true);
-            $sheet->getColumnDimension('C')->setWidth(30);
-            $sheet->getColumnDimension('D')->setAutoSize(true);
-            for ($i = 1; $i <= $totalDays; $i++) {
-                $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
-                $sheet->getColumnDimension($colLetter)->setWidth(12);
-            } // Wider daily columns
-            $summaryStartColIndex = 4 + $totalDays + 1;
-            $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
-            for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
-                $colLetter = Coordinate::stringFromColumnIndex($i);
-                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
-            }
-
-
-            // --- Output Excel File ---
-            ob_end_clean();
-            $filename = "BangCong_Thang_{$month}_{$year}.xlsx";
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $filename . '"');
-            header('Cache-Control: max-age=0');
-            $writer = new Xlsx($spreadsheet);
-            $writer->save('php://output');
-            exit;
-        } catch (Exception $e) {
-            ob_end_clean();
-            http_response_code(500);
-            exit("Lỗi khi tạo file Excel: " . $e->getMessage());
-        }
+        } 
     })->setPermissions(['timekeeping']);
 
     $app->router("/timekeeping-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
