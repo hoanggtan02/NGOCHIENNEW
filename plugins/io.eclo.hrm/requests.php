@@ -24,7 +24,7 @@ return [
                         "router" => '/hrm/insurrance',
                         "icon" => '<i class="ti ti-shield-check"></i>',
                     ],
-                        'positions' => [
+                    'positions' => [
                         "name" => $jatbi->lang("Chức vụ"),
                         "router" => '/hrm/positions',
                         "icon" => '<i class="ti ti-clock"></i>',
@@ -90,6 +90,11 @@ return [
                         "router" => '/hrm/timekeeping',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'overtime'   => [
+                        "name"  => $jatbi->lang("Tăng ca"),
+                        "router" => '/hrm/overtime',
+                        "icon"  => '<i class="ti ti-user"></i>',
+                    ],
                     'salary' => [
                         "name" => $jatbi->lang("Tính lương"),
                         "router" => '/hrm/salary',
@@ -115,7 +120,6 @@ return [
                         "router" => '/hrm/decided',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
-
                     'camera' => [
                         "name" => $jatbi->lang("Camera"),
                         "router" => '/hrm/camera',
@@ -148,7 +152,11 @@ return [
                     'decided.edit' => $jatbi->lang("Sửa quyết định thôi việc"),
                     'decided.deleted' => $jatbi->lang("Xóa quyết định thôi việc"),
 
-
+                    'overtime' => $jatbi->lang("Tăng ca"),
+                    'overtime.add' => $jatbi->lang("Thêm Tăng ca"),
+                    'overtime.edit' => $jatbi->lang("Sửa Tăng ca"),
+                    'overtime.deleted' => $jatbi->lang("Xóa Tăng ca"),
+                    'overtime.approve' => $jatbi->lang("Phê duyệt Tăng ca"),
 
                     "faceid" => $jatbi->lang("Nhật ký nhận diện"),
 
@@ -221,6 +229,8 @@ return [
                     'furlough.add' => $jatbi->lang("Thêm Nghỉ phép"),
                     'furlough.edit' => $jatbi->lang("Sửa Nghỉ phép"),
                     'furlough.deleted' => $jatbi->lang("Xóa Nghỉ phép"),
+                    'furlough.approve' => $jatbi->lang("Phê duyệt Nghỉ phép"),
+
 
                     // Quyền cho Nghỉ phép năm
                     'annual_leave' => $jatbi->lang("Nghỉ phép năm"),
@@ -229,10 +239,10 @@ return [
                     'annual_leave.deleted' => $jatbi->lang("Xóa Nghỉ phép năm"),
 
                     // Quyền cho Ngày lễ
-                    // 'holiday' => $jatbi->lang("Ngày lễ"),
-                    // 'holiday.add' => $jatbi->lang("Thêm Ngày lễ"),
-                    // 'holiday.edit' => $jatbi->lang("Sửa Ngày lễ"),
-                    // 'holiday.deleted' => $jatbi->lang("Xóa Ngày lễ"),
+                    'holiday' => $jatbi->lang("Ngày lễ"),
+                    'holiday.add' => $jatbi->lang("Thêm Ngày lễ"),
+                    'holiday.edit' => $jatbi->lang("Sửa Ngày lễ"),
+                    'holiday.deleted' => $jatbi->lang("Xóa Ngày lễ"),
 
                     // Quyền cho Xem thưởng và kỉ luật
                     'reward-discipline' => $jatbi->lang("Khen thưởng kỉ luật"),

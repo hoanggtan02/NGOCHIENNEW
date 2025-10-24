@@ -35,14 +35,6 @@
                                 "attr" => 'multiple',
                                 "class"=>'filter-name',
                             ])?>
-                            <?=$app->component('select',[
-                                "name"=>'furlough_categorys',
-                                "options"=>$furlough_categorys ?? [],
-                                "selected" => $app->xss($_GET['$furlough_categorys'] ?? ''),
-                                "placeholder"=>$jatbi->lang("Loại"),
-                                "attr" => 'multiple',
-                                "class"=>'filter-name',
-                            ])?>
                             <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
@@ -94,21 +86,13 @@
                 data-state-save='true' style="width:100%">
                 <thead>
                     <tr>
-                        <th data-name="checkbox" data-orderable="false" class="text-center" style="width: 1%;">
-                            <div class="form-check"><input class="form-check-input checkall" type="checkbox"
-                                    data-checkbox="input.checker"></div>
-                        </th>
-                        <th data-name="furlough_category_name"><?=$jatbi->lang("Danh mục")?></th>
-                        <th data-name="personnel_name"><?=$jatbi->lang("Nhân viên")?></th>
-                        <th data-name="total_days_off"><?=$jatbi->lang("Số ngày nghỉ phép")?></th>
-                        <th data-name="date_from"><?=$jatbi->lang("Từ ngày")?></th>
-                        <th data-name="date_to"><?=$jatbi->lang("Đến ngày")?></th>
-                        <th data-name="date"><?=$jatbi->lang("Ngày làm đơn")?></th>
-                        <th data-name="notes"><?=$jatbi->lang("Lý do / Ghi chú")?></th>
+                        <th data-name="checkbox" data-orderable="false"><div class="form-check"><input class="form-check-input checkall" type="checkbox" data-checkbox="input.checker"></div></th>
+                        <th data-name="profile_name"><?=$jatbi->lang("Nhân viên")?></th>
+                        <th data-name="furlough_name"><?=$jatbi->lang("Loại phép")?></th>
+                        <th data-name="duration" data-orderable="false"><?=$jatbi->lang("Thời gian nghỉ")?></th>
+                        <th data-name="total_days"><?=$jatbi->lang("Tổng ngày")?></th>
                         <th data-name="status"><?=$jatbi->lang("Trạng thái")?></th>
-                        <th data-name="action" data-orderable="false" data-class="text-end">
-                            <?=$jatbi->lang("Tùy chọn")?>
-                        </th>
+                        <th data-name="action" data-orderable="false"><?=$jatbi->lang("Tùy chọn")?></th>
                     </tr>
                 </thead>
             </table>

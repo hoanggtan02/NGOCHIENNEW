@@ -84,12 +84,15 @@
                    style="width:100%">
                 <thead>
                     <tr>
-                        <th data-name="checkbox" data-orderable="false" data-class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" data-checkbox="input.checker"></div></th>
-                        <th data-name="type" data-orderable="false"><?=$jatbi->lang("Loại")?></th>
-                        <th data-name="personnel_code" data-orderable="false"><?=$jatbi->lang("Mã nhân viên")?></th>
-                        <th data-name="personnel_name" data-orderable="false"><?=$jatbi->lang("Nhân viên")?></th>
-                        <th data-name="amount" data-orderable="false"><?=$jatbi->lang("Số phép năm tồn")?></th>
-                        <th data-name="action" data-orderable="false" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                        <th data-name="checkbox" data-orderable="false"><div class="form-check"><input class="form-check-input checkall" type="checkbox" data-checkbox="input.checker"></div></th>
+                        <th data-name="profile_code"><?php echo $jatbi->lang('Mã NV'); ?></th>
+                        <th data-name="profile_name"><?php echo $jatbi->lang('Tên nhân viên'); ?></th>
+                        <th data-name="furlough_name"><?php echo $jatbi->lang('Loại phép'); ?></th>
+                        <th data-name="total_accrued"><?php echo $jatbi->lang('Phép được hưởng'); ?></th>
+                        <th data-name="carried_over"><?php echo $jatbi->lang('Phép tồn năm trước'); ?></th>
+                        <th data-name="days_used"><?php echo $jatbi->lang('Phép đã dùng'); ?></th>
+                        <th data-name="remaining"><?php echo $jatbi->lang('Phép còn lại'); ?></th>
+                        <th data-name="action" data-orderable="false"><?php echo $jatbi->lang('Tùy chọn'); ?></th>
                     </tr>
                 </thead>
             </table>

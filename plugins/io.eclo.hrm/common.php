@@ -18,6 +18,11 @@ return [
             "color" => 'primary',
         ],
     ],
+    'overtime_status' => [
+        'pending' => ['name' => 'Chờ duyệt', 'color' => '#ffc107'],
+        'approved' => ['name' => 'Đã duyệt', 'color' => '#28a745'],
+        'rejected' => ['name' => 'Đã từ chối', 'color' => '#dc3545'],
+    ],
     "proposal-form" => [
         "1" => [
             "id" => 1,
@@ -35,47 +40,60 @@ return [
             "color" => 'text-light bg-primary',
         ],
     ],
+    'leave_request_status' => [
+        'pending' => [
+            'name' => 'Chờ duyệt',
+            'color' => '#ffc107' // Yellow
+        ],
+        'approved' => [
+            'name' => 'Đã duyệt',
+            'color' => '#28a745' // Green
+        ],
+        'rejected' => [
+            'name' => 'Đã từ chối',
+            'color' => '#dc3545' // Red
+        ],
+    ],
     "proposal-status" => [
-        "0"=>[
-            "name"=>$jatbi->lang('Nháp'),
-            "color"=>'body text-body',
-            "id"=>0,
+        "0" => [
+            "name" => $jatbi->lang('Nháp'),
+            "color" => 'body text-body',
+            "id" => 0,
         ],
-        "1"=>[
-            "name"=>$jatbi->lang('Chờ duyệt'),
-            "color"=>'warning text-dark',
-            "id"=>1,
+        "1" => [
+            "name" => $jatbi->lang('Chờ duyệt'),
+            "color" => 'warning text-dark',
+            "id" => 1,
         ],
-        "2"=>[
-            "name"=>$jatbi->lang('Đã duyệt'),
-            "color"=>'success text-light',
-            "id"=>2,
+        "2" => [
+            "name" => $jatbi->lang('Đã duyệt'),
+            "color" => 'success text-light',
+            "id" => 2,
         ],
-        "3"=>[
-            "name"=>$jatbi->lang('Không duyệt'),
-            "color"=>'dark text-light',
-            "id"=>3,
+        "3" => [
+            "name" => $jatbi->lang('Không duyệt'),
+            "color" => 'dark text-light',
+            "id" => 3,
         ],
-        "4"=>[
-            "name"=>$jatbi->lang('Đã bút toán'),
-            "color"=>'primary text-light',
-            "id"=>4,
+        "4" => [
+            "name" => $jatbi->lang('Đã bút toán'),
+            "color" => 'primary text-light',
+            "id" => 4,
         ],
-        "5"=>[
-            "name"=>$jatbi->lang('Khóa bút toán'),
-            "color"=>'info text-light',
-            "id"=>5,
+        "5" => [
+            "name" => $jatbi->lang('Khóa bút toán'),
+            "color" => 'info text-light',
+            "id" => 5,
         ],
-        "10"=>[
-            "name"=>$jatbi->lang('Yêu cầu hủy'),
-            "color"=>'danger text-light',
-            "id"=>10,
+        "10" => [
+            "name" => $jatbi->lang('Yêu cầu hủy'),
+            "color" => 'danger text-light',
+            "id" => 10,
         ],
-        "20"=>[
-            "name"=>$jatbi->lang('Đã hủy'),
-            "color"=>'secondary text-light',
-            "id"=>20,
+        "20" => [
+            "name" => $jatbi->lang('Đã hủy'),
+            "color" => 'secondary text-light',
+            "id" => 20,
         ],
     ],
 ];
-?> 
