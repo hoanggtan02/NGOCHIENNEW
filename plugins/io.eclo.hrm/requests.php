@@ -77,7 +77,7 @@ return [
                     ],
                     'time-late' => [
                         "name" => $jatbi->lang("Đi trễ về sớm"),
-                        "router" => '/hrm/time-late',
+                        "router" => '/hrm/timekeeping-late',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
                     'salary-advance' => [
@@ -251,10 +251,10 @@ return [
                     'reward-discipline.deleted' => $jatbi->lang("Xóa Khen thưởng kỉ luật"),
 
                     // Quyền cho Đi trễ về sớm
-                    // 'time-late' => $jatbi->lang("Đi trễ về sớm"),
-                    // 'time-late.add' => $jatbi->lang("Thêm Đi trễ về sớm"),
-                    // 'time-late.edit' => $jatbi->lang("Sửa Đi trễ về sớm"),
-                    // 'time-late.deleted' => $jatbi->lang("Xóa Đi trễ về sớm"),    
+                    'time-late' => $jatbi->lang("Đi trễ về sớm"),
+                    'time-late.add' => $jatbi->lang("Thêm Đi trễ về sớm"),
+                    'time-late.edit' => $jatbi->lang("Sửa Đi trễ về sớm"),
+                    'time-late.deleted' => $jatbi->lang("Xóa Đi trễ về sớm"),    
 
                     'salary-advance' => $jatbi->lang("Ứng lương"),
                     'salary-advance.add' => $jatbi->lang("Thêm Ứng lương"),

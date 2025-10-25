@@ -4799,10 +4799,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ], $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
-                    "type" => $data['type'],
+                    "type" => $data['type'] == 1 ? $jatbi->lang("Đi trễ") : $jatbi->lang("Về sớm"),
                     "name" => $data['name'],
                     "value" => $data['value'] . ' ' . $jatbi->lang("phút"),
-                    "price" => $data['price'],
+                    // "price" => $data['price'],
                     "date" => $data['date'],
                     "content" => $data['content'],
                     "status" => $app->component("status", [
@@ -4871,14 +4871,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
-            if ($app->xss($_POST['type']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '' || $app->xss($_POST['price']) == '') {
+            if ($app->xss($_POST['type']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '') {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
             } else {
                 $insert = [
                     "name" => $app->xss($_POST['name']),
                     "type" => $app->xss($_POST['type']),
                     "date" => $app->xss($_POST['date']),
-                    "price" => $app->xss(str_replace([','], '', $_POST['price'])),
+                    // "price" => $app->xss(str_replace([','], '', $_POST['price'])),
                     "value" => $app->xss($_POST['value']),
                     "content" => $app->xss($_POST['content']),
                     "status" => $app->xss($_POST['status']),
@@ -4913,14 +4913,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
             $data = $app->get("reward_discipline", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($data)) {
-                if ($app->xss($_POST['type']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '' || $app->xss($_POST['price']) == '') {
+                if ($app->xss($_POST['type']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '') {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
                 } else {
                     $insert = [
                         "name" => $app->xss($_POST['name']),
                         "type" => $app->xss($_POST['type']),
                         "date" => $app->xss($_POST['date']),
-                        "price" => $app->xss(str_replace([','], '', $_POST['price'])),
+                        // "price" => $app->xss(str_replace([','], '', $_POST['price'])),
                         "value" => $app->xss($_POST['value']),
                         "content" => $app->xss($_POST['content']),
                         "status" => $app->xss($_POST['status']),
@@ -4935,7 +4935,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
             }
         }
-    })->setPermissions(['reward-discipline.edit']);
+    })->setPermissions(['time-late.edit']);
 
     $app->router("/time-late-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         if ($app->method() === 'GET') {
@@ -4956,7 +4956,179 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
             }
         }
-    })->setPermissions(['reward-discipline.deleted']);
+    })->setPermissions(['time-late.deleted']);
+
+    $app->router('/timekeeping-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Đi trễ / Về sớm");
+            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            echo $app->render($template . '/hrm/timekeeping-late.html', $vars);
+        }
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
+            $searchValue = isset($_POST['search']['value']) ? $app->xss($_POST['search']['value']) : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'ttl.id'; // Use alias
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+
+            $status_filter = isset($_POST['status']) && ctype_digit($_POST['status']) ? (int)$_POST['status'] : null;
+
+            $join = [
+                "[>]personnels(p)" => ["personnels" => "id"]
+            ];
+
+            $where = [
+                "AND" => [
+                    "ttl.deleted" => 0,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+            ];
+            if (!empty($searchValue)) {
+                $where["AND"]["OR"] = [
+                    "p.name[~]" => $searchValue,
+                    "p.code[~]" => $searchValue
+                ];
+            }
+
+            if ($status_filter !== null) {
+                $where["AND"]["ttl.status"] = $status_filter;
+            }
+
+            // Add filters for date range, specific personnel if needed from $_POST
+            // Example:
+            if (!empty($_POST['personnels'])) {
+                $where["AND"]["ttl.personnels"] = (int)$_POST['personnels'];
+            }
+
+
+            $countWhere = ["AND" => $where['AND']];
+            $count = $app->count("timekeeping_time_late(ttl)", $join, "ttl.id", $countWhere);
+
+            $datas = [];
+
+            // Select data with join
+            $app->select("timekeeping_time_late(ttl)", $join, [
+                'ttl.id',
+                'ttl.type',
+                'ttl.date',      // Datetime of the incident
+                'ttl.time_late', // Minutes late/early
+                'ttl.status',    // Integer status (0 or 1 assumed)
+                'p.name(personnel_name)' // Personnel name from join
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "checkbox" => $app->component("box", ["data" => $data['id']]),
+                    "type" => $data['type'] == 1 ? $jatbi->lang("Đi trễ") : $jatbi->lang("Về sớm"),
+                    "personnel_name" => $data['personnel_name'],
+                    "date" => date('d/m/Y H:i', strtotime($data['date'])), // Format datetime
+                    "time_late" => $data['time_late'] . ' ' . $jatbi->lang("phút"),
+                    "action" => ($app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['time-late.edit'],
+                                'action' => ['data-url' => '/hrm/timekeeping-time-late-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['time-late.deleted'],
+                                'action' => ['data-url' => '/hrm/timekeeping-time-late-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                        ]
+                    ]))
+                ];
+            });
+
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas,
+            ]);
+        }
+    })->setPermissions(['time-late']);
+
+    $app->router('/timekeeping-time-late-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $id = (int)$vars['id'];
+        $vars['title'] = $jatbi->lang("Sửa Ghi Nhận Đi trễ/Về sớm");
+
+        // Lấy dữ liệu hiện tại
+        $data = $app->get("timekeeping_time_late", "*", ["id" => $id, "deleted" => 0]);
+
+        if (!$data) {
+            $vars['modalContent'] = $jatbi->lang("Không tìm thấy dữ liệu ghi nhận đi trễ/về sớm.");
+            echo $app->render($template . '/common/reward.html', $vars);
+            return;
+        }
+
+        if ($app->method() === 'GET') {
+            // --- Hiển thị form ---
+            $vars['data'] = $data;
+            // Lấy danh sách nhân viên (nếu cần cho phép đổi nhân viên, thường thì không nên)
+            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0,"id"=> $data['personnels'], "status" => "A", "ORDER" => ["name" => "ASC"]]);
+            // Render form chỉnh sửa (cần tạo file này)
+            echo $app->render($template . '/hrm/timekeeping-time-late-post.html', $vars,$jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            // --- Xử lý cập nhật ---
+            $app->header(['Content-Type' => 'application/json']);
+            $post = $app->request->getParsedBody(); // Lấy dữ liệu an toàn hơn
+
+            if (empty($post['personnels']) || empty($post['date']) || empty($post['type']) || !isset($post['time_late']) || !ctype_digit((string)$post['time_late'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng điền đủ thông tin hợp lệ (Nhân viên, Ngày giờ, Loại, Số phút).")]);
+                return;
+            }
+
+            // Chuẩn bị dữ liệu cập nhật
+            $update_data = [
+                "personnels" => (int)$post['personnels'],
+                "type" => (int)$post['type'], // 1=Late, 2=Early
+                "date" => date("Y-m-d H:i:s", strtotime($post['date'])), 
+                "time_late" => (int)$post['time_late'], // Số phút
+                // "status" => isset($post['status']) ? (int)$post['status'] : $data['status'], // Cập nhật status nếu có
+                "notes" => $app->xss($post['notes'] ?? ''), // Thêm trường notes nếu có trong form
+                "user" => $app->getSession("accounts")['id'] ?? 0, // Ghi nhận người sửa
+                "date_poster" => date("Y-m-d H:i:s") // Ghi nhận thời gian sửa
+            ];
+
+            // Thực hiện cập nhật
+            $app->update("timekeeping_time_late", $update_data, ["id" => $id]);
+
+            // Ghi log
+            $jatbi->logs('timekeeping_time_late', 'edit', ['id' => $id, 'changes' => $update_data]);
+
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Cập nhật thành công"),
+                'reload' => true
+            ]);
+        }
+    })->setPermissions(['time-late.edit']);
+
+    $app->router("/timekeeping-time-late-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $boxid = explode(',', $app->xss($_GET['box']));
+            $datas = $app->select("timekeeping_time_late", "*", ["id" => $boxid, "deleted" => 0]);
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $app->update("timekeeping_time_late", ["deleted" => 1], ["id" => $data['id']]);
+                }
+                $jatbi->logs('hrm', 'timekeeping_time_late-deleted', $datas);
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+            }
+        }
+    })->setPermissions(['time-late.deleted']);
 
     $app->router('/salary-advance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
@@ -5400,6 +5572,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
     $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         try {
+            // --- Fetch Filter Parameters ---
             $year = $_GET['year'] ?? date('Y');
             $month = $_GET['month'] ?? date('m');
             $personnelF = $_GET['personnel'] ?? '';
@@ -5451,7 +5624,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "deleted" => 0,
                 "status" => 'A'
             ]);
+            $overtime_data = $app->select(
+                "hrm_overtime_requests",
+                ["profile_id", "work_date", "total_hours", "multiplier"],
+                [
+                    "profile_id" => $personnel_ids,
+                    "work_date[>=]" => $start_date_month,
+                    "work_date[<=]" => $end_date_month,
+                    "deleted" => 0,
+                    "status" => 'approved'
+                ]
+            );
             $office_map = array_column($app->select("offices", ["id", "name"], ["deleted" => 0, "status" => "A"]), 'name', 'id');
+
 
             // --- Create Data Maps ---
             $timekeeping_map = [];
@@ -5477,6 +5662,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     }
                 }
             }
+            $overtime_map = [];
+            foreach ($overtime_data as $ot) {
+                $currentDateStr = $ot['work_date'];
+                if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
+                    $overtime_map[$ot['profile_id']][$currentDateStr] = [
+                        'approved_hours' => (float)($ot['total_hours'] ?? 0),
+                        'rate' => (float)($ot['multiplier'] ?? 1.0)
+                    ];
+                }
+            }
 
             // --- Process Data for Excel ---
             $excelData = [];
@@ -5486,6 +5681,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $dailyData = [];
                 $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
                 $leave_days_count = 0;
+                $total_counted_overtime_hours_effect = 0; // Total OT hours * rate (for công)
+                $raw_overtime_hours = 0; // Total raw OT hours worked for summary
 
                 $active_roster = $rosters_map[$pid] ?? null;
                 $currentTimeworkId = $active_roster ? $active_roster['timework'] : null;
@@ -5495,19 +5692,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $current_date_str = "$year-$month-$dayStr";
                     $current_date_ts = strtotime($current_date_str);
                     $week_day = date('N', $current_date_ts);
-                    $value = ''; // Final value for the Excel cell
-                    $workValue = null; // Calculated work value (e.g., 1, 0.5, K/L, V)
+                    $value = '';
+                    $workValue = null;
+                    $actual_hours_for_cong = 0; // Standard hours within shift
+                    $day_ot_hours_effect = 0; // OT hours * rate for this day
+                    $day_raw_overtime_hours = 0; // Raw OT hours worked today
 
                     $schedule = $currentTimeworkId ? ($timework_details_map[$currentTimeworkId][$week_day] ?? null) : null;
                     $holidayName = $holidayMap[$current_date_str] ?? null;
                     $leaveInfoArray = $leave_map[$pid][$current_date_str] ?? null;
-                    $tk = $timekeeping_map[$pid][$current_date_str] ?? null; // Timekeeping record for the day
+                    $tk = $timekeeping_map[$pid][$current_date_str] ?? null;
+                    $approved_overtime = $overtime_map[$pid][$current_date_str] ?? null;
 
                     $is_full_day_leave = false;
                     $day_leave_value = 0;
-                    $leaveTextValue = ''; // Text part for leave, e.g., "NPN (C)"
+                    $leaveTextValue = '';
 
-                    // --- Determine Leave Status ---
                     if ($leaveInfoArray) {
                         $leaveTextParts = [];
                         foreach ($leaveInfoArray as $leaveDetail) {
@@ -5525,30 +5725,21 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $leaveTextParts[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
                         }
                         $leaveTextValue = implode(', ', $leaveTextParts);
-                        if ($is_full_day_leave || $day_leave_value >= 1.0) $is_full_day_leave = true; // Mark as full day if total leave is >= 1
+                        if ($is_full_day_leave || $day_leave_value >= 1.0) $is_full_day_leave = true;
                         $leave_days_count += $day_leave_value;
                     }
 
-                    // --- START: MODIFIED Work Value Calculation ---
-                    // Calculate work hours and công IF checkin/out exists, REGARDLESS of schedule
                     if (isset($tk) && !empty($tk['checkin']) && !empty($tk['checkout'])) {
                         $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
                         $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
-                        $hours = ($checkout_time - $checkin_time) / 3600;
-                        // $lunch_deduction = ($hours > 5) ? 1.5 : 0;
-                        $actual_hours = max(0, $hours /* - $lunch_deduction */); // Ensure non-negative
+                        $total_duration_seconds = max(0, $checkout_time - $checkin_time);
+                        $total_hours_worked = $total_duration_seconds / 3600;
+                        $lunch_deduction_hours = ($total_hours_worked > 5) ? 1.5 : 0; //// Thời gian nghỉ trưa
 
-                        // Always count work day and hours if checkin/out exists
-                        $work_days++;
-                        if ($week_day == 7) $total_sunday_hours += $actual_hours;
-                        else $total_day_hours += $actual_hours;
-
-                        $workValue = round($actual_hours / 8, 2); // Calculate công based on 8 hours/day
-
-                        // BUT, only calculate late/early IF they were actually scheduled to work
                         if ($schedule && $schedule['off'] == 0) {
                             $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
                             $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
+
                             if ($checkin_time > $expected_start) {
                                 $late_count++;
                                 $late_minutes += ($checkin_time - $expected_start) / 60;
@@ -5557,44 +5748,77 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 $early_count++;
                                 $early_minutes += ($expected_end - $checkout_time) / 60;
                             }
-                        }
-                        // No else needed here; if not scheduled, late/early remain 0 for the day
-                    }
-                    // Handle incomplete or absent based on schedule (as before)
-                    elseif (isset($tk)) { // Checkin exists but checkout is missing
-                        // Decide K/L based on schedule
-                        if ($schedule && $schedule['off'] == 0) {
-                            $workValue = 'K/L'; // Incomplete on a scheduled day
+
+                            $effective_start = max($checkin_time, $expected_start);
+                            $effective_end = min($checkout_time, $expected_end);
+                            $duration_within_schedule_seconds = max(0, $effective_end - $effective_start);
+                            $actual_hours_for_cong = max(0, ($duration_within_schedule_seconds / 3600) /*- $lunch_deduction_hour*/);
+
+                            $actual_ot_hours_worked = 0;
+                            if ($checkin_time < $expected_start) {
+                                $actual_ot_hours_worked += ($expected_start - $checkin_time) / 3600;
+                            }
+                            if ($checkout_time > $expected_end) {
+                                $actual_ot_hours_worked += ($checkout_time - $expected_end) / 3600;
+                            }
+
+                            if ($approved_overtime && $actual_ot_hours_worked > 0) {
+                                $approved_hours = $approved_overtime['approved_hours'];
+                                $ot_rate = $approved_overtime['rate'];
+                                $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
+                                $day_ot_hours_effect = ($counted_ot_hours * $ot_rate); // OT effect for the day
+                                $day_raw_overtime_hours = $counted_ot_hours;
+                            }
                         } else {
-                            // Still incomplete, but wasn't scheduled, maybe different code?
-                            // Let's keep K/L for simplicity, or use another indicator like K/P?
-                            $workValue = 'K/L'; // Or 'K/P' ?
+                            $actual_hours_for_cong = 0;
+                            $workValue = 'K/P';
+                            $actual_ot_hours_worked = max(0, $total_hours_worked /*- $lunch_deduction_hour*/);
+                            if ($approved_overtime && $actual_ot_hours_worked > 0) {
+                                $approved_hours = $approved_overtime['approved_hours'];
+                                $ot_rate = $approved_overtime['rate'];
+                                $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
+                                $day_ot_hours_effect = ($counted_ot_hours * $ot_rate); // OT effect for the day
+                                $day_raw_overtime_hours = $counted_ot_hours;
+                                $workValue = round($day_ot_hours_effect / 8, 2); // Work value based only on approved OT effect
+                            }
                         }
-                    } else { // No timekeeping record
+
+                        $work_days++;
+                        if ($week_day == 7) $total_sunday_hours += $actual_hours_for_cong; // Add standard hours
+                        else $total_day_hours += $actual_hours_for_cong; // Add standard hours
+                        $raw_overtime_hours += $day_raw_overtime_hours; // Accumulate raw OT hours
+                        $total_counted_overtime_hours_effect += $day_ot_hours_effect; // Accumulate OT effect for công
+
+
+                        if (!isset($workValue) || $workValue !== 'K/P') {
+                            $base_cong_value = round($actual_hours_for_cong / 8, 2);
+                            $ot_cong_value = round($day_ot_hours_effect / 8, 2); // Daily OT effect on công
+                            $workValue = $base_cong_value + $ot_cong_value;
+                            if ($workValue == 0 && $total_hours_worked > 0) {
+                                $workValue = 0;
+                            }
+                        }
+                    } elseif (isset($tk)) {
+                        $workValue = 'K/L';
+                    } else {
                         if ($schedule && $schedule['off'] == 0 && $current_date_ts < time() && !$holidayName && !$leaveInfoArray) {
-                            $workValue = 'V'; // Absent on a past scheduled workday
+                            $workValue = 'V';
                         }
-                        // Otherwise $workValue remains null
                     }
-                    // --- END: MODIFIED Work Value Calculation ---
 
-
-                    // --- Combine Values for Final Cell Output (Logic remains mostly the same) ---
                     if ($holidayName) {
                         $value = $holidayName;
                     } elseif ($is_full_day_leave) {
                         $value = $leaveTextValue;
-                    } elseif (!empty($leaveTextValue)) { // Half-day leave
-                        // Show leave + work value if work value was calculated
-                        $value = $leaveTextValue . (isset($workValue) && $workValue !== 'V' && $workValue !== 'K/L' ? " : " . $workValue : "");
+                    } elseif (!empty($leaveTextValue)) {
+                        $value = $leaveTextValue . (isset($workValue) && $workValue !== 'V' && $workValue !== 'K/L' && $workValue !== 'K/P' && ($actual_hours_for_cong + $day_ot_hours_effect) > 0 ? " : " . $workValue : "");
                     } elseif ($schedule && $schedule['off'] == 1) {
                         $value = 'OFF';
-                    } elseif (isset($workValue)) { // Only work value (no leave, not OFF/Holiday)
+                    } elseif (isset($workValue)) {
                         $value = $workValue;
                     } else {
-                        $value = ''; // Default empty
+                        $value = '';
                     }
-
                     $dailyData[$dayStr] = $value;
                 } // End daily loop
 
@@ -5604,13 +5828,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     'HoTen' => $personnel['name'],
                     'BoPhan' => $office_map[$personnel['office']] ?? '',
                     'DailyData' => $dailyData,
-                    'TongGio_Ngay' => round($total_day_hours, 2),
-                    'TongGio_Dem' => 0,
-                    'TongGio_CN' => round($total_sunday_hours, 2),
-                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours, 2),
-                    'CongLam_Ngay' => $work_days,
-                    'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours) / 8, 2),
-                    'CongPhep' => $leave_days_count,
+                    'TongGio_Ngay' => round($total_day_hours, 2),        // Standard Day Hours
+                    'TongGio_CN' => round($total_sunday_hours, 2),         // Standard Sunday Hours
+                    'TongGio_TangCa' => round($raw_overtime_hours, 2),     // NEW: Raw Approved OT Hours
+                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours + $raw_overtime_hours, 2), // Updated Total Hours
+                    'CongLam_Ngay' => $work_days,                        // Days with Checkin/out
+                    // Corrected Công Giờ calculation
+                    'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours + $total_counted_overtime_hours_effect) / 8, 2),
+                    'CongPhep' => $leave_days_count,                     // Leave days count
                     'DiMuon_Lan' => $late_count,
                     'DiMuon_Phut' => round($late_minutes),
                     'VeSom_Lan' => $early_count,
@@ -5623,7 +5848,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle("BangCongThang_$month-$year");
 
-            // Set Headers and Styles (Similar to previous version, ensure 'CongPhep' column is handled)
+            // Set Headers and Styles
             $sheet->setCellValue('A2', 'CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC')->mergeCells('A2:D2');
             $sheet->setCellValue('A3', 'BẢNG CHẤM CÔNG THÁNG ' . "$month/$year")->mergeCells('A3:F3');
             $sheet->getStyle('A2:A3')->getFont()->setBold(true)->setSize(14);
@@ -5637,12 +5862,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $week_day = date('N', strtotime("$year-$month-$day"));
                 $headers_row7[] = $days_of_week_map[$week_day];
             }
+
+            // --- UPDATED Summary Headers ---
             $summary_headers = [
-                'Tổng giờ' => ['Ngày', 'CN', 'Tổng'],
+                'Tổng giờ' => ['Ngày', 'CN', 'Tăng Ca', 'Tổng'], // Moved Tăng Ca here
                 'Tổng công' => ['Ngày làm', 'Công giờ', 'Phép'],
                 'Đi muộn' => ['Lần', 'Phút'],
                 'Về sớm' => ['Lần', 'Phút']
             ];
+            // --- END UPDATED ---
             foreach ($summary_headers as $main => $subs) {
                 $headers_row6[] = $main;
                 for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
@@ -5668,29 +5896,31 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // Write Data Rows
             $rowIndex = 8;
-            $colIndexBase = 1; // Start column index
+            $colIndexBase = 1;
             foreach ($excelData as $data) {
                 $colIndex = $colIndexBase;
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['STT']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['MaNV']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['HoTen']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['BoPhan']);
-                // Daily Data
                 foreach (range(1, $totalDays) as $day) {
                     $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
                 }
-                // Summary Data
+                // --- UPDATED Summary Data Writing ---
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_TangCa']); // Added OT Hours
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']); // Updated Total
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']); // Updated Công giờ
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongPhep']);
+                // Removed separate OT column here
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
+                // --- END UPDATED ---
                 $rowIndex++;
             }
 
@@ -5700,8 +5930,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet->getStyle('A6:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
             $sheet->getStyle('A6:' . $lastColLetter . '7')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('A6:' . $lastColLetter . '7')->getFont()->setBold(true);
-            $sheet->getStyle('A8:' . $lastColLetter . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER); // Center data rows
-            $sheet->getStyle('C8:D' . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT); // Left align Name and Dept
+            $sheet->getStyle('A8:' . $lastColLetter . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('C8:D' . ($rowIndex - 1))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
             $sheet->getColumnDimension('A')->setAutoSize(true);
             $sheet->getColumnDimension('B')->setAutoSize(true);
@@ -5710,7 +5940,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             for ($i = 1; $i <= $totalDays; $i++) {
                 $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
                 $sheet->getColumnDimension($colLetter)->setWidth(12);
-            } // Wider daily columns
+            }
             $summaryStartColIndex = 4 + $totalDays + 1;
             $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
             for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
@@ -6017,7 +6247,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']);
 
             echo $app->render($template . '/hrm/timekeeping.html', $vars);
-        } 
+        }
     })->setPermissions(['timekeeping']);
 
     $app->router("/timekeeping-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
@@ -6038,51 +6268,163 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
-            if (empty($_POST['personnels']) || empty($_POST['date']) || empty($_POST['status'])) {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng không để trống")]);
-            }
-            if ($_POST['personnels'] && $_POST['date'] && $_POST['status']) {
-                $gettime = $app->get("timekeeping", "*", [
-                    "personnels" => $app->xss($_POST['personnels']),
-                    "date" => date("Y-m-d", strtotime($_POST['date'])),
-                ]);
-                if ($_POST['status'] == 1) {
-                    $timekeeping = [
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "date" => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
-                        "checkin" => $app->xss(date("H:i:s", strtotime($_POST['date']))),
-                        "date_poster" => date("Y-m-d H:i:s"),
-                    ];
-                }
-                if ($_POST['status'] == 2) {
-                    $timekeeping = [
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "date" => $app->xss(date("Y-m-d", strtotime($_POST['date']))),
-                        "checkout" => $app->xss(date("H:i:s", strtotime($_POST['date']))),
-                        "date_poster" => date("Y-m-d H:i:s"),
-                    ];
-                }
-                if ($gettime > 1) {
-                    $app->update("timekeeping", $timekeeping, ["id" => $gettime['id']]);
-                    $getID = $gettime['id'];
-                } else {
-                    $app->insert("timekeeping", $timekeeping);
-                    $getID = $app->id();
-                }
-                $insert = [
-                    "personnels" => $app->xss($_POST['personnels']),
-                    "notes" => $app->xss($_POST['notes']),
-                    "date" => $app->xss($_POST['date']),
-                    "status" => $app->xss($_POST['status']),
-                    "user" => $app->getSession("accounts")['id'] ?? 0,
-                    "date_poster" => date("Y-m-d H:i:s"),
-                ];
-                $app->insert("timekeeping_details", $insert);
-                $jatbi->logs('timekeeping', 'add', [$insert, $timeLate ?? ""]);
 
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            // Input validation - Removed time check, assuming date includes time
+            if (empty($_POST['personnels']) || empty($_POST['date']) || empty($_POST['status'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng điền đủ thông tin Nhân viên, Ngày giờ và Loại")]);
+                return; // Stop execution if validation fails
             }
-        }
+
+            $personnel_id = (int)$app->xss($_POST['personnels']);
+            // --- CORRECTED: Extract date and time from the single $_POST['date'] field ---
+            $datetime_input = $_POST['date']; // e.g., "2025-10-26T08:30" or "2025-10-26 08:30:00"
+            $datetime_ts = strtotime($datetime_input);
+            if ($datetime_ts === false) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Định dạng Ngày giờ không hợp lệ")]);
+                return;
+            }
+            $date_str = date("Y-m-d", $datetime_ts); // Extract Date part
+            $time_str = date("H:i:s", $datetime_ts); // Extract Time part
+            // --- END CORRECTION ---
+
+            $status = (int)$app->xss($_POST['status']); // 1 = checkin, 2 = checkout
+            $notes = $app->xss($_POST['notes']);
+            $current_user_id = $app->getSession("accounts")['id'] ?? 0;
+            $now_datetime = date("Y-m-d H:i:s");
+            $timekeeping_id = 0; // Initialize
+
+            // Get existing timekeeping record for the day
+            $gettime = $app->get("timekeeping", "*", [
+                "personnels" => $personnel_id,
+                "date" => $date_str,
+            ]);
+
+            $timekeeping_data = []; // Prepare data for insert/update
+
+            if ($status == 1) { // Checkin
+                $timekeeping_data["checkin"] = $time_str;
+            } elseif ($status == 2) { // Checkout
+                $timekeeping_data["checkout"] = $time_str;
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Loại chấm công không hợp lệ")]);
+                return;
+            }
+
+            if ($gettime) { // Record exists, update it
+                if ($status == 1 && (empty($gettime['checkin']) || strtotime($time_str) < strtotime($gettime['checkin']))) {
+                    $app->update("timekeeping", ["checkin" => $time_str], ["id" => $gettime['id']]);
+                } elseif ($status == 2 && (empty($gettime['checkout']) || strtotime($time_str) > strtotime($gettime['checkout']))) {
+                    $app->update("timekeeping", ["checkout" => $time_str], ["id" => $gettime['id']]);
+                }
+                $timekeeping_id = $gettime['id'];
+            } else { // No record, insert new one
+                $timekeeping_data["personnels"] = $personnel_id;
+                $timekeeping_data["date"] = $date_str;
+                $timekeeping_data["date_poster"] = $now_datetime;
+                $app->insert("timekeeping", $timekeeping_data);
+                $timekeeping_id = $app->id();
+            }
+
+            // Insert into timekeeping_details
+            $insert_details = [
+                "personnels" => $personnel_id,
+                "notes" => $notes,
+                "date" => date("Y-m-d H:i:s", $datetime_ts), // Use the full timestamp from input
+                "status" => $status,
+                "user" => $current_user_id,
+                "date_poster" => $now_datetime,
+                "deleted" => 0
+            ];
+            $app->insert("timekeeping_details", $insert_details);
+
+            // --- START: ADD LATE/EARLY CALCULATION AND INSERT ---
+            if ($timekeeping_id > 0) {
+                $day_late_minutes = 0;
+                $day_early_minutes = 0;
+
+                // Find schedule
+                $schedule = null;
+                $active_roster = $app->get("rosters", ["timework"], [
+                    "personnels" => $personnel_id,
+                    "date[<=]" => $date_str,
+                    "deleted" => 0,
+                    "ORDER" => ["date" => "DESC"]
+                ]);
+                if ($active_roster && $active_roster['timework']) {
+                    $week_day = date('N', strtotime($date_str));
+                    $schedule = $app->get("timework_details", ["time_from", "time_to", "off"], [
+                        "timework" => $active_roster['timework'],
+                        "week" => $week_day,
+                        "deleted" => 0
+                    ]);
+                }
+
+                // Check against schedule if exists and not OFF day
+                if ($schedule && $schedule['off'] == 0) {
+                    $time_ts = $datetime_ts; // Use the timestamp derived from input
+                    $expected_start_ts = strtotime("$date_str {$schedule['time_from']}");
+                    $expected_end_ts = strtotime("$date_str {$schedule['time_to']}");
+
+                    if ($status == 1) { // Checkin added/updated
+                        if ($time_ts > $expected_start_ts + 60) {
+                            $day_late_minutes = ($time_ts - $expected_start_ts) / 60;
+                        }
+                    } elseif ($status == 2) { // Checkout added/updated
+                        if ($time_ts < $expected_end_ts - 60) {
+                            $day_early_minutes = ($expected_end_ts - $time_ts) / 60;
+                        }
+                    }
+
+                    $incident_date = date("Y-m-d H:i:s", $time_ts); // Correct incident date/time
+
+                    // Record Late Arrival
+                    if ($day_late_minutes > 0) {
+                        $exists_late = $app->has("timekeeping_time_late", ["timekeeping" => $timekeeping_id, "type" => 1]);
+                        if (!$exists_late) {
+                            $app->insert("timekeeping_time_late", [
+                                "type" => 1,
+                                "personnels" => $personnel_id,
+                                "date" => $incident_date,
+                                "time_late" => (int)round($day_late_minutes),
+                                "timekeeping" => $timekeeping_id,
+                                "date_poster" => $now_datetime,
+                                "user" => $current_user_id,
+                                "status" => 0,
+                                "deleted" => 0
+                            ]);
+                        }
+                    }
+
+                    // Record Early Departure
+                    if ($day_early_minutes > 0) {
+                        $exists_early = $app->has("timekeeping_time_late", ["timekeeping" => $timekeeping_id, "type" => 2]);
+                        if (!$exists_early) {
+                            $app->insert("timekeeping_time_late", [
+                                "type" => 2,
+                                "personnels" => $personnel_id,
+                                "date" => $incident_date,
+                                "time_late" => (int)round($day_early_minutes),
+                                "timekeeping" => $timekeeping_id,
+                                "date_poster" => $now_datetime,
+                                "user" => $current_user_id,
+                                "status" => 0,
+                                "deleted" => 0
+                            ]);
+                        }
+                    }
+                } // End if schedule check
+            } // End if timekeeping_id > 0
+            // --- END: ADD LATE/EARLY ---
+
+            // Log the main action
+            $jatbi->logs('timekeeping', 'add/update', [
+                'timekeeping_id' => $timekeeping_id,
+                'details' => $insert_details,
+            ]);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'reload' => true]);
+        } // End POST method
+
     })->setPermissions(['timekeeping.add']);
 
     $app->router("/timekeeping-view/{personnelId}/{date}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
@@ -8390,7 +8732,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $count = $app->count("hrm_overtime_requests", $join, "hrm_overtime_requests.id", ["AND" => $where['AND']]);
             $datas = [];
-            $app->select("hrm_overtime_requests", $join, ["hrm_overtime_requests.active", "hrm_overtime_requests.work_date", "hrm_overtime_requests.start_time", "hrm_overtime_requests.end_time", "hrm_overtime_requests.total_hours", "hrm_overtime_requests.multiplier", "hrm_overtime_requests.status", "personnels.name(profile_name)"], $where, function ($data) use (&$datas, $jatbi, $app, $common) {
+            $app->select("hrm_overtime_requests", $join, [
+                "hrm_overtime_requests.active",
+                "hrm_overtime_requests.work_date",
+                "hrm_overtime_requests.start_time",
+                "hrm_overtime_requests.end_time",
+                "hrm_overtime_requests.total_hours",
+                "hrm_overtime_requests.multiplier",
+                "hrm_overtime_requests.status",
+                "personnels.name(profile_name)"
+            ], $where, function ($data) use (&$datas, $jatbi, $app, $common) {
                 $status_info = $common['overtime_status'][$data['status']] ?? ['name' => 'N/A', 'color' => '#ccc'];
                 $action_buttons = [];
                 if ($data['status'] === 'pending') {
@@ -8398,7 +8749,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
                 $action_buttons[] = ['type' => 'button', 'name' => $jatbi->lang("Sửa"), 'permission' => ['overtime.edit'], 'action' => ['data-url' => '/hrm/overtime-edit/' . $data['active'], 'data-action' => 'modal']];
                 $action_buttons[] = ['type' => 'button', 'name' => $jatbi->lang("Xóa"), 'permission' => ['overtime.deleted'], 'action' => ['data-url' => '/hrm/overtime-deleted?box=' . $data['active'], 'data-action' => 'modal']];
-                $datas[] = ["checkbox" => $app->component("box", ["data" => $data['active'], "class" => "checker"]), "profile_name" => $data['profile_name'], "work_date" => date('d/m/Y', strtotime($data['work_date'])), "time_range" => date('H:i', strtotime($data['start_time'])) . ' - ' . date('H:i', strtotime($data['end_time'])), "total_hours" => $data['total_hours'], "multiplier" => "x" . $data['multiplier'], "status" => "<span class='badge' style='background-color: {$status_info['color']}'>{$status_info['name']}</span>", "action" => $app->component("action", ["button" => $action_buttons]),];
+                $datas[] = [
+                    "checkbox" => $app->component("box", [
+                        "data" => $data['active'],
+                        "class" => "checker"
+                    ]),
+                    "profile_name" => $data['profile_name'],
+                    "work_date" => date('d/m/Y', strtotime($data['work_date'])),
+                    "time_range" => date('H:i', strtotime($data['start_time'])) . ' - ' . date('H:i', strtotime($data['end_time'])),
+                    "total_hours" => $data['total_hours'],
+                    "multiplier" => "x" . $data['multiplier'],
+                    "status" => "<span class='badge' style='background-color: {$status_info['color']}'>{$status_info['name']}</span>",
+                    "action" => $app->component("action", ["button" => $action_buttons]),
+                ];
             });
             echo json_encode(["draw" => $draw, "recordsTotal" => $count, "recordsFiltered" => $count, "data" => $datas ?? []]);
         }
@@ -8419,7 +8782,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $start = new DateTime($_POST['start_time']);
             $end = new DateTime($_POST['end_time']);
             $total_hours = round(abs($end->getTimestamp() - $start->getTimestamp()) / 3600, 2);
-            $post_data = ["active" => $jatbi->active(), "profile_id" => (int)$_POST['profile_id'], "work_date" => $app->xss($_POST['work_date']), "start_time" => $app->xss($_POST['start_time']), "end_time" => $app->xss($_POST['end_time']), "total_hours" => $total_hours, "multiplier" => (float)$_POST['multiplier'], "reason" => $app->xss($_POST['reason']), "status" => 'pending', "account" => $app->getSession("accounts")['id'] ?? 0, "date" => date("Y-m-d H:i:s"),];
+            $post_data = [
+                "active" => $jatbi->active(),
+                "profile_id" => (int)$_POST['profile_id'],
+                "work_date" => $app->xss($_POST['work_date']),
+                "start_time" => $app->xss($_POST['start_time']),
+                "end_time" => $app->xss($_POST['end_time']),
+                "total_hours" => $total_hours,
+                "multiplier" => (float)$_POST['multiplier'],
+                "reason" => $app->xss($_POST['reason']),
+                "status" => 'pending',
+                "account" => $app->getSession("accounts")['id'] ?? 0,
+                "date" => date("Y-m-d H:i:s"),
+            ];
             $app->insert("hrm_overtime_requests", $post_data);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Tạo yêu cầu thành công"), 'url' => '/hrm/overtime']);
         }
@@ -8441,7 +8816,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $start = new DateTime($_POST['start_time']);
             $end = new DateTime($_POST['end_time']);
             $total_hours = round(abs($end->getTimestamp() - $start->getTimestamp()) / 3600, 2);
-            $post_data = ["profile_id" => (int)$_POST['profile_id'], "work_date" => $app->xss($_POST['work_date']), "start_time" => $app->xss($_POST['start_time']), "end_time" => $app->xss($_POST['end_time']), "total_hours" => $total_hours, "multiplier" => (float)$_POST['multiplier'], "reason" => $app->xss($_POST['reason']), "modify" => date("Y-m-d H:i:s")];
+            $post_data = [
+                "profile_id" => (int)$_POST['profile_id'],
+                "work_date" => $app->xss($_POST['work_date']),
+                "start_time" => $app->xss($_POST['start_time']),
+                "end_time" => $app->xss($_POST['end_time']),
+                "total_hours" => $total_hours,
+                // "multiplier" => (float)$_POST['multiplier'],
+                "reason" => $app->xss($_POST['reason']),
+                "modify" => date("Y-m-d H:i:s")
+            ];
             $app->update("hrm_overtime_requests", $post_data, ["id" => $data['id']]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => 'true']);
         }

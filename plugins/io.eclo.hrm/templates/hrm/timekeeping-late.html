@@ -27,6 +27,14 @@
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3">
+                            <?=$app->component('select',[
+                                "name"=>'personnels',
+                                "class"=>'filter-name',
+                                "options"=>$personnels,
+                                "selected" => $data['personnels'] ?? '',
+                                "placeholder"=>$jatbi->lang("Nhân viên"),
+                                "attr" => 'multiple',
+                            ])?>
                             <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
@@ -43,7 +51,7 @@
             </div>
         </div>
     </div>
-    <?php if($jatbi->permission(['time-late.deleted']) == 'true' || $jatbi->permission(['time-late.add']) == 'true'){ ?>
+    <?php if($jatbi->permission(['time-late.deleted']) == 'true'){ ?>
     <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
         <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
             style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
@@ -56,15 +64,6 @@
                     data-action="modal" data-checkbox="input.checker"
                     data-url="<?=$jatbi->url('/hrm/time-late-deleted')?>" style="--width:50px;--height:50px;">
                     <i class="ti ti-trash fs-3" aria-hidden="true"></i>
-                </a>
-            </li>
-            <?php } ?>
-            <?php if($jatbi->permission(['time-late.add']) == 'true'){ ?>
-            <li class="my-2">
-                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-url="<?=$jatbi->url('/hrm/time-late-add')?>"
-                    style="--width:50px;--height:50px;">
-                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
                 </a>
             </li>
             <?php } ?>
@@ -82,14 +81,14 @@
                             <div class="form-check"><input class="form-check-input checkall" type="checkbox"
                                     data-checkbox="input.checker"></div>
                         </th>
-                        <th data-name="type"><?=$jatbi->lang('Loại')?></th>
-                        <th data-name="name"><?=$jatbi->lang('Tên')?></th>
-                        <th data-name="value"><?=$jatbi->lang('Giá trị')?></th>
-                        <!-- <th data-name="price"><?=$jatbi->lang('Số tiền')?></th> -->
-                        <th data-name="date"><?=$jatbi->lang('Ngày áp dụng')?></th>
-                        <th data-name="content"><?=$jatbi->lang('Nội dung')?></th>
-                        <th data-name="status"><?=$jatbi->lang('Trạng thái')?></th>
-                        <th data-name="action" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                        <th data-name="type" data-orderable="false"><?=$jatbi->lang('Loại')?></th>
+                        <th data-name="personnel_name" data-orderable="false"><?=$jatbi->lang('Nhân viên')?></th>
+                        <th data-name="date" data-orderable="false"><?=$jatbi->lang('Ngày giờ')?></th>
+                        <th data-name="time_late" data-orderable="false"><?=$jatbi->lang('Số phút')?></th>
+                        <!-- <th data-name="status" data-orderable="true"><?=$jatbi->lang('Trạng thái')?></th> -->
+                        <th data-name="action" data-orderable="false" data-class="text-end">
+                            <?=$jatbi->lang("Tùy chọn")?>
+                        </th>
                     </tr>
                 </thead>
             </table>

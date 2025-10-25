@@ -1,0 +1,83 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <!-- Nút đóng -->
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+                    <div class="row g-3">
+
+                        <!-- Nhân viên (Chỉ đọc) -->
+                        <div class="col-lg-12">
+                            <?=$app->component('select',[
+                                "placeholder"       => $jatbi->lang("Nhân viên"),
+                                "name"        => 'personnels',
+                                "options"     => $personnels ?? [],
+                                "selected"    => $data['personnels'] ?? '',
+                                "required"    => 'true',
+                                "attr"        => 'disabled', // Chỉ đọc
+                            ])?>
+                        </div>
+
+                        <!-- Loại (Đi trễ / Về sớm) -->
+                        <div class="col-lg-12">
+                            <?=$app->component('select',[
+                                "placeholder"       => $jatbi->lang("Loại"),
+                                "name"        => 'type',
+                                "options"     => [
+                                    ['value' => 1, 'text' => $jatbi->lang('Đi trễ')],
+                                    ['value' => 2, 'text' => $jatbi->lang('Về sớm')]
+                                ],
+                                "selected"    => $data['type'] ?? '',
+                                "required"    => 'true',
+                            ])?>
+                        </div>
+
+                        <!-- Ngày giờ -->
+                        <div class="col-lg-12">
+                             <?=$app->component('input',[
+                                "placeholder"       => $jatbi->lang("Ngày giờ"),
+                                "name"        => 'date',
+                                "type"        => 'datetime-local', // Cho phép chọn cả ngày và giờ
+                                // Định dạng lại giá trị từ DB thành chuẩn datetime-local
+                                "value"       => !empty($data['date']) ? date('Y-m-d\TH:i', strtotime($data['date'])) : '',
+                                "required"    => 'true',
+                            ])?>
+                        </div>
+
+                        <!-- Số phút -->
+                        <div class="col-lg-12">
+                             <label class="form-label"><?=$jatbi->lang("Số phút")?> <small class="text-danger">*</small></label>
+                             <div class="input-group">
+                                 <input type="number" name="time_late" value="<?= htmlspecialchars($data['time_late'] ?? '0') ?>" class="form-control p-3" min="0" required>
+                                 <span class="input-group-text"><?=$jatbi->lang("Phút")?></span>
+                             </div>
+                        </div>
+
+                         <!-- Ghi chú (Tùy chọn) -->
+                         <div class="col-lg-12">
+                            <?=$app->component('textarea',[
+                                "placeholder"       => $jatbi->lang("Ghi chú"),
+                                "name"        =>'notes',
+                                "rows"        => 3,
+                                "value"       => $data['notes'] ?? '', // Giả sử có cột notes
+                            ])?>
+                         </div>
+
+                        <!-- Nút Hoàn thành -->
+                        <div class="col-lg-12">
+                            <?= $jatbi->csrfField() ?>
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
