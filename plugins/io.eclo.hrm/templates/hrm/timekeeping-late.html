@@ -35,6 +35,19 @@
                                 "placeholder"=>$jatbi->lang("Nhân viên"),
                                 "attr" => 'multiple',
                             ])?>
+                            <?=$app->component('select',[
+                                "name"=>'type',
+                                "class"=>'filter-name',
+                                "options"=>$type,
+                                "placeholder"=>$jatbi->lang("Loại"),
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => $app->xss($_GET['date'] ?? (date('01/m/Y') . ' - ' . date('d/m/Y'))),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
                             <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>

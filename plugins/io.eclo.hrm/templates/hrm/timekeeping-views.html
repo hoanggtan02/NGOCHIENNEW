@@ -1,0 +1,192 @@
+<div class="container-fluid mt-4">
+    <!-- 1. Header (Title + Breadcrumbs) - From 'late' style -->
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+                <?= htmlspecialchars($month ?? '') ?>/
+                <?= htmlspecialchars($year ?? '') ?>
+            </h4>
+            <!-- <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item small">
+                    <a href="<?=$jatbi->url('/')?>" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+            </ul> -->
+        </div>
+    </div>
+
+    <!-- 2. Filter Form - Font size reduced -->
+    <div class="filter-search">
+        <form method="GET" data-pjax>
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                        style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                        <form data-pjax method="get" action="/hrm/timekeeping">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?=$app->component('select',[
+                                        "name"=>'office',
+                                        "class"=>'filter-name',
+                                        "placeholder"=>$jatbi->lang("Phòng ban"),
+                                        "selected" => $app->xss($_GET['office'] ?? ''),
+                                        "options" => $office ?? [],
+                                    ])?>
+                                <?=$app->component('select', [
+                                        "name" => 'personnel',
+                                        "placeholder" => $jatbi->lang("Nhân viên"),
+                                        "selected" => $app->xss($_GET['personnel'] ?? ''),
+                                        "class" => 'filter-name',
+                                        "options" => $personnels
+                                    ])?>
+                                <?=$app->component('select',[
+                                        "name"=>'year',
+                                        "class"=>'filter-name',
+                                        "options"=>$years ?? [],
+                                        "selected" => $app->xss($_GET['year'] ?? date('Y')),
+                                        "placeholder"=>$jatbi->lang("Năm"),
+                                    ])?>
+                                <?=$app->component('select',[
+                                        "name"=>'month',
+                                        "class"=>'filter-name',
+                                        "options"=>$months ?? [],
+                                        "selected" => $app->xss($_GET['month'] ?? date('m')),
+                                        "placeholder"=>$jatbi->lang("Tháng"),
+                                    ])?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3 py-2 text-end w-100">
+                                <a href="/hrm/timekeeping" data-pjax
+                                    class="btn btn-light px-3 py-2 rounded-pill"><?=$jatbi->lang("Làm mới")?></a>
+                                <button type="submit"
+                                    class="btn btn-eclo px-3 py-2 rounded-pill"><?=$jatbi->lang("Tìm")?></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3. Main Data Table - 'late' style card + 'views' style table -->
+    <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <!-- EDITED: Reduced table font size from 0.85rem to 0.8rem -->
+                <table class="table table-bordered table-striped table-hover mb-0"
+                    style="min-width: 1800px; font-size: 0.8rem;">
+                    <!-- EDITED: Reduced header font size to 0.75rem for compactness -->
+                    <thead class="table-light text-center align-middle sticky-top"
+                        style="z-index: 10; font-size: 0.75rem;">
+                        <!-- Header Row 1: Merged Cells -->
+                        <tr>
+                            <th rowspan="2" class="border">STT</th>
+                            <th rowspan="2" class="border">Mã NV</th>
+                            <th rowspan="2" class="border" style="min-width: 150px;">Họ và tên</th>
+                            <th rowspan="2" class="border" style="min-width: 120px;">Bộ phận</th>
+                            <th colspan="<?= htmlspecialchars($totalDays ?? 31) ?>" class="border">Ngày trong tháng</th>
+                            <th colspan="4" class="border">Tổng giờ</th>
+                            <th colspan="3" class="border">Tổng công</th>
+                            <th colspan="2" class="border">Đi muộn</th>
+                            <th colspan="2" class="border">Về sớm</th>
+                        </tr>
+                        <!-- Header Row 2: Day names and Summary Sub-headers -->
+                        <tr>
+                            <?php foreach ($headerDates ?? [] as $hDate): ?>
+                            <th class="border" style="min-width: 45px;">
+                                <?= htmlspecialchars($hDate['day']) ?><br>
+                                <?= htmlspecialchars($hDate['dow']) ?>
+                            </th>
+                            <?php endforeach; ?>
+                            <th class="border">Ngày</th>
+                            <th class="border">CN</th>
+                            <th class="border">Tăng Ca</th>
+                            <th class="border">Tổng</th>
+                            <th class="border">Ngày làm</th>
+                            <th class="border">Công giờ</th>
+                            <th class="border">Phép</th>
+                            <th class="border">Lần</th>
+                            <th class="border">Phút</th>
+                            <th class="border">Lần</th>
+                            <th class="border">Phút</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($viewData)): ?>
+                        <tr>
+                            <td colspan="<?= 4 + ($totalDays ?? 31) + 11 ?>"
+                                class="text-center p-5 fst-italic text-muted">Không có dữ liệu chấm công cho bộ lọc đã
+                                chọn.</td>
+                        </tr>
+                        <?php else: ?>
+                        <?php foreach ($viewData as $rowData): ?>
+                        <tr>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['STT']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['MaNV']) ?>
+                            </td>
+                            <td class="border ps-2">
+                                <?= htmlspecialchars($rowData['HoTen']) ?>
+                            </td>
+                            <td class_name="border ps-2">
+                                <?= htmlspecialchars($rowData['BoPhan']) ?>
+                            </td>
+                            <?php foreach ($headerDates ?? [] as $hDate): ?>
+                            <td class="text-center border">
+                                <?= $rowData['DailyData'][$hDate['day']] ?? '' ?>
+                            </td>
+                            <?php endforeach; ?>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['TongGio_Ngay']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['TongGio_CN']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['TongGio_TangCa']) ?>
+                            </td>
+                            <td class="text-center border fw-bold">
+                                <?= htmlspecialchars($rowData['TongGio_Tong']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['CongLam_Ngay']) ?>
+                            </td>
+                            <td class="text-center border fw-bold">
+                                <?= htmlspecialchars($rowData['CongLam_Gio']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['CongPhep']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['DiMuon_Lan']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['DiMuon_Phut']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['VeSom_Lan']) ?>
+                            </td>
+                            <td class="text-center border">
+                                <?= htmlspecialchars($rowData['VeSom_Phut']) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

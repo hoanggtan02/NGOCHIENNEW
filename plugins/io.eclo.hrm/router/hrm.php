@@ -425,22 +425,65 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['personnels.edit']);
 
     $app->router("/personnels-deleted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $vars['title'] = $jatbi->lang("Xóa nhân viên");
+
+        $hrm_deviced = $app->select("hrm_decided", ["decided", "password"], ["deleted" => 0]);
+
         if ($app->method() === 'GET') {
             echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
-            ]);
-            $boxid = explode(',', $app->xss($_GET['box']));
-            $datas = $app->select("personnels", "*", ["id" => $boxid, "deleted" => 0]);
-            if (count($datas) > 0) {
-                foreach ($datas as $data) {
-                    $app->update("personnels", ["deleted" => 1], ["id" => $data['id']]);
+            $app->header(['Content-Type' => 'application/json']);
+            $ids = explode(',', $app->xss($_GET['box']));
+
+            if (empty($ids)) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng chọn nhân viên cần xóa!')]);
+                return;
+            }
+
+            $datas = $app->select("personnels", ["id"], ["id" => $ids, "deleted" => 0]);
+
+            if (empty($datas)) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không tìm thấy nhân viên hợp lệ để xóa.")]);
+                return;
+            }
+
+            $update_result = $app->update(
+                "personnels",
+                ["deleted" => 1, "face" => 0],
+                ["id" => $ids]
+            );
+
+            if ($update_result && $update_result->rowCount() > 0) {
+                $jatbi->logs('personnels', 'deleted', $datas);
+
+                $api_errors = [];
+                foreach ($datas as $personnel) {
+                    $personnel_id_to_delete = $personnel['id'];
+
+                    foreach ($hrm_deviced as $device) {
+                        $payload = [
+                            'deviceKey' => $device['decided'],
+                            'secret' => $device['password'],
+                            'sn' => $personnel_id_to_delete,
+                        ];
+
+                        try {
+                            $response = $jatbi->callCameraApi('person/delete', $payload);
+                        } catch (Exception $e) {
+                            $api_errors[] = "Lỗi gọi API xóa NV {$personnel_id_to_delete} khỏi thiết bị {$device['decided']}: " . $e->getMessage();
+                        }
+                    }
                 }
-                $jatbi->logs('hrm', 'personnels-deleted', $datas);
-                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+
+                $content_message = $jatbi->lang("Xóa nhân viên thành công.");
+                if (!empty($api_errors)) {
+                    $content_message .= " " . $jatbi->lang("Tuy nhiên, có lỗi xảy ra khi xóa khỏi một số camera:") . " " . implode("; ", $api_errors);
+                    echo json_encode(['status' => 'warning', 'content' => $content_message, 'reload' => true]);
+                } else {
+                    echo json_encode(['status' => 'success', 'content' => $content_message, 'reload' => true]);
+                }
             } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Xóa nhân viên thất bại hoặc nhân viên đã bị xóa.')]);
             }
         }
     })->setPermissions(['personnels.deleted']);
@@ -4292,6 +4335,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'holiday.name',
                 'holiday.date_from',
                 'holiday.date_to',
+                'holiday.salary',
                 'holiday.notes',
                 'holiday.status',
                 'offices.name(office_name)',
@@ -4302,6 +4346,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "name" => $data['name'],
                     "total_days" => 1,
                     "notes" => $data['notes'],
+                    "salary" => "x" . $data['salary'],
                     "status" => $app->component("status", [
                         "url" => "/hrm/furlough-categorys-status/" . $data['id'],
                         "data" => $data['status'],
@@ -4379,7 +4424,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "name" => $app->xss($_POST['name']),
                 "date_from" => $app->xss($_POST['date_from']),
                 "date_to" => $app->xss($_POST['date_to']),
-                // "salary" => $app->xss($_POST['salary']),
+                "salary" => $app->xss($_POST['salary']),
                 "office" => $app->xss($_POST['office']),
                 // "notes" => $app->xss($_POST['notes']),
                 "status" => 'A',
@@ -4427,7 +4472,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "date_to" => $app->xss($_POST['date_to']),
                         "salary" => $app->xss($_POST['salary']),
                         "office" => $app->xss($_POST['office']),
-                        "notes" => $app->xss($_POST['notes']),
+                        // "notes" => $app->xss($_POST['notes']),
                         "status" => $app->xss($_POST['status']),
                         "date" => date("Y-m-d H:i:s"),
                         "user" => $app->getSession("accounts")['id'] ?? null,
@@ -4961,6 +5006,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router('/timekeeping-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Đi trễ / Về sớm");
+            $vars['type'] = [
+                ["value" => 1, "text" => $jatbi->lang("Đi trễ")],
+                ["value" => 2, "text" => $jatbi->lang("Về sớm")],
+            ];
             $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
             echo $app->render($template . '/hrm/timekeeping-late.html', $vars);
         }
@@ -4975,6 +5024,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             $status_filter = isset($_POST['status']) && ctype_digit($_POST['status']) ? (int)$_POST['status'] : null;
+            $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
+
 
             $join = [
                 "[>]personnels(p)" => ["personnels" => "id"]
@@ -5004,6 +5055,18 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $where["AND"]["ttl.personnels"] = (int)$_POST['personnels'];
             }
 
+            if (!empty($_POST['type'])) {
+                $where["AND"]["ttl.type"] = (int)$_POST['type'];
+            }
+
+            if (!empty($filter_date)) {
+                $date_parts = explode(' - ', $filter_date);
+                if (count($date_parts) == 2) {
+                    $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date_parts[0]))));
+                    $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date_parts[1]))));
+                    $where['AND']["ttl.date[<>]"] = [$date_from, $date_to];
+                }
+            }
 
             $countWhere = ["AND" => $where['AND']];
             $count = $app->count("timekeeping_time_late(ttl)", $join, "ttl.id", $countWhere);
@@ -5023,7 +5086,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "type" => $data['type'] == 1 ? $jatbi->lang("Đi trễ") : $jatbi->lang("Về sớm"),
                     "personnel_name" => $data['personnel_name'],
-                    "date" => date('d/m/Y H:i', strtotime($data['date'])), // Format datetime
+                    "date" => date('d/m/Y', strtotime($data['date'])), // Format datetime
                     "time_late" => $data['time_late'] . ' ' . $jatbi->lang("phút"),
                     "action" => ($app->component("action", [
                         "button" => [
@@ -5070,9 +5133,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             // --- Hiển thị form ---
             $vars['data'] = $data;
             // Lấy danh sách nhân viên (nếu cần cho phép đổi nhân viên, thường thì không nên)
-            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0,"id"=> $data['personnels'], "status" => "A", "ORDER" => ["name" => "ASC"]]);
+            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $data['personnels'], "status" => "A", "ORDER" => ["name" => "ASC"]]);
             // Render form chỉnh sửa (cần tạo file này)
-            echo $app->render($template . '/hrm/timekeeping-time-late-post.html', $vars,$jatbi->ajax());
+            echo $app->render($template . '/hrm/timekeeping-time-late-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             // --- Xử lý cập nhật ---
             $app->header(['Content-Type' => 'application/json']);
@@ -5087,7 +5150,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $update_data = [
                 "personnels" => (int)$post['personnels'],
                 "type" => (int)$post['type'], // 1=Late, 2=Early
-                "date" => date("Y-m-d H:i:s", strtotime($post['date'])), 
+                "date" => date("Y-m-d", strtotime($post['date'])),
                 "time_late" => (int)$post['time_late'], // Số phút
                 // "status" => isset($post['status']) ? (int)$post['status'] : $data['status'], // Cập nhật status nếu có
                 "notes" => $app->xss($post['notes'] ?? ''), // Thêm trường notes nếu có trong form
@@ -5299,277 +5362,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['salary-advance.deleted']);
 
-    // $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
-    //     if ($app->method() === 'GET') {
-    //         $vars['title'] = $jatbi->lang("Chấm công");
-
-    //         // Prepare year and month lists for filters
-    //         $years = [];
-    //         for ($i = 2020; $i <= date('Y'); $i++) {
-    //             $years[] = ["value" => $i, "text" => $i];
-    //         }
-    //         $months = [];
-    //         for ($i = 1; $i <= 12; $i++) {
-    //             $value = str_pad($i, 2, "0", STR_PAD_LEFT);
-    //             $months[] = ["value" => $value, "text" => $i];
-    //         }
-    //         $vars['years'] = $years;
-    //         $vars['months'] = $months;
-
-    //         // Personnel list based on accessible stores
-    //         $personnels = $app->select("personnels", ["id(value)", "name(text)"], [
-    //             "deleted" => 0,
-    //             "status" => 'A',
-    //             "stores" => $accStore
-    //         ]);
-    //         $vars['personnels'] = array_merge(
-    //             [['value' => '', 'text' => $jatbi->lang('Chọn nhân viên')]],
-    //             $personnels
-    //         );
-
-    //         // Office list
-    //         $office = $app->select("offices", ["id(value)", "name(text)"], [
-    //             "deleted" => 0,
-    //             "status" => 'A',
-    //         ]);
-    //         $vars['office'] = array_merge(
-    //             [['value' => '', 'text' => $jatbi->lang('Chọn phòng ban')]],
-    //             $office
-    //         );
-
-    //         // Get filters
-    //         $year = $_GET['year'] ?? date('Y');
-    //         $month = $_GET['month'] ?? date('m');
-    //         $personnelF = $_GET['personnel'] ?? '';
-    //         $officeF = $_GET['office'] ?? '';
-    //         $stores = $_GET['stores'] ?? $accStore; // Use accessible stores if not specified
-
-    //         $start_date_month = $year . "-" . $month . "-01";
-    //         $end_date_month = date("Y-m-t", strtotime($start_date_month)); // Get last day of the month
-
-    //         // Filter offices
-    //         $whereOffice = ["deleted" => 0, "status" => 'A'];
-    //         if (!empty($officeF)) {
-    //             $whereOffice["id"] = $officeF;
-    //         }
-    //         $offices = $app->select("offices", "*", $whereOffice);
-
-    //         // Generate date list for the month
-    //         $dates = [];
-    //         $date_form = date("t", strtotime($start_date_month));
-    //         for ($day = 1; $day <= $date_form; $day++) {
-    //             $dayFormatted = str_pad($day, 2, "0", STR_PAD_LEFT);
-    //             $date = date("Y-m-d", strtotime($year . "-" . $month . "-" . $dayFormatted));
-    //             $week = date("N", strtotime($date)); // 1 (Mon) to 7 (Sun)
-    //             $dates[] = ["name" => $dayFormatted, "date" => $date, "week" => $week];
-    //         }
-
-    //         $datas = []; // Final structure to pass to template
-
-    //         foreach (($offices ?? []) as $key => $office) {
-    //             // Filter personnel for the current office
-    //             $wherePersonnel = [
-    //                 "office" => $office['id'],
-    //                 "personnels.deleted" => 0,
-    //                 "personnels.status" => 'A',
-    //                 "personnels.stores" => $stores,
-    //                 "GROUP" => "personnels.id" // Ensure unique personnel
-    //             ];
-    //             if (!empty($personnelF)) {
-    //                 $wherePersonnel["personnels.id"] = $personnelF; // Filter by specific personnel if selected
-    //             }
-    //             $SelectPer = $app->select("personnels", "*", $wherePersonnel);
-
-    //             $datas[$key] = [
-    //                 "name" => $office['name'],
-    //                 "personnels" => []
-    //             ];
-
-    //             if (empty($SelectPer)) continue; // Skip if no personnel in this office
-
-    //             $perIds = array_column($SelectPer, "id"); // Get IDs for batch queries
-
-    //             // --- Pre-query all necessary data for these personnel within the month ---
-
-    //             // 1. Timekeeping data
-    //             $timekeepingAll = $app->select("timekeeping", ["personnels", "date", "checkin", "checkout"], [
-    //                 "date[>=]" => $start_date_month,
-    //                 "date[<=]" => $end_date_month,
-    //                 "personnels" => $perIds
-    //             ]);
-    //             $timekeepingMap = [];
-    //             foreach ($timekeepingAll as $c) {
-    //                 $timekeepingMap[$c['personnels']][$c['date']] = $c;
-    //             }
-
-    //             // 2. Roster data (assuming only one active roster per person matters for the month view)
-    //             //    A more complex logic might be needed if rosters change mid-month
-    //             $rostersAll = $app->select("rosters", ["id", "personnels", "date", "timework"], [
-    //                 "personnels" => $perIds,
-    //                 "date[<=]" => $end_date_month, // Get the latest applicable roster
-    //                 "deleted" => 0,
-    //                 "ORDER" => ["date" => "DESC"]
-    //                 // Note: Need grouping or further logic if multiple rosters exist per person
-    //             ]);
-    //             $rosterMap = []; // Map personnel ID to their LATEST timework ID
-    //             foreach ($rostersAll as $r) {
-    //                 if (!isset($rosterMap[$r['personnels']])) { // Keep only the latest one due to ORDER DESC
-    //                     $rosterMap[$r['personnels']] = $r['timework'];
-    //                 }
-    //             }
-
-    //             // 3. Timework details (based on active rosters)
-    //             $activeTimeworkIds = array_unique(array_values($rosterMap));
-    //             $timeworkDetailsAll = [];
-    //             if (!empty($activeTimeworkIds)) {
-    //                 $timeworkDetailsAll = $app->select("timework_details", "*", [
-    //                     "timework" => $activeTimeworkIds,
-    //                     "deleted" => 0 // Assuming timework_details has deleted flag
-    //                 ]);
-    //             }
-    //             $timeworkDetailsMap = []; // Map [timework_id][week_day] to details
-    //             foreach ($timeworkDetailsAll as $t) {
-    //                 $timeworkDetailsMap[$t['timework']][$t['week']] = $t;
-    //             }
-
-    //             // --- CORRECTED: 4. Leave Request Data ---
-    //             $leaveRequestsAll = $app->select("hrm_leave_request_details", [
-    //                 "[>]hrm_leave_requests(lr)" => ["leave_request_id" => "id"],
-    //                 "[>]furlough_categorys(fc)" => ["lr.furlough_id" => "id"] // Join to get category code
-    //             ], [
-    //                 "lr.profile_id", // Use profile_id to match personnel
-    //                 "hrm_leave_request_details.leave_date",
-    //                 "hrm_leave_request_details.leave_session",
-    //                 "fc.code(category_code)", // Get the code (e.g., 'PN')
-    //                 "fc.name(category_name)"  // Get the name
-    //             ], [
-    //                 "lr.profile_id" => $perIds,
-    //                 "hrm_leave_request_details.leave_date[>=]" => $start_date_month,
-    //                 "hrm_leave_request_details.leave_date[<=]" => $end_date_month,
-    //                 "lr.deleted" => 0,
-    //                 "lr.status" => 'A'
-    //             ]);
-    //             $leaveMap = []; // Map [personnel_id][date] to leave details
-    //             foreach ($leaveRequestsAll as $l) {
-    //                 $leaveMap[$l['profile_id']][$l['leave_date']][] = $l; // Store as array in case of half-day overlaps? (Shouldn't happen with validation)
-    //             }
-    //             // --- END CORRECTION ---
-
-    //             // --- NEW: 5. Holiday Data ---
-    //             $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to"], [
-    //                 "date_from[<=]" => $end_date_month,
-    //                 "date_to[>=]" => $start_date_month,
-    //                 "deleted" => 0,
-    //                 "status" => 'A'
-    //                 // Add office filter here if holidays are office-specific
-    //                 // "office" => [$office['id'], 0] // Example: Specific office or global (0)
-    //             ]);
-    //             $holidayMap = []; // Map [date] to holiday name
-    //             foreach ($holidaysAll as $h) {
-    //                 $start = strtotime($h['date_from']);
-    //                 $end = strtotime($h['date_to']);
-    //                 for ($d = $start; $d <= $end; $d += 86400) {
-    //                     $currentDateStr = date("Y-m-d", $d);
-    //                     // Only store if within the queried month to avoid unnecessary data
-    //                     if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-    //                         $holidayMap[$currentDateStr] = $h['name'] ?? 'Lễ';
-    //                     }
-    //                 }
-    //             }
-    //             // --- END NEW ---
-
-    //             // --- Assign data for each personnel ---
-    //             foreach ($SelectPer as $per) {
-    //                 $personnelData = [
-    //                     "id" => $per['id'],
-    //                     "name" => $per['name'],
-    //                     "dates" => []
-    //                 ];
-
-    //                 $currentTimeworkId = $rosterMap[$per['id']] ?? null; // Get assigned timework ID
-
-    //                 foreach ($dates as $dateInfo) {
-    //                     $currentDate = $dateInfo['date'];
-    //                     $currentWeekDay = $dateInfo['week'];
-
-    //                     $checked = $timekeepingMap[$per['id']][$currentDate] ?? null;
-    //                     $timeworkDetail = $currentTimeworkId ? ($timeworkDetailsMap[$currentTimeworkId][$currentWeekDay] ?? null) : null;
-    //                     $leaveInfo = $leaveMap[$per['id']][$currentDate] ?? null; // Corrected variable
-    //                     $holidayName = $holidayMap[$currentDate] ?? null; // NEW holiday check
-
-    //                     $color = "bg-light bg-opacity-10"; // Default background
-    //                     $off = 0;                          // Is it an off day?
-    //                     $offcontent = "";                  // Text for off day (OFF, P, Lễ)
-
-    //                     // --- Determine Off Status and Color ---
-    //                     if ($holidayName) { // Highest priority: Holiday
-    //                         $off = 1;
-    //                         $offcontent = $holidayName; // Use holiday name
-    //                         $color = 'bg-info bg-opacity-25'; // Holiday color (e.g., light blue)
-    //                     } elseif ($leaveInfo) { // Next priority: Approved Leave
-    //                         $off = 1;
-    //                         // Display category code or name, handle multiple half-days if needed
-    //                         $leaveText = [];
-    //                         foreach ($leaveInfo as $leaveDetail) {
-    //                             $sessionText = '';
-    //                             if ($leaveDetail['leave_session'] === 'morning') $sessionText = ' (S)';
-    //                             elseif ($leaveDetail['leave_session'] === 'afternoon') $sessionText = ' (C)';
-    //                             $leaveText[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
-    //                         }
-    //                         $offcontent = implode(', ', $leaveText); // E.g., "PN (S), PN (C)" or just "PN"
-    //                         $color = 'bg-primary bg-opacity-25'; // Leave color (e.g., primary blue)
-    //                     } elseif ($timeworkDetail && $timeworkDetail['off'] == 1) { // Scheduled Day Off
-    //                         $off = 1;
-    //                         $offcontent = 'OFF';
-    //                         $color = 'bg-secondary bg-opacity-25'; // Day off color (e.g., grey)
-    //                     } else { // Working day - determine color by checkin/out status
-    //                         if (empty($checked)) { // No checkin/out record
-    //                             if (strtotime($currentDate) < strtotime(date("Y-m-d"))) { // Past date without record
-    //                                 // Check if it was supposed to be a working day based on timework
-    //                                 if ($timeworkDetail && $timeworkDetail['off'] != 1) {
-    //                                     $color = 'bg-warning bg-opacity-10'; // Absent (yellow)
-    //                                 } else {
-    //                                     // If it wasn't a scheduled working day, treat as default light
-    //                                     $color = 'bg-light bg-opacity-10';
-    //                                 }
-    //                             } else {
-    //                                 // Future date or today without record yet
-    //                                 $color = 'bg-light bg-opacity-10';
-    //                             }
-    //                         } elseif (empty($checked['checkout'])) { // Checked in but not out
-    //                             $color = 'bg-danger bg-opacity-10'; // Incomplete (red)
-    //                         } else { // Checked in and out
-    //                             $color = 'bg-success bg-opacity-10'; // Complete (green)
-    //                         }
-    //                     }
-
-    //                     // --- Store calculated data for the date ---
-    //                     $personnelData["dates"][$currentDate] = [
-    //                         "name" => $dateInfo['name'],
-    //                         "date" => $currentDate,
-    //                         "week" => $currentWeekDay,
-    //                         "color" => $color,
-    //                         "checkin" => ["time" => $checked['checkin'] ?? null],
-    //                         "checkout" => ["time" => $checked['checkout'] ?? null],
-    //                         "off" => ["status" => $off, "content" => $offcontent],
-    //                     ];
-    //                 } // End loop through dates
-
-    //                 $datas[$key]["personnels"][$per['id']] = $personnelData; // Add processed personnel data
-
-    //             } // End loop through personnel in the office
-    //         } // End loop through offices
-
-    //         // Pass data to the template
-    //         $vars['dates'] = $dates; // List of dates header
-    //         $vars['datas'] = $datas; // Main data structure [office][personnel][date]
-    //         $vars['offices'] = $offices; // List of offices displayed
-    //         $vars['furlough_categorys'] = $app->select("furlough_categorys", "*", ["deleted" => 0, "status" => 'A']); // For modals?
-
-    //         echo $app->render($template . '/hrm/timekeeping.html', $vars);
-    //     }
-    // })->setPermissions(['timekeeping']);
-
     $app->router('/timekeeping-excel', ['GET'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         try {
             // --- Fetch Filter Parameters ---
@@ -5618,7 +5410,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($timework_ids)) {
                 $timework_details_data = $app->select("timework_details", ["timework", "week", "time_from", "time_to", "off"], ["timework" => $timework_ids, "deleted" => 0]);
             }
-            $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to"], [
+            $holidaysAll = $app->select("holiday", ["name", "date_from", "date_to", "salary"], [
                 "date_from[<=]" => $end_date_month,
                 "date_to[>=]" => $start_date_month,
                 "deleted" => 0,
@@ -5651,6 +5443,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             $timework_details_map = [];
             foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
+
             $holidayMap = [];
             foreach ($holidaysAll as $h) {
                 $start = strtotime($h['date_from']);
@@ -5658,7 +5451,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 for ($d = $start; $d <= $end; $d += 86400) {
                     $currentDateStr = date("Y-m-d", $d);
                     if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-                        $holidayMap[$currentDateStr] = $h['name'] ?? 'Lễ';
+                        $holidayMap[$currentDateStr] = [
+                            'name' => $h['name'] ?? 'Lễ',
+                            'rate' => (float)($h['salary'] ?? 1.5)
+                        ];
                     }
                 }
             }
@@ -5666,23 +5462,21 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             foreach ($overtime_data as $ot) {
                 $currentDateStr = $ot['work_date'];
                 if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-                    $overtime_map[$ot['profile_id']][$currentDateStr] = [
-                        'approved_hours' => (float)($ot['total_hours'] ?? 0),
-                        'rate' => (float)($ot['multiplier'] ?? 1.0)
-                    ];
+                    $overtime_map[$ot['profile_id']][$currentDateStr] = ['approved_hours' => (float)($ot['total_hours'] ?? 0), 'rate' => (float)($ot['multiplier'] ?? 1.0)];
                 }
             }
 
             // --- Process Data for Excel ---
             $excelData = [];
             $stt = 1;
+
             foreach ($personnel_list as $personnel) {
                 $pid = $personnel['id'];
                 $dailyData = [];
                 $total_day_hours = $total_sunday_hours = $work_days = $late_count = $late_minutes = $early_count = $early_minutes = 0;
                 $leave_days_count = 0;
-                $total_counted_overtime_hours_effect = 0; // Total OT hours * rate (for công)
-                $raw_overtime_hours = 0; // Total raw OT hours worked for summary
+                $total_counted_hours_effect = 0;
+                $raw_overtime_hours = 0;
 
                 $active_roster = $rosters_map[$pid] ?? null;
                 $currentTimeworkId = $active_roster ? $active_roster['timework'] : null;
@@ -5694,12 +5488,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $week_day = date('N', $current_date_ts);
                     $value = '';
                     $workValue = null;
-                    $actual_hours_for_cong = 0; // Standard hours within shift
-                    $day_ot_hours_effect = 0; // OT hours * rate for this day
-                    $day_raw_overtime_hours = 0; // Raw OT hours worked today
+                    $actual_hours_for_cong = 0;
+                    $day_ot_hours_effect = 0;
+                    $day_raw_overtime_hours = 0;
+                    $day_base_hours_effect = 0;
 
                     $schedule = $currentTimeworkId ? ($timework_details_map[$currentTimeworkId][$week_day] ?? null) : null;
-                    $holidayName = $holidayMap[$current_date_str] ?? null;
+                    $holidayInfo = $holidayMap[$current_date_str] ?? null;
+                    $holidayName = $holidayInfo['name'] ?? null;
+                    $holiday_rate = $holidayInfo['rate'] ?? 1;
+                    $is_holiday = ($holidayName != null);
                     $leaveInfoArray = $leave_map[$pid][$current_date_str] ?? null;
                     $tk = $timekeeping_map[$pid][$current_date_str] ?? null;
                     $approved_overtime = $overtime_map[$pid][$current_date_str] ?? null;
@@ -5732,19 +5530,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     if (isset($tk) && !empty($tk['checkin']) && !empty($tk['checkout'])) {
                         $checkin_time = strtotime("$current_date_str {$tk['checkin']}");
                         $checkout_time = strtotime("$current_date_str {$tk['checkout']}");
-                        $total_duration_seconds = max(0, $checkout_time - $checkin_time);
-                        $total_hours_worked = $total_duration_seconds / 3600;
-                        $lunch_deduction_hours = ($total_hours_worked > 5) ? 1.5 : 0; //// Thời gian nghỉ trưa
+                        $total_hours_worked = max(0, ($checkout_time - $checkin_time)) / 3600;
+                        // $lunch_deduction_hours = ($total_hours_worked > 5) ? 1.5 : 0;
+                        $net_hours_worked = max(0, $total_hours_worked /*- $lunch_deduction_hours*/);
+                        $work_days++;
 
                         if ($schedule && $schedule['off'] == 0) {
                             $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
                             $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
-
-                            if ($checkin_time > $expected_start) {
+                            if ($checkin_time > $expected_start ) {
                                 $late_count++;
                                 $late_minutes += ($checkin_time - $expected_start) / 60;
                             }
-                            if ($checkout_time < $expected_end) {
+                            if ($checkout_time < $expected_end ) {
                                 $early_count++;
                                 $early_minutes += ($expected_end - $checkout_time) / 60;
                             }
@@ -5752,7 +5550,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $effective_start = max($checkin_time, $expected_start);
                             $effective_end = min($checkout_time, $expected_end);
                             $duration_within_schedule_seconds = max(0, $effective_end - $effective_start);
-                            $actual_hours_for_cong = max(0, ($duration_within_schedule_seconds / 3600) /*- $lunch_deduction_hour*/);
+                            $scheduled_hours = max(0, $expected_end - $expected_start) / 3600;
+                            // $scheduled_lunch_deduction = ($scheduled_hours > 5) ? 1.5 : 0;
+                            $actual_hours_for_cong = max(0, ($duration_within_schedule_seconds / 3600) /*- $scheduled_lunch_deduction*/);
 
                             $actual_ot_hours_worked = 0;
                             if ($checkin_time < $expected_start) {
@@ -5762,39 +5562,57 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 $actual_ot_hours_worked += ($checkout_time - $expected_end) / 3600;
                             }
 
-                            if ($approved_overtime && $actual_ot_hours_worked > 0) {
-                                $approved_hours = $approved_overtime['approved_hours'];
-                                $ot_rate = $approved_overtime['rate'];
-                                $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
-                                $day_ot_hours_effect = ($counted_ot_hours * $ot_rate); // OT effect for the day
-                                $day_raw_overtime_hours = $counted_ot_hours;
+                            $base_rate = $is_holiday ? $holiday_rate : 1.0;
+                            $day_base_hours_effect = $actual_hours_for_cong * $base_rate;
+
+                            if ($actual_ot_hours_worked > 0) {
+                                $ot_rate_from_request = $approved_overtime['rate'] ?? 1;
+                                $final_ot_rate = $is_holiday ? ($holiday_rate * $ot_rate_from_request) : $ot_rate_from_request;
+
+                                // *** LOGIC CORRECTION: Removed || $is_holiday ***
+                                if ($approved_overtime) {
+                                    $approved_hours = $approved_overtime['approved_hours'] ?? 0;
+                                    $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
+                                    $day_ot_hours_effect = ($counted_ot_hours * $final_ot_rate);
+                                    $day_raw_overtime_hours = $counted_ot_hours;
+                                }
                             }
+
+                            if ($is_holiday) $day_raw_overtime_hours += $actual_hours_for_cong; // Add base holiday hours to raw total
+
                         } else {
+                            // --- OFF DAY WORK ---
                             $actual_hours_for_cong = 0;
                             $workValue = 'K/P';
-                            $actual_ot_hours_worked = max(0, $total_hours_worked /*- $lunch_deduction_hour*/);
-                            if ($approved_overtime && $actual_ot_hours_worked > 0) {
-                                $approved_hours = $approved_overtime['approved_hours'];
-                                $ot_rate = $approved_overtime['rate'];
-                                $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
-                                $day_ot_hours_effect = ($counted_ot_hours * $ot_rate); // OT effect for the day
-                                $day_raw_overtime_hours = $counted_ot_hours;
-                                $workValue = round($day_ot_hours_effect / 8, 2); // Work value based only on approved OT effect
+                            $actual_ot_hours_worked = $net_hours_worked;
+
+                            if ($actual_ot_hours_worked > 0) {
+                                $ot_rate_from_request = $approved_overtime['rate'] ?? 1;
+                                $final_ot_rate = $is_holiday ? ($holiday_rate * $ot_rate_from_request) : $ot_rate_from_request;
+
+                                // *** LOGIC CORRECTION: Removed || $is_holiday ***
+                                if ($approved_overtime) {
+                                    $approved_hours = $approved_overtime['approved_hours'] ?? 0;
+                                    $counted_ot_hours = min($actual_ot_hours_worked, $approved_hours);
+                                    $day_ot_hours_effect = ($counted_ot_hours * $final_ot_rate);
+                                    $day_raw_overtime_hours = $counted_ot_hours;
+                                    $workValue = round($day_ot_hours_effect / 8, 2);
+                                }
                             }
                         }
 
-                        $work_days++;
-                        if ($week_day == 7) $total_sunday_hours += $actual_hours_for_cong; // Add standard hours
-                        else $total_day_hours += $actual_hours_for_cong; // Add standard hours
-                        $raw_overtime_hours += $day_raw_overtime_hours; // Accumulate raw OT hours
-                        $total_counted_overtime_hours_effect += $day_ot_hours_effect; // Accumulate OT effect for công
+                        if (!$is_holiday) {
+                            if ($week_day == 7) $total_sunday_hours += $actual_hours_for_cong;
+                            else $total_day_hours += $actual_hours_for_cong;
+                        }
+                        $raw_overtime_hours += $day_raw_overtime_hours;
+                        $total_counted_hours_effect += $day_base_hours_effect + $day_ot_hours_effect;
 
-
-                        if (!isset($workValue) || $workValue !== 'K/P') {
-                            $base_cong_value = round($actual_hours_for_cong / 8, 2);
-                            $ot_cong_value = round($day_ot_hours_effect / 8, 2); // Daily OT effect on công
+                        if (!isset($workValue)) {
+                            $base_cong_value = round($day_base_hours_effect / 8, 3);
+                            $ot_cong_value = round($day_ot_hours_effect / 8, 3);
                             $workValue = $base_cong_value + $ot_cong_value;
-                            if ($workValue == 0 && $total_hours_worked > 0) {
+                            if ($workValue == 0 && $net_hours_worked > 0) {
                                 $workValue = 0;
                             }
                         }
@@ -5807,11 +5625,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     }
 
                     if ($holidayName) {
-                        $value = $holidayName;
+                        // Display holiday name + work value if it exists
+                        $value = $holidayName . (isset($workValue) && $workValue > 0 ? " : " . $workValue : ($workValue === 0 ? " : 0" : ""));
                     } elseif ($is_full_day_leave) {
                         $value = $leaveTextValue;
                     } elseif (!empty($leaveTextValue)) {
-                        $value = $leaveTextValue . (isset($workValue) && $workValue !== 'V' && $workValue !== 'K/L' && $workValue !== 'K/P' && ($actual_hours_for_cong + $day_ot_hours_effect) > 0 ? " : " . $workValue : "");
+                        $value = $leaveTextValue . (isset($workValue) && $workValue !== 'V' && $workValue !== 'K/L' && $workValue !== 'K/P' && ($day_base_hours_effect + $day_ot_hours_effect) > 0 ? " : " . $workValue : "");
                     } elseif ($schedule && $schedule['off'] == 1) {
                         $value = 'OFF';
                     } elseif (isset($workValue)) {
@@ -5828,14 +5647,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     'HoTen' => $personnel['name'],
                     'BoPhan' => $office_map[$personnel['office']] ?? '',
                     'DailyData' => $dailyData,
-                    'TongGio_Ngay' => round($total_day_hours, 2),        // Standard Day Hours
-                    'TongGio_CN' => round($total_sunday_hours, 2),         // Standard Sunday Hours
-                    'TongGio_TangCa' => round($raw_overtime_hours, 2),     // NEW: Raw Approved OT Hours
-                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours + $raw_overtime_hours, 2), // Updated Total Hours
-                    'CongLam_Ngay' => $work_days,                        // Days with Checkin/out
-                    // Corrected Công Giờ calculation
-                    'CongLam_Gio' => round(($total_day_hours + $total_sunday_hours + $total_counted_overtime_hours_effect) / 8, 2),
-                    'CongPhep' => $leave_days_count,                     // Leave days count
+                    'TongGio_Ngay' => round($total_day_hours, 2),
+                    'TongGio_CN' => round($total_sunday_hours, 2),
+                    'TongGio_TangCa' => round($raw_overtime_hours, 2),
+                    'TongGio_Tong' => round($total_day_hours + $total_sunday_hours + $raw_overtime_hours, 2),
+                    'CongLam_Ngay' => $work_days,
+                    'CongLam_Gio' => round($total_counted_hours_effect / 8, 2),
+                    'CongPhep' => $leave_days_count,
                     'DiMuon_Lan' => $late_count,
                     'DiMuon_Phut' => round($late_minutes),
                     'VeSom_Lan' => $early_count,
@@ -5863,14 +5681,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $headers_row7[] = $days_of_week_map[$week_day];
             }
 
-            // --- UPDATED Summary Headers ---
             $summary_headers = [
-                'Tổng giờ' => ['Ngày', 'CN', 'Tăng Ca', 'Tổng'], // Moved Tăng Ca here
+                'Tổng giờ' => ['Ngày', 'CN', 'Tăng Ca', 'Tổng'],
                 'Tổng công' => ['Ngày làm', 'Công giờ', 'Phép'],
                 'Đi muộn' => ['Lần', 'Phút'],
                 'Về sớm' => ['Lần', 'Phút']
             ];
-            // --- END UPDATED ---
             foreach ($summary_headers as $main => $subs) {
                 $headers_row6[] = $main;
                 for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
@@ -5907,20 +5723,17 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $dayStr = str_pad($day, 2, '0', STR_PAD_LEFT);
                     $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DailyData'][$dayStr] ?? '');
                 }
-                // --- UPDATED Summary Data Writing ---
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Ngay']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_CN']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_TangCa']); // Added OT Hours
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']); // Updated Total
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_TangCa']);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['TongGio_Tong']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Ngay']);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']); // Updated Công giờ
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongLam_Gio']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['CongPhep']);
-                // Removed separate OT column here
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Lan']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['DiMuon_Phut']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Lan']);
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex++) . $rowIndex, $data['VeSom_Phut']);
-                // --- END UPDATED ---
                 $rowIndex++;
             }
 
@@ -5938,14 +5751,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet->getColumnDimension('C')->setWidth(30);
             $sheet->getColumnDimension('D')->setAutoSize(true);
             for ($i = 1; $i <= $totalDays; $i++) {
-                $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
-                $sheet->getColumnDimension($colLetter)->setWidth(12);
+                $colLetter = Coordinate::stringFromColumnIndex(4 + $i); 
+                $sheet->getColumnDimension($colLetter)->setWidth(7);
             }
             $summaryStartColIndex = 4 + $totalDays + 1;
             $lastColIndex = Coordinate::columnIndexFromString($lastColLetter);
             for ($i = $summaryStartColIndex; $i <= $lastColIndex; $i++) {
                 $colLetter = Coordinate::stringFromColumnIndex($i);
-                $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                $sheet->getColumnDimension($colLetter)->setAutoSize(True);
             }
 
 
@@ -5964,6 +5777,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             exit("Lỗi khi tạo file Excel: " . $e->getMessage());
         }
     })->setPermissions(['timekeeping']);
+
+
 
     $app->router('/timekeeping', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
@@ -6198,8 +6013,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $color = 'bg-secondary bg-opacity-25';
                         }
 
-                        // --- Determine Timekeeping Status and Color (IF NOT a full off day) ---
-                        // Only check timekeeping if not Holiday, not Full Day Leave, and not Scheduled Off
                         if ($off == 0) {
                             if (empty($checked)) { // No checkin/out record
                                 if (strtotime($currentDate) < strtotime(date("Y-m-d"))) {

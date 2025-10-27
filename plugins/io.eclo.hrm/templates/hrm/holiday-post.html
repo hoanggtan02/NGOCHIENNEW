@@ -42,24 +42,23 @@
                                 "required" => 'true',
                             ])?>
                         </div>
-                        <!-- <div class="col-lg-12">
+                        <div class="col-lg-12">
                             <div class="mb-3">
                                 <label><?=$jatbi->lang("Hệ số lương")?> <small class="text-danger">*</small></label>
                                 <div class="input-group">
                                     <span class="input-group-text">x</span>
                                     <input placeholder="<?=$jatbi->lang("Hệ số lương")?>" type="text" name="salary" class="form-control p-3" value="<?=$data['salary'] ?? 0?>">
-                                    <span class="input-group-text"><?=$jatbi->lang("Ngày lương")?></span>
                                 </div>
 				            </div>
                             <?=$app->component('select-status',[
                                 "value" => $data['status'] ?? '',
                             ])?>
-                            <?=$app->component('textarea',[
+                            <!-- <?=$app->component('textarea',[
                                 "name"=>'notes',
                                 "placeholder"=>$jatbi->lang("Ghi chú"),
                                 "value" => $data['notes'] ?? '',
-                            ])?>
-                        </div> -->
+                            ])?> -->
+                        </div>
 						<div class="col-lg-12">
 							<?= $jatbi->csrfField() ?>
 							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>

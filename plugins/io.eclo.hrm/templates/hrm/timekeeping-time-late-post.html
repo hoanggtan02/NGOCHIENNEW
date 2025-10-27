@@ -21,7 +21,7 @@
                                 "options"     => $personnels ?? [],
                                 "selected"    => $data['personnels'] ?? '',
                                 "required"    => 'true',
-                                "attr"        => 'disabled', // Chỉ đọc
+                                "attr"        => 'disabled', 
                             ])?>
                         </div>
 
@@ -44,9 +44,8 @@
                              <?=$app->component('input',[
                                 "placeholder"       => $jatbi->lang("Ngày giờ"),
                                 "name"        => 'date',
-                                "type"        => 'datetime-local', // Cho phép chọn cả ngày và giờ
-                                // Định dạng lại giá trị từ DB thành chuẩn datetime-local
-                                "value"       => !empty($data['date']) ? date('Y-m-d\TH:i', strtotime($data['date'])) : '',
+                                "type"        => 'datetime-local', 
+                                "value"       => !empty($data['date']) ? date('Y-m-d', strtotime($data['date'])) : '',
                                 "required"    => 'true',
                             ])?>
                         </div>
@@ -66,7 +65,7 @@
                                 "placeholder"       => $jatbi->lang("Ghi chú"),
                                 "name"        =>'notes',
                                 "rows"        => 3,
-                                "value"       => $data['notes'] ?? '', // Giả sử có cột notes
+                                "value"       => $data['notes'] ?? '', 
                             ])?>
                          </div>
 
