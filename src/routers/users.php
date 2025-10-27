@@ -1070,6 +1070,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                     // "active" => $jatbi->active(),
                     "group" => serialize($selectPermission),
                     "deleted" => 0,
+                    "your_self" => !empty($_POST['your_self']) ? 1 : 0,
                 ];
                 $app->insert("permission", $insert);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
@@ -1110,6 +1111,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                         "name" => $app->xss($_POST['name']),
                         "status" => $app->xss($_POST['status']),
                         "group" => serialize($selectPermission),
+                        "your_self" => !empty($_POST['your_self']) ? 1 : 0,
                     ];
                     $app->update("permission", $insert, ["id" => $data['id']]);
                     echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'data' => $data, "insert" => $insert]);

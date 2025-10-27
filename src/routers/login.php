@@ -23,6 +23,42 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
                 "status" => "A",
                 "deleted" => 0
             ]);
+            $data = $app->get("accounts", [
+                "[>]permission" => ["accounts.permission" => "permission.id"],
+            ],[
+                "permission.your_self",
+                "accounts.id",
+                "accounts.type",
+                "accounts.name",
+                "accounts.account",
+                "accounts.email",
+                "accounts.phone",
+                "accounts.password",
+                "accounts.permission",
+                "accounts.data",
+                "accounts.active",
+                "accounts.avatar",
+                "accounts.birthday",
+                "accounts.gender",
+                "accounts.date",
+                "accounts.status",
+                "accounts.ip",
+                "accounts.token",
+                "accounts.agent",
+                "accounts.mode",
+                "accounts.skin",
+                "accounts.deleted",
+                "accounts.stores",
+            ], [
+                "OR" => [
+                    "accounts.email"     => $app->xss($_POST['email']),
+                    "accounts.account"   => $app->xss($_POST['email']),
+                ],
+                "accounts.status" => "A",
+                "accounts.deleted" => 0
+            ]);
+
+
             if (isset($data) && password_verify($app->xss($_POST['password']), $data['password'])) {
                 $gettoken = $app->randomString(256);
                 $payload = [
@@ -58,9 +94,11 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
                 $app->setSession('accounts', [
                     "id" => $data['id'],
                     "name" => $data['name'],
+                    "your_self" => $data['your_self'],
                     "agent" => $payload['agent'],
                     "token" => $payload['token'],
                     "active" => $data['active'],
+                    "personnels_id" => $data['personnels_id'],
                 ]);
 
                 // Thêm logic gán $_SESSION['stores']

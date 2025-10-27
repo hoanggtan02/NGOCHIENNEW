@@ -25,12 +25,20 @@
                             ])?>
 						</div>
 						<div class="col-lg-12">
+							<div class="form-check">
+								<input class="form-check-input" type="checkbox" name="your_self" id="your_self"
+									value="1" <?= !empty($data['your_self']) && $data['your_self'] == 1 ? 'checked' : '' ?>>
+								<label class="form-check-label ps-2 pt-1" for="your_self">
+									<?=$jatbi->lang("Chỉ xem dữ liệu của bản thân")?>
+								</label>
+							</div>
+							<small class="text-muted ps-4"><?=$jatbi->lang("Khi bật tùy chọn này, người dùng thuộc nhóm quyền này chỉ thấy dữ liệu liên quan đến tài khoản của họ.")?></small>
 							<div class="form-check mb-3">
 								<input class="form-check-input checkall" type="checkbox" value="" id="checkper" data-checkbox="input.permission-item">
 								<label class="form-check-label ps-2 pt-1" for="checkper">
 							  		<?=$jatbi->lang("Chọn tất cả")?>
 							  	</label>
-							</div>
+							</div>							
 							<?php foreach ($permissions as $key => $value) { ?>
 					        	<div class="border border-opacity-10  border-eclo mb-3 rounded-3">
 					        		<div class="border-bottom  border-opacity-10 border-eclo p-3 fw-bold">
