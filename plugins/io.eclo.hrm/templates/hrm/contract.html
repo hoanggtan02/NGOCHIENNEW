@@ -98,11 +98,13 @@
     <?php } ?>
     <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
         <div class="card-body">
+            <?php if($jatbi->permission(['contract.edit']) == 'true'){ ?>
             <div class="custom-buttons d-none">
                 <a href="/hrm/contract-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>" class="btn btn-eclo">
                     <?=$jatbi->lang("Xuất excel")?>
                 </a>
             </div>
+            <?php } ?>
             <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
                 data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
                 data-state-save='true' style="width:100%">
