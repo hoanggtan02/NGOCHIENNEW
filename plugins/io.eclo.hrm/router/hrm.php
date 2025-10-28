@@ -1429,6 +1429,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router('/rosters', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Bảng phân công");
+            $vars['office'] = $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A","ORDER" => ["name" => "ASC"]]);
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
             $vars['timeworks'] = $app->select("timework", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]);
             // $vars['timeworks'] = $app->select("timework", ["id", "name"], ["deleted" => 0, "status" => 'A']);
@@ -1444,6 +1445,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
             $timeworks = isset($_POST['timeworks']) ? $_POST['timeworks'] : '';
+            $office = isset($_POST['office']) ? $_POST['office'] : '';
+
             $store_ids = array_column($stores, column_key: 'value');
 
             $joins = [
@@ -1469,9 +1472,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             if (!empty($timeworks)) {
                 $where['AND']['timework.id'] = $timeworks;
-            }
-            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                        if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
+            if (!empty($office)) {
+                $where['AND']['personnels.office'] = $office;
             }
             $count = $app->count("rosters", $joins, ['rosters.id '], $where['AND']);
             $datas = [];
@@ -1491,6 +1496,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "notes" => $data['notes'],
                     "action" => ($app->component("action", [
                         "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem"),
+                                'permission' => ['rosters'],
+                                'action' => ['data-url' => '/hrm/rosters-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Sửa"),
@@ -1517,10 +1528,24 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['rosters']);
 
+    $app->router('/rosters-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
+        $vars['data'] = $app->get("rosters", "*", ["id" => $vars['id'], "deleted" => 0]);
+        if (!empty($vars['data'])) {
+            $vars['title'] = $jatbi->lang("Xem chi tiết bảng phân công");
+            $vars['personnel'] = $app->get("personnels", "*", ["id" => $vars['data']['personnels'], "deleted" => 0]);
+            $vars['timework'] = $app->get("timework", "*", ["id" => $vars['data']['timework'], "deleted" => 0]);
+            $vars['timework_details'] = $app->select("timework_details", "*", ["timework" => $vars['timework']['id'], "deleted" => 0]);
+            echo $app->render($template . '/hrm/rosters-views.html', $vars, $jatbi->ajax());
+        } else {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không tìm thấy dữ liệu")]);
+        }
+    })->setPermissions(['rosters']);
+
     $app->router('/rosters-excel', 'GET', function ($vars) use ($app, $stores) {
         try {
             $month_year = $_GET['month_year'] ?? date('Y-m');
             $officeF = $_GET['office'] ?? '';
+            $personnel = $_GET['personnels'] ?? '';
             $store_ids = array_column($stores, 'value');
 
 
@@ -1536,6 +1561,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             if (!empty($officeF))
                 $wherePersonnel['office'] = $officeF;
+            if (!empty($personnel))
+                $wherePersonnel['id'] = $personnel;
+
 
             $personnel_list = $app->select("personnels", ["id", "name"], ["ORDER" => ["name" => "ASC"]] + $wherePersonnel);
             if (empty($personnel_list))
@@ -3802,7 +3830,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]personnels(p)" => ["profile_id" => "id"],
                 "[>]offices(o)" => ["p.office" => "id"],
                 "[>]furlough_categorys(fc)" => ["furlough_id" => "id"],
-                "[>]personnels_contract(pc)"=>["profile_id"=>"personnels"],
+                "[>]personnels_contract(pc)" => ["profile_id" => "personnels"],
                 "[>]hrm_positions(pos)" => ["pc.position" => "id"],
             ],
             [
