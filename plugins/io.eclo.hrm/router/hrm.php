@@ -1472,7 +1472,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             if (!empty($timeworks)) {
                 $where['AND']['timework.id'] = $timeworks;
-                        if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
             if (!empty($office)) {
