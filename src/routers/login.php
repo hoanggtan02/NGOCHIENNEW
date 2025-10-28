@@ -24,7 +24,8 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
                 "deleted" => 0
             ]);
             $data = $app->get("accounts", [
-                "[>]permission" => ["accounts.permission" => "permission.id"],
+                "[>]permission" => ["permission" => "id"],
+                "[>]personnels" => ["id" => "account"],
             ],[
                 "permission.your_self",
                 "accounts.id",
@@ -49,6 +50,8 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
                 "accounts.skin",
                 "accounts.deleted",
                 "accounts.stores",
+                "personnels.id(personnels_id)",
+                "personnels.account",
             ], [
                 "OR" => [
                     "accounts.email"     => $app->xss($_POST['email']),

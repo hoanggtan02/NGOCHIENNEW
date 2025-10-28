@@ -31,11 +31,15 @@ $app->group($setting['manager'], function ($app) use ($jatbi, $setting, $common,
         $year = $filters['year'] ?? date('Y');
 
 
+
         if ($app->method() === 'GET') {
             $account_id = $app->getSession("accounts")['id'] ?? null;
             $account = $account_id ? $app->get("accounts", "*", ["id" => $account_id]) : [];
             if (($account['type'] ?? null) == 10) {
                 echo $app->render($setting['template'] . '/pages/home_driver.html', $vars);
+                return;
+            }else if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                echo $app->render($setting['template'] . '/pages/home_personnels.html', $vars);
                 return;
             }
         }

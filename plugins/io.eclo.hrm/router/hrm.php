@@ -104,7 +104,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $where['AND']['personnels.status_type'] = $status_type;
             }
 
-            if ($app->getSession("accounts")['your_self'] == 1) {
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
@@ -211,7 +211,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['province_new'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("province_new", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
             echo $app->render($template . '/hrm/personnels-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
-            // ===== FIX: TOÀN BỘ LOGIC POST ĐÃ ĐƯỢC VIẾT LẠI =====
             $app->header(['Content-Type' => 'application/json']);
 
             if (empty($_POST['name']) || empty($_POST['phone']) || empty($_POST['stores'])) {
@@ -408,8 +407,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             // ===== Cập nhật bảng accounts liên kết =====
             $account = $app->get("accounts", "*", ["id" => $data['account'], "deleted" => 0]);
             if ($account) {
+                if (count($stores) > 1) {
+                    $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
+                    $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
+                    if (!is_array($input_stores)) {
+                        $input_stores = [$input_stores]; // ép chuỗi thành mảng
+                    }
+                    $input_stores = array_map([$app, 'xss'], $input_stores);
+                    if (empty($input_stores)) {
+                        $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+                    }
+                } else {
+                    $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+                }
                 $update_account = [
                     "name" => $app->xss($_POST['name']),
+                    "account" => $app->xss($_POST['account']),
                     "email" => $app->xss($_POST['email']),
                     "phone" => $app->xss($_POST['phone']),
                     "gender" => $app->xss($_POST['gender']),
@@ -417,6 +430,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "permission" => $app->xss($_POST['permission']),
                     "status" => $app->xss($_POST['status']),
                     "date" => date('Y-m-d H:i:s'),
+                    "stores" => serialize($input_stores),
                 ];
 
                 // Nếu có nhập mật khẩu mới
@@ -499,36 +513,40 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['personnels.deleted']);
 
-    $app->router('/personnels-detail/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/personnels-detail/{id}', 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
-                $vars['title'] = $jatbi->lang("Nhân viên: ") . $vars['data']['name'];
-                $vars['contracts'] = $app->select(
-                    "personnels_contract",
-                    [
-                        "[>]offices" => ["offices" => "id"],
-                    ],
-                    [
-                        "personnels_contract.id",
-                        "personnels_contract.code",
-                        "personnels_contract.type",
-                        "personnels_contract.salary",
-                        "personnels_contract.duration",
-                        "personnels_contract.date_contract",
-                        "personnels_contract.workday",
-                        "offices.name(office_name)"
-                    ],
-                    [
-                        "personnels_contract.personnels" => $vars['data']['id'],
-                        "personnels_contract.deleted" => 0
-                    ]
-                );
+                if(($app->getSession("accounts")['your_self'] ?? 0 )== 1 && $app->getSession("accounts")['personnels_id'] != $vars['id']){
+                    echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                }else{
+                    $vars['title'] = $jatbi->lang("Nhân viên: ") . $vars['data']['name'];
+                    $vars['contracts'] = $app->select(
+                        "personnels_contract",
+                        [
+                            "[>]offices" => ["offices" => "id"],
+                        ],
+                        [
+                            "personnels_contract.id",
+                            "personnels_contract.code",
+                            "personnels_contract.type",
+                            "personnels_contract.salary",
+                            "personnels_contract.duration",
+                            "personnels_contract.date_contract",
+                            "personnels_contract.workday",
+                            "offices.name(office_name)"
+                        ],
+                        [
+                            "personnels_contract.personnels" => $vars['data']['id'],
+                            "personnels_contract.deleted" => 0
+                        ]
+                    );
 
-                $vars['insurrances'] = $app->select("personnels_insurrance", "*", ["personnels" => $vars['data']['id'], "deleted" => 0]);
-                echo $app->render($template . '/hrm/personnels-detail.html', $vars, $jatbi->ajax());
+                    $vars['insurrances'] = $app->select("personnels_insurrance", "*", ["personnels" => $vars['data']['id'], "deleted" => 0]);
+                    echo $app->render($template . '/hrm/personnels-detail.html', $vars, $jatbi->ajax());
+                }
             } else {
-                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
             }
         }
     })->setPermissions(['personnels']);
@@ -1452,7 +1470,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($timeworks)) {
                 $where['AND']['timework.id'] = $timeworks;
             }
-
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
             $count = $app->count("rosters", $joins, ['rosters.id '], $where['AND']);
             $datas = [];
 
@@ -1831,6 +1851,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         'personnels_contract.code[~]' => $searchValue,
                     ],
                     "personnels_contract.deleted" => 0,
+                    "personnels.stores" => $accStore,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -1842,6 +1863,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $where['AND']['personnels_contract.type'] = $type;
             if (!empty($offices))
                 $where['AND']['offices.id'] = $offices;
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
 
             $count = $app->count("personnels_contract", $joins, ['personnels_contract.id'], $where['AND']);
             $datas = [];
@@ -2640,17 +2664,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
-                $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
-                // $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                // $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                $vars['personnels_contracts'] = $setting['personnels_contracts'][$vars['data']['type']]['name'];
-                $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]);
-                echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
+                $contract_id = $app->get("personnels_contract", "id", ["personnels" => $app->getSession("accounts")["personnels_id"], "deleted" => 0]);
+                if(($app->getSession("accounts")['your_self'] ?? 0 )== 1 && $contract_id != $vars['id']){
+                    echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                }else{
+                    $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
+                    // $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                    // $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                    $vars['personnels_contracts'] = $setting['personnels_contracts'][$vars['data']['type']]['name'];
+                    $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]);
+                    echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
+                }
             } else {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             }
         }
-    })->setPermissions(['contract.add']);
+    })->setPermissions(['contract']);
 
     $app->router("/contract-salary-update/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         if ($app->method() === 'GET') {
@@ -2907,6 +2936,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             if (!empty($personnels)) {
                 $where['AND']['personnels.id'] = $personnels;
+            }
+
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("personnels_insurrance", $joins, "personnels_insurrance.id", $where['AND']);
@@ -3361,18 +3394,24 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['insurrance.deleted']);
 
-    $app->router("/insurrance-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/insurrance-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         $vars['title'] = $jatbi->lang("Bảo hiểm");
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels_insurrance", "*", ["id" => $vars['id'], "deleted" => 0]);
             if (!empty($vars['data'])) {
-                $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
-                $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                echo $app->render($template . '/hrm/insurrance-view.html', $vars, $jatbi->ajax());
+                $insurrance_id = $app->get("personnels_insurrance", "id", ["personnels" => $app->getSession("accounts")["personnels_id"], "deleted" => 0]);
+                if(($app->getSession("accounts")['your_self'] ?? 0 )== 1 && $insurrance_id != $vars['id']){
+                    echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                }else{
+                    $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
+                    $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                    $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
+                    echo $app->render($template . '/hrm/insurrance-view.html', $vars, $jatbi->ajax());
+                }
             } else {
-                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
             }
+            
         }
     })->setPermissions(['insurrance']);
 
@@ -3599,7 +3638,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough-categorys.deleted']);
 
-    $app->router("/furlough", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common) {
+    $app->router("/furlough", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nghỉ phép");
             $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
@@ -3627,7 +3666,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]furlough_categorys" => ["furlough_id" => "id"]
             ];
             $where = [
-                "AND" => ["hrm_leave_requests.deleted" => 0],
+                "AND" => [
+                    "hrm_leave_requests.deleted" => 0],
+                    "personnels.stores" => $accStore,
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)]
             ];
@@ -3647,6 +3688,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $where["AND"]["hrm_leave_requests.id"] = $app->select("hrm_leave_request_details", "leave_request_id", [
                     "leave_date[<>]" => [$date_filter[0], $date_filter[1]]
                 ]);
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("hrm_leave_requests", $join, "hrm_leave_requests.id", ["AND" => $where['AND']]);
@@ -3893,7 +3937,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         if ($app->method() === 'GET') {
             // --- Phần GET: Hiển thị form ---
             $vars['data'] = ['status' => 'pending', 'leave_session' => 'full_day'];
-            $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $app->getSession("accounts")['personnels_id']]);
+            }else{
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
+            }
             $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A"]); // Lấy thêm 'code'
             $vars['leave_details'] = [];
             echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
@@ -4548,6 +4596,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "reward_discipline.price[~]" => $searchValue,
                         "reward_discipline.content[~]" => $searchValue,
                     ],
+                    "reward_discipline.deleted" => 0,
+                    "personnels.stores" => $accStore,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -4557,6 +4607,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             if (!empty($type)) {
                 $where['AND']['reward_discipline.type'] = $type;
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("reward_discipline", $joins, "reward_discipline.id", $where['AND']);
@@ -5007,7 +5060,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['time-late.deleted']);
 
-    $app->router('/timekeeping-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+    $app->router('/timekeeping-late', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Đi trễ / Về sớm");
             $vars['type'] = [
@@ -5038,6 +5091,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $where = [
                 "AND" => [
                     "ttl.deleted" => 0,
+                    "p.stores" => $accStore,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -5051,6 +5105,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             if ($status_filter !== null) {
                 $where["AND"]["ttl.status"] = $status_filter;
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['p.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             // Add filters for date range, specific personnel if needed from $_POST
@@ -5224,6 +5281,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "personnels.name[~]" => $searchValue,
                     ],
                     "salary_advance.deleted" => 0,
+                    "personnels.stores" => $accStore,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -5233,6 +5291,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             if (!empty($date)) {
                 $where['AND']['salary_advance.date'] = $date;
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("salary_advance", $joins, "salary_advance.id", $where['AND']);
@@ -5837,6 +5898,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($officeF)) {
                 $whereOffice["id"] = $officeF;
             }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $office_id = $app->get("personnels", "office", ["id" => $app->getSession("accounts")['personnels_id']]);
+                $whereOffice['AND']['id'] = $office_id;
+            }
             $offices = $app->select("offices", "*", $whereOffice);
 
             // Generate date list for the month
@@ -5862,6 +5927,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ];
                 if (!empty($personnelF)) {
                     $wherePersonnel["personnels.id"] = $personnelF; // Filter by specific personnel if selected
+                }
+                if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                    $wherePersonnel['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
                 }
                 $SelectPer = $app->select("personnels", "*", $wherePersonnel);
 
@@ -6260,7 +6328,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         } else {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
         }
-    })->setPermissions(['timekeeping.edit']);
+    })->setPermissions(['timekeeping']);
 
     $app->router("/timekeeping-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         if ($app->method() === 'GET') {
@@ -6883,7 +6951,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['uniforms_items.edit']);
 
-    $app->router('/uniforms-allocations', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+    $app->router('/uniforms-allocations', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting, $accStore) {
 
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Lịch sử cấp phát đồng phục");
@@ -6954,7 +7022,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]accounts(a)" => ["user" => "id"]
 
             ];
-            $where = ["AND" => ["uniform_allocations.deleted" => 0]];
+            $where = [
+                "AND" => [
+                    "uniform_allocations.deleted" => 0,
+                    "p.stores" => $accStore
+                    ]
+                ];
 
             if (!empty($searchValue)) {
                 $where['AND']['OR'] = ["p.name[~]" => $searchValue, "ui.item_name[~]" => $searchValue];
@@ -6977,7 +7050,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $date_to = date('Y-m-d');
             }
             $where['AND']['uniform_allocations.issue_date[<>]'] = [$date_from, $date_to];
-
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['p.id'] = $app->getSession("accounts")['personnels_id'];
+            }
             $count = $app->count("uniform_allocations", $joins, "uniform_allocations.id", $where);
 
             $where["ORDER"] = ["uniform_allocations." . $orderName => strtoupper($orderDir)];
@@ -7744,7 +7819,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         echo $app->render($template . '/hrm/faceid-post.html', $vars, $jatbi->ajax());
     })->setPermissions(['faceid']);
 
-    $app->router("/annual_leave", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common) {
+    $app->router("/annual_leave", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nghỉ phép năm");
             $currentYear = date('Y');
@@ -7771,10 +7846,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             $where = ["AND" => [
                 "annual_leave.deleted" => 0,
-                "annual_leave.year" => $year
+                "annual_leave.year" => $year,
+                "personnels.stores" => $accStore,
             ], "LIMIT" => [$start, $length], "ORDER" => ["personnels.name" => "ASC"]];
             if ($searchValue) {
                 $where["AND"]["OR"] = ["personnels.name[~]" => $searchValue, "personnels.code[~]" => $searchValue];
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("annual_leave", $join, "annual_leave.id", ["AND" => $where['AND']]);
@@ -8510,7 +8589,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['decided']);
 
 
-    $app->router("/overtime", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common) {
+    $app->router("/overtime", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Tăng ca");
             $vars['sub_title'] = $jatbi->lang("Quản lý Đăng ký Tăng ca");
@@ -8533,7 +8612,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $date_filter = isset($_POST['date']) ? $jatbi->parseDateRange($_POST['date']) : null;
 
             $join = ["[>]personnels" => ["profile_id" => "id"]];
-            $where = ["AND" => ["hrm_overtime_requests.deleted" => 0], "LIMIT" => [$start, $length], "ORDER" => [$orderName => strtoupper($orderDir)]];
+            $where = [
+                "AND" => [
+                    "hrm_overtime_requests.deleted" => 0,
+                    "personnels.stores" => $accStore,
+                ], 
+                "LIMIT" => [$start, $length], 
+                "ORDER" => [$orderName => strtoupper($orderDir)]];
             if ($searchValue) {
                 $where["AND"]["OR"] = ["personnels.name[~]" => $searchValue];
             }
@@ -8545,6 +8630,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
             if ($date_filter) {
                 $where["AND"]["hrm_overtime_requests.work_date[<>]"] = [$date_filter[0], $date_filter[1]];
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
             $count = $app->count("hrm_overtime_requests", $join, "hrm_overtime_requests.id", ["AND" => $where['AND']]);
@@ -8588,7 +8676,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         $vars['title'] = $jatbi->lang("Tạo Đơn đăng ký Tăng ca");
         if ($app->method() === 'GET') {
             $vars['data'] = ['work_date' => date('Y-m-d'), 'multiplier' => 1.5];
-            $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
+            if (($app->getSession("accounts")['your_self'] ?? 0 )== 1) {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $app->getSession("accounts")['personnels_id']]);
+            }else{
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
+            }
             echo $app->render($template . '/hrm/overtime-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);

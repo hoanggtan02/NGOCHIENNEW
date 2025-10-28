@@ -25,12 +25,14 @@
                                 "placeholder"=>$jatbi->lang("Nhân viên"),
                                 "required" => 'true',
                             ])?>
-                            <?=$app->component('input',[
-                                "name"=>'price',
-                                "placeholder"=>$jatbi->lang("Số tiền"),
-                                "value" => $data['price'] ?? '',
-                                "type" => "number",
-                                "required" => 'true',
+                            <?=$app->component('input', [
+                                "type" => 'tel',
+                                "name" => "price", 
+                                "placeholder" => $jatbi->lang("Số tiền"),
+                                "class" => "number", 
+                                "required" => true,
+                                "value" => $data['details']['price'] ?? '',
+                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
                             ])?>
                             <?=$app->component('textarea',[
                                 "name"=>'notes',
