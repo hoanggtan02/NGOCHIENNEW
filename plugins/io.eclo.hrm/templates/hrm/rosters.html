@@ -38,6 +38,14 @@
                                 "attr" => 'multiple',
                             ])?>
                                 <?=$app->component('select',[
+                                "name"=>'office',
+                                "class"=>'filter-name',
+                                "options"=>$office,
+                                "selected" => $data['office'] ?? '',
+                                "placeholder"=>$jatbi->lang("Phòng ban"),
+                                "attr" => 'multiple',
+                            ])?>
+                                <?=$app->component('select',[
                                 "name"=>'timeworks',
                                 "class"=>'filter-name',
                                 "placeholder"=>$jatbi->lang("Thời gian làm việc"),

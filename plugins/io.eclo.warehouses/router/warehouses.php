@@ -6875,9 +6875,6 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
         }
     });
 
-
-
-
     $app->router("/warehouse_error", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Sản phẩm lỗi");
         $action = "error";
@@ -7155,8 +7152,6 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
 
         echo $app->render($template . '/warehouses/ingredient-import.html', $vars);
     })->setPermissions(['ingredient']);
-
-
 
     $app->router('/ingredient-import/crafting/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template) {
         $id = (int) ($vars['id'] ?? 0);
@@ -7961,7 +7956,7 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                     "date" => $jatbi->datetime($data['date_poster']),
                     "user" => $data['user_name'],
                     "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
-                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+                    "views" => '<button data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
                 ];
             }
 
@@ -8232,7 +8227,6 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
 
     //     echo $app->render($template . '/warehouses/ingredient-move.html', $vars);
     // })->setPermissions(['ingredient']);
-
 
 
     $app->router('/ingredient-move', ['GET'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores, $setting) {

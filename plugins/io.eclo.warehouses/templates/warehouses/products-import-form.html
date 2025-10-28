@@ -38,19 +38,21 @@
                                     <td>
                                         <?=$item['name']?>
                                     </td>
-                                    <td>
-                                        <input type="tel" name="price" data-number="money" data-currency=""
+                                    <td class="text-end">
+                                        <?=number_format($item['price'])?>
+                                        <!-- <input type="tel" name="price" data-number="money" data-currency=""
                                             data-decimals="0" data-thousands="," data-decimal="."
                                             class="blur-update form-control form-control-sm text-end number"
                                             data-url="/warehouses/products-update/import/ingredient/price/<?=$key?>/"
                                             data-form='{"value": "this.val"}' data-load="this" data-action="blur"
-                                            value="<?=$item['price']?>">
+                                            value="<?=$item['price']?>"> -->
                                     </td>
-                                    <td>
-                                        <input type="number" name="amount"
+                                    <td class="text-center">
+                                        <?=$item['amount']?>
+                                        <!-- <input type="number" name="amount"
                                             class="blur-update form-control form-control-sm text-end number"
                                             data-url="/warehouses/products-update/import/ingredient/amount/<?=$key?>"
-                                            value="<?=$item['amount']?>" data-load="this" data-action="blur" min="0">
+                                            value="<?=$item['amount']?>" data-load="this" data-action="blur" min="0"> -->
 
                                     </td>
                                     <td>
@@ -79,7 +81,11 @@
                             </tfoot>
                         </table>
                     </div>
-                    <?=$app->component('textarea', ["name" => 'content', "placeholder" => "Nội dung", "value" => $data['content'] ?? '', "attr" => 'data-action="blur" data-url="/warehouses/products-update/import/content" data-form=\'{"value": "this.val"}\''])?>
+                    <?=$app->component('textarea', [
+                            "name" => 'content', 
+                            "placeholder" => "Nội dung", 
+                            "value" => $data['content'] ?? '', 
+                            "attr" => 'data-action="blur" data-url="/warehouses/products-update/import/content" data-form=\'{"value": "this.val"}\''])?>
                 </div>
                 <div class="card-footer bg-transparent border-0 py-3 text-end">
                     <button class="btn btn-light rounded-pill px-4 click-update" data-action="click"

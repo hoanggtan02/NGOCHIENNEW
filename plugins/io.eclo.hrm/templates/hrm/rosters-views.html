@@ -1,0 +1,92 @@
+<?php
+// Xử lý mảng $timework_details để map theo ngày trong tuần (week) cho dễ truy cập
+$details_map = [];
+foreach ($timework_details ?? [] as $detail) {
+    $details_map[$detail['week']] = $detail;
+}
+$days_map = [
+    1 => $jatbi->lang("Thứ Hai"),
+    2 => $jatbi->lang("Thứ Ba"),
+    3 => $jatbi->lang("Thứ Tư"),
+    4 => $jatbi->lang("Thứ Năm"),
+    5 => $jatbi->lang("Thứ Sáu"),
+    6 => $jatbi->lang("Thứ Bảy"),
+    7 => $jatbi->lang("Chủ Nhật")
+];
+?>
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+                
+                <!-- Thông tin chung -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted mb-0"><?=$jatbi->lang("Nhân viên")?></label>
+                        <p class="fs-6"><?=htmlspecialchars($personnel['name'] ?? 'N/A')?></p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-0"><?=$jatbi->lang("Lịch làm việc")?></label>
+                        <p class="fs-6"><?=htmlspecialchars($timework['name'] ?? 'N/A')?></p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-0"><?=$jatbi->lang("Ngày áp dụng")?></label>
+                        <p class="fs-6"><?= date('d/m/Y', strtotime($data['date'] ?? 'now')) ?></p>
+                    </div>
+                </div>
+
+                <!-- Bảng chi tiết lịch làm việc -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-2"><?=$jatbi->lang("Thứ")?></th>
+                                <th class="py-2"><?=$jatbi->lang("Từ giờ")?></th>
+                                <th class="py-2"><?=$jatbi->lang("Đến giờ")?></th>
+                                <th class="py-2"><?=$jatbi->lang("Nghỉ")?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php for ($i = 1; $i <= 7; $i++): // Lặp qua 7 ngày trong tuần ?>
+                                <?php
+                                $detail = $details_map[$i] ?? null; // Lấy chi tiết của ngày
+                                $is_off = $detail && $detail['off'] == 1;
+                                ?>
+                                <tr class="<?= $is_off ? 'table-light text-muted' : '' ?>">
+                                    <td class="fw-bold"><?= $days_map[$i] ?></td>
+                                    <td>
+                                        <?= $is_off ? '---' : date('H:i', strtotime($detail['time_from'] ?? '00:00')) ?>
+                                    </td>
+                                    <td>
+                                        <?= $is_off ? '---' : date('H:i', strtotime($detail['time_to'] ?? '00:00')) ?>
+                                    </td>
+                                    <td>
+                                        <?= $is_off ? '<span class="fw-bold text-danger">'.$jatbi->lang('CÓ').'</span>' : $jatbi->lang('Không') ?>
+                                    </td>
+                                </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Ghi chú (Nếu có) -->
+                <?php if(!empty($data['notes'])): ?>
+                    <div class="mt-3">
+                        <label class="form-label small fw-bold text-muted mb-0"><?=$jatbi->lang("Ghi chú")?></label>
+                        <p class="fs-6 fst-italic"><?=htmlspecialchars($data['notes'])?></p>
+                    </div>
+                <?php endif; ?>
+
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal"><?=$jatbi->lang("Đóng")?></button>
+            </div>
+        </div>
+    </div>
+</div>
