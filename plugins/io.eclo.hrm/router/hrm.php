@@ -1913,11 +1913,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $joins = [
                 "[><]personnels(p)" => ["pc.personnels" => "id"],
                 "[>]offices(o)" => ["p.office" => "id"],
-                // "[>]branch(b)" => ["p.stores" => "id"],
                 "[>]personnels_insurrance(pi)" => ["p.id" => "personnels"],
+
                 "[>]ward(w)" => ["p.ward" => "id"],
                 "[>]district(d)" => ["p.district" => "id"],
-                "[>]province(pv)" => ["p.province" => "id"]
+                "[>]province(pv)" => ["p.province" => "id"],
+
+                "[>]hrm_positions(pos)" => ["pc.position" => "id"],
+
+                "[>]province_new(pvn)" => ["p.province-new" => "id"],
+                "[>]district_new(dn)" => ["p.ward-new" => "id"],
             ];
 
             $where = ["AND" => ["pc.deleted" => 0, "p.deleted" => 0, "p.stores" => $store_ids], "ORDER" => ["p.name" => "ASC"]];
@@ -1934,13 +1939,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "p.birthday(ngay_sinh)",
                 "p.gender(gioi_tinh)",
                 "p.nation(dan_toc)",
-                "dia_chi" => $app->raw("CONCAT_WS(', ', p.address, w.name, d.name, pv.name)"),
+                "dia_chi" => $app->raw(
+                    "CASE 
+                        WHEN p.`address-new` IS NOT NULL AND p.`address-new` != '' 
+                        THEN CONCAT_WS(', ', p.`address-new`, dn.name, pvn.name) 
+                        ELSE CONCAT_WS(', ', p.address, w.name, d.name, pv.name) 
+                    END"
+                ),
                 "p.phone(sdt)",
                 "p.idcode(cccd)",
                 "p.iddate(ngay_cap_cccd)",
                 "p.idplace(noi_cap_cccd)",
                 "o.name(phong_ban)",
-                // "b.name(phong_ban)",
+                "pos.name(chuc_danh)",
                 "pc.code(so_hop_dong)",
                 "pc.type(loai_hd)",
                 "pc.date_contract(ngay_ky_hd)",
@@ -2715,15 +2726,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['contract.edit']);
 
-    $app->router('/contract-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/contract-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
         $id = (int) ($vars['id'] ?? 0);
         $vars['title'] = $jatbi->lang("In Hợp đồng lao động");
 
-        // 1. Lấy dữ liệu chính của hợp đồng và các thông tin liên quan
         $data = $app->get("personnels_contract", [
             "[>]personnels(p)" => ["personnels" => "id"],
             "[>]offices(o)" => ["offices" => "id"],
             "[>]hrm_positions(pos)" => ["position" => "id"],
+            "[>]province(pv)" => ["p.province" => "id"],
+            "[>]district(d)" => ["p.district" => "id"],
+            "[>]ward(w)" => ["p.ward" => "id"],
+            "[>]province_new(pvn)" => ["p.province-new" => "id"],
+            "[>]district_new(dn)" => ["p.ward-new" => "id"]
         ], [
             "personnels_contract.id",
             "personnels_contract.code",
@@ -2742,48 +2757,27 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             "p.name(personnel_name)",
             "pos.name(position)",
             "p.birthday",
-            "p.address",
+            "address" => $app->raw(
+                "CASE 
+                        WHEN p.`address-new` IS NOT NULL AND p.`address-new` != '' 
+                        THEN CONCAT_WS(', ', p.`address-new`, dn.name, pvn.name) 
+                        ELSE CONCAT_WS(', ', p.address, w.name, d.name, pv.name) 
+                    END"
+            ),
             "p.idcode",
             "p.iddate",
             "p.idplace",
             "p.gender",
             "p.nation",
-            "o.name(office_name)"
+            "o.name(office_name)",
         ], ["personnels_contract.id" => $id, "personnels_contract.deleted" => 0]);
 
         if (!$data) {
             return $app->render($template . '/error.html', $vars, $jatbi->ajax());
         }
 
-        // 2. Lấy chi tiết lương và trợ cấp
-        $DataSalary = $app->get("personnels_contract_salary", "*", ["contract" => $id, "status" => 0, "deleted" => 0, "ORDER" => ["id" => "DESC"]]);
 
-        $salarys_db = [];
-        $allowances_db = [];
-
-        if ($DataSalary) {
-            $salarys_db = $app->select("personnels_contract_salary_details", "*", ["salary" => $DataSalary['id'], "type" => 1, "deleted" => 0]);
-            $allowances_db = $app->select("personnels_contract_salary_details", "*", ["salary" => $DataSalary['id'], "type" => 2, "deleted" => 0]);
-
-            $all_salary_items = array_merge($salarys_db, $allowances_db);
-            $category_ids = array_unique(array_column($all_salary_items, 'content'));
-            $category_map = [];
-            if (!empty($category_ids)) {
-                $category_map = array_column($app->select("salary_categorys", ["id", "name"], ["id" => $category_ids]), 'name', 'id');
-            }
-
-            foreach ($salarys_db as &$item) {
-                $item['content_name'] = $category_map[$item['content']] ?? 'N/A';
-                $item['duration_name'] = $duration_types[$item['duration']]['name'] ?? 'N/A';
-            }
-            unset($item);
-
-            foreach ($allowances_db as &$item) {
-                $item['content_name'] = $category_map[$item['content']] ?? 'N/A';
-                $item['duration_name'] = $duration_types[$item['duration']]['name'] ?? 'N/A';
-            }
-            unset($item);
-        }
+        // 3. Lấy lịch làm việc
         $timework_details = [];
         $timework_name = "Chưa phân công";
 
@@ -2810,6 +2804,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
 
+        // 4. Tạo chuỗi lịch làm việc
         $work_schedule_line1 = "";
         $work_schedule_line2 = "";
         $days_map = [1 => 'Thứ Hai', 2 => 'Thứ Ba', 3 => 'Thứ Tư', 4 => 'Thứ Năm', 5 => 'Thứ Sáu', 6 => 'Thứ Bảy', 7 => 'Chủ Nhật'];
@@ -2833,7 +2828,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
 
-        $first_line_text = "Từ ngày Thứ Hai đến ngày Chủ nhật hàng tuần:";
+        $first_line_text = "- Từ ngày Thứ Hai đến ngày Chủ nhật hàng tuần:";
         if (!empty($off_days)) {
             $first_line_text .= " nghỉ ngày " . implode(', ', $off_days);
         }
@@ -2851,17 +2846,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $work_schedule_line2 = "";
         }
 
-        $vars['data'] = $data;
+        // 5. Gán biến cho template
+        $vars['data'] = $data; // $data này BÂY GIỜ chứa 'personnel_address'
         $vars['salarys'] = $salarys_db;
         $vars['allowances'] = $allowances_db;
-
         $vars['work_schedule_line1'] = $work_schedule_line1;
         $vars['work_schedule_line2'] = $work_schedule_line2;
-
-        var_dump($work_schedule_line1);
-        var_dump($work_schedule_line2);
-
-        // $vars['personnels_contracts_map'] = $personnels_contracts;
 
         echo $app->render($template . '/hrm/contract-print.html', $vars, $jatbi->ajax());
     })->setPermissions(['contract']);
@@ -3757,6 +3747,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]personnels(p)" => ["profile_id" => "id"],
                 "[>]offices(o)" => ["p.office" => "id"],
                 "[>]furlough_categorys(fc)" => ["furlough_id" => "id"],
+                "[>]personnels_contract(pc)"=>["profile_id"=>"personnels"],
+                "[>]hrm_positions(pos)" => ["pc.position" => "id"],
             ],
             [
                 "hrm_leave_requests.id",
@@ -3768,6 +3760,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "p.name(personnel_name)",
                 "o.name(office_name)",
                 "fc.name(furlough_category_name)",
+                "pos.name(position)"
             ],
             [
                 "hrm_leave_requests.id" => $id
@@ -5538,11 +5531,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         if ($schedule && $schedule['off'] == 0) {
                             $expected_start = strtotime("$current_date_str {$schedule['time_from']}");
                             $expected_end = strtotime("$current_date_str {$schedule['time_to']}");
-                            if ($checkin_time > $expected_start ) {
+                            if ($checkin_time > $expected_start) {
                                 $late_count++;
                                 $late_minutes += ($checkin_time - $expected_start) / 60;
                             }
-                            if ($checkout_time < $expected_end ) {
+                            if ($checkout_time < $expected_end) {
                                 $early_count++;
                                 $early_minutes += ($expected_end - $checkout_time) / 60;
                             }
@@ -5751,7 +5744,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet->getColumnDimension('C')->setWidth(30);
             $sheet->getColumnDimension('D')->setAutoSize(true);
             for ($i = 1; $i <= $totalDays; $i++) {
-                $colLetter = Coordinate::stringFromColumnIndex(4 + $i); 
+                $colLetter = Coordinate::stringFromColumnIndex(4 + $i);
                 $sheet->getColumnDimension($colLetter)->setWidth(7);
             }
             $summaryStartColIndex = 4 + $totalDays + 1;
