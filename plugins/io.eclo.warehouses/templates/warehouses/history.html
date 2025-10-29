@@ -62,20 +62,39 @@
                                 "options" => $accounts ?? []
                             ])?>
                         </div>
+                        <?php if($title == $jatbi->lang("Lịch sử chuyển hàng")){ ?>
                         <div class="px-3">
-                            <?=$app->component('select-status',[
-                                "value" => $app->xss($_GET['status'] ?? ''),
+                            <?=$app->component('select',[
+                                "name" => 'receive_status',
+                                "placeholder" => $jatbi->lang("Trạng thái"),
+                                "selected" => $app->xss($_GET['receive_status'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $Status_warehouser_move ?? []
                             ])?>
                         </div>
+                        <?php } ?>
+                        <?php if($title == $jatbi->lang("Lịch sử nhập hàng")){ ?>
+                        <div class="px-3">
+                            <?=$app->component('select',[
+                                "name" => 'receive_status',
+                                "placeholder" => $jatbi->lang("Trạng thái"),
+                                "selected" => $app->xss($_GET['receive_status'] ?? ''),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%"',
+                                "options" => $receive_status ?? []
+                            ])?>
+                        </div>
+                        <?php } ?>
                         <div class="px-3">
                             <?=$app->component('input', [
-        "name" => 'date',
-        "placeholder" => $jatbi->lang("Ngày"),
-        
-        "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
-        "class" => 'filter-name',
-        "attr" => 'data-width="100%" data-datepicker',
-    ])?>
+                                "name" => 'date',
+                                "placeholder" => $jatbi->lang("Ngày"),
+                                
+                                "value" => $app->xss($_GET['date'] ?? (date('d/m/Y') . ' - ' . date('d/m/Y'))),
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker',
+                            ])?>
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3 py-2 text-end w-100">

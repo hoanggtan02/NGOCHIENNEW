@@ -1671,8 +1671,8 @@ $app->router('/ingredient-import/cancel', ['GET', 'POST'], function ($vars) use 
         ]);
 
         $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
-        $store_id = (int) ($_SESSION['warehouses']['import']['stores'] ?? 1);
-        $branch_id = (int) ($_SESSION['warehouses']['import']['branch'] ?? 1);
+        $store_id = (int) ($_SESSION['warehouses']['import']['stores']['id'] ?? 1);
+        $branch_id = (int) ($_SESSION['warehouses']['import']['branch']['id'] ?? 1);
 
         // 2. Xây dựng câu điều kiện WHERE cơ bản
         $where = [
