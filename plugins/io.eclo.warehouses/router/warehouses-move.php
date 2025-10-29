@@ -269,7 +269,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 		echo json_encode(['status' => 'success', 'content' => "Cập nhật thành công"]);
 	});
 
-	$app->router('/warehouses-updatee-2/move/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+	$app->router('/warehouses-updatee-2/move/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting ,$template) {
 		$action = "move";
 		if ($app->method() === 'GET') {
 			echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
@@ -1030,7 +1030,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 		echo $app->render($template . '/warehouses/warehouses-importmove.html', $vars);
 	})->setPermissions(['warehouses-import']);
 
-	$app->router("/products-move-warehouse/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore, $stores) {
+	$app->router("/products-move-warehouse/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting ,$template, $accStore, $stores) {
 		if ($app->method() === 'GET') {
 			$vars['modalContent'] = $jatbi->lang("Bạn có thật sự muốn trả sản phẩm về kho cũ");
 
