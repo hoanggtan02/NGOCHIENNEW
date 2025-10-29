@@ -411,60 +411,7 @@ class Jatbi
 			"into-money" => $intro,
 		];
 	}
-	// public function getTime($start, $end, $startFromOne = 0, $Steps = '10:0,30:0,59:0') {
-	// 	$stepConfig = [];
-	//     $pairs = explode(',', $Steps); // Tách chuỗi thành các cặp '10:0', '30:0', '59:0'
-	//     foreach ($pairs as $pair) {
-	//         $parts = explode(':', $pair); // Tách mỗi cặp thành [limit, extra]
-	//         if (count($parts) === 2) {
-	//             $limit = (int)trim($parts[0]);
-	//             $extra = (int)trim($parts[1]); // Dùng float để linh hoạt hơn
-	//             $stepConfig[$limit] = $extra;
-	//         }
-	//     }
-	//     ksort($stepConfig); // Đảm bảo thứ tự tăng dần
 
-	//     $startTime = new DateTime($start ?? '00:00');
-	//     $endTime   = new DateTime($end ?? '00:00');
-
-	//     // Đặt giây = 0 để không bị lẻ giây
-	//     $startTime->setTime((int)$startTime->format('H'), (int)$startTime->format('i'), 0);
-	//     $endTime->setTime((int)$endTime->format('H'), (int)$endTime->format('i'), 0);
-
-	//     $totalMinutes = ($endTime->getTimestamp() - $startTime->getTimestamp()) / 60;
-
-	//     if ($totalMinutes <= 0) return 0; // Không tính âm hoặc 0
-
-	//     $baseHours    = floor($totalMinutes / 60);
-	//     $extraMinutes = $totalMinutes - ($baseHours * 60);
-
-	//     // Nếu bật chế độ bắt đầu từ 1 giờ
-	//     if ($startFromOne==1 && $totalMinutes < 60) {
-	//         return 1;
-	//     }
-
-	//     // Tính phần dư theo step
-	//     $extraCharge = null;
-	//     foreach ($stepConfig as $limit => $extra) {
-	//         if ($extraMinutes < $limit) {
-	//             $extraCharge = $extra;
-	//             break;
-	//         }
-	//     }
-
-	//     // Nếu vượt mốc lớn nhất -> cộng thêm 1h
-	//     if ($extraCharge === null) {
-	//         $extraCharge = 1;
-	//     }
-
-	//     // Nếu extraCharge = 0 thì vẫn giữ phút thành số lẻ
-	//     if ($extraCharge === 0) {
-	//         return round($baseHours + ($extraMinutes / 60), 2);
-	//     }
-
-	//     // Nếu extraCharge = 1 thì nhảy tròn giờ
-	//     return $baseHours + $extraCharge;
-	// }
 	public function getTime($start, $end, $startFromOne = 0, $Steps = '10:0,30:0,59:0')
 	{
 		$stepConfig = [];
@@ -585,9 +532,10 @@ class Jatbi
 			return  $this->app->select("brands_linkables", "brands", ["data" => $data, "type" => $type]);
 		}
 	}
+
 	private function _getAccountStores()
 	{
-		if ($this->cachedAccountBrands !== null) { // Vẫn dùng cache cũ để tránh lỗi
+		if ($this->cachedAccountBrands !== null) {
 			return $this->cachedAccountBrands;
 		}
 
@@ -597,107 +545,117 @@ class Jatbi
 			return [];
 		}
 
-		$where = [
-			"status" => "A",
-			"deleted" => 0
-		];
-
-		// Logic mới: Đọc quyền từ cột 'stores' của bảng 'accounts'
-		if (!empty($user['stores'])) {
-			$store_ids = json_decode($user['stores'], true);
-			if (is_array($store_ids) && !empty($store_ids)) {
-				$where['id'] = $store_ids;
-			} else {
-				// Nếu cột stores có dữ liệu nhưng không phải JSON hợp lệ, không trả về gì
-				$this->cachedAccountBrands = [];
-				return [];
-			}
-		}
-		// Nếu $user['stores'] rỗng, không thêm điều kiện 'id', tức là lấy tất cả (dành cho super admin)
-
-		$this->cachedAccountBrands = $this->app->select("stores", [
-			"id",
-			"name",
-			"address",
-		], $where);
+		$this->cachedAccountBrands = $this->app->select("stores_linkables", [
+			"[>]stores" => ["stores" => "id"]
+		], [
+			"stores.id",
+			"stores.name",
+			"stores.address",
+		], [
+			"stores_linkables.data" => $user['id'],
+			"stores_linkables.type" => "accounts",
+			"stores.status" => "A",
+			"stores.deleted" => 0,
+			"ORDER" => ["stores_linkables.id" => "ASC"]
+		]);
 
 		return $this->cachedAccountBrands;
 	}
+
 	public function stores($type = null, $post = null)
 	{
-		$cacheKey = 'stores_' . ($type ?? 'default') . serialize($post);
-		if (isset($this->cachedBrands[$cacheKey])) { // Vẫn dùng cache cũ để tránh lỗi
+		// Sử dụng $post làm một phần của key cache nếu nó tồn tại
+		$cacheKey = is_null($type) ? 'default' : $type;
+		if ($type === 'CHECK' || $type === 'POST') {
+			$cacheKey .= '_' . serialize($post);
+		}
+
+		if (isset($this->cachedBrands[$cacheKey])) {
 			return $this->cachedBrands[$cacheKey];
 		}
 
 		$checkuser = $this->_getAuthenticatedUser();
-		if (!$checkuser) return null;
-
-		$cookie = $this->app->getCookie('stores') ?? null;
+		if (!$checkuser) {
+			return null; // Không có user, không có brand
+		}
+		$stores_json = $this->app->getCookie('stores') ?? json_encode([]);
+		$cookie = json_decode($stores_json, true);
 		$result = null;
 
 		switch ($type) {
 			case 'SELECT':
 				$accountStores = $this->_getAccountStores();
-				$result = array_map(function ($store) {
+				$result = array_map(function ($stores) {
 					return [
-						'name' => $store['name'],
-						'id' => $store['id'],
-						'value' => $store['id'],
-						'address' => $store['address'],
-						'text' => $store['name'],
+						'name' => $stores['name'],
+						'id' => $stores['id'],
+						'value' => $stores['id'],
+						'address' => $stores['address'],
+						'text' => $stores['name'],
+						'active' => $stores['id'],
 					];
 				}, $accountStores);
 				break;
 
 			case 'SET':
 				$accountStores = $this->_getAccountStores();
-				$idList = array_column($accountStores, 'id');
+				$activeList = array_column($accountStores, 'active');
 
 				if (empty($cookie)) {
-					$newCookieValue = (count($accountStores) === 1) ? $accountStores[0]['id'] : 0;
+					$newCookieValue = (count($accountStores) === 1) ? $accountStores[0]['active'] : 0;
 					$this->app->setCookie("stores", $newCookieValue, time() + ((3600 * 24 * 30) * 12), '/');
-				} elseif (count($accountStores) === 1 && $cookie != $accountStores[0]['id']) {
-					$this->app->setCookie("stores", $accountStores[0]['id'], time() + ((3600 * 24 * 30) * 12), '/');
-				} elseif (count($accountStores) > 1 && !in_array($cookie, $idList)) {
+				} elseif (count($accountStores) === 1 && $cookie != $accountStores[0]['active']) {
+					$this->app->setCookie("stores", $accountStores[0]['active'], time() + ((3600 * 24 * 30) * 12), '/');
+				} elseif (count($accountStores) > 1 && !in_array($cookie, $activeList)) {
 					$this->app->setCookie("stores", 0, time() + ((3600 * 24 * 30) * 12), '/');
 				}
-				$this->app->setCookie("branch", 0, -1, '/');
-				$result = '';
+				$result = ''; // Giữ nguyên hành vi gốc
+				break;
+
+			case 'CHECK':
+				$accountStores = $this->_getAccountStores();
+				$activeList = array_column($accountStores, 'active');
+				$result = in_array($post, $activeList);
 				break;
 
 			case 'GET':
 				if (!empty($cookie) && $cookie != 0) {
-					$result = $this->app->get("stores", "*", ["deleted" => 0, "status" => 'A', "id" => $cookie]);
+					$result = $this->app->get("stores", "*", ["deleted" => 0, "status" => 'A', "active" => $cookie]);
 				} else {
-					$result = ["name" => $this->lang("Tất cả cửa hàng"), "id" => 0];
+					$result = ["name" => $this->lang("Tất cả"), "active" => 0];
 				}
 				break;
 
 			case 'ID':
 				if (!empty($cookie) && $cookie != 0) {
-					$result = (int)$cookie;
+					$result = $this->app->get("stores", "id", ["deleted" => 0, "status" => 'A', "active" => $cookie]);
 				} else {
 					$result = 0;
 				}
 				break;
 
-			case 'POST': // Dùng cho hàm setStores, đảm bảo luôn trả về một mảng ID
-				if ($post === null || $post === '') {
-					$result = [];
-				} else {
-					$result = is_array($post) ? $post : [$post];
+			case 'POST':
+				$allStores = $this->app->select("stores", "*", ["deleted" => 0, "status" => 'A']);
+				if (count($allStores) === 1) {
+					$result = $allStores[0]['id'];
+				} elseif ($post != null) {
+					$result = $post;
+				} elseif (!empty($cookie) && $cookie != 0 && in_array($cookie, array_column($allStores, 'active'))) {
+					$result = $this->app->get("stores", "id", ["active" => $cookie]);
 				}
 				break;
 
-			default:
+			default: // Trường hợp $type = null hoặc không khớp
 				$accountStores = $this->_getAccountStores();
-				if (!empty($cookie) && $cookie != 0) {
-					if (in_array($cookie, array_column($accountStores, 'id'))) {
-						$result = [$cookie];
-					} else {
-						$result = array_column($accountStores, 'id');
+				if (!empty($cookie) && count($cookie) == 1) {
+					$storeId = null;
+					foreach ($accountStores as $store) {
+						if ($store['id'] == $cookie['value']) {
+							$storeId = $store['id'];
+							break;
+						}
 					}
+					$result[] = $storeId;
 				} else {
 					$result = array_column($accountStores, 'id');
 				}
