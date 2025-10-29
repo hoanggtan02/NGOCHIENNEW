@@ -1,0 +1,62 @@
+<div class="container-fluid mt-4">
+    <nav class="d-flex justify-content-between align-items-center mb-3" aria-label="breadcrumb">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0 bg-transparent p-0">
+                <li class="breadcrumb-item"><a href="/"><?=$jatbi->lang('Trang chủ')?></a></li>
+                <li class="breadcrumb-item"><a href="/purchases/purchase/"><?=$jatbi->lang('Đề xuất mua hàng')?></a></li>
+                <li class="breadcrumb-item active" aria-current="page"><?=$title?></li>
+            </ol>
+        </div>
+    </nav>
+    <div class="row justify-content-center align-items-start">
+        <div class="col-lg-10" style="margin-bottom: 30px;">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><?=$jatbi->lang('Thông tin chung')?></h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <?=$app->component('select', ["name" => 'type', "placeholder" => $jatbi->lang("Loại đề xuất"), "selected" => $data['type'], "required" => true, "attr" => 'data-field="type" data-reload="true"', "options" => [["value" => 1, "text" => $jatbi->lang("Mua hàng")], ["value" => 2, "text" => $jatbi->lang("Mua nguyên liệu")]]])?>
+                        </div>
+                        <div class="col-md-3">
+                             <?=$app->component('select', ["name" => 'vendor', "placeholder" => $jatbi->lang("Nhà cung cấp"), "options" => $vendors ?? [], "selected" => $data['vendor']['id'] ?? '', "required" => true, "attr" => 'data-field="vendor"'])?>
+                        </div>
+                        <div class="col-md-3">
+                            <?=$app->component('select', ["name" => 'stores', "placeholder" => $jatbi->lang("Cửa hàng"), "options" => $storess ?? [], "selected" => $data['stores']['id'] ?? '', "required" => true, "attr" => 'data-field="stores"'])?>
+                        </div>
+                        <div class="col-md-3">
+                            <?=$app->component('input', ["name" => 'date', "placeholder" => $jatbi->lang("Ngày"), "type" => "date", "value" => $data['date'], "required" => true, "attr" => 'data-field="date"'])?>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body border-top">
+                    <h5 class="fw-bold mb-3"><?=$jatbi->lang('Chi tiết đề xuất')?></h5>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <?php if($data['type'] == 1): ?>
+                                <?=$app->component('select', ["name" => 'products_add', "placeholder" => $jatbi->lang("Tìm và thêm Sản phẩm..."), "attr" => 'data-ajax-url="/api/products-search"'])?>
+                            <?php else: ?>
+                                <?=$app->component('select', ["name" => 'ingredient_add', "placeholder" => $jatbi->lang("Tìm và thêm Nguyên liệu..."), "options" => $ingredient ?? []])?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light">
+                                </thead>
+                            <tbody>
+                                </tbody>
+                            <tfoot>
+                                </tfoot>
+                        </table>
+                    </div>
+                     <?=$app->component('textarea', ["name" => 'content', "placeholder" => $jatbi->lang('Nội dung đề xuất'), "value" => $data['content'] ?? '', "attr" => 'data-field="content"'])?>
+                </div>
+                <div class="card-footer text-end bg-transparent border-0 py-3">
+                    <button class="btn btn-light rounded-pill px-4" id="cancel-purchase"><?=$jatbi->lang('Hủy')?></button>
+                    <button class="btn btn-eclo rounded-pill px-5" id="complete-purchase"><?=$jatbi->lang('Hoàn tất')?></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

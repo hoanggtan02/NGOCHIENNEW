@@ -731,6 +731,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                 ];
                 $app->insert("accounts", $insert);
                 $getID = $app->id();
+                $jatbi->setStores("add",'accounts',$getID,$_POST['stores'] ?? '');
                 $app->insert("settings", ["account" => $getID]);
                 $directory = 'datas/' . $insert['active'];
                 mkdir($directory, 0755, true);
@@ -850,6 +851,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                     ];
                     $app->update("accounts", $insert, ["id" => $data['id']]);
                     $getID = $data['id'];
+                    $jatbi->setStores("edit",'accounts',$data['id'],$_POST['stores'] ?? '');
                     if ($_FILES['avatar']) {
                         $imageUrl = $_FILES['avatar'];
                         $handle = $app->upload($imageUrl);
