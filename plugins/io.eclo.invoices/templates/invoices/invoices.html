@@ -98,27 +98,40 @@
         </div>
     </div>
 
-    <?php if($jatbi->permission(['license_sale.delete']) == 'true' || $jatbi->permission(['license_sale.add']) == 'true'): ?>
+    <?php if($jatbi->permission(['invoices.delete']) == 'true' || $jatbi->permission(['invoices.add']) == 'true'): ?>
     <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
         <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center"
             style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
         </button>
         <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
-            <?php if($jatbi->permission(['license_sale.delete']) == 'true'): ?>
+            <?php if($jatbi->permission(['invoices.delete']) == 'true'): ?>
             <li class="my-2">
                 <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal-confirm" data-checkbox="input.checker" data-url="/invoices/license_sale-delete"
+                    data-action="modal" data-checkbox="input.checker" 
+                    data-url="<?=$jatbi->url('/invoices/invoices-delete')?>" 
                     style="--width:50px;--height:50px;">
                     <i class="ti ti-trash fs-3" aria-hidden="true"></i>
                 </a>
+                
             </li>
             <?php endif; ?>
-            <?php if($jatbi->permission(['license_sale.add']) == 'true'): ?>
+            <?php if($jatbi->permission(['invoices.add']) == 'true'): ?>
             <li class="my-2">
                 <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-url="/invoices/license_sale-add" style="--width:50px;--height:50px;">
+                     href="/invoices/invoices-add" style="--width:50px;--height:50px;">
                     <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php endif; ?>
+
+            <?php if($jatbi->permission(['lock']) == 'true'): ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-info width height d-flex justify-content-center align-items-center p-1"
+                     data-action="modal" 
+                     data-url="<?=$jatbi->url('/invoices/invoices-lock')?>" 
+                     style="--width:50px;--height:50px;">
+                    <i class="ti ti-lock fs-3" aria-hidden="true"></i>
                 </a>
             </li>
             <?php endif; ?>

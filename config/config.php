@@ -337,6 +337,59 @@ if (!function_exists('get_ingredient_export_cookie_data')) {
     }
 }
 
+$warehouse_ticket_cookie_config = [
+    'name' => 'warehouse_ticket', // Tên cookie gốc
+    'path' => '/',
+    'expire' => time() + 86400, // 1 ngày
+];
+if (!function_exists('get_warehouse_ticket_cookie_data')) {
+    /**
+     * Lấy dữ liệu cookie cho một phiếu kho cụ thể (import, move, cancel).
+     * Tên cookie thực tế sẽ là warehouse_ticket_import, warehouse_ticket_move,...
+     */
+    function get_warehouse_ticket_cookie_data($app, $action) { // $action là 'import', 'move', 'cancel'
+        $setting = $app->getValueData('setting');
+        // Lấy config gốc
+        $base_config = $setting['warehouse_ticket_cookie'] ?? ['name' => 'warehouse_ticket'];
+        // Tạo tên cookie động
+        $cookie_name = $base_config['name'] . '_' . $action;
+
+        $cookie_json = $app->getCookie($cookie_name);
+        $cookie_data = $cookie_json ? json_decode($cookie_json, true) : null;
+
+        // Cấu trúc mặc định, bao gồm tất cả các key có thể có
+        $defaults = [
+            'type' => $action,          // Loại phiếu hiện tại (import/move/cancel)
+            'data' => 'products',       // Loại dữ liệu (products/ingredient)
+            'date' => date("Y-m-d"),
+            'content' => '',
+            'stores' => null,           // array ['id', 'name']
+            'branch' => null,           // array ['id', 'name']
+            'products' => [],           // array [product_id => [details...]]
+            'import_type' => '',        // Dùng cho import: 'purchase', 'move', ''
+            'purchase' => null,         // ID phiếu mua (cho import)
+            'move' => null,             // ID phiếu chuyển (cho import)
+            'vendor' => null,           // array vendor info (cho import)
+            'stores_receive' => null,   // array cửa hàng nhận (cho move)
+            'branch_receive' => null,   // array quầy nhận (cho move)
+            'stores_receive_re' => null,// ID cửa hàng nhận (cho import from move) - Giữ key cũ của bạn
+            'warehouses' => [],         // array lô hàng (cho cancel) [batch_id => [details...]]
+            // Thêm các key khác nếu logic cũ của bạn dùng đến
+        ];
+
+        if (!is_array($cookie_data)) {
+            // Nếu cookie không tồn tại hoặc lỗi decode, trả về cấu trúc default
+            $cookie_data = $defaults;
+        } else {
+            // Nếu có cookie, hợp nhất với default để đảm bảo mọi key đều tồn tại
+            $cookie_data = array_merge($defaults, $cookie_data);
+             // Quan trọng: Đảm bảo 'type' luôn là $action hiện tại để tránh nhầm lẫn
+             $cookie_data['type'] = $action;
+        }
+        return $cookie_data;
+    }
+}
+
 
 return [
     "db" => [
@@ -389,6 +442,7 @@ return [
         "ingredient_cookie" => $ingredient_cookie_config,
         "ingredient_move_cookie" => $ingredient_move_cookie_config,
         "ingredient_export_cookie" => $ingredient_export_cookie_config,
+        "warehouse_ticket_cookie" => $warehouse_ticket_cookie_config,
     ]
 ];
 
