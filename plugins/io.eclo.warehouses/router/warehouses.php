@@ -5619,6 +5619,28 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             $app->insert("warehouses_details", $details_insert);
 
+            $details_id = $app->id();
+
+
+            $logs_insert = [
+                "type"        => "remove",
+                "data"        => "products",
+                "warehouses"  => $warehouse_id, // ID từ `warehouses`
+                "details"     => $details_id,   // ID từ `warehouses_details`
+                "products"    => $product['id'],
+                "price"       => $product['price'],
+                "amount"      => $amount,
+                "total"       => $amount * $product['price'],
+                "notes"       => $product['notes'],
+                "date"        => date('Y-m-d H:i:s'),
+                "user"        => $app->getSession("accounts")['id'],
+                "stores"      => $product['stores'],
+                "branch"      => $product['branch'],
+            ];
+
+          
+            $app->insert("warehouses_logs", $logs_insert);
+
             $jatbi->logs('warehouses_details', 'add', $details_insert);
 
 
@@ -5697,7 +5719,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             }
 
 
-            $warehouse_id = $app->insert("warehouses", [
+           $app->insert("warehouses", [
                 "code" => "delete",
                 "type" => "delete",
                 "data" => "products",
@@ -5711,6 +5733,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 "active" => $jatbi->active(30),
                 "receive_status" => 1,
             ]);
+            $warehouse_id = $app->id();
 
             $app->insert("process_deleted", [
                 "warehouses" => $warehouse_id,
