@@ -2845,60 +2845,55 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
 
 $app->router('/invoices-lock', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
 
-    // Xử lý GET: Hiển thị form
     if ($app->method() === 'GET') {
         $vars['title'] = $jatbi->lang("Khóa/Mở khóa sổ hoá đơn");
         
-        // Lấy danh sách cửa hàng cho form select
-        // Giả sử $accStore là mảng các ID cửa hàng user được phép thấy
+
         $vars['stores'] = array_merge(
             [["value" => "", "text" => $jatbi->lang("Tất cả cửa hàng (hiện tại)")]], 
             $app->select("stores", ["id (value)", "name (text)"], ["id" => $accStore, "deleted" => 0, "status" => 'A'])
         );
         
-        // Render form modal
+ 
         echo $app->render($template . '/invoices/invoices-lock.html', $vars, $jatbi->ajax());
     } 
-    // Xử lý POST: Thực hiện khóa/mở khóa
+
     elseif ($app->method() === 'POST') {
         
         $app->header(['Content-Type' => 'application/json']);
 
         $date_from_str = $_POST['date_from'] ?? '';
         $date_to_str = $_POST['date_to'] ?? '';
-        $lock_status = $_POST['lock'] ?? '1'; // Mặc định là khóa
+        $lock_status = $_POST['lock'] ?? '1'; 
         $store_id = $_POST['stores'] ?? '';
 
         if (empty($date_from_str) || empty($date_to_str)) {
-            echo json_encode(['status'=>'error','content'=>$jatbi->lang('loi-trong')]); // 'loi-trong' -> 'Vui lòng chọn ngày'
+            echo json_encode(['status'=>'error','content'=>$jatbi->lang('Lỗi trống')]); 
             return;
         }
 
-        // 2. Chuẩn bị dữ liệu
+
         $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $date_from_str)));
         $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $date_to_str)));
         
-        // Xác định cửa hàng
-        // $accStore trong code cũ là mảng, ta cần xử lý
+
         $store_where = ['stores' => $accStore];
         if ($store_id !== '') {
             $store_where = ['stores' => $store_id];
         }
 
-        // 3. Xây dựng điều kiện WHERE
+
         $where_condition = [
             "date[<>]" => [$date_from, $date_to],
             "deleted" => 0,
         ];
-        // Chỉ thêm điều kiện store nếu nó được xác định
+
         if (!empty($store_where)) {
             $where_condition = array_merge($where_condition, $store_where);
         }
 
-        // 4. Lấy data để log (giống code cũ)
         $invoices = $app->select("invoices", ["id", "date", "lock_or_unlock"], $where_condition);
 
-        // 5. Thực hiện update
         if ($lock_status == '1') {
             $lock = 'lock';
             $new_lock_value = 1;
@@ -2909,24 +2904,19 @@ $app->router('/invoices-lock', ['GET', 'POST'], function ($vars) use ($app, $jat
             $old_lock_value = 1;
         }
 
-        // Cập nhật bảng 'invoices'
         $where_invoices_update = $where_condition;
         $where_invoices_update["lock_or_unlock"] = $old_lock_value;
         $app->update("invoices", ["lock_or_unlock" => $new_lock_value], $where_invoices_update);
 
-        // Cập nhật bảng 'invoices_products'
-        // (Lưu ý: Bảng invoices_products có thể không có cột 'stores', 
-        // code cũ của bạn có thể có lỗi logic ở đây nếu 'stores' không tồn tại.
-        // Giả định là nó có cột 'date' và 'stores')
         $where_products_update = $where_condition;
         $where_products_update["lock_or_unlock"] = $old_lock_value;
         $app->update("invoices_products", ["lock_or_unlock" => $new_lock_value], $where_products_update);
         
-        // 6. Ghi log
+      
         $jatbi->logs('invoices', $lock, [$new_lock_value, $invoices]);
 
-        // 7. Trả về thành công
-        echo json_encode(['status'=>'success','content'=>$jatbi->lang('cap-nhat-thanh-cong'),"url"=>$_SERVER['HTTP_REFERER']]);
+ 
+        echo json_encode(['status'=>'success','content'=>$jatbi->lang('Cập nhật thành công'),"url"=>$_SERVER['HTTP_REFERER']]);
     }
 
 })->setPermissions(['lock']);
