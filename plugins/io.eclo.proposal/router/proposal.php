@@ -1178,16 +1178,15 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
             $where = [
                 "AND" => [
                     "OR" => [
-                        "customers.name[~]" => $searchValue,
+                        "vendors.name[~]" => $searchValue,
                     ],
-                    "customers.status" => 'A',
-                    "customers.deleted" => 0,
-                    "customers.form" => 1,
+                    "vendors.status" => 'A',
+                    "vendors.deleted" => 0,
                 ]
             ];
-            $app->select("customers", [
-                "customers.id",
-                "customers.name",
+            $app->select("vendors", [
+                "vendors.id",
+                "vendors.name",
             ], $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "value" => $data['id'],
@@ -1215,10 +1214,11 @@ $app->group("/proposal", function ($app) use ($setting, $jatbi, $common, $templa
                     "stores_linkables.stores" => $jatbi->stores(),
                 ]
             ];
+            // var_dump($jatbi->stores());
             $app->select("accounts", [
                 "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "accounts"]]
             ], [
-                "accounts.id",
+                "@accounts.id",
                 "accounts.name",
             ], $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [

@@ -1201,8 +1201,8 @@ $app->group("/proposal/config", function ($app) use ($setting, $jatbi, $common, 
         $data = $app->get("proposal_target", "*", ["active" => $vars['id'], "deleted" => 0]);
         if ($app->method() === 'GET') {
             if (!empty($data)) {
-                $vars['data']['stores'] = $jatbi->setStores("select", 'proposal_target', $vars['data']['id']);
                 $vars['data'] = $data;
+                $vars['data']['stores'] = $jatbi->setStores("select", 'proposal_target', $vars['data']['id']);
                 $types = $common['proposal'];
                 $forms = $common['proposal-form'];
                 $vars['types'] = array_map(function ($item) {
