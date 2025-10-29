@@ -1215,7 +1215,7 @@ $app->group($setting['manager'] . "/admin", function ($app) use ($jatbi, $settin
             'css' => $cssVersion
         ];
         file_put_contents($logFile, json_encode($log, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        $app->redirect($_SERVER['HTTP_REFERER']);
+        // $app->redirect($_SERVER['HTTP_REFERER']);
         // echo var_dump($commonJs)
 
     });

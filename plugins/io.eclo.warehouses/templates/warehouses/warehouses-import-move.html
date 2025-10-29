@@ -57,11 +57,12 @@
                                 "attr" => 'data-width="100%" data-action="change" data-load="this" 
                                             data-url="/stores1" data-selector="[data-fillter]"
                                             data-form=\'{"value": "this.val"}\'',
-                                "options" => $stores ?? []
+                                "options" => $stores ?? [],
+                                "id" => "stores_receive",    
                             ])?>
-                            <?php if($accStore == 0){ 
-                            $branchs = $app->select("branch",["id(value)","name(text)","code"],["status"=>A,"deleted"=>0,"
-                                stores"=>$data['stores']]);
+                            <?php if(count($accStore) > 1){ 
+                            $branchs = $app->select("branch",["id(value)","name(text)","code"],["status"=>'A',"deleted"=>0,"
+                                stores"=>$data['stores'] ?? null ]);
                             }else{
                                 $branchs = $app->select("branch",["id(value)","name(text)","code"],["stores"=>$accStore,"deleted"=> 0,"status"=>'A']);
                             }?>
@@ -70,7 +71,13 @@
                                 "placeholder"=>$jatbi->lang("Quầy hàng đến"),
                                 "selected" => $data['branchss'] ?? "", 
                                 "class" => 'filter-name',
-                                "attr" => 'data-width="100%"',
+                                "attr" => 'data-width="100%" data-parent="#stores_receive" 
+                                data-load="true" 
+                                data-url="/api/branch" 
+                                data-method="POST" 
+                                data-keyword="keyword" 
+                                data-max-length="1" ',
+                                "id" => "branch_receive",            
                                 "options" => $branchs ?? []
                             ])?>
                             <?=$app->component('input',[

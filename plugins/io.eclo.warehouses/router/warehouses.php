@@ -3318,9 +3318,27 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 'value' => '',
                 'text' => $jatbi->lang('Tất cả')
             ]);
+            $receive_status = [
+                [
+                    'value' => '',
+                    'text' => $jatbi->lang('Tất cả')
+                ],
+                [
+                    'value' => 1,
+                    'text' => $jatbi->lang('Đã nhập hàng')
+                ]
+            ];
+            $Status_warehouser_move = array_map(function($item) use ($jatbi) {
+                return [
+                    'value' => $item['id'],
+                    'text' => $jatbi->lang($item['name'])
+                ];
+            }, $setting['Status_warehouser_move']);
             $vars['accounts'] = $accounts;
             $vars['date_from'] = date('Y-m-d 00:00:00');
             $vars['date_to'] = date('Y-m-d 23:59:59');
+            $vars['receive_status'] = $receive_status;
+            $vars['Status_warehouser_move'] = $Status_warehouser_move;
             $stores = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
 
 
@@ -3338,10 +3356,10 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             $filter_user = $_POST['user'] ?? '';
             $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
-            $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : '';
+            $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
             $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
-            $user = isset($_POST['user']) ? $app->xss($_POST['user']) : '';
+            $receive_status = isset($_POST['receive_status']) ? $app->xss($_POST['receive_status']) : '';
 
 
             if ($date_string) {
@@ -3402,16 +3420,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             if (!empty($filter_user) && $filter_user != 'null') {
                 $where['AND']['warehouses.user'] = $filter_user;
             }
-
+            if (!empty($receive_status) && $receive_status != 'null') {
+                $where['AND']['warehouses.receive_status'] = $receive_status;
+            }
 
 
 
             $joins = [
-                "[<]accounts" => ["user" => "id"],
-                "[<]stores" => ["stores" => "id"],
-                "[<]branch" => ["branch" => "id"],
-                "[<]stores(stores_receive)" => ["stores_receive" => "id"],
-                "[<]branch(branch_receive)" => ["branch_receive" => "id"],
+                "[>]accounts" => ["user" => "id"],
+                "[>]stores" => ["stores" => "id"],
+                "[>]branch" => ["branch" => "id"],
+                "[>]stores(stores_receive)" => ["stores_receive" => "id"],
+                "[>]branch(branch_receive)" => ["branch_receive" => "id"],
             ];
 
 
@@ -7294,17 +7314,28 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
         $vars['store_options'] = $store_options;
 
         $selected_store_id = $vars['data']['stores']['id'] ?? 0;
-        $vars['branch_options'] = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-
+        $branchs = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
+        $branch_options = [['value' => '', 'text' => '']];
+        if (!empty($branchs)) {
+            foreach ($branchs as $branch) {
+                if (isset($branch['value']) && isset($branch['text'])) {
+                    $branch_options[] = $branch;
+                }
+            }
+        }
+        $vars['branch_options'] = $branch_options;
         echo $app->render($template . '/warehouses/import.html', $vars);
     })->setPermissions(['warehouses-import']);
 
     $app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-        $action = $vars['action'];
-        $router['3'] = $vars['product'];
-        $router['4'] = $vars['do'];
-        $router['5'] = $vars['id'];
+        
+        $action = $vars['action'] ?? '';
+        $router = [
+            '3' => $vars['product'] ?? '',
+            '4' => $vars['do'] ?? '',
+            '5' => $vars['id'] ?? ''
+        ];
 
         $error = [];
         $total_products = 0;
@@ -7315,66 +7346,94 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
         $cancel_amount = 0;
         $AmountMinus = false;
         $pro_logs = [];
-        if ($router['3'] == 'stores') {
-            $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-            if ($data > 1) {
+
+        // === BẮT ĐẦU XỬ LÝ ===
+        if ($router['3'] === 'stores') {
+            $value = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("stores", ["id", "name"], ["id" => $value]);
+
+            if (!empty($data) && is_array($data)) {
                 $_SESSION['warehouses'][$action]['stores'] = [
                     "id" => $data['id'],
                     "name" => $data['name'],
                 ];
-                if ($action == 'cancel') {
-                    $datas = $app->get("products", ["id", "units"], ["id" => $_SESSION['warehouses'][$action]['products']]);
-                    unset($_SESSION['warehouses'][$action]['warehouses']);
-                    $warehouses = $app->select("warehouses_details", ["id", "products", "vendor", "amount_total", "price", 'stores'], [
-                        "type" => 'import',
-                        "products" => $datas['id'],
-                        "stores" => $_SESSION['warehouses'][$action]['stores'],
-                        "deleted" => 0,
-                        "amount_total[>]" => 0
-                    ]);
-                    foreach ($warehouses as $key => $value) {
-                        $_SESSION['warehouses'][$action]['warehouses'][$value['id']] = [
-                            "id" => $value['id'],
-                            "products" => $value['products'],
-                            "vendor" => $value['vendor'],
-                            "duration" => $value['duration'],
-                            "amount_total" => $value['amount_total'],
-                            "amount" => '',
-                            "price" => $value['price'],
-                            "units" => $datas['units'],
-                            "date" => $value['date'],
-                            "stores" => $value['stores'],
-                        ];
+
+                if ($action === 'cancel') {
+                    $productId = $_SESSION['warehouses'][$action]['products']['id'] ?? null;
+                    $datas = $productId ? $app->get("products", ["id", "units"], ["id" => $productId]) : null;
+
+                    if ($datas) {
+                        unset($_SESSION['warehouses'][$action]['warehouses']);
+                        $warehouses = $app->select("warehouses_details", [
+                            "id", "products", "vendor", "amount_total", "price", "stores", "duration", "date"
+                        ], [
+                            "type" => 'import',
+                            "products" => $datas['id'],
+                            "stores" => $_SESSION['warehouses'][$action]['stores']['id'],
+                            "deleted" => 0,
+                            "amount_total[>]" => 0
+                        ]);
+
+                        foreach ($warehouses as $value_item) {
+                            $_SESSION['warehouses'][$action]['warehouses'][$value_item['id']] = [
+                                "id" => $value_item['id'],
+                                "products" => $value_item['products'],
+                                "vendor" => $value_item['vendor'],
+                                "duration" => $value_item['duration'] ?? '',
+                                "amount_total" => $value_item['amount_total'],
+                                "amount" => '',
+                                "price" => $value_item['price'],
+                                "units" => $datas['units'],
+                                "date" => $value_item['date'],
+                                "stores" => $value_item['stores'],
+                            ];
+                        }
                     }
                 }
-                if ($action == 'move') {
+
+                if ($action === 'move') {
                     unset($_SESSION['warehouses'][$action]['products']);
                     unset($_SESSION['warehouses'][$action]['branch']);
                 }
+
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($router['3'] == 'check-update') {
-            $_SESSION['warehouses'][$action]['products'][$router['4']]['status'] = $_POST['value'];
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($router['3'] == 'branch') {
-            $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-            if ($data > 1) {
+
+        } elseif ($router['3'] === 'check-update') {
+            $value = $app->xss($_POST['value'] ?? '');
+            if (isset($_SESSION['warehouses'][$action]['products'][$router['4']])) {
+                $_SESSION['warehouses'][$action]['products'][$router['4']]['status'] = $value;
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+            }
+
+        } elseif ($router['3'] === 'branch') {
+            $value = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("branch", ["id", "name"], ["id" => $value]);
+
+            if (!empty($data) && is_array($data)) {
                 $_SESSION['warehouses'][$action]['branch'] = [
                     "id" => $data['id'],
                     "name" => $data['name'],
                 ];
-                if ($action == 'move') {
+
+                if ($action === 'move') {
                     unset($_SESSION['warehouses'][$action]['products']);
                 }
+
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($router['3'] == 'branch_receive') {
-            $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-            if ($data > 1) {
+
+        } elseif ($router['3'] === 'branch_receive') {
+            $value = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("branch", ["id", "name"], ["id" => $value]);
+
+            if (!empty($data) && is_array($data)) {
                 $_SESSION['warehouses'][$action]['branch_receive'] = [
                     "id" => $data['id'],
                     "name" => $data['name'],
@@ -7383,21 +7442,29 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($router['3'] == 'warehouses') {
-            $value = $app->xss($_POST['value']);
+
+        } elseif ($router['3'] === 'warehouses') {
+            $value = (float)str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+            $warehouseId = $router['5'] ?? '';
+
             if ($value < 0) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không thể cập nhật số lượng âm")]);
-            } else {
-                if ($_SESSION['warehouses'][$action]['warehouses'][$router['5']]['amount_total'] >= $value) {
-                    $_SESSION['warehouses'][$action]['warehouses'][$router['5']][$router['4']] = $value;
-                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                } else {
-                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng hủy lớn hơn tồn")]);
-                }
+                return;
             }
-        } elseif ($router['3'] == 'stores_receive') {
-            $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-            if ($data > 1) {
+
+            $amountTotal = $_SESSION['warehouses'][$action]['warehouses'][$warehouseId]['amount_total'] ?? 0;
+            if ($amountTotal >= $value) {
+                $_SESSION['warehouses'][$action]['warehouses'][$warehouseId][$router['4']] = $value;
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng hủy lớn hơn tồn")]);
+            }
+
+        } elseif ($router['3'] === 'stores_receive') {
+            $value = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("stores", ["id", "name"], ["id" => $value]);
+
+            if (!empty($data) && is_array($data)) {
                 $_SESSION['warehouses'][$action]['stores_receive'] = [
                     "id" => $data['id'],
                     "name" => $data['name'],
@@ -7406,171 +7473,197 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($router['3'] == 'data') {
+
+        } elseif ($router['3'] === 'data') {
+            $value = $app->xss($_POST['value'] ?? '');
             unset($_SESSION['warehouses'][$action]['products']);
-            $_SESSION['warehouses'][$action]['data'] = $app->xss($_POST['value']);
+            $_SESSION['warehouses'][$action]['data'] = $value;
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($router['3'] == 'products') {
-            if ($router['4'] == 'add') {
-                $data = $app->get("products", ["id", "images", "code", "name", "categorys", "default_code", "units", "notes", "crafting", "amount"], ["id" => $app->xss($router['5'])]);
-                if ($data > 1) {
-                    if ($data['amount'] <= 0 && $action == 'move') {
-                        $error = $jatbi->lang("Số lượng không đủ");
+
+        } elseif ($router['3'] === 'products') {
+            if ($router['4'] === 'add') {
+                $productId = $app->xss($router['5'] ?? '');
+                $data = $app->get("products", [
+                    "id", "images", "code", "name", "categorys", "default_code", "units", "notes", "crafting", "amount"
+                ], ["id" => $productId]);
+
+                if (!empty($data) && is_array($data)) {
+                    if ($data['amount'] <= 0 && $action === 'move') {
+                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                        return;
                     }
-                    if (empty($error)) {
-                        if (!isset($_SESSION['warehouses'][$action]['products'][$data['id']])) {
-                            $_SESSION['warehouses'][$action]['products'][$data['id']] = [
-                                "products" => $data['id'],
-                                "amount_buy" => 0,
-                                "amount" => 1,
-                                "price" => 0,
-                                "images" => $data['images'],
-                                "code" => $data['code'],
-                                "name" => $data['name'],
-                                "categorys" => $data['categorys'],
-                                "default_code" => $data['default_code'],
-                                "units" => $data['units'],
-                                "notes" => $data['notes'],
-                                "crafting" => $data['crafting'],
-                                "warehouses" => $data['amount'],
-                            ];
-                            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                        } else {
-                            $getPro = $_SESSION['warehouses'][$action]['products'][$data['id']];
-                            $value = $getPro['amount'] + 1;
-                            if ($value > $data['amount'] && $action == 'move') {
-                                $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $data['amount'];
-                                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                            } else {
-                                $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $value;
-                                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                            }
-                        }
+
+                    if (!isset($_SESSION['warehouses'][$action]['products'][$data['id']])) {
+                        $_SESSION['warehouses'][$action]['products'][$data['id']] = [
+                            "products" => $data['id'],
+                            "amount_buy" => 0,
+                            "amount" => 1,
+                            "price" => 0,
+                            "images" => $data['images'],
+                            "code" => $data['code'],
+                            "name" => $data['name'],
+                            "categorys" => $data['categorys'],
+                            "default_code" => $data['default_code'],
+                            "units" => $data['units'],
+                            "notes" => $data['notes'],
+                            "crafting" => $data['crafting'],
+                            "warehouses" => $data['amount'],
+                        ];
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
                     } else {
-                        echo json_encode(['status' => 'error', 'content' => $error,]);
+                        $current = $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] + 1;
+                        if ($current > $data['amount'] && $action === 'move') {
+                            $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $data['amount'];
+                            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                        } else {
+                            $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $current;
+                            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                        }
                     }
                 } else {
                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
                 }
-            } elseif ($router['4'] == 'deleted') {
+
+            } elseif ($router['4'] === 'deleted') {
                 unset($_SESSION['warehouses'][$action]['products'][$router['5']]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } elseif ($router['4'] == 'price') {
-                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
+
+            } elseif ($router['4'] === 'price') {
+                $value = str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $value;
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } elseif ($router['4'] == 'amount') {
-                $value = $app->xss(str_replace([','], '', $router['5']));
+
+            } elseif ($router['4'] === 'amount') {
+                $value = (float)str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+                $productId = $_SESSION['warehouses'][$action]['products'][$router['5']]['products'] ?? null;
+
                 if ($value < 0) {
                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
-                } else {
-                    $getAmount = $app->get("products", ["id", "amount"], ["id" => $_SESSION["warehouses"][$action]['products'][$router['5']]['products']]);
-                    if ($value > $getAmount['amount'] && $action == 'move' || $value > $getAmount['amount'] && $action == 'cancel') {
-                        $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $getAmount['amount'];
-                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                    } else {
-                        $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
-                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                    }
+                    return;
                 }
+
+                $getAmount = $productId ? $app->get("products", ["id", "amount"], ["id" => $productId]) : null;
+                if ($getAmount && $value > $getAmount['amount'] && in_array($action, ['move', 'cancel'])) {
+                    $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $getAmount['amount'];
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                } else {
+                    $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $value;
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                }
+
             } else {
-                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss($_POST['value']);
+                $value = $app->xss($_POST['value'] ?? '');
+                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $value;
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             }
-        } elseif ($router['3'] == 'date' || $router['3'] == 'content') {
-            $_SESSION['warehouses'][$action][$router['3']] = $app->xss($_POST['value']);
+
+        } elseif (in_array($router['3'], ['date', 'content'])) {
+            $value = $app->xss($_POST['value'] ?? '');
+            $_SESSION['warehouses'][$action][$router['3']] = $value;
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($router['3'] == 'cancel') {
+
+        } elseif ($router['3'] === 'cancel') {
             unset($_SESSION['warehouses'][$action]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($router['3'] == 'completed') {
-            $datas = $_SESSION['warehouses'][$action];
-            $warehouses1 = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
-            $kiemtra = 'false';
-            $sanpham_kiemtra = [];
-            $kiemtracuahang = 'false';
 
-            foreach ($datas['products'] as $value_amount) {
+        } elseif ($router['3'] === 'completed') {
+            $datas = $_SESSION['warehouses'][$action] ?? [];
+            $moveId = $datas['move'] ?? 0;
+            $warehouses1 = $app->get("warehouses", "receive_status", ["id" => $moveId, "deleted" => 0]);
+
+            $kiemtra = false;
+            $sanpham_kiemtra = [];
+            $kiemtracuahang = false;
+
+            foreach ($datas['products'] ?? [] as $value_amount) {
                 $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
-                $total_products += $value_amount['amount'] * $value_amount['price'];
-                if ($value_amount['amount'] == '' || $value_amount['amount'] == 0 || $value_amount['amount'] < 0) {
-                    $error_warehouses = 'true';
+                $total_products += ($value_amount['amount'] ?? 0) * ($value_amount['price'] ?? 0);
+
+                if (empty($value_amount['amount']) || $value_amount['amount'] <= 0) {
+                    $error_warehouses = true;
                 }
-                if ($action == 'move') {
-                    if ($name_po['amount'] <= 0) {
-                        $kiemtra = 'true';
-                        $sanpham_kiemtra[] = $name_po['code'];
+
+                if ($action === 'move' && ($name_po['amount'] ?? 0) <= 0) {
+                    $kiemtra = true;
+                    $sanpham_kiemtra[] = $name_po['code'] ?? '';
+                }
+
+                if ($action === 'import' && (
+                    ($name_po['stores'] ?? 0) != ($datas['stores']['id'] ?? 0) ||
+                    ($name_po['branch'] ?? 0) != ($datas['branch']['id'] ?? 0)
+                )) {
+                    $kiemtracuahang = true;
+                }
+            }
+
+            if ($action === 'move' && $kiemtra) {
+                $error = ['status' => 'error', 'content' => 'Những mã hiện hết số lượng, hãy kiểm tra lại: ' . implode(", ", $sanpham_kiemtra)];
+            }
+
+            if ($action === 'import' && $kiemtracuahang && empty($datas['move'] ?? null) && empty($datas['purchase'] ?? null)) {
+                $error = ['status' => 'error', 'content' => 'Cửa hàng hoặc quầy hàng chọn khác với Cửa hàng hoặc quầy hàng của sản phẩm'];
+            }
+
+            if ($action === 'cancel') {
+                foreach ($datas['warehouses'] ?? [] as $AmounCancel) {
+                    $amount = $AmounCancel['amount'] ?? 0;
+                    $cancel_amount += $amount;
+                    if ($amount < 0) {
+                        $AmountMinus = true;
                     }
                 }
-                if ($action == 'import') {
-                    if ($name_po['stores'] != $datas['stores']['id'] || $name_po['branch'] != ($datas['branch']['id'] ?? 0)) {
-                        $kiemtracuahang = 'true';
-                    }
-                }
             }
-            if ($action == 'move' && $kiemtra == 'true') {
-                $error = [
-                    'status' => 'error',
-                    'content' => 'Những mã hiện hết số lượng, hãy kiểm tra lại: ' . implode(", ", $sanpham_kiemtra)
-                ];
-            }
-            if ($action == 'import' && $kiemtracuahang == 'true' && (empty($datas['move'] ?? null) && empty($datas['purchase'] ?? null))) {
-                $error = [
-                    'status' => 'error',
-                    'content' => 'Cửa hàng hoặc quầy hàng chọn khác với Cửa hàng hoặc quầy hàng của sản phẩm'
-                ];
-            }
-            if ($action == 'cancel') {
-                foreach ($datas['warehouses'] as $AmounCancel) {
-                    $cancel_amount += $AmounCancel['amount'];
-                    if ($AmounCancel['amount'] < 0) {
-                        $AmountMinus = "true";
-                    }
-                }
-            }
-            if ($cancel_amount <= 0 && $action == 'cancel') {
+
+            if ($cancel_amount <= 0 && $action === 'cancel') {
                 $error = ["status" => 'error', 'content' => $jatbi->lang("Phải có số lượng hủy")];
-            } elseif ($AmountMinus == "true" && $action == 'cancel') {
+            } elseif ($AmountMinus && $action === 'cancel') {
                 $error = ["status" => 'error', 'content' => $jatbi->lang("Số lượng không âm")];
             }
-            if ($router['4'] == 'moves') {
-                if ($datas['stores_receive']['id'] == '' || $datas['branch_receive']['id'] == '') {
-                    $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
-                }
+
+            if ($router['4'] === 'moves' && (empty($datas['stores_receive']['id'] ?? '') || empty($datas['branch_receive']['id'] ?? ''))) {
+                $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
             }
-            if (
-                empty($datas['stores']['id']) ||
-                empty($datas['branch']['id']) ||
-                empty($datas['type']) ||
-                empty($datas['content']) ||
-                count($datas['products'] ?? []) == 0 ||
-                (count($datas['warehouses'] ?? []) == 0 && $action == 'cancel')
-            ) {
+
+            $required = [
+                $datas['stores']['id'] ?? '',
+                $datas['branch']['id'] ?? '',
+                $datas['type'] ?? '',
+                $datas['content'] ?? '',
+                count($datas['products'] ?? []),
+                ($action === 'cancel' ? count($datas['warehouses'] ?? []) : 1)
+            ];
+
+            if (in_array('', $required, true) || ($action === 'cancel' && count($datas['warehouses'] ?? []) == 0)) {
                 $error = ["status" => 'error', 'content' => "Lỗi trống"];
             } elseif ($warehouses1 == 2) {
                 $error = ['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập")];
             }
-            if (count($error) == 0) {
+
+            if (empty($error)) {
                 $insert = [
-                    "code" => $datas['type'] == 'import' ? 'PN' : 'PX',
-                    "type" => $datas['type'],
-                    "data" => $datas['data'],
-                    "stores" => $datas['type'] == 'import' ? $datas['stores']['id'] : $_SESSION['warehouses']['move']['stores']['id'],
-                    "branch" => $datas['branch']['id'],
+                    "code" => ($datas['type'] ?? '') === 'import' ? 'PN' : 'PX',
+                    "type" => $datas['type'] ?? '',
+                    "data" => $datas['data'] ?? '',
+                    "stores" => ($datas['type'] ?? '') === 'import' ? ($datas['stores']['id'] ?? '') : ($_SESSION['warehouses']['move']['stores']['id'] ?? ''),
+                    "branch" => $datas['branch']['id'] ?? '',
                     "stores_receive" => $datas['stores_receive']['id'] ?? null,
                     "branch_receive" => $datas['branch_receive']['id'] ?? null,
-                    "content" => $datas['content'],
+                    "content" => $datas['content'] ?? '',
                     "vendor" => $datas['vendor']['id'] ?? null,
                     "user" => $app->getSession("accounts")['id'] ?? 0,
-                    "date" => $datas['date'],
+                    "date" => $datas['date'] ?? '',
                     "active" => $jatbi->active(30),
                     "date_poster" => date("Y-m-d H:i:s"),
                     "purchase" => $datas['purchase'] ?? "",
                     "move" => $datas['move'] ?? "",
                     "receive_status" => 1,
                 ];
+
                 $app->insert("warehouses", $insert);
                 $orderId = $app->id();
-                if (isset($datas['purchase'])) {
+
+                // Xử lý purchase
+                if (!empty($datas['purchase'] ?? '')) {
                     $app->update("purchase", ["status" => 5], ["id" => $datas['purchase']]);
                     $app->insert("purchase_logs", [
                         "purchase" => $datas['purchase'],
@@ -7580,47 +7673,53 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                         "date" => date('Y-m-d H:i:s'),
                     ]);
                 }
-                if (isset($datas['move'])) {
-                    foreach ($datas['products'] as $key => $value_move) {
-                        if ($value_move['amount'] < $value_move['amount_old']) {
-                            $move_error[] = $value_move['amount_old'] - $value_move['amount'];
+
+                // Xử lý move
+                if (!empty($datas['move'] ?? '')) {
+                    $move_error = [];
+                    foreach ($datas['products'] as $value_move) {
+                        if (($value_move['amount'] ?? 0) < ($value_move['amount_old'] ?? 0)) {
+                            $move_error[] = ($value_move['amount_old'] ?? 0) - ($value_move['amount'] ?? 0);
                         }
                         $app->update("warehouses_details", ["amount_move" => $value_move['amount']], ["id" => $value_move['details']]);
                     }
-                    if (count($move_error) > 0) {
-                        $receive_status = 3;
-                    } else {
-                        $receive_status = 2;
-                    }
+                    $receive_status = count($move_error) > 0 ? 3 : 2;
                     $app->update("warehouses", [
                         "receive_status" => $receive_status,
                         "receive_date" => date("Y-m-d H:i:s"),
                     ], ["id" => $datas['move']]);
                 }
-                foreach ($datas['products'] as $key1 => $value) {
-                    $getProducts = $app->get("products", ["id", "code_products", "code", "name", "categorys", "group", "vendor", "price", "cost", "units", "tkco", "tkno", "default_code", "amount"], ["id" => $value['products'], "deleted" => 0]);
+
+                // Xử lý từng sản phẩm
+                foreach ($datas['products'] as $value) {
+                    $getProducts = $app->get("products", [
+                        "id", "code_products", "code", "name", "categorys", "group", "vendor", "price", "cost", "units", "tkco", "tkno", "default_code", "amount"
+                    ], ["id" => $value['products'], "deleted" => 0]);
+
                     $crafting = $app->get("crafting", "*", ["id" => ($value['crafting'] ?? null)]);
-                    if ($insert['type'] == "move") {
+
+                    if ($insert['type'] === "move") {
                         $storeget = $app->get("stores", "*", ["id" => $insert['stores_receive']]);
                         $branchget = $app->get("branch", "*", ["id" => $insert['branch_receive']]);
-                        if ($getProducts['code_products'] == NULL) {
-                            $code = $getProducts['code'];
-                        } else {
-                            if ($insert['stores_receive'] == $insert['stores']) {
-                                $code = $branchget['code'] . $getProducts['code_products'];
-                            } else {
-                                $code = $storeget['code'] . $branchget['code'] . $getProducts['code_products'];
-                            }
-                        }
-                        $checkcode = $app->get("products", ["id", "code"], ["code" => $code, "deleted" => 0, 'status' => 'A', "stores" => $insert['stores_receive'], "branch" => $insert['branch_receive']]);
-                        if ($code == $checkcode['code'] && $getProducts['code_products'] != NULL) {
-                            $tam = [
+
+                        $code = $getProducts['code_products'] == NULL
+                            ? $getProducts['code']
+                            : ($insert['stores_receive'] == $insert['stores']
+                                ? $branchget['code'] . $getProducts['code_products']
+                                : $storeget['code'] . $branchget['code'] . $getProducts['code_products']);
+
+                        $checkcode = $app->get("products", ["id", "code"], [
+                            "code" => $code, "deleted" => 0, 'status' => 'A',
+                            "stores" => $insert['stores_receive'], "branch" => $insert['branch_receive']
+                        ]);
+
+                        if ($code == ($checkcode['code'] ?? '') && $getProducts['code_products'] != NULL) {
+                            $app->insert("tam", [
                                 "products" => $checkcode['id'],
                                 "value" => $value['products'],
                                 "warehouses" => $orderId,
                                 "date" => date('Y-m-d H:i:s'),
-                            ];
-                            $app->insert("tam", $tam);
+                            ]);
                         } else {
                             $insert_products = [
                                 "type" => $app->get("products", "type", ["id" => $value['products']]),
@@ -7631,32 +7730,35 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                                 "vat" => $setting['site_vat'],
                                 "vat_type" => 1,
                                 "amount" => 0,
-                                "content" => $value['content'],
+                                "content" => $value['content'] ?? '',
                                 "vendor" => $getProducts['vendor'],
                                 "group" => $getProducts['group'],
-                                "price" => $app->xss(str_replace([','], '', $getProducts['price'])),
-                                "cost" => $app->xss(str_replace([','], '', $getProducts['cost'])),
+                                "price" => str_replace(',', '', $getProducts['price']),
+                                "cost" => str_replace(',', '', $getProducts['cost']),
                                 "units" => $getProducts['units'],
-                                "notes" => $app->xss($crafting['notes']),
+                                "notes" => $crafting['notes'] ?? '',
                                 "active" => $jatbi->active(32),
-                                // "images"		=> $handle->file_dst_name==''?'no-images.jpg':$handle->file_dst_name,
                                 "date" => date('Y-m-d H:i:s'),
                                 "status" => 'A',
                                 "user" => $app->getSession("accounts")['id'] ?? 0,
                                 "new" => 1,
-                                "crafting" => $value['crafting'],
+                                "crafting" => $value['crafting'] ?? null,
                                 "stores" => $insert['stores_receive'],
                                 "branch" => $insert['branch_receive'],
-                                "code_products" => $getProducts['code_products'] == NULL ? NULL : $getProducts['code_products'],
+                                "code_products" => $getProducts['code_products'],
                                 "tkno" => $getProducts['tkco'],
                                 "tkco" => $getProducts['tkno'],
                                 "default_code" => $getProducts['default_code'],
                             ];
                             $app->insert("products", $insert_products);
                             $Gid = $app->id();
-                            $getDetails = $app->select("products_details", ["id", "ingredient", "code", "type", "group", "categorys", "pearl", "sizes", "colors", "units", "price", "cost", "amount", "total"], ["products" => $value['products'], "deleted" => 0]);
+
+                            $getDetails = $app->select("products_details", [
+                                "id", "ingredient", "code", "type", "group", "categorys", "pearl", "sizes", "colors", "units", "price", "cost", "amount", "total"
+                            ], ["products" => $value['products'], "deleted" => 0]);
+
                             foreach ($getDetails as $detail) {
-                                $products_details = [
+                                $app->insert("products_details", [
                                     "products" => $Gid,
                                     "ingredient" => $detail['ingredient'],
                                     "code" => $detail['code'],
@@ -7673,245 +7775,266 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                                     "total" => $detail['total'],
                                     "user" => $app->getSession("accounts")['id'] ?? 0,
                                     "date" => date("Y-m-d H:i:s"),
-                                ];
-                                $app->insert("products_details", $products_details);
+                                ]);
                             }
-                            $tam = [
+
+                            $app->insert("tam", [
                                 "products" => $Gid,
                                 "value" => $value['products'],
                                 "warehouses" => $orderId,
                                 "date" => date('Y-m-d H:i:s'),
-                            ];
-                            $app->insert("tam", $tam);
+                            ]);
                         }
                     }
-                    if ($action == 'import') {
-                        if (!empty($datas['move'])) {
+
+                    // Xử lý nhập kho
+                    if ($action === 'import') {
+                        if (!empty($datas['move'] ?? '')) {
                             $checktam = $app->get("tam", "products", ["value" => $value['products'], "warehouses" => $app->get("warehouses", "move", ["id" => $orderId])]);
                             $pro = [
                                 "warehouses" => $orderId,
                                 "data" => $insert['data'],
                                 "type" => $insert['type'],
-                                "products" => $value['status'] == 0 ? $checktam : $value['products'],
-                                "amount_buy" => $value['amount_buy'],
-                                "amount" => $value['amount'],
-                                "amount_total" => $value['amount'],
-                                "price" => $getProducts['price'],
-                                "notes" => $value['notes'],
+                                "products" => ($value['status'] ?? 0) == 0 ? $checktam['products'] ?? $value['products'] : $value['products'],
+                                "amount_buy" => $value['amount_buy'] ?? 0,
+                                "amount" => $value['amount'] ?? 0,
+                                "amount_total" => $value['amount'] ?? 0,
+                                "price" => $getProducts['price'] ?? 0,
+                                "notes" => $value['notes'] ?? '',
                                 "date" => date("Y-m-d H:i:s"),
                                 "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
-                                "branch" => $value['status'] == 0 ? $insert['branch'] : $value['branch'],
+                                "stores" => ($value['status'] ?? 0) == 0 ? $insert['stores'] : ($value['stores'] ?? null),
+                                "branch" => ($value['status'] ?? 0) == 0 ? $insert['branch'] : ($value['branch'] ?? null),
                             ];
                             $app->insert("warehouses_details", $pro);
                             $GetID = $app->id();
-                            $warehouses_logs = [
+
+                            $app->insert("warehouses_logs", [
                                 "type" => $insert['type'],
                                 "data" => $insert['data'],
                                 "warehouses" => $orderId,
                                 "details" => $GetID,
                                 "products" => $pro['products'],
                                 "price" => $pro['price'],
-                                "amount" => str_replace([','], '', $value['amount']),
-                                "total" => $value['amount'] * $value['price'],
-                                "notes" => $value['notes'],
+                                "amount" => $value['amount'] ?? 0,
+                                "total" => ($value['amount'] ?? 0) * ($value['price'] ?? 0),
+                                "notes" => $value['notes'] ?? '',
                                 "date" => date('Y-m-d H:i:s'),
                                 "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
-                            ];
-                            $app->insert("warehouses_logs", $warehouses_logs);
+                                "stores" => ($value['status'] ?? 0) == 0 ? $insert['stores'] : ($value['stores'] ?? null),
+                            ]);
+
                             $sanpham = $app->get("products", ["id", "amount"], ["id" => $pro['products']]);
-                            $app->update("products", ["amount" => $sanpham['amount'] + $value['amount']], ["id" => $sanpham['id']]);
+                            $app->update("products", ["amount" => ($sanpham['amount'] ?? 0) + ($value['amount'] ?? 0)], ["id" => $sanpham['id']]);
                             $pro_logs[] = $pro;
                         } else {
-                            $app->update("products", ["amount" => $getProducts['amount'] + str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
+                            $app->update("products", ["amount" => ($getProducts['amount'] ?? 0) + ($value['amount'] ?? 0)], ["id" => $getProducts['id']]);
                             $pro = [
                                 "warehouses" => $orderId,
                                 "data" => $insert['data'],
                                 "type" => $insert['type'],
                                 "vendor" => $value['vendor'] ?? "",
                                 "products" => $value['products'],
-                                "amount_buy" => $value['amount_buy'],
-                                "amount" => str_replace([','], '', $value['amount']),
-                                "amount_total" => str_replace([','], '', $value['amount']),
-                                "price" => $value['price'],
-                                "notes" => $value['notes'],
-                                "date" => date(format: "Y-m-d H:i:s"),
+                                "amount_buy" => $value['amount_buy'] ?? 0,
+                                "amount" => $value['amount'] ?? 0,
+                                "amount_total" => $value['amount'] ?? 0,
+                                "price" => $value['price'] ?? 0,
+                                "notes" => $value['notes'] ?? '',
+                                "date" => date("Y-m-d H:i:s"),
                                 "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => (isset($value['status']) && $value['status'] == 0)
-                                    ? ($insert['stores'] ?? null)
-                                    : ($value['stores'] ?? null),
-
-                                "branch" => (isset($value['status']) && $value['status'] == 0)
-                                    ? ($insert['branch'] ?? null)
-                                    : ($value['branch'] ?? null),
+                                "stores" => ($value['status'] ?? 0) == 0 ? $insert['stores'] : ($value['stores'] ?? null),
+                                "branch" => ($value['status'] ?? 0) == 0 ? $insert['branch'] : ($value['branch'] ?? null),
                             ];
                             $app->insert("warehouses_details", $pro);
                             $GetID = $app->id();
-                            $warehouses_logs = [
+
+                            $app->insert("warehouses_logs", [
                                 "type" => $insert['type'],
                                 "data" => $insert['data'],
                                 "warehouses" => $orderId,
                                 "details" => $GetID,
                                 "products" => $value['products'],
-                                "price" => $value['price'],
-                                "amount" => str_replace([','], '', $value['amount']),
-                                "total" => $value['amount'] * $value['price'],
-                                "notes" => $value['notes'],
+                                "price" => $value['price'] ?? 0,
+                                "amount" => $value['amount'] ?? 0,
+                                "total" => ($value['amount'] ?? 0) * ($value['price'] ?? 0),
+                                "notes" => $value['notes'] ?? '',
                                 "date" => date('Y-m-d H:i:s'),
                                 "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => (isset($value['status']) && $value['status'] == 0)
-                                    ? $insert['stores']
-                                    : ($value['stores'] ?? null),
-                            ];
-                            $app->insert("warehouses_logs", $warehouses_logs);
+                                "stores" => ($value['status'] ?? 0) == 0 ? $insert['stores'] : ($value['stores'] ?? null),
+                            ]);
                             $pro_logs[] = $pro;
                         }
                     }
-                    if ($action == 'move') {
-                        if ($value['amount'] > 0) {
-                            $app->update("products", ["amount" => $getProducts['amount'] - str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
-                            $getAmounts = $app->select("warehouses_details", ["id", "amount_total", "amount_move", "price"], ["products" => $value['products'], "stores" => $insert['stores'], "type" => "import", "deleted" => 0, "amount_total[>]" => 0]);
-                            $numWarehouse = 0;
-                            $buyAmount = $value['amount'];
-                            foreach ($getAmounts as $keyAmount => $getAmount) {
-                                if ($keyAmount <= $numWarehouse) {
-                                    $conlai = $getAmount['amount_total'] - $buyAmount;
-                                    if ($buyAmount > $getAmount['amount_total']) {
-                                        $getbuy = $getAmount['amount_total'];
-                                    } else {
-                                        $getbuy = $buyAmount;
-                                    }
-                                    $getwarehousess[$value['products']][] = [
-                                        "id" => $getAmount['id'],
-                                        "amount_move" => $getAmount['amount_move'],
-                                        "amount_total" => $getAmount['amount_total'],
-                                        "price" => $getAmount['price'],
-                                        "duration" => $getAmount['duration'],
-                                        "amount" => $getbuy,
-                                    ];
-                                    if ($conlai < 0) {
-                                        $numWarehouse = $numWarehouse + 1;
-                                        $buyAmount = -$conlai;
-                                    }
-                                }
-                            }
-                            foreach ($getwarehousess[$value['products']] as $getwarehouses) {
-                                $update_ware = [
-                                    "amount_move" => $getwarehouses['amount_move'] + $getwarehouses['amount'],
-                                    "amount_total" => $getwarehouses['amount_total'] - $getwarehouses['amount'],
-                                ];
-                                $app->update("warehouses_details", $update_ware, ["id" => $getwarehouses['id']]);
-                            }
-                            $pro = [
-                                "warehouses" => $orderId,
-                                "data" => $insert['data'],
-                                "type" => $insert['type'],
-                                "vendor" => $value['vendor'],
-                                "products" => $value['products'],
-                                "amount_buy" => $value['amount_buy'],
-                                "amount" => $value['amount'],
-                                "amount_total" => $value['amount'],
-                                "price" => $getProducts['price'],
-                                "notes" => $value['notes'],
-                                "date" => date("Y-m-d H:i:s"),
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $insert['stores'],
-                                "branch" => $insert['branch'],
+
+                    if ($action === 'move' && ($value['amount'] ?? 0) > 0) {
+                        $app->update("products", ["amount" => ($getProducts['amount'] ?? 0) - ($value['amount'] ?? 0)], ["id" => $getProducts['id']]);
+
+                        $getAmounts = $app->select("warehouses_details", ["id", "amount_total", "amount_move", "price", "duration"], [
+                            "products" => $value['products'],
+                            "stores" => $insert['stores'],
+                            "type" => "import",
+                            "deleted" => 0,
+                            "amount_total[>]" => 0
+                        ]);
+
+                        $getwarehousess = [];
+                        $numWarehouse = 0;
+                        $buyAmount = $value['amount'] ?? 0;
+
+                        foreach ($getAmounts as $getAmount) {
+                            if ($numWarehouse >= count($getAmounts)) break;
+                            $conlai = $getAmount['amount_total'] - $buyAmount;
+                            $getbuy = $buyAmount > $getAmount['amount_total'] ? $getAmount['amount_total'] : $buyAmount;
+
+                            $getwarehousess[$value['products']][] = [
+                                "id" => $getAmount['id'],
+                                "amount_move" => $getAmount['amount_move'],
+                                "amount_total" => $getAmount['amount_total'],
+                                "price" => $getAmount['price'],
+                                "duration" => $getAmount['duration'] ?? '',
+                                "amount" => $getbuy,
                             ];
-                            $app->insert("warehouses_details", $pro);
-                            $get_details = $app->id();
-                            $warehouses_logs = [
-                                "data" => $insert['data'],
-                                "type" => $insert['type'],
-                                "warehouses" => $orderId,
-                                "details" => $get_details,
-                                "products" => $value['products'],
-                                "price" => $getProducts['price'],
-                                "amount" => $value['amount'],
-                                "total" => $value['amount'] * $getProducts['price'],
-                                "notes" => $insert['notes'],
-                                "date" => date('Y-m-d H:i:s'),
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $insert['stores'],
-                                "stores_receive" => $insert['stores_receive'],
-                                "branch" => $insert['branch'],
-                                "branch_receive" => $insert['branch_receive'],
-                            ];
-                            $app->insert("warehouses_logs", $warehouses_logs);
+
+                            if ($conlai < 0) {
+                                $numWarehouse++;
+                                $buyAmount = -$conlai;
+                            }
                         }
+
+                        foreach ($getwarehousess[$value['products']] ?? [] as $getwarehouses) {
+                            $app->update("warehouses_details", [
+                                "amount_move" => $getwarehouses['amount_move'] + $getwarehouses['amount'],
+                                "amount_total" => $getwarehouses['amount_total'] - $getwarehouses['amount'],
+                            ], ["id" => $getwarehouses['id']]);
+                        }
+
+                        $pro = [
+                            "warehouses" => $orderId,
+                            "data" => $insert['data'],
+                            "type" => $insert['type'],
+                            "vendor" => $value['vendor'] ?? '',
+                            "products" => $value['products'],
+                            "amount_buy" => $value['amount_buy'] ?? 0,
+                            "amount" => $value['amount'] ?? 0,
+                            "amount_total" => $value['amount'] ?? 0,
+                            "price" => $getProducts['price'] ?? 0,
+                            "notes" => $value['notes'] ?? '',
+                            "date" => date("Y-m-d H:i:s"),
+                            "user" => $app->getSession("accounts")['id'] ?? 0,
+                            "stores" => $insert['stores'],
+                            "branch" => $insert['branch'],
+                        ];
+                        $app->insert("warehouses_details", $pro);
+                        $get_details = $app->id();
+
+                        $app->insert("warehouses_logs", [
+                            "data" => $insert['data'],
+                            "type" => $insert['type'],
+                            "warehouses" => $orderId,
+                            "details" => $get_details,
+                            "products" => $value['products'],
+                            "price" => $getProducts['price'] ?? 0,
+                            "amount" => $value['amount'] ?? 0,
+                            "total" => ($value['amount'] ?? 0) * ($getProducts['price'] ?? 0),
+                            "notes" => $insert['notes'] ?? '',
+                            "date" => date('Y-m-d H:i:s'),
+                            "user" => $app->getSession("accounts")['id'] ?? 0,
+                            "stores" => $insert['stores'],
+                            "stores_receive" => $insert['stores_receive'],
+                            "branch" => $insert['branch'],
+                            "branch_receive" => $insert['branch_receive'],
+                        ]);
                     }
                 }
-                if ($insert['data'] != '') {
+
+                if (!empty($insert['data'] ?? '')) {
                     $app->insert("purchase_logs", [
                         "purchase" => $insert['data'],
                         "user" => $app->getSession("accounts")['id'] ?? 0,
                         "content" => $app->xss('Nhập hàng'),
-                        "status" => $app->xss(5),
+                        "status" => 5,
                         "date" => date('Y-m-d H:i:s'),
                     ]);
                     $app->update("purchase", ["status" => 5], ["id" => $insert['data']]);
                 }
-                $amount = 0;
-                if ($action == 'cancel') {
-                    foreach ($datas['warehouses'] as $key => $value) {
-                        if ($value['amount'] > 0) {
-                            $getwarehouses = $app->get("warehouses_details", ["id", "amount_cancel", "amount_total", "vendor", "products", "price"], ["id" => $value['id'], "deleted" => 0, "amount_total[>]" => 0]);
-                            $update = [
-                                "amount_cancel" => $getwarehouses['amount_cancel'] + $value['amount'],
-                                "amount_total" => $getwarehouses['amount_total'] - $value['amount'],
-                            ];
-                            $app->update("warehouses_details", $update, ["id" => $getwarehouses['id']]);
-                            $total_amount = $value['amount_total'] - $value['amount'];
-                            $pro = [
-                                "warehouses" => $orderId,
-                                "data" => $insert['data'],
-                                "type" => $insert['type'],
-                                "vendor" => $getwarehouses['vendor'],
-                                "products" => $getwarehouses['products'],
-                                "amount_buy" => $value['amount_buy'],
-                                "amount" => $value['amount'],
-                                "amount_total" => $value['amount'],
-                                "price" => $getwarehouses['price'],
-                                "notes" => $value['notes'],
-                                "date" => date("Y-m-d H:i:s"),
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $insert['stores'],
-                                "branch" => $insert['branch'],
-                            ];
-                            $app->insert("warehouses_details", $pro);
-                            $warehouses_logs = [
-                                "type" => $insert['type'],
-                                "data" => $insert['data'],
-                                "warehouses" => $orderId,
-                                "details" => $getwarehouses['id'],
-                                "products" => $getwarehouses['products'],
-                                "amount" => $app->xss($value['amount']),
-                                "price" => $value['price'],
-                                "total" => $value['amount'] * $value['price'],
-                                "date" => date('Y-m-d H:i:s'),
-                                "user" => $app->getSession("accounts")['id'] ?? 0,
-                                "stores" => $insert['stores'],
-                                "branch" => $insert['branch'],
-                            ];
-                            $app->insert("warehouses_logs", $warehouses_logs);
-                            $pro_logs[] = $pro;
-                            $amount += $value['amount'];
+
+                if ($action === 'cancel') {
+                    $amount = 0;
+                    foreach ($datas['warehouses'] ?? [] as $value) {
+                        if (($value['amount'] ?? 0) > 0) {
+                            $getwarehouses = $app->get("warehouses_details", [
+                                "id", "amount_cancel", "amount_total", "vendor", "products", "price"
+                            ], ["id" => $value['id'], "deleted" => 0, "amount_total[>]" => 0]);
+
+                            if ($getwarehouses) {
+                                $app->update("warehouses_details", [
+                                    "amount_cancel" => ($getwarehouses['amount_cancel'] ?? 0) + ($value['amount'] ?? 0),
+                                    "amount_total" => ($getwarehouses['amount_total'] ?? 0) - ($value['amount'] ?? 0),
+                                ], ["id" => $getwarehouses['id']]);
+
+                                $pro = [
+                                    "warehouses" => $orderId,
+                                    "data" => $insert['data'],
+                                    "type" => $insert['type'],
+                                    "vendor" => $getwarehouses['vendor'],
+                                    "products" => $getwarehouses['products'],
+                                    "amount_buy" => $value['amount_buy'] ?? 0,
+                                    "amount" => $value['amount'] ?? 0,
+                                    "amount_total" => $value['amount'] ?? 0,
+                                    "price" => $getwarehouses['price'],
+                                    "notes" => $value['notes'] ?? '',
+                                    "date" => date("Y-m-d H:i:s"),
+                                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                                    "stores" => $insert['stores'],
+                                    "branch" => $insert['branch'],
+                                ];
+                                $app->insert("warehouses_details", $pro);
+
+                                $app->insert("warehouses_logs", [
+                                    "type" => $insert['type'],
+                                    "data" => $insert['data'],
+                                    "warehouses" => $orderId,
+                                    "details" => $getwarehouses['id'],
+                                    "products" => $getwarehouses['products'],
+                                    "amount" => $value['amount'] ?? 0,
+                                    "price" => $value['price'] ?? 0,
+                                    "total" => ($value['amount'] ?? 0) * ($value['price'] ?? 0),
+                                    "date" => date('Y-m-d H:i:s'),
+                                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                                    "stores" => $insert['stores'],
+                                    "branch" => $insert['branch'],
+                                ]);
+                                $pro_logs[] = $pro;
+                                $amount += ($value['amount'] ?? 0);
+                            }
                         }
                     }
-                    $getProducts = $app->get("products", ["id", "amount"], ["id" => $datas['products']]);
-                    $app->update("products", ["amount" => $getProducts['amount'] - $amount], ["id" => $getProducts['id']]);
+
+                    $getProducts = $app->get("products", ["id", "amount"], ["id" => $datas['products'] ?? 0]);
+                    if ($getProducts) {
+                        $app->update("products", ["amount" => ($getProducts['amount'] ?? 0) - $amount], ["id" => $getProducts['id']]);
+                    }
                 }
-                $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action]['products'], $_SESSION['warehouses'][$action]]);
-                if ($insert['type'] == 'import') {
-                    $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Nhập hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã nhập hàng phiếu #PN' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
-                } elseif ($insert['type'] == 'move') {
-                    $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Xuất hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã xuất hàng phiếu #PX' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
-                }
+
+                $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action]['products'] ?? [], $_SESSION['warehouses'][$action] ?? []]);
+
+                $notificationType = $insert['type'] === 'import' ? 'Nhập hàng' : 'Xuất hàng';
+                $notificationTitle = 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã ' . strtolower($notificationType) . ' phiếu #' . ($insert['type'] === 'import' ? 'PN' : 'PX') . $orderId;
+
+                $jatbi->notification(
+                    $app->getSession("accounts")['id'] ?? 0,
+                    '',
+                    'products',
+                    $notificationType,
+                    $notificationTitle,
+                    '/warehouses/warehouses-history-views/' . $orderId . '/',
+                    'modal-url'
+                );
+
                 unset($_SESSION['warehouses'][$action]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
-                echo json_encode(['status' => 'error', 'content' => $error['content']]);
+                echo json_encode($error);
             }
         }
     });
@@ -7961,7 +8084,7 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                     "date" => $jatbi->datetime($data['date_poster']),
                     "user" => $data['user_name'],
                     "action" => '<a class="btn btn-primary btn-sm pjax-load" href="/warehouses/products-import/crafting/' . $data['id'] . '">' . $jatbi->lang('Nhập hàng') . '</a>',
-                    "views" => '<button data-action="modal" data-url="/admin/logs-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
+                    "views" => '<button data-action="modal" data-url="/crafting/pairing-export-views/' . $data['id'] . '" class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Xem') . '"><i class="ti ti-eye"></i></button>',
                 ];
             }
 
@@ -9540,9 +9663,9 @@ $app->router('/ingredient-export', ['GET'], function ($vars) use ($app, $jatbi, 
 
             $app->select("warehouses", $join, $columns, $queryForSelect, function ($data) use (&$datas, $jatbi, $app, $setting) {
                 $datas[] = [
-                    "code" => '<a class="modal-url fw-semibold" data-url="/warehouses/products-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
+                    "code" => '<a class="modal-url fw-semibold" data-action="modal" data-url="/warehouses/products-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
                     "content" => ($data['crafting'] != '')
-                        ? '<a class="modal-url" data-url="/crafting/pairing-export-views/' . $data['crafting'] . '">' . $data['content'] . '</a>'
+                        ? '<a class="modal-url" data-action="modal" data-url="/crafting/pairing-export-views/' . $data['crafting'] . '">' . $data['content'] . '</a>'
                         : $data['content'],
                     "date" => $jatbi->date($data['date_poster']),
                     "user" => $data['user_name'] ?? 'N/A',
