@@ -48,8 +48,6 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             echo $app->render($template . '/recruitment/job_postings.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
-
-            // Get DataTables parameters
             $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
             $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
             $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
@@ -139,17 +137,17 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "checkbox" => $app->component("box", ["data" => $data['active']]),
                     "title" => $data['title'],
                     "jobs" => $job_names_html,
-                    "description" => substr($data['description'], 0, 100) . '...',
-                    "requirements" => substr($data['requirements'], 0, 100) . '...',
-                    "interest" => substr($data['interest'], 0, 100) . '...',
+                    "description" => mb_substr($data['description'] ?? '', 0, 50, 'UTF-8') . '...',
+                    "interest" => mb_substr($data['interest'] ?? '', 0, 50, 'UTF-8') . '...',
+                    "requirements" => mb_substr($data['requirements'] ?? '', 0, 50, 'UTF-8') . '...',
+                    "created_date" => $data['created_date'],
+                    "stores" => $data['store_name'],
+                    "user" => $data['user_name'],
                     "status" => $app->component("status", [
                         "url" => "/recruitment/job_postings-status/" . $data['active'],
                         "data" => $data['status'],
                         "permission" => ['job_postings.edit']
                     ]),
-                    "stores" => $data['store_name'],
-                    "user" => $data['user_name'],
-                    "created_date" => $data['created_date'],
                     "action" => $app->component("action", [
                         "button" => [
                             [
