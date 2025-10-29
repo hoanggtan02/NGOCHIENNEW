@@ -31,7 +31,7 @@
                                 "placeholder" => $jatbi->lang("Số tiền"),
                                 "class" => "number", 
                                 "required" => true,
-                                "value" => $data['details']['price'] ?? '',
+                                "value" => $data['price'] ?? '',
                                 "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
                             ])?>
                             <?=$app->component('textarea',[

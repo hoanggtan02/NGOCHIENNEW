@@ -70,7 +70,9 @@
                             </td>
                             <td
                                 style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
-                                <?php echo htmlspecialchars($app->get("office", "name", ["id" => $data['department_name']])); ?>
+                                <!-- <?php echo htmlspecialchars($app->get("office", "name", ["id" => $data['department_name']])); ?> -->
+                                <?php echo htmlspecialchars($data['office_name'] ?? ""); ?>
+
                             </td>
                             <td
                                 style="border: 1px solid #000; padding: 8px; vertical-align: middle;text-align: center;">
