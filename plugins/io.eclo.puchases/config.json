@@ -1,0 +1,9 @@
+{
+    "name": "Puchases",
+    "version": "1.0.0",
+    "install": "true",
+    "id": "io.eclo.puchases",
+    "author": "ECLO",
+    "description": "Mua hàng",
+    "requires": "1.0.0"
+}

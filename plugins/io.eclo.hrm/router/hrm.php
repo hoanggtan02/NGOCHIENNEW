@@ -301,7 +301,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             $app->insert("accounts", $insert_account);
             $account_id = $app->id();
-
+            // $jatbi->setStores("add",'accounts',$account_id,$_POST['stores'] ?? '');
             // 3️⃣ Cập nhật lại bảng nhân viên
             $app->update("personnels", [
                 "account" => $account_id
@@ -439,6 +439,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
 
                 $app->update("accounts", $update_account, ["id" => $account['id']]);
+                // $jatbi->setStores("edit",'accounts',$account['id'],$_POST['stores'] ?? '');
             }
 
             $jatbi->logs('hrm', 'personnels-edit', [$update_personnel]);

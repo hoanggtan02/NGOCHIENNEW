@@ -221,12 +221,9 @@
                                         <input type="tel" data-number="money" data-currency="" data-decimals="0"
                                             data-thousands="," data-decimal="." name="price"
                                             class="blur-update form-control number" data-load="this" data-action="blur"
-                                            id="price-<?=$value['id']?>" data-form='{"value": "#price-<?=$value['
-                                            id'];?>.val"}'
-                                        data-url="/invoices/invoices-update/sales/
-                                        <?=$action?>/commission/
-                                        <?=$value['id']?>" data-selector="[data-pos-personnels]" value="
-                                        <?=number_format($value['price'])?>">
+                                            data-form='{"value": "this.val"}'
+                                            data-url="/invoices/invoices-update/sales/<?=$action?>/commission/<?=$value['id']?>" data-selector="[data-pos-personnels]" 
+                                            value="<?=number_format($value['price'])?>">
                                         <div class="input-group-text">
                                             <a class="click-update text-danger" data-load="this" data-action="click"
                                                 data-selector="[data-pos-personnels]" data-alert="true"

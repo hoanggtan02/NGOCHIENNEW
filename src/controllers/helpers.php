@@ -709,69 +709,52 @@ class Jatbi
 	}
 	public function setStores($action, $type, $data, $stores = null)
 	{
-		// Lấy danh sách stores hiện tại nếu là edit và không có stores mới được truyền vào
-		if (empty($stores) && $action == 'edit') {
-			$stores = $this->app->select("stores_linkables", "stores", [
-				"type" => $type,
-				"data" => $data
-			]) ?? [];
-		}
-
-		// Giả định bạn đã có hàm $this->stores() thay thế cho $this->brands()
 		$PostStore = $this->stores('POST', $stores ?? '');
 		$PostStore = is_array($PostStore) ? $PostStore : [$PostStore];
-
 		if ($action === 'add') {
 			foreach ($PostStore as $option) {
 				$insert_option = [
-					"stores" => $option, // Thay 'brands' bằng 'stores'
+					"stores" => $option,
 					"type"   => $type,
 					"data"   => $data,
 				];
-				$this->app->insert("stores_linkables", $insert_option); // Thay bảng
+				$this->app->insert("stores_linkables", $insert_option);
+				$insert['stores'][] = $insert_option;
 			}
 		} elseif ($action === 'edit') {
-			// 1. Lấy tất cả các liên kết stores đang có của đối tượng
-			$existing_options = $this->app->select("stores_linkables", "*", [ // Thay bảng
+			$existing_options = $this->app->select("stores_linkables", "*", [
 				"data" => $data,
 				"type" => $type
 			]);
 
-			// 2. Tạo một map để tra cứu nhanh: [store_id => link_id]
 			$existing_map = [];
 			foreach ($existing_options as $opt) {
-				$existing_map[$opt['stores']] = $opt['id']; // Thay 'brands' bằng 'stores'
+				$existing_map[$opt['stores']] = $opt['id'];
 			}
 
 			$current_stores = [];
 
-			// 3. Lặp qua danh sách stores mới để thêm hoặc giữ lại
 			foreach ($PostStore as $option) {
 				if (isset($existing_map[$option])) {
-					// Giữ lại: store này đã có, không cần làm gì
-					$current_stores[] = $option;
+					// Cập nhật nếu cần (có thể mở rộng logic)
+					$current_brands[] = $option;
 				} else {
-					// Thêm mới: store này chưa có, insert vào DB
-					$this->app->insert("stores_linkables", [ // Thay bảng
-						"stores" => $option, // Thay 'brands' bằng 'stores'
+					$this->app->insert("stores_linkables", [
+						"stores" => $option,
 						"type"   => $type,
 						"data"   => $data,
 					]);
 					$current_stores[] = $option;
 				}
 			}
-
-			// 4. Lặp qua danh sách stores cũ để xóa những liên kết không còn tồn tại
-			foreach ($existing_map as $store => $id) {
-				if (!in_array($store, $current_stores)) {
-					// Xóa: store cũ này không có trong danh sách mới, cần xóa đi
-					$this->app->delete("stores_linkables", ["id" => $id]); // Thay bảng
+			foreach ($existing_map as $brand => $id) {
+				if (!in_array($brand, $current_stores)) {
+					$this->app->delete("stores_linkables", ["id" => $id]);
 				}
 			}
 		} elseif ($action === 'select') {
-			// Trả về danh sách ID các stores được liên kết
-			return $this->app->select("stores_linkables", "stores", ["data" => $data, "type" => $type]); // Thay bảng và cột
-		}
+			return  $this->app->select("stores_linkables","stores",["data"=>$data,"type"=>$type]);
+		} 
 	}
 	public function ajax($type = null)
 	{
