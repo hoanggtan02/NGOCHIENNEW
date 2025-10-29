@@ -99,9 +99,17 @@
     <?php } ?>
     <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
         <div class="card-body">
-            <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
-                data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
-                data-state-save='true' style="width:100%">
+            <table id="datatable" 
+            data-table 
+            class="table align-middle" 
+            data-type="POST" 
+            data-server="true"    
+            data-processing="true" 
+            data-page-length="10" 
+            data-searching="true" 
+            data-paging="true"
+            data-state-save='true' 
+            style="width:100%">
                 <thead>
                     <tr>
                         <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true"
@@ -109,22 +117,22 @@
                             <div class="form-check"><input class="form-check-input checkall" type="checkbox" value=""
                                     data-checkbox="input.checker"></div>
                         </th>
-                        <th data-name="title" data-searchable="true" class="text-nowrap " data-visible="true"
+                        <th data-name="title" data-searchable="false" class="text-nowrap " data-visible="true"
                             data-class="text-start"><?=$jatbi->lang("Tiêu đề")?></th>
-                        <th data-name="jobs" data-searchable="true" class="text-nowrap " data-visible="true"
+                        <th data-name="jobs" data-searchable="false" class="text-nowrap " data-visible="true"
                             data-class="text-start"><?=$jatbi->lang("Vị trí tuyển dụng")?></th>
-                        <th data-name="description" data-searchable="true" class="text-nowrap " data-visible="true"
+                        <th data-name="description" data-searchable="false" class="text-nowrap " data-visible="true"
                             data-class="text-start"><?=$jatbi->lang("Mô tả công việc")?></th>
-                        <th data-name="interest" data-searchable="true" class="text-nowrap" data-visible="true"
+                        <th data-name="interest" data-searchable="false" class="text-nowrap" data-visible="true"
                             data-class="text-start"><?=$jatbi->lang("Quyền lợi")?></th>
-                        <th data-name="requirements" data-searchable="true" class="text-nowrap " data-visible="true"
+                        <th data-name="requirements" data-searchable="false" class="text-nowrap " data-visible="true"
                             data-class="text-nowrap"><?=$jatbi->lang("Yêu cầu công việc")?></th>
-                        <th data-name="created_date" data-orderable="true" class="text-nowrap " data-visible="true"
-                            data-class="text-start"><?=$jatbi->lang("Ngày tạo")?></th>
-                        <th data-name="stores" data-orderable="true" class="text-nowrap " data-visible="true"
-                            data-class="text-center"><?=$jatbi->lang("Cửa hàng")?></th>
-                        <th data-name="user" data-orderable="true" class="text-nowrap " data-visible="true"
-                            data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th>
+                        <th data-name="created_date" data-orderable="falsefalse" class="text-nowrap "
+                            data-visible="true" data-class="text-start"><?=$jatbi->lang("Ngày tạo")?></th>
+                        <!-- <th data-name="stores" data-orderable="false" class="text-nowrap " data-visible="true"
+                             data-class="text-center"><?=$jatbi->lang("Cửa hàng")?></th> -->
+                        <!-- <th data-name="user" data-orderable="false" class="text-nowrap " data-visible="true"
+                            data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th> -->
                         <th data-name="status" data-orderable="false" class="text-nowrap " data-visible="true"
                             data-class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
                         <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true"
