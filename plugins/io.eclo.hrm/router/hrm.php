@@ -2917,8 +2917,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         // 5. Gán biến cho template
         $vars['data'] = $data; // $data này BÂY GIỜ chứa 'personnel_address'
-        $vars['salarys'] = $salarys_db;
-        $vars['allowances'] = $allowances_db;
+        // $vars['salarys'] = $salarys_db;
+        // $vars['allowances'] = $allowances_db;
         $vars['work_schedule_line1'] = $work_schedule_line1;
         $vars['work_schedule_line2'] = $work_schedule_line2;
 
