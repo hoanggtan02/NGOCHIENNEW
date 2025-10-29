@@ -7211,1359 +7211,710 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
         echo $app->render($template . '/warehouses/ingredient-import-from-crafting.html', $vars);
     })->setPermissions(['ingredient']);
 
-    // $app->router("/warehouses-import", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
-    //     $vars['title'] = $jatbi->lang("Nhập hàng");
-    //     $action = "import";
-    //     $type = $vars['type'] ?? '';
-    //     $id = $vars['id'] ?? 0;
+    $app->router("/warehouses-import", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
+        $vars['title'] = $jatbi->lang("Nhập hàng");
+        $action = "import";
+        $type = $vars['type'] ?? '';
+        $id = $vars['id'] ?? 0;
 
-    //     if (isset($_SESSION['warehouses'][$action]['import_type']) && $_SESSION['warehouses'][$action]['import_type'] !== $type) {
-    //         unset($_SESSION['warehouses'][$action]);
-    //     }
-    //     $_SESSION['warehouses'][$action]['import'] = $type;
-    //     if (empty($_SESSION['warehouses'][$action]['type'])) {
-    //         $_SESSION['warehouses'][$action]['type'] = $action;
-    //     }
-    //     if (empty($_SESSION['warehouses'][$action]['data'])) {
-    //         $_SESSION['warehouses'][$action]['data'] = 'products';
-    //     }
-    //     if (empty($_SESSION['warehouses'][$action]['date'])) {
-    //         $_SESSION['warehouses'][$action]['date'] = date("Y-m-d");
-    //     }
-    //     if (count($stores) == 1 && empty($_SESSION['warehouses'][$action]['stores'])) {
-    //         $_SESSION['warehouses'][$action]['stores'] = $app->get("stores", "*", ["id" => array_values($accStore)[0] ?? 0, "status" => 'A', "deleted" => 0]);
-    //     }
-
-    //     $vars['data'] = $_SESSION['warehouses'][$action] ?? [];
-    //     $vars['action'] = $action;
-    //     $vars['type'] = $type;
-
-    //     $session_products = $_SESSION['warehouses'][$action]['products'] ?? [];
-    //     $enriched_products = [];
-    //     if (!empty($session_products)) {
-    //         $product_ids = array_column($session_products, 'products');
-
-    //         $products_info = $app->select("products", [
-    //             "[>]vendors" => ["vendor" => "id"],
-    //             "[>]units" => ["units" => "id"],
-    //             "[>]stores" => ["stores" => "id"],
-    //             "[>]branch" => ["branch" => "id"]
-    //         ], [
-    //             "products.id",
-    //             "products.code",
-    //             "products.name",
-    //             "products.vendor(vendor_id)",
-    //             "vendors.name(vendor_name)",
-    //             "units.name(unit_name)",
-    //             "stores.name(store_name)",
-    //             "branch.name(branch_name)"
-    //         ], ["products.id" => $product_ids]);
-
-    //         $products_map = array_column($products_info, null, 'id');
-
-    //         foreach ($session_products as $key => $item) {
-    //             $p_id = $item['products'] ?? 0;
-    //             if (isset($products_map[$p_id])) {
-    //                 $product_detail = $products_map[$p_id];
-    //                 $price = (float) str_replace(',', '', $item['price'] ?? 0);
-    //                 $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
-
-    //                 $enriched_products[$key] = array_merge($item, [
-    //                     'key' => $key,
-    //                     'code' => $product_detail['code'],
-    //                     'name' => $product_detail['name'],
-    //                     'vendor_name' => $product_detail['vendor_name'],
-    //                     'unit' => $product_detail['unit_name'],
-    //                     'store' => $product_detail['store_name'],
-    //                     'branch' => $product_detail['branch_name'],
-    //                     'total_price' => $price * $amount,
-    //                 ]);
-    //             }
-    //         }
-    //     }
-    //     $vars['SelectProducts'] = $enriched_products;
-
-    //     $store_options = [['value' => '', 'text' => '']];
-    //     if (!empty($stores)) {
-    //         foreach ($stores as $store) {
-    //             if (isset($store['value']) && isset($store['text'])) {
-    //                 $store_options[] = $store;
-    //             }
-    //         }
-    //     }
-    //     $vars['store_options'] = $store_options;
-
-    //     $selected_store_id = $vars['data']['stores']['id'] ?? 0;
-    //     $vars['branch_options'] = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-
-    //     echo $app->render($template . '/warehouses/import.html', $vars);
-    // })->setPermissions(['warehouses-import']);
-
-    // $app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
-    //     $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-    //     $action = $vars['action'];
-    //     $router['3'] = $vars['product'];
-    //     $router['4'] = $vars['do'];
-    //     $router['5'] = $vars['id'];
-
-    //     $error = [];
-    //     $total_products = 0;
-    //     $error_warehouses = false;
-    //     $kiemtra = false;
-    //     $sanpham_kiemtra = [];
-    //     $kiemtracuahang = false;
-    //     $cancel_amount = 0;
-    //     $AmountMinus = false;
-    //     $pro_logs = [];
-    //     if ($router['3'] == 'stores') {
-    //         $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-    //         if ($data > 1) {
-    //             $_SESSION['warehouses'][$action]['stores'] = [
-    //                 "id" => $data['id'],
-    //                 "name" => $data['name'],
-    //             ];
-    //             if ($action == 'cancel') {
-    //                 $datas = $app->get("products", ["id", "units"], ["id" => $_SESSION['warehouses'][$action]['products']]);
-    //                 unset($_SESSION['warehouses'][$action]['warehouses']);
-    //                 $warehouses = $app->select("warehouses_details", ["id", "products", "vendor", "amount_total", "price", 'stores'], [
-    //                     "type" => 'import',
-    //                     "products" => $datas['id'],
-    //                     "stores" => $_SESSION['warehouses'][$action]['stores'],
-    //                     "deleted" => 0,
-    //                     "amount_total[>]" => 0
-    //                 ]);
-    //                 foreach ($warehouses as $key => $value) {
-    //                     $_SESSION['warehouses'][$action]['warehouses'][$value['id']] = [
-    //                         "id" => $value['id'],
-    //                         "products" => $value['products'],
-    //                         "vendor" => $value['vendor'],
-    //                         "duration" => $value['duration'],
-    //                         "amount_total" => $value['amount_total'],
-    //                         "amount" => '',
-    //                         "price" => $value['price'],
-    //                         "units" => $datas['units'],
-    //                         "date" => $value['date'],
-    //                         "stores" => $value['stores'],
-    //                     ];
-    //                 }
-    //             }
-    //             if ($action == 'move') {
-    //                 unset($_SESSION['warehouses'][$action]['products']);
-    //                 unset($_SESSION['warehouses'][$action]['branch']);
-    //             }
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } else {
-    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-    //         }
-    //     } elseif ($router['3'] == 'check-update') {
-    //         $_SESSION['warehouses'][$action]['products'][$router['4']]['status'] = $_POST['value'];
-    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //     } elseif ($router['3'] == 'branch') {
-    //         $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-    //         if ($data > 1) {
-    //             $_SESSION['warehouses'][$action]['branch'] = [
-    //                 "id" => $data['id'],
-    //                 "name" => $data['name'],
-    //             ];
-    //             if ($action == 'move') {
-    //                 unset($_SESSION['warehouses'][$action]['products']);
-    //             }
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } else {
-    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-    //         }
-    //     } elseif ($router['3'] == 'branch_receive') {
-    //         $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-    //         if ($data > 1) {
-    //             $_SESSION['warehouses'][$action]['branch_receive'] = [
-    //                 "id" => $data['id'],
-    //                 "name" => $data['name'],
-    //             ];
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } else {
-    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-    //         }
-    //     } elseif ($router['3'] == 'warehouses') {
-    //         $value = $app->xss($_POST['value']);
-    //         if ($value < 0) {
-    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không thể cập nhật số lượng âm")]);
-    //         } else {
-    //             if ($_SESSION['warehouses'][$action]['warehouses'][$router['5']]['amount_total'] >= $value) {
-    //                 $_SESSION['warehouses'][$action]['warehouses'][$router['5']][$router['4']] = $value;
-    //                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //             } else {
-    //                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng hủy lớn hơn tồn")]);
-    //             }
-    //         }
-    //     } elseif ($router['3'] == 'stores_receive') {
-    //         $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-    //         if ($data > 1) {
-    //             $_SESSION['warehouses'][$action]['stores_receive'] = [
-    //                 "id" => $data['id'],
-    //                 "name" => $data['name'],
-    //             ];
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } else {
-    //             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-    //         }
-    //     } elseif ($router['3'] == 'data') {
-    //         unset($_SESSION['warehouses'][$action]['products']);
-    //         $_SESSION['warehouses'][$action]['data'] = $app->xss($_POST['value']);
-    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //     } elseif ($router['3'] == 'products') {
-    //         if ($router['4'] == 'add') {
-    //             $data = $app->get("products", ["id", "images", "code", "name", "categorys", "default_code", "units", "notes", "crafting", "amount"], ["id" => $app->xss($router['5'])]);
-    //             if ($data > 1) {
-    //                 if ($data['amount'] <= 0 && $action == 'move') {
-    //                     $error = $jatbi->lang("Số lượng không đủ");
-    //                 }
-    //                 if (empty($error)) {
-    //                     if (!isset($_SESSION['warehouses'][$action]['products'][$data['id']])) {
-    //                         $_SESSION['warehouses'][$action]['products'][$data['id']] = [
-    //                             "products" => $data['id'],
-    //                             "amount_buy" => 0,
-    //                             "amount" => 1,
-    //                             "price" => 0,
-    //                             "images" => $data['images'],
-    //                             "code" => $data['code'],
-    //                             "name" => $data['name'],
-    //                             "categorys" => $data['categorys'],
-    //                             "default_code" => $data['default_code'],
-    //                             "units" => $data['units'],
-    //                             "notes" => $data['notes'],
-    //                             "crafting" => $data['crafting'],
-    //                             "warehouses" => $data['amount'],
-    //                         ];
-    //                         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //                     } else {
-    //                         $getPro = $_SESSION['warehouses'][$action]['products'][$data['id']];
-    //                         $value = $getPro['amount'] + 1;
-    //                         if ($value > $data['amount'] && $action == 'move') {
-    //                             $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $data['amount'];
-    //                             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-    //                         } else {
-    //                             $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $value;
-    //                             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //                         }
-    //                     }
-    //                 } else {
-    //                     echo json_encode(['status' => 'error', 'content' => $error,]);
-    //                 }
-    //             } else {
-    //                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
-    //             }
-    //         } elseif ($router['4'] == 'deleted') {
-    //             unset($_SESSION['warehouses'][$action]['products'][$router['5']]);
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } elseif ($router['4'] == 'price') {
-    //             $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } elseif ($router['4'] == 'amount') {
-    //             $value = $app->xss(str_replace([','], '', $router['5']));
-    //             if ($value < 0) {
-    //                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
-    //             } else {
-    //                 $getAmount = $app->get("products", ["id", "amount"], ["id" => $_SESSION["warehouses"][$action]['products'][$router['5']]['products']]);
-    //                 if ($value > $getAmount['amount'] && $action == 'move' || $value > $getAmount['amount'] && $action == 'cancel') {
-    //                     $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $getAmount['amount'];
-    //                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-    //                 } else {
-    //                     $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
-    //                     echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //                 }
-    //             }
-    //         } else {
-    //             $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss($_POST['value']);
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         }
-    //     } elseif ($router['3'] == 'date' || $router['3'] == 'content') {
-    //         $_SESSION['warehouses'][$action][$router['3']] = $app->xss($_POST['value']);
-    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //     } elseif ($router['3'] == 'cancel') {
-    //         unset($_SESSION['warehouses'][$action]);
-    //         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //     } elseif ($router['3'] == 'completed') {
-    //         $datas = $_SESSION['warehouses'][$action];
-    //         $warehouses1 = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
-    //         $kiemtra = 'false';
-    //         $sanpham_kiemtra = [];
-    //         $kiemtracuahang = 'false';
-
-    //         foreach ($datas['products'] as $value_amount) {
-    //             $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
-    //             $total_products += $value_amount['amount'] * $value_amount['price'];
-    //             if ($value_amount['amount'] == '' || $value_amount['amount'] == 0 || $value_amount['amount'] < 0) {
-    //                 $error_warehouses = 'true';
-    //             }
-    //             if ($action == 'move') {
-    //                 if ($name_po['amount'] <= 0) {
-    //                     $kiemtra = 'true';
-    //                     $sanpham_kiemtra[] = $name_po['code'];
-    //                 }
-    //             }
-    //             if ($action == 'import') {
-    //                 if ($name_po['stores'] != $datas['stores']['id'] || $name_po['branch'] != ($datas['branch']['id'] ?? 0)) {
-    //                     $kiemtracuahang = 'true';
-    //                 }
-    //             }
-    //         }
-    //         if ($action == 'move' && $kiemtra == 'true') {
-    //             $error = [
-    //                 'status' => 'error',
-    //                 'content' => 'Những mã hiện hết số lượng, hãy kiểm tra lại: ' . implode(", ", $sanpham_kiemtra)
-    //             ];
-    //         }
-    //         if ($action == 'import' && $kiemtracuahang == 'true' && (empty($datas['move'] ?? null) && empty($datas['purchase'] ?? null))) {
-    //             $error = [
-    //                 'status' => 'error',
-    //                 'content' => 'Cửa hàng hoặc quầy hàng chọn khác với Cửa hàng hoặc quầy hàng của sản phẩm'
-    //             ];
-    //         }
-    //         if ($action == 'cancel') {
-    //             foreach ($datas['warehouses'] as $AmounCancel) {
-    //                 $cancel_amount += $AmounCancel['amount'];
-    //                 if ($AmounCancel['amount'] < 0) {
-    //                     $AmountMinus = "true";
-    //                 }
-    //             }
-    //         }
-    //         if ($cancel_amount <= 0 && $action == 'cancel') {
-    //             $error = ["status" => 'error', 'content' => $jatbi->lang("Phải có số lượng hủy")];
-    //         } elseif ($AmountMinus == "true" && $action == 'cancel') {
-    //             $error = ["status" => 'error', 'content' => $jatbi->lang("Số lượng không âm")];
-    //         }
-    //         if ($router['4'] == 'moves') {
-    //             if ($datas['stores_receive']['id'] == '' || $datas['branch_receive']['id'] == '') {
-    //                 $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
-    //             }
-    //         }
-    //         if (
-    //             empty($datas['stores']['id']) ||
-    //             empty($datas['branch']['id']) ||
-    //             empty($datas['type']) ||
-    //             empty($datas['content']) ||
-    //             count($datas['products'] ?? []) == 0 ||
-    //             (count($datas['warehouses'] ?? []) == 0 && $action == 'cancel')
-    //         ) {
-    //             $error = ["status" => 'error', 'content' => "Lỗi trống"];
-    //         } elseif ($warehouses1 == 2) {
-    //             $error = ['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập")];
-    //         }
-    //         if (count($error) == 0) {
-    //             $insert = [
-    //                 "code" => $datas['type'] == 'import' ? 'PN' : 'PX',
-    //                 "type" => $datas['type'],
-    //                 "data" => $datas['data'],
-    //                 "stores" => $datas['type'] == 'import' ? $datas['stores']['id'] : $_SESSION['warehouses']['move']['stores']['id'],
-    //                 "branch" => $datas['branch']['id'],
-    //                 "stores_receive" => $datas['stores_receive']['id'] ?? null,
-    //                 "branch_receive" => $datas['branch_receive']['id'] ?? null,
-    //                 "content" => $datas['content'],
-    //                 "vendor" => $datas['vendor']['id'] ?? null,
-    //                 "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                 "date" => $datas['date'],
-    //                 "active" => $jatbi->active(30),
-    //                 "date_poster" => date("Y-m-d H:i:s"),
-    //                 "purchase" => $datas['purchase'] ?? "",
-    //                 "move" => $datas['move'] ?? "",
-    //                 "receive_status" => 1,
-    //             ];
-    //             $app->insert("warehouses", $insert);
-    //             $orderId = $app->id();
-    //             if (isset($datas['purchase'])) {
-    //                 $app->update("purchase", ["status" => 5], ["id" => $datas['purchase']]);
-    //                 $app->insert("purchase_logs", [
-    //                     "purchase" => $datas['purchase'],
-    //                     "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                     "content" => $app->xss('Nhập hàng'),
-    //                     "status" => 5,
-    //                     "date" => date('Y-m-d H:i:s'),
-    //                 ]);
-    //             }
-    //             if (isset($datas['move'])) {
-    //                 foreach ($datas['products'] as $key => $value_move) {
-    //                     if ($value_move['amount'] < $value_move['amount_old']) {
-    //                         $move_error[] = $value_move['amount_old'] - $value_move['amount'];
-    //                     }
-    //                     $app->update("warehouses_details", ["amount_move" => $value_move['amount']], ["id" => $value_move['details']]);
-    //                 }
-    //                 if (count($move_error) > 0) {
-    //                     $receive_status = 3;
-    //                 } else {
-    //                     $receive_status = 2;
-    //                 }
-    //                 $app->update("warehouses", [
-    //                     "receive_status" => $receive_status,
-    //                     "receive_date" => date("Y-m-d H:i:s"),
-    //                 ], ["id" => $datas['move']]);
-    //             }
-    //             foreach ($datas['products'] as $key1 => $value) {
-    //                 $getProducts = $app->get("products", ["id", "code_products", "code", "name", "categorys", "group", "vendor", "price", "cost", "units", "tkco", "tkno", "default_code", "amount"], ["id" => $value['products'], "deleted" => 0]);
-    //                 $crafting = $app->get("crafting", "*", ["id" => ($value['crafting'] ?? null)]);
-    //                 if ($insert['type'] == "move") {
-    //                     $storeget = $app->get("stores", "*", ["id" => $insert['stores_receive']]);
-    //                     $branchget = $app->get("branch", "*", ["id" => $insert['branch_receive']]);
-    //                     if ($getProducts['code_products'] == NULL) {
-    //                         $code = $getProducts['code'];
-    //                     } else {
-    //                         if ($insert['stores_receive'] == $insert['stores']) {
-    //                             $code = $branchget['code'] . $getProducts['code_products'];
-    //                         } else {
-    //                             $code = $storeget['code'] . $branchget['code'] . $getProducts['code_products'];
-    //                         }
-    //                     }
-    //                     $checkcode = $app->get("products", ["id", "code"], ["code" => $code, "deleted" => 0, 'status' => 'A', "stores" => $insert['stores_receive'], "branch" => $insert['branch_receive']]);
-    //                     if ($code == $checkcode['code'] && $getProducts['code_products'] != NULL) {
-    //                         $tam = [
-    //                             "products" => $checkcode['id'],
-    //                             "value" => $value['products'],
-    //                             "warehouses" => $orderId,
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                         ];
-    //                         $app->insert("tam", $tam);
-    //                     } else {
-    //                         $insert_products = [
-    //                             "type" => $app->get("products", "type", ["id" => $value['products']]),
-    //                             "main" => 0,
-    //                             "code" => $code,
-    //                             "name" => $getProducts['name'],
-    //                             "categorys" => $getProducts['categorys'],
-    //                             "vat" => $setting['site_vat'],
-    //                             "vat_type" => 1,
-    //                             "amount" => 0,
-    //                             "content" => $value['content'],
-    //                             "vendor" => $getProducts['vendor'],
-    //                             "group" => $getProducts['group'],
-    //                             "price" => $app->xss(str_replace([','], '', $getProducts['price'])),
-    //                             "cost" => $app->xss(str_replace([','], '', $getProducts['cost'])),
-    //                             "units" => $getProducts['units'],
-    //                             "notes" => $app->xss($crafting['notes']),
-    //                             "active" => $jatbi->active(32),
-    //                             // "images"		=> $handle->file_dst_name==''?'no-images.jpg':$handle->file_dst_name,
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                             "status" => 'A',
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "new" => 1,
-    //                             "crafting" => $value['crafting'],
-    //                             "stores" => $insert['stores_receive'],
-    //                             "branch" => $insert['branch_receive'],
-    //                             "code_products" => $getProducts['code_products'] == NULL ? NULL : $getProducts['code_products'],
-    //                             "tkno" => $getProducts['tkco'],
-    //                             "tkco" => $getProducts['tkno'],
-    //                             "default_code" => $getProducts['default_code'],
-    //                         ];
-    //                         $app->insert("products", $insert_products);
-    //                         $Gid = $app->id();
-    //                         $getDetails = $app->select("products_details", ["id", "ingredient", "code", "type", "group", "categorys", "pearl", "sizes", "colors", "units", "price", "cost", "amount", "total"], ["products" => $value['products'], "deleted" => 0]);
-    //                         foreach ($getDetails as $detail) {
-    //                             $products_details = [
-    //                                 "products" => $Gid,
-    //                                 "ingredient" => $detail['ingredient'],
-    //                                 "code" => $detail['code'],
-    //                                 "type" => $detail['type'],
-    //                                 "group" => $detail['group'],
-    //                                 "categorys" => $detail['categorys'],
-    //                                 "pearl" => $detail['pearl'],
-    //                                 "sizes" => $detail['sizes'],
-    //                                 "colors" => $detail['colors'],
-    //                                 "units" => $detail['units'],
-    //                                 "price" => $detail['price'],
-    //                                 "cost" => $detail['cost'],
-    //                                 "amount" => $detail['amount'],
-    //                                 "total" => $detail['total'],
-    //                                 "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                                 "date" => date("Y-m-d H:i:s"),
-    //                             ];
-    //                             $app->insert("products_details", $products_details);
-    //                         }
-    //                         $tam = [
-    //                             "products" => $Gid,
-    //                             "value" => $value['products'],
-    //                             "warehouses" => $orderId,
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                         ];
-    //                         $app->insert("tam", $tam);
-    //                     }
-    //                 }
-    //                 if ($action == 'import') {
-    //                     if (!empty($datas['move'])) {
-    //                         $checktam = $app->get("tam", "products", ["value" => $value['products'], "warehouses" => $app->get("warehouses", "move", ["id" => $orderId])]);
-    //                         $pro = [
-    //                             "warehouses" => $orderId,
-    //                             "data" => $insert['data'],
-    //                             "type" => $insert['type'],
-    //                             "products" => $value['status'] == 0 ? $checktam : $value['products'],
-    //                             "amount_buy" => $value['amount_buy'],
-    //                             "amount" => $value['amount'],
-    //                             "amount_total" => $value['amount'],
-    //                             "price" => $getProducts['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date("Y-m-d H:i:s"),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
-    //                             "branch" => $value['status'] == 0 ? $insert['branch'] : $value['branch'],
-    //                         ];
-    //                         $app->insert("warehouses_details", $pro);
-    //                         $GetID = $app->id();
-    //                         $warehouses_logs = [
-    //                             "type" => $insert['type'],
-    //                             "data" => $insert['data'],
-    //                             "warehouses" => $orderId,
-    //                             "details" => $GetID,
-    //                             "products" => $pro['products'],
-    //                             "price" => $pro['price'],
-    //                             "amount" => str_replace([','], '', $value['amount']),
-    //                             "total" => $value['amount'] * $value['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
-    //                         ];
-    //                         $app->insert("warehouses_logs", $warehouses_logs);
-    //                         $sanpham = $app->get("products", ["id", "amount"], ["id" => $pro['products']]);
-    //                         $app->update("products", ["amount" => $sanpham['amount'] + $value['amount']], ["id" => $sanpham['id']]);
-    //                         $pro_logs[] = $pro;
-    //                     } else {
-    //                         $app->update("products", ["amount" => $getProducts['amount'] + str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
-    //                         $pro = [
-    //                             "warehouses" => $orderId,
-    //                             "data" => $insert['data'],
-    //                             "type" => $insert['type'],
-    //                             "vendor" => $value['vendor'] ?? "",
-    //                             "products" => $value['products'],
-    //                             "amount_buy" => $value['amount_buy'],
-    //                             "amount" => str_replace([','], '', $value['amount']),
-    //                             "amount_total" => str_replace([','], '', $value['amount']),
-    //                             "price" => $value['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date(format: "Y-m-d H:i:s"),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => (isset($value['status']) && $value['status'] == 0)
-    //                                 ? ($insert['stores'] ?? null)
-    //                                 : ($value['stores'] ?? null),
-
-    //                             "branch" => (isset($value['status']) && $value['status'] == 0)
-    //                                 ? ($insert['branch'] ?? null)
-    //                                 : ($value['branch'] ?? null),
-    //                         ];
-    //                         $app->insert("warehouses_details", $pro);
-    //                         $GetID = $app->id();
-    //                         $warehouses_logs = [
-    //                             "type" => $insert['type'],
-    //                             "data" => $insert['data'],
-    //                             "warehouses" => $orderId,
-    //                             "details" => $GetID,
-    //                             "products" => $value['products'],
-    //                             "price" => $value['price'],
-    //                             "amount" => str_replace([','], '', $value['amount']),
-    //                             "total" => $value['amount'] * $value['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => (isset($value['status']) && $value['status'] == 0)
-    //                                 ? $insert['stores']
-    //                                 : ($value['stores'] ?? null),
-    //                         ];
-    //                         $app->insert("warehouses_logs", $warehouses_logs);
-    //                         $pro_logs[] = $pro;
-    //                     }
-    //                 }
-    //                 if ($action == 'move') {
-    //                     if ($value['amount'] > 0) {
-    //                         $app->update("products", ["amount" => $getProducts['amount'] - str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
-    //                         $getAmounts = $app->select("warehouses_details", ["id", "amount_total", "amount_move", "price"], ["products" => $value['products'], "stores" => $insert['stores'], "type" => "import", "deleted" => 0, "amount_total[>]" => 0]);
-    //                         $numWarehouse = 0;
-    //                         $buyAmount = $value['amount'];
-    //                         foreach ($getAmounts as $keyAmount => $getAmount) {
-    //                             if ($keyAmount <= $numWarehouse) {
-    //                                 $conlai = $getAmount['amount_total'] - $buyAmount;
-    //                                 if ($buyAmount > $getAmount['amount_total']) {
-    //                                     $getbuy = $getAmount['amount_total'];
-    //                                 } else {
-    //                                     $getbuy = $buyAmount;
-    //                                 }
-    //                                 $getwarehousess[$value['products']][] = [
-    //                                     "id" => $getAmount['id'],
-    //                                     "amount_move" => $getAmount['amount_move'],
-    //                                     "amount_total" => $getAmount['amount_total'],
-    //                                     "price" => $getAmount['price'],
-    //                                     "duration" => $getAmount['duration'],
-    //                                     "amount" => $getbuy,
-    //                                 ];
-    //                                 if ($conlai < 0) {
-    //                                     $numWarehouse = $numWarehouse + 1;
-    //                                     $buyAmount = -$conlai;
-    //                                 }
-    //                             }
-    //                         }
-    //                         foreach ($getwarehousess[$value['products']] as $getwarehouses) {
-    //                             $update_ware = [
-    //                                 "amount_move" => $getwarehouses['amount_move'] + $getwarehouses['amount'],
-    //                                 "amount_total" => $getwarehouses['amount_total'] - $getwarehouses['amount'],
-    //                             ];
-    //                             $app->update("warehouses_details", $update_ware, ["id" => $getwarehouses['id']]);
-    //                         }
-    //                         $pro = [
-    //                             "warehouses" => $orderId,
-    //                             "data" => $insert['data'],
-    //                             "type" => $insert['type'],
-    //                             "vendor" => $value['vendor'],
-    //                             "products" => $value['products'],
-    //                             "amount_buy" => $value['amount_buy'],
-    //                             "amount" => $value['amount'],
-    //                             "amount_total" => $value['amount'],
-    //                             "price" => $getProducts['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date("Y-m-d H:i:s"),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $insert['stores'],
-    //                             "branch" => $insert['branch'],
-    //                         ];
-    //                         $app->insert("warehouses_details", $pro);
-    //                         $get_details = $app->id();
-    //                         $warehouses_logs = [
-    //                             "data" => $insert['data'],
-    //                             "type" => $insert['type'],
-    //                             "warehouses" => $orderId,
-    //                             "details" => $get_details,
-    //                             "products" => $value['products'],
-    //                             "price" => $getProducts['price'],
-    //                             "amount" => $value['amount'],
-    //                             "total" => $value['amount'] * $getProducts['price'],
-    //                             "notes" => $insert['notes'],
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $insert['stores'],
-    //                             "stores_receive" => $insert['stores_receive'],
-    //                             "branch" => $insert['branch'],
-    //                             "branch_receive" => $insert['branch_receive'],
-    //                         ];
-    //                         $app->insert("warehouses_logs", $warehouses_logs);
-    //                     }
-    //                 }
-    //             }
-    //             if ($insert['data'] != '') {
-    //                 $app->insert("purchase_logs", [
-    //                     "purchase" => $insert['data'],
-    //                     "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                     "content" => $app->xss('Nhập hàng'),
-    //                     "status" => $app->xss(5),
-    //                     "date" => date('Y-m-d H:i:s'),
-    //                 ]);
-    //                 $app->update("purchase", ["status" => 5], ["id" => $insert['data']]);
-    //             }
-    //             $amount = 0;
-    //             if ($action == 'cancel') {
-    //                 foreach ($datas['warehouses'] as $key => $value) {
-    //                     if ($value['amount'] > 0) {
-    //                         $getwarehouses = $app->get("warehouses_details", ["id", "amount_cancel", "amount_total", "vendor", "products", "price"], ["id" => $value['id'], "deleted" => 0, "amount_total[>]" => 0]);
-    //                         $update = [
-    //                             "amount_cancel" => $getwarehouses['amount_cancel'] + $value['amount'],
-    //                             "amount_total" => $getwarehouses['amount_total'] - $value['amount'],
-    //                         ];
-    //                         $app->update("warehouses_details", $update, ["id" => $getwarehouses['id']]);
-    //                         $total_amount = $value['amount_total'] - $value['amount'];
-    //                         $pro = [
-    //                             "warehouses" => $orderId,
-    //                             "data" => $insert['data'],
-    //                             "type" => $insert['type'],
-    //                             "vendor" => $getwarehouses['vendor'],
-    //                             "products" => $getwarehouses['products'],
-    //                             "amount_buy" => $value['amount_buy'],
-    //                             "amount" => $value['amount'],
-    //                             "amount_total" => $value['amount'],
-    //                             "price" => $getwarehouses['price'],
-    //                             "notes" => $value['notes'],
-    //                             "date" => date("Y-m-d H:i:s"),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $insert['stores'],
-    //                             "branch" => $insert['branch'],
-    //                         ];
-    //                         $app->insert("warehouses_details", $pro);
-    //                         $warehouses_logs = [
-    //                             "type" => $insert['type'],
-    //                             "data" => $insert['data'],
-    //                             "warehouses" => $orderId,
-    //                             "details" => $getwarehouses['id'],
-    //                             "products" => $getwarehouses['products'],
-    //                             "amount" => $app->xss($value['amount']),
-    //                             "price" => $value['price'],
-    //                             "total" => $value['amount'] * $value['price'],
-    //                             "date" => date('Y-m-d H:i:s'),
-    //                             "user" => $app->getSession("accounts")['id'] ?? 0,
-    //                             "stores" => $insert['stores'],
-    //                             "branch" => $insert['branch'],
-    //                         ];
-    //                         $app->insert("warehouses_logs", $warehouses_logs);
-    //                         $pro_logs[] = $pro;
-    //                         $amount += $value['amount'];
-    //                     }
-    //                 }
-    //                 $getProducts = $app->get("products", ["id", "amount"], ["id" => $datas['products']]);
-    //                 $app->update("products", ["amount" => $getProducts['amount'] - $amount], ["id" => $getProducts['id']]);
-    //             }
-    //             $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action]['products'], $_SESSION['warehouses'][$action]]);
-    //             if ($insert['type'] == 'import') {
-    //                 $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Nhập hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã nhập hàng phiếu #PN' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
-    //             } elseif ($insert['type'] == 'move') {
-    //                 $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Xuất hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã xuất hàng phiếu #PX' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
-    //             }
-    //             unset($_SESSION['warehouses'][$action]);
-    //             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-    //         } else {
-    //             echo json_encode(['status' => 'error', 'content' => $error['content']]);
-    //         }
-    //     }
-    // });
-
-
-    
-    $app->router("/warehouses-import(/{import_type:purchase|move}(/{id:[0-9]+})?)", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
-    // --- Code Router GET /warehouses-import đã cung cấp ở câu trả lời trước ---
-    // (Đã bao gồm logic đọc cookie, khởi tạo từ purchase/move, chuẩn bị $vars)
-    // --- Dán code đó vào đây ---
-     $vars['title'] = $jatbi->lang("Nhập hàng");
-    $action = "import";
-    $import_type = $vars['import_type'] ?? ''; // Đổi tên 'type' thành 'import_type' cho rõ
-    $id = (int) ($vars['id'] ?? 0);
-
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action;
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
-
-    // 2. Logic reset cookie nếu import_type thay đổi
-    if (($cookie_data['import_type'] ?? '') !== $import_type) {
-        $app->deleteCookie($cookie_name);
-        $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-        $cookie_data['import_type'] = $import_type; // Gán lại type mới
-        $needs_cookie_update = true; // Đánh dấu cần lưu lại ở cuối
-        // Không cần gán $cookie_data['import'] = $import_type như code cũ
-    }
-     // Gán các giá trị mặc định đã được helper xử lý
-
-     // Xử lý nhập từ Purchase
-     if ($import_type === 'purchase' && $id > 0) {
-         if (($cookie_data['purchase'] ?? null) != $id) {
-             $needs_cookie_update = true;
-             // Reset
-             $cookie_data['products'] = []; $cookie_data['content'] = ''; $cookie_data['vendor'] = null; $cookie_data['move'] = null;
-
-             $getPur = $app->get("purchase", ['id', 'code', 'vendor'], ["id" => $id, "deleted" => 0, "status" => 3]);
-             if ($getPur) {
-                 $getPros = $app->select("purchase_products", ['id', 'products', 'amount', 'price', 'vendor'], ["purchase" => $getPur['id'], "deleted" => 0]);
-                 foreach ($getPros as $value) {
-                     $getPro = $app->get("products", ['id', 'amount'], ["id" => $value['products']]); // Chỉ lấy ID, amount
-                     if ($getPro) {
-                         $pid = (int)$getPro['id'];
-                         $cookie_data['products'][$pid] = [
-                             "products" => $pid,
-                             "amount_buy" => (float) str_replace(',', '', $value['amount']),
-                             "amount" => (float) str_replace(',', '', $value['amount']),
-                             "price" => (float) $value['price'],
-                             "vendor" => (int) $value['vendor'],
-                             "notes" => '',
-                             "warehouses" => (float) ($getPro['amount'] ?? 0),
-                         ];
-                     }
-                 }
-                 $cookie_data['purchase'] = $getPur['id'];
-                 $cookie_data['content'] = "nhập hàng từ phiếu mua #" . $getPur['code'];
-                 $cookie_data['vendor'] = $app->get("vendors", "*", ["id" => $getPur['vendor']]);
-             } else { /* Xử lý lỗi */ }
-         }
-     }
-     // Xử lý nhập từ Move
-     elseif ($import_type === 'move' && $id > 0) {
-         if (($cookie_data['move'] ?? null) != $id) {
-             $needs_cookie_update = true;
-             // Reset
-             $cookie_data['products'] = []; $cookie_data['content'] = ''; $cookie_data['vendor'] = null; $cookie_data['purchase'] = null; $cookie_data['stores'] = null; $cookie_data['branch'] = null;
-
-             $getMove = $app->get("warehouses", ['id', 'code', 'stores', 'branch', 'stores_receive', 'branch_receive', 'vendor', 'content'], ["id" => $id, "deleted" => 0, "receive_status" => [1, 3], "stores_receive" => array_keys($accStore)]);
-             if ($getMove) {
-                 $getPros = $app->select("warehouses_details", ['id', 'products', 'amount', 'price', 'vendor'], ["warehouses" => $getMove['id'], "deleted" => 0]);
-                 foreach ($getPros as $value) {
-                     $getPro = $app->get("products", ['id', 'amount'], ["id" => $value['products']]);
-                     if ($getPro) {
-                         $pid = (int)$getPro['id'];
-                         $cookie_data['products'][$pid] = [
-                             "products" => $pid,
-                             "amount_buy" => 0,
-                             "amount" => (float) str_replace(',', '', $value['amount']),
-                             "amount_old" => (float) str_replace(',', '', $value['amount']),
-                             "details" => (int) $value['id'],
-                             "price" => (float) $value['price'],
-                             "notes" => '',
-                             "status" => 0,
-                             "stores" => (int) $getMove['stores'],
-                             "branch" => (int) $getMove['branch'],
-                             "warehouses" => (float) ($getPro['amount'] ?? 0),
-                         ];
-                     }
-                 }
-                 $cookie_data['move'] = $getMove['id'];
-                 $cookie_data['stores_receive_re'] = (int) $getMove['stores_receive'];
-                 $cookie_data['content'] = $getMove['content'] ?: ("nhập hàng từ mã chuyển hàng #" . $getMove['code'] . $getMove['id']);
-                 $cookie_data['vendor'] = $app->get("vendors", "*", ["id" => $getMove['vendor']]);
-                 $cookie_data['stores'] = $app->get("stores", "*", ["id" => $getMove['stores_receive']]);
-                 $cookie_data['branch'] = $app->get("branch", "*", ["id" => $getMove['branch_receive']]);
-             } else { /* Xử lý lỗi */ }
-         }
-     }
-      // Nhập tự do
-     else {
-        if (($cookie_data['purchase'] ?? null) || ($cookie_data['move'] ?? null)) {
-            $needs_cookie_update = true;
-            $store_before = $cookie_data['stores']; $branch_before = $cookie_data['branch']; $date_before = $cookie_data['date'];
-            $cookie_data = get_warehouse_ticket_cookie_data($app, $action); // Lấy default
-            // Giữ lại
-            $cookie_data['stores'] = $store_before; $cookie_data['branch'] = $branch_before; $cookie_data['date'] = $date_before;
-            $cookie_data['import_type'] = '';
+        if (isset($_SESSION['warehouses'][$action]['import_type']) && $_SESSION['warehouses'][$action]['import_type'] !== $type) {
+            unset($_SESSION['warehouses'][$action]);
         }
-     }
-
-     // Tự động chọn cửa hàng
-     if (count($stores) == 1 && empty($cookie_data['stores'])) {
-        $store_id = array_values($accStore)[0] ?? 0;
-        $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
-        if ($store_info) { $cookie_data['stores'] = $store_info; $needs_cookie_update = true; }
-     }
-
-     // Lưu cookie nếu cần
-     if ($needs_cookie_update) {
-        if (json_encode($cookie_data) === false) { /* log */ }
-        else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
-     }
-
-    // Chuẩn bị $vars cho view (Giữ nguyên logic)
-    $vars['data'] = $cookie_data;
-    $vars['action'] = $action;
-    $vars['type'] = $import_type; // Truyền import_type
-
-    // Làm giàu $SelectProducts (Giữ nguyên logic query)
-    $cookie_products = $cookie_data['products'] ?? [];
-    $enriched_products = [];
-    if (!empty($cookie_products)) {
-        // ... (Code làm giàu $enriched_products giữ nguyên) ...
-         $product_ids = array_keys($cookie_products);
-         if(!empty($product_ids)) {
-             $products_info = $app->select("products", [ /* joins */ ], [ /* fields */ ], ["products.id" => $product_ids]);
-             $products_map = array_column($products_info, null, 'id');
-             foreach ($cookie_products as $key => $item) {
-                 $p_id = (int) $key;
-                 if (isset($products_map[$p_id])) {
-                     $product_detail = $products_map[$p_id];
-                     $price = (float)($item['price'] ?? 0); $amount = (float)($item['amount'] ?? 0);
-                     $enriched_products[$key] = array_merge($item, [
-                         'key' => $key, 'code' => $product_detail['code'], 'name' => $product_detail['name'],
-                         'vendor_name' => $product_detail['vendor_name'] ?? $app->get("vendors","name",["id"=>$item['vendor']??0]),
-                         'unit' => $product_detail['unit_name'], 'store' => $product_detail['store_name'],
-                         'branch' => $product_detail['branch_name'], 'total_price' => $price * $amount,
-                         'notes' => $item['notes'] ?? '', 'duration' => $item['duration'] ?? '',
-                         'status' => $item['status'] ?? null, 'amount_old' => $item['amount_old'] ?? null,
-                         'amount_buy' => $item['amount_buy'] ?? 0,
-                     ]);
-                 }
-             }
-         }
-    }
-    $vars['SelectProducts'] = $enriched_products;
-
-    // Chuẩn bị store/branch options (Giữ nguyên)
-    $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng')]];
-    if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
-    $vars['store_options'] = $store_options;
-    $selected_store_id = $cookie_data['stores']['id'] ?? 0;
-    $branch_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-    $vars['branch_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy hàng')]], $branch_opts_query);
-
-    // Render view
-    echo $app->render($template . '/warehouses/import.html', $vars);
-})->setPermissions(['warehouses-import']);
-
-// --- ROUTER HIỂN THỊ TRANG CHUYỂN HÀNG (MOVE) ---
-$app->router("/warehouses-move", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
-    $jatbi->permission('warehouses-move');
-    $action = "move";
-    $vars['title'] = $jatbi->lang("Chuyển hàng"); // Title cho trang chuyển hàng
-
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_move
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
-
-    // Logic khởi tạo session cũ:
-    // if($_SESSION['warehouses'][$action]['type']==''){ $_SESSION['warehouses'][$action]['type'] = $action; }
-    // if($_SESSION['warehouses'][$action]['data']==''){ $_SESSION['warehouses'][$action]['data'] = 'products'; }
-    // if($_SESSION['warehouses'][$action]['date']==''){ $_SESSION['warehouses'][$action]['date'] = date("Y-m-d"); }
-    // (Helper đã xử lý các default này)
-
-    // Tự động chọn cửa hàng gửi (Giữ nguyên logic)
-    if (count($stores) == 1 && empty($cookie_data['stores'])) {
-        $store_id = array_values($accStore)[0] ?? 0;
-        $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
-        if ($store_info) {
-             $cookie_data['stores'] = $store_info;
-             $needs_cookie_update = true;
+        $_SESSION['warehouses'][$action]['import'] = $type;
+        if (empty($_SESSION['warehouses'][$action]['type'])) {
+            $_SESSION['warehouses'][$action]['type'] = $action;
         }
-    }
-
-    // Lưu cookie nếu cần
-    if ($needs_cookie_update) {
-        if (json_encode($cookie_data) === false) { /* log */ }
-        else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
-    }
-
-    // Chuẩn bị $vars cho view (Giống import nhưng dùng $action = 'move')
-    $vars['data'] = $cookie_data;
-    $vars['action'] = $action;
-
-    // Làm giàu $SelectProducts (Giống import)
-    $cookie_products = $cookie_data['products'] ?? [];
-    $enriched_products = [];
-    if (!empty($cookie_products)) {
-        // ... (Code làm giàu $enriched_products giống hệt /warehouses-import) ...
-         $product_ids = array_keys($cookie_products);
-         if(!empty($product_ids)) {
-             $products_info = $app->select("products", [ /* joins */ ], [ /* fields */ ], ["products.id" => $product_ids]);
-             $products_map = array_column($products_info, null, 'id');
-             foreach ($cookie_products as $key => $item) { /* ... merge ... */ }
-         }
-    }
-    $vars['SelectProducts'] = $enriched_products;
-
-    // Options Cửa hàng gửi (Giống import)
-    $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng gửi')]];
-    if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
-    $vars['store_options'] = $store_options;
-
-    // Options Quầy gửi (Giống import)
-    $selected_store_id = $cookie_data['stores']['id'] ?? 0;
-    $branch_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-    $vars['branch_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy gửi')]], $branch_opts_query);
-
-    // Options Cửa hàng nhận (Lấy tất cả store?)
-    // Code gốc không rõ lấy $stores_receive từ đâu, tạm lấy tất cả
-    $all_stores_receive = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
-    $vars['store_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng nhận')]], $all_stores_receive);
-
-    // Options Quầy nhận (Dựa vào cửa hàng nhận đã chọn trong cookie)
-    $selected_store_receive_id = $cookie_data['stores_receive']['id'] ?? 0;
-    $branch_receive_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_receive_id, "status" => 'A']);
-    $vars['branch_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy nhận')]], $branch_receive_opts_query);
-
-    // Render view (Có thể là file khác hoặc cùng file với import?)
-    echo $app->render($template . '/warehouses/move.html', $vars); // Giả sử là move.html
-})->setPermissions(['warehouses-move']);
-
-
-// --- ROUTER HIỂN THỊ TRANG HỦY HÀNG (CANCEL) ---
-$app->router("/warehouses-cancel/{product_id:[0-9]+}", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
-    $jatbi->permission('warehouses-cancel');
-    $action = "cancel";
-    $product_id = (int) ($vars['product_id'] ?? 0);
-    $vars['title'] = $jatbi->lang("Hủy hàng sản phẩm"); // Title
-
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_cancel
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
-
-    $product_data = null; // Thông tin sản phẩm đang hủy
-
-    // Logic khởi tạo session gốc:
-    // if($data['id']!=$_SESSION['warehouses'][$action]['products']){ unset($_SESSION['warehouses'][$action]); }
-    // Kiểm tra xem có đang hủy sản phẩm khác không
-    $current_product_in_cookie = $cookie_data['products'] ?? 0; // products chỉ lưu ID cho cancel
-    if (is_array($current_product_in_cookie)) $current_product_in_cookie = key($current_product_in_cookie);
-
-    if ($current_product_in_cookie != $product_id || $product_id == 0) {
-        $product_data = $app->get("products", ["id", "vendor", "units", "name", "code"], ["id" => $product_id, "deleted" => 0]);
-        if (!$product_data) {
-             // header("HTTP/1.0 404 Not Found"); die(); // Giữ logic gốc
-              $app->redirect('/products'); // Hoặc redirect
-              return;
+        if (empty($_SESSION['warehouses'][$action]['data'])) {
+            $_SESSION['warehouses'][$action]['data'] = 'products';
         }
-        $needs_cookie_update = true;
-        // Khởi tạo cookie mới
-        $cookie_data = get_warehouse_ticket_cookie_data($app, $action); // Lấy default
-        $cookie_data['vendor'] = $product_data['vendor']; // Lưu ID vendor
-        $cookie_data['products'] = $product_data['id']; // Chỉ lưu ID sản phẩm
-        // Mặc định cửa hàng nếu chưa chọn (giữ logic cũ)
-        if (empty($cookie_data['stores'])) {
-            $store_id = array_values($accStore)[0] ?? 0;
-            $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
-            if ($store_info) $cookie_data['stores'] = $store_info;
+        if (empty($_SESSION['warehouses'][$action]['date'])) {
+            $_SESSION['warehouses'][$action]['date'] = date("Y-m-d");
         }
-         $cookie_data['content'] = $jatbi->lang("Hủy hàng sản phẩm:") . " #" . $product_data['code']; // Gán content
+        if (count($stores) == 1 && empty($_SESSION['warehouses'][$action]['stores'])) {
+            $_SESSION['warehouses'][$action]['stores'] = $app->get("stores", "*", ["id" => array_values($accStore)[0] ?? 0, "status" => 'A', "deleted" => 0]);
+        }
 
-        // Lấy các lô hàng (Giữ nguyên logic query)
-        $cookie_data['warehouses'] = []; // Reset trước khi nạp
-        $warehouses = $app->select("warehouses_details", "*", [
-            "type" => 'import',
-            "products" => $product_data['id'],
-            "stores" => $cookie_data['stores']['id'] ?? 0, // Dùng store ID từ cookie
-            "deleted" => 0,
-            "amount_total[>]" => 0,
-            "ORDER" => ["id" => "ASC"] // Nên sort theo ID hoặc date
-        ]);
-        foreach ($warehouses as $value) {
-            if(isset($value['id'])) {
-                $cookie_data['warehouses'][$value['id']] = [
-                    "id" => $value['id'], "products" => $value['products'], "vendor" => $value['vendor'],
-                    "duration" => $value['duration'] ?? null, "amount_total" => $value['amount_total'],
-                    "amount" => '', // Số lượng hủy = rỗng
-                    "price" => $value['price'], "units" => $product_data['units'],
-                    "date" => $value['date'], "stores" => $value['stores'],
+        $vars['data'] = $_SESSION['warehouses'][$action] ?? [];
+        $vars['action'] = $action;
+        $vars['type'] = $type;
+
+        $session_products = $_SESSION['warehouses'][$action]['products'] ?? [];
+        $enriched_products = [];
+        if (!empty($session_products)) {
+            $product_ids = array_column($session_products, 'products');
+
+            $products_info = $app->select("products", [
+                "[>]vendors" => ["vendor" => "id"],
+                "[>]units" => ["units" => "id"],
+                "[>]stores" => ["stores" => "id"],
+                "[>]branch" => ["branch" => "id"]
+            ], [
+                "products.id",
+                "products.code",
+                "products.name",
+                "products.vendor(vendor_id)",
+                "vendors.name(vendor_name)",
+                "units.name(unit_name)",
+                "stores.name(store_name)",
+                "branch.name(branch_name)"
+            ], ["products.id" => $product_ids]);
+
+            $products_map = array_column($products_info, null, 'id');
+
+            foreach ($session_products as $key => $item) {
+                $p_id = $item['products'] ?? 0;
+                if (isset($products_map[$p_id])) {
+                    $product_detail = $products_map[$p_id];
+                    $price = (float) str_replace(',', '', $item['price'] ?? 0);
+                    $amount = (float) str_replace(',', '', $item['amount'] ?? 0);
+
+                    $enriched_products[$key] = array_merge($item, [
+                        'key' => $key,
+                        'code' => $product_detail['code'],
+                        'name' => $product_detail['name'],
+                        'vendor_name' => $product_detail['vendor_name'],
+                        'unit' => $product_detail['unit_name'],
+                        'store' => $product_detail['store_name'],
+                        'branch' => $product_detail['branch_name'],
+                        'total_price' => $price * $amount,
+                    ]);
+                }
+            }
+        }
+        $vars['SelectProducts'] = $enriched_products;
+
+        $store_options = [['value' => '', 'text' => '']];
+        if (!empty($stores)) {
+            foreach ($stores as $store) {
+                if (isset($store['value']) && isset($store['text'])) {
+                    $store_options[] = $store;
+                }
+            }
+        }
+        $vars['store_options'] = $store_options;
+
+        $selected_store_id = $vars['data']['stores']['id'] ?? 0;
+        $vars['branch_options'] = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
+
+        echo $app->render($template . '/warehouses/import.html', $vars);
+    })->setPermissions(['warehouses-import']);
+
+    $app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
+        $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+        $action = $vars['action'];
+        $router['3'] = $vars['product'];
+        $router['4'] = $vars['do'];
+        $router['5'] = $vars['id'];
+
+        $error = [];
+        $total_products = 0;
+        $error_warehouses = false;
+        $kiemtra = false;
+        $sanpham_kiemtra = [];
+        $kiemtracuahang = false;
+        $cancel_amount = 0;
+        $AmountMinus = false;
+        $pro_logs = [];
+        if ($router['3'] == 'stores') {
+            $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+            if ($data > 1) {
+                $_SESSION['warehouses'][$action]['stores'] = [
+                    "id" => $data['id'],
+                    "name" => $data['name'],
+                ];
+                if ($action == 'cancel') {
+                    $datas = $app->get("products", ["id", "units"], ["id" => $_SESSION['warehouses'][$action]['products']]);
+                    unset($_SESSION['warehouses'][$action]['warehouses']);
+                    $warehouses = $app->select("warehouses_details", ["id", "products", "vendor", "amount_total", "price", 'stores'], [
+                        "type" => 'import',
+                        "products" => $datas['id'],
+                        "stores" => $_SESSION['warehouses'][$action]['stores'],
+                        "deleted" => 0,
+                        "amount_total[>]" => 0
+                    ]);
+                    foreach ($warehouses as $key => $value) {
+                        $_SESSION['warehouses'][$action]['warehouses'][$value['id']] = [
+                            "id" => $value['id'],
+                            "products" => $value['products'],
+                            "vendor" => $value['vendor'],
+                            "duration" => $value['duration'],
+                            "amount_total" => $value['amount_total'],
+                            "amount" => '',
+                            "price" => $value['price'],
+                            "units" => $datas['units'],
+                            "date" => $value['date'],
+                            "stores" => $value['stores'],
+                        ];
+                    }
+                }
+                if ($action == 'move') {
+                    unset($_SESSION['warehouses'][$action]['products']);
+                    unset($_SESSION['warehouses'][$action]['branch']);
+                }
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+            }
+        } elseif ($router['3'] == 'check-update') {
+            $_SESSION['warehouses'][$action]['products'][$router['4']]['status'] = $_POST['value'];
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } elseif ($router['3'] == 'branch') {
+            $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+            if ($data > 1) {
+                $_SESSION['warehouses'][$action]['branch'] = [
+                    "id" => $data['id'],
+                    "name" => $data['name'],
+                ];
+                if ($action == 'move') {
+                    unset($_SESSION['warehouses'][$action]['products']);
+                }
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+            }
+        } elseif ($router['3'] == 'branch_receive') {
+            $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+            if ($data > 1) {
+                $_SESSION['warehouses'][$action]['branch_receive'] = [
+                    "id" => $data['id'],
+                    "name" => $data['name'],
+                ];
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+            }
+        } elseif ($router['3'] == 'warehouses') {
+            $value = $app->xss($_POST['value']);
+            if ($value < 0) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không thể cập nhật số lượng âm")]);
+            } else {
+                if ($_SESSION['warehouses'][$action]['warehouses'][$router['5']]['amount_total'] >= $value) {
+                    $_SESSION['warehouses'][$action]['warehouses'][$router['5']][$router['4']] = $value;
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                } else {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng hủy lớn hơn tồn")]);
+                }
+            }
+        } elseif ($router['3'] == 'stores_receive') {
+            $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+            if ($data > 1) {
+                $_SESSION['warehouses'][$action]['stores_receive'] = [
+                    "id" => $data['id'],
+                    "name" => $data['name'],
+                ];
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+            }
+        } elseif ($router['3'] == 'data') {
+            unset($_SESSION['warehouses'][$action]['products']);
+            $_SESSION['warehouses'][$action]['data'] = $app->xss($_POST['value']);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } elseif ($router['3'] == 'products') {
+            if ($router['4'] == 'add') {
+                $data = $app->get("products", ["id", "images", "code", "name", "categorys", "default_code", "units", "notes", "crafting", "amount"], ["id" => $app->xss($router['5'])]);
+                if ($data > 1) {
+                    if ($data['amount'] <= 0 && $action == 'move') {
+                        $error = $jatbi->lang("Số lượng không đủ");
+                    }
+                    if (empty($error)) {
+                        if (!isset($_SESSION['warehouses'][$action]['products'][$data['id']])) {
+                            $_SESSION['warehouses'][$action]['products'][$data['id']] = [
+                                "products" => $data['id'],
+                                "amount_buy" => 0,
+                                "amount" => 1,
+                                "price" => 0,
+                                "images" => $data['images'],
+                                "code" => $data['code'],
+                                "name" => $data['name'],
+                                "categorys" => $data['categorys'],
+                                "default_code" => $data['default_code'],
+                                "units" => $data['units'],
+                                "notes" => $data['notes'],
+                                "crafting" => $data['crafting'],
+                                "warehouses" => $data['amount'],
+                            ];
+                            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                        } else {
+                            $getPro = $_SESSION['warehouses'][$action]['products'][$data['id']];
+                            $value = $getPro['amount'] + 1;
+                            if ($value > $data['amount'] && $action == 'move') {
+                                $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $data['amount'];
+                                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                            } else {
+                                $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $value;
+                                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                            }
+                        }
+                    } else {
+                        echo json_encode(['status' => 'error', 'content' => $error,]);
+                    }
+                } else {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+                }
+            } elseif ($router['4'] == 'deleted') {
+                unset($_SESSION['warehouses'][$action]['products'][$router['5']]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } elseif ($router['4'] == 'price') {
+                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } elseif ($router['4'] == 'amount') {
+                $value = $app->xss(str_replace([','], '', $router['5']));
+                if ($value < 0) {
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
+                } else {
+                    $getAmount = $app->get("products", ["id", "amount"], ["id" => $_SESSION["warehouses"][$action]['products'][$router['5']]['products']]);
+                    if ($value > $getAmount['amount'] && $action == 'move' || $value > $getAmount['amount'] && $action == 'cancel') {
+                        $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $getAmount['amount'];
+                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                    } else {
+                        $_SESSION["warehouses"][$action]['products'][$router['5']][$router['4']] = $app->xss(str_replace([','], '', $_POST['value']));
+                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                    }
+                }
+            } else {
+                $_SESSION['warehouses'][$action]['products'][$router['5']][$router['4']] = $app->xss($_POST['value']);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        } elseif ($router['3'] == 'date' || $router['3'] == 'content') {
+            $_SESSION['warehouses'][$action][$router['3']] = $app->xss($_POST['value']);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } elseif ($router['3'] == 'cancel') {
+            unset($_SESSION['warehouses'][$action]);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } elseif ($router['3'] == 'completed') {
+            $datas = $_SESSION['warehouses'][$action];
+            $warehouses1 = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
+            $kiemtra = 'false';
+            $sanpham_kiemtra = [];
+            $kiemtracuahang = 'false';
+
+            foreach ($datas['products'] as $value_amount) {
+                $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
+                $total_products += $value_amount['amount'] * $value_amount['price'];
+                if ($value_amount['amount'] == '' || $value_amount['amount'] == 0 || $value_amount['amount'] < 0) {
+                    $error_warehouses = 'true';
+                }
+                if ($action == 'move') {
+                    if ($name_po['amount'] <= 0) {
+                        $kiemtra = 'true';
+                        $sanpham_kiemtra[] = $name_po['code'];
+                    }
+                }
+                if ($action == 'import') {
+                    if ($name_po['stores'] != $datas['stores']['id'] || $name_po['branch'] != ($datas['branch']['id'] ?? 0)) {
+                        $kiemtracuahang = 'true';
+                    }
+                }
+            }
+            if ($action == 'move' && $kiemtra == 'true') {
+                $error = [
+                    'status' => 'error',
+                    'content' => 'Những mã hiện hết số lượng, hãy kiểm tra lại: ' . implode(", ", $sanpham_kiemtra)
                 ];
             }
-        }
-    } else {
-        // Nếu hủy cùng sản phẩm, chỉ lấy lại thông tin sp
-        $product_data = $app->get("products", ["id", "name", "code"], ["id" => $product_id]);
-         if (!$product_data) { $app->redirect('/products'); return; }
-    }
-
-    // Lưu cookie nếu cần
-    if ($needs_cookie_update) {
-        if (json_encode($cookie_data) === false) { /* log */ }
-        else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
-    }
-
-    // Chuẩn bị $vars cho view
-    $vars['data'] = $cookie_data;
-    $vars['action'] = $action;
-    $vars['product_data'] = $product_data; // Truyền thông tin sản phẩm
-    $vars['id'] = $product_id; // Truyền ID sản phẩm
-
-     // Options Cửa hàng (Giữ nguyên)
-    $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng')]];
-    if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
-    $vars['store_options'] = $store_options;
-
-    // Render view (cần tạo file view mới hoặc dùng chung?)
-    echo $app->render($template . '/warehouses/cancel.html', $vars); // Giả sử là cancel.html
-})->setPermissions(['warehouses-cancel']);
-
-
-
-
-// Sửa: Thêm $setting vào use
-$app->router('/warehouses-update/{action:import|move|cancel}/{entity}/{operation}(/{id:[0-9]+})?', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) { // Đổi tên $product thành $entity, $do thành $operation
-    $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-    $action = $vars['action'];       // 'import', 'move', 'cancel'
-    $entity = $vars['entity'];       // 'stores', 'branch', 'products', 'warehouses', 'date', 'content', 'completed', etc.
-    $operation = $vars['operation']; // 'add', 'deleted', 'price', 'amount', 'moves'(cho completed move) or ID/Key
-    $id = isset($vars['id']) ? (int)$vars['id'] : null; // ID sản phẩm, ID lô hàng, hoặc null
-
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action;
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
-
-    // Khởi tạo biến (Giữ nguyên)
-    $error = []; $total_products = 0; $error_warehouses = false; $kiemtra = false;
-    $sanpham_kiemtra = []; $kiemtracuahang = false; $cancel_amount = 0;
-    $AmountMinus = false; $pro_logs = []; $move_error = []; // Thêm $move_error
-
-    // --- Xử lý theo $entity (Giữ nguyên cấu trúc if/elseif) ---
-
-    if ($entity == 'stores') {
-        $value = $_POST['value'] ?? null;
-        $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($value), "deleted"=>0, "status"=>'A']);
-        if ($data) {
-            $cookie_data['stores'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
+            if ($action == 'import' && $kiemtracuahang == 'true' && (empty($datas['move'] ?? null) && empty($datas['purchase'] ?? null))) {
+                $error = [
+                    'status' => 'error',
+                    'content' => 'Cửa hàng hoặc quầy hàng chọn khác với Cửa hàng hoặc quầy hàng của sản phẩm'
+                ];
+            }
             if ($action == 'cancel') {
-                 $product_id_for_cancel = $cookie_data['products'] ?? 0;
-                 if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
-                 if ($product_id_for_cancel > 0) {
-                     $datas_units = $app->get("products", ["units"], ["id" => $product_id_for_cancel]);
-                     $cookie_data['warehouses'] = [];
-                     $warehouses = $app->select("warehouses_details", "*", [ /* query giữ nguyên */ ]);
-                     foreach ($warehouses as $value_wh) {
-                         if(isset($value_wh['id'])) { $cookie_data['warehouses'][$value_wh['id']] = [ /* gán giữ nguyên */ ]; }
-                     }
-                 } else { /* log */ }
-            } elseif ($action == 'move') { $cookie_data['products'] = []; $cookie_data['branch'] = null; }
-            elseif ($action == 'import') {
-                 $cookie_data['branch'] = null;
-                 if ($cookie_data['import_type'] == '') $cookie_data['products'] = [];
+                foreach ($datas['warehouses'] as $AmounCancel) {
+                    $cancel_amount += $AmounCancel['amount'];
+                    if ($AmounCancel['amount'] < 0) {
+                        $AmountMinus = "true";
+                    }
+                }
             }
-        } else { $error['content'] = $jatbi->lang("Cửa hàng không hợp lệ"); }
-
-    } elseif ($entity == 'check-update') { // $operation là product_key/ID
-        $product_key = $operation;
-        $value = $_POST['value'] ?? null;
-        $status_value = ($value == '1') ? 1 : 0;
-        if (isset($cookie_data['products'][$product_key])) {
-             $cookie_data['products'][$product_key]['status'] = $status_value;
-             $needs_cookie_update = true;
-        } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu."); }
-
-    } elseif ($entity == 'branch') {
-        $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['branch'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
-            if ($action == 'move') { $cookie_data['products'] = []; }
-            else if ($action == 'import' && $cookie_data['import_type'] == '') { $cookie_data['products'] = []; }
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng không hợp lệ");
-             else { $cookie_data['branch'] = null; $needs_cookie_update = true;
-                   if ($action == 'move' || ($action == 'import' && $cookie_data['import_type'] == '')) $cookie_data['products'] = [];
-             }
-        }
-    } elseif ($entity == 'branch_receive') { // action 'move'
-        $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['branch_receive'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng nhận không hợp lệ");
-             else { $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
-        }
-    } elseif ($entity == 'warehouses') { // action 'cancel', $operation = 'amount', $id = batch_id
-        $batch_id = (int)$id;
-        $field_to_update = $operation;
-        $value_str = $_POST['value'] ?? '';
-        $value = (float) str_replace([','], '', $app->xss($value_str));
-
-        if ($field_to_update == 'amount') {
-            if (!isset($cookie_data['warehouses'][$batch_id])) { $error['content'] = $jatbi->lang("Lô hàng không tồn tại trong phiếu hủy."); }
-            elseif ($value < 0) { $error['content'] = $jatbi->lang("Không thể cập nhật số lượng âm"); }
-            else {
-                $amount_total = (float) ($cookie_data['warehouses'][$batch_id]['amount_total'] ?? 0);
-                if ($amount_total >= $value) { $cookie_data['warehouses'][$batch_id]['amount'] = $value; $needs_cookie_update = true; }
-                else { $cookie_data['warehouses'][$batch_id]['amount'] = $amount_total; $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng hủy lớn hơn tồn"); }
+            if ($cancel_amount <= 0 && $action == 'cancel') {
+                $error = ["status" => 'error', 'content' => $jatbi->lang("Phải có số lượng hủy")];
+            } elseif ($AmountMinus == "true" && $action == 'cancel') {
+                $error = ["status" => 'error', 'content' => $jatbi->lang("Số lượng không âm")];
             }
-        } else { $error['content'] = $jatbi->lang("Thao tác không hợp lệ với lô hàng."); }
-
-    } elseif ($entity == 'stores_receive') { // action 'move'
-        $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['stores_receive'] = ["id" => $data['id'], "name" => $data['name']];
-            $cookie_data['branch_receive'] = null; $needs_cookie_update = true;
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Cửa hàng nhận không hợp lệ");
-             else { $cookie_data['stores_receive'] = null; $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
-        }
-    } elseif ($entity == 'data') { // Đổi loại dữ liệu
-        $cookie_data['products'] = []; $cookie_data['data'] = $app->xss($_POST['value']);
-        $needs_cookie_update = true;
-    } elseif ($entity == 'products') {
-        $product_id = (int)$id; // ID sản phẩm
-
-        if ($operation == 'add') {
-             $data = $app->get("products", "*", ["id" => $product_id]);
-             if ($data) {
-                  $stock_amount = (float) ($data['amount'] ?? 0);
-                  if ($stock_amount <= 0 && $action == 'move') { $error['content'] = $jatbi->lang("Số lượng không đủ"); }
-                  if (empty($error)) {
-                      if (!isset($cookie_data['products'][$product_id])) {
-                          // Thêm mới (Giữ nguyên cấu trúc gán session gốc)
-                          $cookie_data['products'][$product_id] = [
-                             "products" => $data['id'], "amount_buy" => 0, "amount" => 1, "price" => 0,
-                             "images" => $data['images'], "code" => $data['code'], "name" => $data['name'],
-                             "categorys" => $data['categorys'], "default_code" => $data['default_code'],
-                             "units" => $data['units'], "notes" => $data['notes'],
-                             "crafting" => $data['crafting'], "warehouses" => $stock_amount,
-                          ];
-                          $needs_cookie_update = true;
-                      } else {
-                          // Tăng số lượng (Giữ nguyên logic)
-                          $getPro = $cookie_data['products'][$product_id];
-                          $value = (float)($getPro['amount'] ?? 0) + 1;
-                          if ($value > $stock_amount && $action == 'move') {
-                             $cookie_data['products'][$product_id]['amount'] = $stock_amount;
-                             $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
-                          } else {
-                             $cookie_data['products'][$product_id]['amount'] = $value;
-                             $needs_cookie_update = true;
-                          }
-                      }
-                  }
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại"); }
-        } elseif ($operation == 'deleted') {
-             unset($cookie_data['products'][$product_id]); $needs_cookie_update = true;
-        } elseif ($operation == 'price') {
-             if (isset($cookie_data['products'][$product_id])) {
-                 $cookie_data['products'][$product_id]['price'] = (float) str_replace(',', '', $app->xss($_POST['value']));
-                 $needs_cookie_update = true;
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-        } elseif ($operation == 'amount') {
-             $value_str = $_POST['value'] ?? '0';
-             $value = (float) str_replace([','], '', $app->xss($value_str));
-             if (!isset($cookie_data['products'][$product_id])) { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-             elseif ($value < 0) { $error['content'] = $jatbi->lang("Số lượng không âm"); }
-             else {
-                 if ($action == 'move' || $action == 'cancel') { // Sửa: Check cả cancel? Logic cũ có check cancel
-                     $getAmount = $app->get("products", ["amount"], ["id" => $product_id]);
-                     $stock_amount = (float) ($getAmount['amount'] ?? 0);
-                     if ($value > $stock_amount) {
-                         $cookie_data['products'][$product_id]['amount'] = $stock_amount;
-                         $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
-                     } else {
-                         $cookie_data['products'][$product_id]['amount'] = $value;
-                         $needs_cookie_update = true;
-                     }
-                 } else {
-                     $cookie_data['products'][$product_id]['amount'] = $value;
-                     $needs_cookie_update = true;
-                 }
-             }
-        } else { // Cập nhật notes, duration, amount_buy...
-             $field_to_update = $operation;
-             $value = $_POST['value'] ?? '';
-             if (isset($cookie_data['products'][$product_id])) {
-                 if (in_array($field_to_update, ['notes', 'duration', 'amount_buy'])) { // Giữ nguyên các field
-                     $val_processed = ($field_to_update == 'amount_buy') ? (float) str_replace(',', '', $app->xss($value)) : $app->xss($value);
-                     $cookie_data['products'][$product_id][$field_to_update] = $val_processed;
-                     $needs_cookie_update = true;
-                 } else { $error['content'] = $jatbi->lang("Trường cập nhật không hợp lệ."); }
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-        }
-    } elseif ($entity == 'date' || $entity == 'content') {
-        $cookie_data[$entity] = $app->xss($_POST['value']);
-        $needs_cookie_update = true;
-    } elseif ($entity == 'cancel') { // Hủy phiếu
-        $app->deleteCookie($cookie_name);
-        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        return;
-    } elseif ($entity == 'completed') { // Hoàn tất phiếu
-        $datas = $cookie_data; // Dùng dữ liệu từ cookie
-
-        // --- Logic kiểm tra (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
-        // $warehouses1 = $app->get("warehouses", "receive_status", ...); // Giữ nguyên
-        // $kiemtra = 'false'; // Sửa thành boolean
-        // ... (Toàn bộ khối kiểm tra giữ nguyên) ...
-        $warehouses1_receive_status = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
-        $kiemtra = false; $sanpham_kiemtra = []; $kiemtracuahang = false;
-        $error_warehouses = false; $AmountMinus = false; $cancel_amount = 0; $move_error = []; // Thêm move_error
-
-        if (isset($datas['products']) && is_array($datas['products'])) {
-            foreach ($datas['products'] as $value_amount) {
-                 if (!is_array($value_amount) || !isset($value_amount['products'])) continue;
-                 $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
-                 $current_amount = (float)($value_amount['amount'] ?? 0);
-                 $total_products += $current_amount * (float)($value_amount['price'] ?? 0);
-                 if ($current_amount <= 0 && $action != 'cancel') { $error_warehouses = true; }
-                 if ($action == 'move') {
-                     $stock = (float)($name_po['amount'] ?? 0);
-                     if ($stock < $current_amount) { $kiemtra = true; $sanpham_kiemtra[] = $name_po['code'] ?? ('ID:'.$value_amount['products']); }
-                 }
-                 if ($action == 'import') {
-                     if (($name_po['stores'] ?? null) != ($datas['stores']['id'] ?? null) || ($name_po['branch'] ?? null) != ($datas['branch']['id'] ?? null)) {
-                         if (empty($datas['move']) && empty($datas['purchase'])) { $kiemtracuahang = true; }
-                     }
-                 }
+            if ($router['4'] == 'moves') {
+                if ($datas['stores_receive']['id'] == '' || $datas['branch_receive']['id'] == '') {
+                    $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
+                }
             }
-        } elseif ($action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("Không có sản phẩm trong phiếu.")]; }
+            if (
+                empty($datas['stores']['id']) ||
+                empty($datas['branch']['id']) ||
+                empty($datas['type']) ||
+                empty($datas['content']) ||
+                count($datas['products'] ?? []) == 0 ||
+                (count($datas['warehouses'] ?? []) == 0 && $action == 'cancel')
+            ) {
+                $error = ["status" => 'error', 'content' => "Lỗi trống"];
+            } elseif ($warehouses1 == 2) {
+                $error = ['status' => 'error', 'content' => $jatbi->lang("Phiếu này đã được nhập")];
+            }
+            if (count($error) == 0) {
+                $insert = [
+                    "code" => $datas['type'] == 'import' ? 'PN' : 'PX',
+                    "type" => $datas['type'],
+                    "data" => $datas['data'],
+                    "stores" => $datas['type'] == 'import' ? $datas['stores']['id'] : $_SESSION['warehouses']['move']['stores']['id'],
+                    "branch" => $datas['branch']['id'],
+                    "stores_receive" => $datas['stores_receive']['id'] ?? null,
+                    "branch_receive" => $datas['branch_receive']['id'] ?? null,
+                    "content" => $datas['content'],
+                    "vendor" => $datas['vendor']['id'] ?? null,
+                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => $datas['date'],
+                    "active" => $jatbi->active(30),
+                    "date_poster" => date("Y-m-d H:i:s"),
+                    "purchase" => $datas['purchase'] ?? "",
+                    "move" => $datas['move'] ?? "",
+                    "receive_status" => 1,
+                ];
+                $app->insert("warehouses", $insert);
+                $orderId = $app->id();
+                if (isset($datas['purchase'])) {
+                    $app->update("purchase", ["status" => 5], ["id" => $datas['purchase']]);
+                    $app->insert("purchase_logs", [
+                        "purchase" => $datas['purchase'],
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "content" => $app->xss('Nhập hàng'),
+                        "status" => 5,
+                        "date" => date('Y-m-d H:i:s'),
+                    ]);
+                }
+                if (isset($datas['move'])) {
+                    foreach ($datas['products'] as $key => $value_move) {
+                        if ($value_move['amount'] < $value_move['amount_old']) {
+                            $move_error[] = $value_move['amount_old'] - $value_move['amount'];
+                        }
+                        $app->update("warehouses_details", ["amount_move" => $value_move['amount']], ["id" => $value_move['details']]);
+                    }
+                    if (count($move_error) > 0) {
+                        $receive_status = 3;
+                    } else {
+                        $receive_status = 2;
+                    }
+                    $app->update("warehouses", [
+                        "receive_status" => $receive_status,
+                        "receive_date" => date("Y-m-d H:i:s"),
+                    ], ["id" => $datas['move']]);
+                }
+                foreach ($datas['products'] as $key1 => $value) {
+                    $getProducts = $app->get("products", ["id", "code_products", "code", "name", "categorys", "group", "vendor", "price", "cost", "units", "tkco", "tkno", "default_code", "amount"], ["id" => $value['products'], "deleted" => 0]);
+                    $crafting = $app->get("crafting", "*", ["id" => ($value['crafting'] ?? null)]);
+                    if ($insert['type'] == "move") {
+                        $storeget = $app->get("stores", "*", ["id" => $insert['stores_receive']]);
+                        $branchget = $app->get("branch", "*", ["id" => $insert['branch_receive']]);
+                        if ($getProducts['code_products'] == NULL) {
+                            $code = $getProducts['code'];
+                        } else {
+                            if ($insert['stores_receive'] == $insert['stores']) {
+                                $code = $branchget['code'] . $getProducts['code_products'];
+                            } else {
+                                $code = $storeget['code'] . $branchget['code'] . $getProducts['code_products'];
+                            }
+                        }
+                        $checkcode = $app->get("products", ["id", "code"], ["code" => $code, "deleted" => 0, 'status' => 'A', "stores" => $insert['stores_receive'], "branch" => $insert['branch_receive']]);
+                        if ($code == $checkcode['code'] && $getProducts['code_products'] != NULL) {
+                            $tam = [
+                                "products" => $checkcode['id'],
+                                "value" => $value['products'],
+                                "warehouses" => $orderId,
+                                "date" => date('Y-m-d H:i:s'),
+                            ];
+                            $app->insert("tam", $tam);
+                        } else {
+                            $insert_products = [
+                                "type" => $app->get("products", "type", ["id" => $value['products']]),
+                                "main" => 0,
+                                "code" => $code,
+                                "name" => $getProducts['name'],
+                                "categorys" => $getProducts['categorys'],
+                                "vat" => $setting['site_vat'],
+                                "vat_type" => 1,
+                                "amount" => 0,
+                                "content" => $value['content'],
+                                "vendor" => $getProducts['vendor'],
+                                "group" => $getProducts['group'],
+                                "price" => $app->xss(str_replace([','], '', $getProducts['price'])),
+                                "cost" => $app->xss(str_replace([','], '', $getProducts['cost'])),
+                                "units" => $getProducts['units'],
+                                "notes" => $app->xss($crafting['notes']),
+                                "active" => $jatbi->active(32),
+                                // "images"		=> $handle->file_dst_name==''?'no-images.jpg':$handle->file_dst_name,
+                                "date" => date('Y-m-d H:i:s'),
+                                "status" => 'A',
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "new" => 1,
+                                "crafting" => $value['crafting'],
+                                "stores" => $insert['stores_receive'],
+                                "branch" => $insert['branch_receive'],
+                                "code_products" => $getProducts['code_products'] == NULL ? NULL : $getProducts['code_products'],
+                                "tkno" => $getProducts['tkco'],
+                                "tkco" => $getProducts['tkno'],
+                                "default_code" => $getProducts['default_code'],
+                            ];
+                            $app->insert("products", $insert_products);
+                            $Gid = $app->id();
+                            $getDetails = $app->select("products_details", ["id", "ingredient", "code", "type", "group", "categorys", "pearl", "sizes", "colors", "units", "price", "cost", "amount", "total"], ["products" => $value['products'], "deleted" => 0]);
+                            foreach ($getDetails as $detail) {
+                                $products_details = [
+                                    "products" => $Gid,
+                                    "ingredient" => $detail['ingredient'],
+                                    "code" => $detail['code'],
+                                    "type" => $detail['type'],
+                                    "group" => $detail['group'],
+                                    "categorys" => $detail['categorys'],
+                                    "pearl" => $detail['pearl'],
+                                    "sizes" => $detail['sizes'],
+                                    "colors" => $detail['colors'],
+                                    "units" => $detail['units'],
+                                    "price" => $detail['price'],
+                                    "cost" => $detail['cost'],
+                                    "amount" => $detail['amount'],
+                                    "total" => $detail['total'],
+                                    "user" => $app->getSession("accounts")['id'] ?? 0,
+                                    "date" => date("Y-m-d H:i:s"),
+                                ];
+                                $app->insert("products_details", $products_details);
+                            }
+                            $tam = [
+                                "products" => $Gid,
+                                "value" => $value['products'],
+                                "warehouses" => $orderId,
+                                "date" => date('Y-m-d H:i:s'),
+                            ];
+                            $app->insert("tam", $tam);
+                        }
+                    }
+                    if ($action == 'import') {
+                        if (!empty($datas['move'])) {
+                            $checktam = $app->get("tam", "products", ["value" => $value['products'], "warehouses" => $app->get("warehouses", "move", ["id" => $orderId])]);
+                            $pro = [
+                                "warehouses" => $orderId,
+                                "data" => $insert['data'],
+                                "type" => $insert['type'],
+                                "products" => $value['status'] == 0 ? $checktam : $value['products'],
+                                "amount_buy" => $value['amount_buy'],
+                                "amount" => $value['amount'],
+                                "amount_total" => $value['amount'],
+                                "price" => $getProducts['price'],
+                                "notes" => $value['notes'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
+                                "branch" => $value['status'] == 0 ? $insert['branch'] : $value['branch'],
+                            ];
+                            $app->insert("warehouses_details", $pro);
+                            $GetID = $app->id();
+                            $warehouses_logs = [
+                                "type" => $insert['type'],
+                                "data" => $insert['data'],
+                                "warehouses" => $orderId,
+                                "details" => $GetID,
+                                "products" => $pro['products'],
+                                "price" => $pro['price'],
+                                "amount" => str_replace([','], '', $value['amount']),
+                                "total" => $value['amount'] * $value['price'],
+                                "notes" => $value['notes'],
+                                "date" => date('Y-m-d H:i:s'),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $value['status'] == 0 ? $insert['stores'] : $value['stores'],
+                            ];
+                            $app->insert("warehouses_logs", $warehouses_logs);
+                            $sanpham = $app->get("products", ["id", "amount"], ["id" => $pro['products']]);
+                            $app->update("products", ["amount" => $sanpham['amount'] + $value['amount']], ["id" => $sanpham['id']]);
+                            $pro_logs[] = $pro;
+                        } else {
+                            $app->update("products", ["amount" => $getProducts['amount'] + str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
+                            $pro = [
+                                "warehouses" => $orderId,
+                                "data" => $insert['data'],
+                                "type" => $insert['type'],
+                                "vendor" => $value['vendor'] ?? "",
+                                "products" => $value['products'],
+                                "amount_buy" => $value['amount_buy'],
+                                "amount" => str_replace([','], '', $value['amount']),
+                                "amount_total" => str_replace([','], '', $value['amount']),
+                                "price" => $value['price'],
+                                "notes" => $value['notes'],
+                                "date" => date(format: "Y-m-d H:i:s"),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => (isset($value['status']) && $value['status'] == 0)
+                                    ? ($insert['stores'] ?? null)
+                                    : ($value['stores'] ?? null),
 
-        if ($action == 'move' && $kiemtra) { $error = ['status'=>'error','content' => 'Mã hết SL hoặc SL xuất vượt tồn: '.implode(", ",array_unique($sanpham_kiemtra))]; }
-        if ($action == 'import' && $kiemtracuahang) { $error = ['status'=>'error','content' => 'Cửa hàng/quầy SP không khớp phiếu'];}
-        if ($error_warehouses && $action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("SL không hợp lệ (>0).")]; }
-
-        if ($action == 'cancel') { /* ... (Logic kiểm tra cancel giữ nguyên) ... */ }
-        // Sửa: Kiểm tra $operation thay $router['4']
-        if ($action == 'move' && $operation == 'moves') { /* ... (Logic kiểm tra move moves giữ nguyên) ... */ }
-        // Kiểm tra lỗi trống (Giữ nguyên, sửa $branch_id_check)
-        $store_id_check = $datas['stores']['id'] ?? null;
-        $branch_id_check = $datas['branch']['id'] ?? null;
-        $products_check = $datas['products'] ?? [];
-        $warehouses_check = $datas['warehouses'] ?? [];
-        if (empty($store_id_check) || ($action != 'cancel' && empty($branch_id_check)) || empty($datas['type']) || empty($datas['content']) || (empty($products_check) && $action != 'cancel') || (empty($warehouses_check) && $action == 'cancel')) { /* ... gán lỗi ... */ }
-        elseif (($datas['move'] ?? 0) > 0 && ($warehouses1_receive_status ?? null) == 2) { $error = ['status'=>'error','content'=>$jatbi->lang("Phiếu này đã được nhập")]; }
-        // --- Kết thúc logic kiểm tra ---
-
-        if (empty($error)) {
-            // --- Logic Xử Lý Chính (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
-            // $insert = [ ... ]; // Giữ nguyên logic gán $insert
-             $insert = [
-                 "code" => ($action == 'import' || $action == 'cancel') ? ($action == 'import' ? 'PN' : 'PH') : 'PX',
-                 "type" => $action, "data" => $datas['data'],
-                 "stores" => $datas['stores']['id'] ?? null, "branch" => $datas['branch']['id'] ?? null,
-                 "stores_receive" => $datas['stores_receive']['id'] ?? null, "branch_receive" => $datas['branch_receive']['id'] ?? null,
-                 "content" => $datas['content'], "vendor" => $datas['vendor']['id'] ?? null,
-                 "user" => $app->getSession("accounts")['id'] ?? 0, "date" => $datas['date'],
-                 "active" => $jatbi->active(30), "date_poster" => date("Y-m-d H:i:s"),
-                 "purchase" => $datas['purchase'] ?? null, "move" => $datas['move'] ?? null,
-                 // "receive_status" => ... // Giữ nguyên logic gán
-             ];
-             if ($action == 'import' && isset($datas['move']) && $datas['move'] > 0) { $insert['receive_status'] = 1; }
-             elseif ($action == 'move') { $insert['receive_status'] = 1; } // Phiếu move mới
-
-             $app->insert("warehouses", $insert);
-             $orderId = $app->id();
-
-             // Update purchase/move status (Giữ nguyên)
-             if (isset($datas['purchase']) && $datas['purchase'] > 0) { /* ... update purchase ... */ }
-             if (isset($datas['move']) && $datas['move'] > 0) { /* ... update warehouses (move) ... */ }
-
-             // Xử lý products (Giữ nguyên logic)
-             if (isset($datas['products']) && is_array($datas['products'])) {
-                 foreach ($datas['products'] as $key1 => $value) { /* ... (Toàn bộ logic phức tạp giữ nguyên) ... */ }
-             }
-
-             // Xử lý warehouses (cho action cancel) (Giữ nguyên logic)
-             $amount = 0;
-             if ($action == 'cancel' && isset($datas['warehouses']) && is_array($datas['warehouses'])) {
-                 foreach ($datas['warehouses'] as $key => $value) {
-                     if ($value['amount'] > 0) { /* ... (Toàn bộ logic xử lý cancel giữ nguyên) ... */ }
-                 }
-                 // Cập nhật tồn kho tổng (Giữ nguyên)
-                 $product_id_for_cancel = $datas['products'] ?? 0;
-                 if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
-                 if($product_id_for_cancel > 0) { $app->update("products", ["amount[-]" => $amount], ["id" => $product_id_for_cancel]); }
-             }
-            // --- Kết thúc Logic Xử Lý Chính ---
-
-            // Ghi log (Giữ nguyên)
-            $log_details_data = ($action == 'cancel') ? ($datas['warehouses'] ?? []) : ($datas['products'] ?? []);
-            $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $log_details_data, $datas]);
-
-            // Thông báo (Giữ nguyên)
-            if ($insert['type'] == 'import') { /* ... */ } elseif ($insert['type'] == 'move') { /* ... */ }
-
-            // Sửa: Xóa cookie
-            $app->deleteCookie($cookie_name);
-
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } else {
-            // Giữ nguyên: Trả về lỗi
-            echo json_encode(['status' => 'error', 'content' => $error['content']]);
-            // Sửa: Lưu lại cookie khi có lỗi để user sửa
-            $needs_cookie_update = true; // Đánh dấu cần lưu lại cookie lỗi
+                                "branch" => (isset($value['status']) && $value['status'] == 0)
+                                    ? ($insert['branch'] ?? null)
+                                    : ($value['branch'] ?? null),
+                            ];
+                            $app->insert("warehouses_details", $pro);
+                            $GetID = $app->id();
+                            $warehouses_logs = [
+                                "type" => $insert['type'],
+                                "data" => $insert['data'],
+                                "warehouses" => $orderId,
+                                "details" => $GetID,
+                                "products" => $value['products'],
+                                "price" => $value['price'],
+                                "amount" => str_replace([','], '', $value['amount']),
+                                "total" => $value['amount'] * $value['price'],
+                                "notes" => $value['notes'],
+                                "date" => date('Y-m-d H:i:s'),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => (isset($value['status']) && $value['status'] == 0)
+                                    ? $insert['stores']
+                                    : ($value['stores'] ?? null),
+                            ];
+                            $app->insert("warehouses_logs", $warehouses_logs);
+                            $pro_logs[] = $pro;
+                        }
+                    }
+                    if ($action == 'move') {
+                        if ($value['amount'] > 0) {
+                            $app->update("products", ["amount" => $getProducts['amount'] - str_replace([','], '', $value['amount'])], ["id" => $getProducts['id']]);
+                            $getAmounts = $app->select("warehouses_details", ["id", "amount_total", "amount_move", "price"], ["products" => $value['products'], "stores" => $insert['stores'], "type" => "import", "deleted" => 0, "amount_total[>]" => 0]);
+                            $numWarehouse = 0;
+                            $buyAmount = $value['amount'];
+                            foreach ($getAmounts as $keyAmount => $getAmount) {
+                                if ($keyAmount <= $numWarehouse) {
+                                    $conlai = $getAmount['amount_total'] - $buyAmount;
+                                    if ($buyAmount > $getAmount['amount_total']) {
+                                        $getbuy = $getAmount['amount_total'];
+                                    } else {
+                                        $getbuy = $buyAmount;
+                                    }
+                                    $getwarehousess[$value['products']][] = [
+                                        "id" => $getAmount['id'],
+                                        "amount_move" => $getAmount['amount_move'],
+                                        "amount_total" => $getAmount['amount_total'],
+                                        "price" => $getAmount['price'],
+                                        "duration" => $getAmount['duration'],
+                                        "amount" => $getbuy,
+                                    ];
+                                    if ($conlai < 0) {
+                                        $numWarehouse = $numWarehouse + 1;
+                                        $buyAmount = -$conlai;
+                                    }
+                                }
+                            }
+                            foreach ($getwarehousess[$value['products']] as $getwarehouses) {
+                                $update_ware = [
+                                    "amount_move" => $getwarehouses['amount_move'] + $getwarehouses['amount'],
+                                    "amount_total" => $getwarehouses['amount_total'] - $getwarehouses['amount'],
+                                ];
+                                $app->update("warehouses_details", $update_ware, ["id" => $getwarehouses['id']]);
+                            }
+                            $pro = [
+                                "warehouses" => $orderId,
+                                "data" => $insert['data'],
+                                "type" => $insert['type'],
+                                "vendor" => $value['vendor'],
+                                "products" => $value['products'],
+                                "amount_buy" => $value['amount_buy'],
+                                "amount" => $value['amount'],
+                                "amount_total" => $value['amount'],
+                                "price" => $getProducts['price'],
+                                "notes" => $value['notes'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $insert['stores'],
+                                "branch" => $insert['branch'],
+                            ];
+                            $app->insert("warehouses_details", $pro);
+                            $get_details = $app->id();
+                            $warehouses_logs = [
+                                "data" => $insert['data'],
+                                "type" => $insert['type'],
+                                "warehouses" => $orderId,
+                                "details" => $get_details,
+                                "products" => $value['products'],
+                                "price" => $getProducts['price'],
+                                "amount" => $value['amount'],
+                                "total" => $value['amount'] * $getProducts['price'],
+                                "notes" => $insert['notes'],
+                                "date" => date('Y-m-d H:i:s'),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $insert['stores'],
+                                "stores_receive" => $insert['stores_receive'],
+                                "branch" => $insert['branch'],
+                                "branch_receive" => $insert['branch_receive'],
+                            ];
+                            $app->insert("warehouses_logs", $warehouses_logs);
+                        }
+                    }
+                }
+                if ($insert['data'] != '') {
+                    $app->insert("purchase_logs", [
+                        "purchase" => $insert['data'],
+                        "user" => $app->getSession("accounts")['id'] ?? 0,
+                        "content" => $app->xss('Nhập hàng'),
+                        "status" => $app->xss(5),
+                        "date" => date('Y-m-d H:i:s'),
+                    ]);
+                    $app->update("purchase", ["status" => 5], ["id" => $insert['data']]);
+                }
+                $amount = 0;
+                if ($action == 'cancel') {
+                    foreach ($datas['warehouses'] as $key => $value) {
+                        if ($value['amount'] > 0) {
+                            $getwarehouses = $app->get("warehouses_details", ["id", "amount_cancel", "amount_total", "vendor", "products", "price"], ["id" => $value['id'], "deleted" => 0, "amount_total[>]" => 0]);
+                            $update = [
+                                "amount_cancel" => $getwarehouses['amount_cancel'] + $value['amount'],
+                                "amount_total" => $getwarehouses['amount_total'] - $value['amount'],
+                            ];
+                            $app->update("warehouses_details", $update, ["id" => $getwarehouses['id']]);
+                            $total_amount = $value['amount_total'] - $value['amount'];
+                            $pro = [
+                                "warehouses" => $orderId,
+                                "data" => $insert['data'],
+                                "type" => $insert['type'],
+                                "vendor" => $getwarehouses['vendor'],
+                                "products" => $getwarehouses['products'],
+                                "amount_buy" => $value['amount_buy'],
+                                "amount" => $value['amount'],
+                                "amount_total" => $value['amount'],
+                                "price" => $getwarehouses['price'],
+                                "notes" => $value['notes'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $insert['stores'],
+                                "branch" => $insert['branch'],
+                            ];
+                            $app->insert("warehouses_details", $pro);
+                            $warehouses_logs = [
+                                "type" => $insert['type'],
+                                "data" => $insert['data'],
+                                "warehouses" => $orderId,
+                                "details" => $getwarehouses['id'],
+                                "products" => $getwarehouses['products'],
+                                "amount" => $app->xss($value['amount']),
+                                "price" => $value['price'],
+                                "total" => $value['amount'] * $value['price'],
+                                "date" => date('Y-m-d H:i:s'),
+                                "user" => $app->getSession("accounts")['id'] ?? 0,
+                                "stores" => $insert['stores'],
+                                "branch" => $insert['branch'],
+                            ];
+                            $app->insert("warehouses_logs", $warehouses_logs);
+                            $pro_logs[] = $pro;
+                            $amount += $value['amount'];
+                        }
+                    }
+                    $getProducts = $app->get("products", ["id", "amount"], ["id" => $datas['products']]);
+                    $app->update("products", ["amount" => $getProducts['amount'] - $amount], ["id" => $getProducts['id']]);
+                }
+                $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action]['products'], $_SESSION['warehouses'][$action]]);
+                if ($insert['type'] == 'import') {
+                    $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Nhập hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã nhập hàng phiếu #PN' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
+                } elseif ($insert['type'] == 'move') {
+                    $jatbi->notification($app->getSession("accounts")['id'] ?? 0, '', 'products', 'Xuất hàng', 'Tài khoản ' . ($app->getSession("accounts")['name'] ?? '') . ' Đã xuất hàng phiếu #PX' . $orderId, '/warehouses/warehouses-history-views/' . $orderId . '/', 'modal-url');
+                }
+                unset($_SESSION['warehouses'][$action]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $error['content']]);
+            }
         }
-    } else {
-        // Trường hợp $entity không hợp lệ
-        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Hành động không hợp lệ.")]);
-    }
-
-    // --- Lưu cookie nếu $needs_cookie_update là true ---
-    // (Bao gồm cả trường hợp lỗi trong completed)
-    if ($needs_cookie_update) {
-         if (json_encode($cookie_data) === false) {
-             error_log("CRITICAL ERROR: Failed to encode cookie data before saving in POST /warehouses-update. Action: {$action}. Data: " . print_r($cookie_data, true));
-         } else {
-            $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
-         }
-    }
-
-}); // Kết thúc router POST
-
-
-
-
-
-
-
-    
+    });
 
     $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
