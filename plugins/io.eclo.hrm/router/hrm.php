@@ -266,8 +266,44 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $insert_data['permanent_province_new'] = $app->xss($_POST['permanent_province_new'] ?? 0);
                 $insert_data['permanent_ward_new'] = $app->xss($_POST['permanent_ward_new'] ?? 0);
             }
+            $result = $app->action(function () use ($app, $jatbi, $insert_data) {
 
-            $app->insert("personnels", $insert_data);
+                $app->insert("personnels", $insert_data);
+                $new_personnel_id = $app->id(); 
+
+                if (!$new_personnel_id) {
+                    return false;
+                }
+
+                $furlough_type = $app->get("furlough_categorys", "id", ["code" => "NPN", "deleted" => 0]);
+                $furlough_id = $furlough_type ?? null; 
+
+                $annual_leave_data = [
+                    "profile_id" => $new_personnel_id,
+                    "furlough_id" => $furlough_id, 
+                    "year" => date('Y'), 
+                    "total_accrued" => 0, 
+                    "carried_over" => 0,
+                    "days_used" => 0, 
+                    // "notes" => "Tạo tự động khi thêm mới nhân viên",
+                    "account" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => date("Y-m-d H:i:s"),
+                    "deleted" => 0,
+                    "active" => $jatbi->active()
+                ];
+
+                $app->insert("annual_leave", $annual_leave_data);
+
+                return $new_personnel_id;
+            });
+
+            if ($result) {
+                $jatbi->logs('personnels', 'add', $insert_data); 
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới nhân viên thành công (đã tạo phép năm)."), 'reload' => true]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra, không thể thêm nhân viên hoặc tạo phép năm.")]);
+            }
+
             $personnel_id = $app->id();
             if (count($stores) > 1) {
                 $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
@@ -1851,10 +1887,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
             $vars['offices'] = $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]);
             $vars['contract_type'] = [
-                ["value" => 1, "text" => $jatbi->lang("Thử việc")],
-                ["value" => 2, "text" => $jatbi->lang("Chính thức lần 1")],
-                ["value" => 3, "text" => $jatbi->lang("Chính thức lần 2")],
-                ["value" => 4, "text" => $jatbi->lang("Không xác định thời hạn")],
+                ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
+                ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
             ];
             echo $app->render($template . '/hrm/contract.html', $vars);
         } elseif ($app->method() === 'POST') {
@@ -2197,10 +2231,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             );
             $vars['contract_type'] = [
                 ["value" => "", "text" => $jatbi->lang("Chọn")],
-                ["value" => 1, "text" => $jatbi->lang("Thử việc")],
-                ["value" => 2, "text" => $jatbi->lang("Chính thức lần 1")],
-                ["value" => 3, "text" => $jatbi->lang("Chính thức lần 2")],
-                ["value" => 4, "text" => $jatbi->lang("Không xác định thời hạn")],
+                ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
+                ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
             ];
             $vars['salary_categorys'] = array_merge(
                 [["value" => "", "text" => $jatbi->lang("Chọn")]],
@@ -2359,10 +2391,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             );
             $vars['contract_type'] = [
                 ["value" => "", "text" => $jatbi->lang("Chọn")],
-                ["value" => 1, "text" => $jatbi->lang("Thử việc")],
-                ["value" => 2, "text" => $jatbi->lang("Chính thức lần 1")],
-                ["value" => 3, "text" => $jatbi->lang("Chính thức lần 2")],
-                ["value" => 4, "text" => $jatbi->lang("Không xác định thời hạn")],
+                ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
+                ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
             ];
             $vars['salary_categorys'] = array_merge(
                 [["value" => "", "text" => $jatbi->lang("Chọn")]],
@@ -2521,10 +2551,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 );
                 $vars['contract_type'] = [
                     ["value" => "", "text" => $jatbi->lang("Chọn")],
-                    ["value" => 1, "text" => $jatbi->lang("Thử việc")],
-                    ["value" => 2, "text" => $jatbi->lang("Chính thức lần 1")],
-                    ["value" => 3, "text" => $jatbi->lang("Chính thức lần 2")],
-                    ["value" => 4, "text" => $jatbi->lang("Không xác định thời hạn")],
+                    ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
+                    ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
                 ];
                 $vars['salary_categorys'] = array_merge(
                     [["value" => "", "text" => $jatbi->lang("Chọn")]],
@@ -3976,7 +4004,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough.approve']);
 
-    $app->router("/furlough-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template,$accStore) {
+    $app->router("/furlough-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
         $vars['title'] = $jatbi->lang("Tạo Đơn xin nghỉ phép");
 
         if ($app->method() === 'GET') {
@@ -3985,7 +4013,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
                 $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $app->getSession("accounts")['personnels_id']]);
             } else {
-                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0,"stores" => $accStore]);
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $accStore]);
             }
             $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A"]); // Lấy thêm 'code'
             $vars['leave_details'] = [];
@@ -7161,7 +7189,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['uniforms_allocations']);
 
-    $app->router('/uniforms_allocations-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$accStore ,$template) {
+    $app->router('/uniforms_allocations-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Cấp phát Đồng phục");
 
         if ($app->method() === 'GET') {
@@ -7170,7 +7198,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $employees_db = $app->select(
                 "personnels",
                 ["id", "code", "name"],
-                ["deleted" => 0, "status" => 'A',"stores" => $accStore]
+                ["deleted" => 0, "status" => 'A', "stores" => $accStore]
             );
 
             $formatted_employees = array_map(function ($employee) {

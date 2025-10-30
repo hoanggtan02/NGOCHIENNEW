@@ -119,20 +119,12 @@ $duration_types = [
 ];
 $personnels_contracts = [
     "1" => [
-        "name" => 'Thử việc',
+        "name" => 'Xac định thời hạn',
         "id" => 1,
     ],
     "2" => [
-        "name" => 'Chính thức lần 1',
+        "name" => 'Không xác định thời hạn',
         "id" => 2,
-    ],
-    "3" => [
-        "name" => 'Chính thức lần 2',
-        "id" => 3,
-    ],
-    "4" => [
-        "name" => 'Xác định thời hạn',
-        "id" => 4,
     ],
 ];
 

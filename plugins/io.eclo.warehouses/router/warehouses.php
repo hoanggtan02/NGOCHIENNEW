@@ -4101,9 +4101,9 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 if ($log['type'] == 'export' && $log['invoices']) {
                     $id_display = '<a class="pjax-load" href="/invoices/invoices-views/' . $log['invoices'] . '/">#HĐ' . $log['invoices'] . '</a>';
                 } elseif (in_array($log['type'], ['import', 'move', 'export']) && $log['warehouses'] && !$log['invoices']) {
-                    $id_display = '<a class="modal-url" data-url="/warehouses/warehouses-history-views/' . $log['warehouses'] . '/">#' . $log['warehouses'] . '</a>';
+                    $id_display = '<a class="modal-url" data-action = "modal" data-url="/warehouses/warehouses-history-views/' . $log['warehouses'] . '">#' . $log['warehouses'] . '</a>';
                 } elseif ($log['type'] == 'error' && $log['warehouses']) {
-                    $id_display = '<a class="modal-url" data-url="/warehouses/products-error-history-views/' . $log['warehouses'] . '">#' . $log['warehouses'] . '</a>';
+                    $id_display = '<a class="modal-url" data-action = "modal" data-url="/warehouses/products-error-history-views/' . $log['warehouses'] . '">#' . $log['warehouses'] . '</a>';
                 }
 
                 $output_data[] = [
@@ -4750,11 +4750,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($dates[1]))));
             }
 
-            $where = ["AND" => ["logs.deleted" => 0, "logs.dispatch" => $type, "logs.action" => ['add', 'edit', 'deleted'], "logs.date[<>]" => [$date_from, $date_to]]];
+            $where = [
+                "AND" => [
+                    "logs.deleted" => 0, 
+                    "logs.dispatch" => $type, 
+                    "logs.action" => ['add', 'edit', 'delete', 'deleted'], 
+                    "logs.date[<>]" => [$date_from, $date_to]
+                    ]
+                ];
             if (!empty($filter_user))
                 $where['AND']['logs.user'] = $filter_user;
 
-            $joins = ["[<]accounts" => ["user" => "id"]];
+            $joins = ["[>]accounts" => ["user" => "id"]];
 
             $recordsTotal = $app->count("logs", $joins, "logs.id", $where);
 
@@ -7015,14 +7022,24 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
     });
 
     $app->router('/warehouses-update-error/error/{field}/{action}/{id}', 'POST', function ($vars) use ($app, $jatbi) {
-
-        $action = 'error';
-        $id = $vars['id'];
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-        if ($vars['field'] == 'stores') {
-            $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-            if ($data > 1) {
+        $action = 'error';
+        $field = $vars['field'] ?? '';
+        $subAction = $vars['action'] ?? '';
+        $id = $vars['id'] ?? '';
+
+        // === KHỞI TẠO TẤT CẢ BIẾN TRƯỚC KHI DÙNG ===
+        $error_warehouses = false;
+        $error = [];
+        $pro_logs = [];
+
+        // === XỬ LÝ FIELD ===
+        if ($field === 'stores') {
+            $value = $app->xss($_POST['value'] ?? '');
+            $data = $app->get("stores", ["id", "name"], ["id" => $value]);
+
+            if (!empty($data) && is_array($data)) {
                 $_SESSION['warehouses'][$action]['stores'] = [
                     "id" => $data['id'],
                     "name" => $data['name'],
@@ -7031,37 +7048,46 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
             }
-        } elseif ($vars['field'] == 'products') {
-            if ($vars['action'] == 'add') {
-                $data = $app->get("products", ["id", "price", "vendor", "images", "code", "name", "categorys", "default_code", "units", "notes", "branch", "amount"], ["id" => $app->xss($id)]);
-                if ($data > 1) {
-                    $warehouses = $data['amount'];
-                    if ($data['amount'] <= 0 && $action == 'error') {
-                        $error = $jatbi->lang("Số lượng không đủ");
+
+        } elseif ($field === 'products') {
+            if ($subAction === 'add') {
+                $productId = $app->xss($id);
+                $data = $app->get("products", [
+                    "id", "price", "vendor", "images", "code", "name", "categorys", "default_code", "units", "notes", "branch", "amount"
+                ], ["id" => $productId]);
+
+                if (!empty($data) && is_array($data)) {
+                    $local_error = '';
+                    $warehouses = $data['amount'] ?? 0;
+
+                    if ($data['amount'] <= 0 && $action === 'error') {
+                        $local_error = $jatbi->lang("Số lượng không đủ");
                     }
-                    if (empty($error)) {
+
+                    if (empty($local_error)) {
                         if (!isset($_SESSION['warehouses'][$action]['products'][$data['id']])) {
                             $_SESSION['warehouses'][$action]['products'][$data['id']] = [
                                 "products" => $data['id'],
                                 "amount_buy" => 0,
                                 "amount" => 1,
-                                "price" => $data['price'],
-                                "vendor" => $data['vendor'],
-                                "images" => $data['images'],
-                                "code" => $data['code'],
-                                "name" => $data['name'],
-                                "categorys" => $data['categorys'],
-                                "default_code" => $data['default_code'],
-                                "units" => $data['units'],
-                                "notes" => $data['notes'],
+                                "price" => $data['price'] ?? 0,
+                                "vendor" => $data['vendor'] ?? '',
+                                "images" => $data['images'] ?? '',
+                                "code" => $data['code'] ?? '',
+                                "name" => $data['name'] ?? '',
+                                "categorys" => $data['categorys'] ?? '',
+                                "default_code" => $data['default_code'] ?? '',
+                                "units" => $data['units'] ?? '',
+                                "notes" => $data['notes'] ?? '',
                                 "warehouses" => $warehouses,
-                                "branch" => $data['branch']
+                                "branch" => $data['branch'] ?? ''
                             ];
                             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
                         } else {
                             $getPro = $_SESSION['warehouses'][$action]['products'][$data['id']];
-                            $value = $getPro['amount'] + 1;
-                            if ($value > $data['amount'] && $action == 'error') {
+                            $value = ($getPro['amount'] ?? 0) + 1;
+
+                            if ($value > $data['amount'] && $action === 'error') {
                                 $_SESSION['warehouses'][$action]['products'][$data['id']]['amount'] = $data['amount'];
                                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
                             } else {
@@ -7070,114 +7096,153 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
                             }
                         }
                     } else {
-                        echo json_encode(['status' => 'error', 'content' => $error]);
+                        echo json_encode(['status' => 'error', 'content' => $local_error]);
                     }
                 } else {
                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
                 }
-            } elseif ($vars['action'] == 'deleted') {
+
+            } elseif ($subAction === 'deleted') {
                 unset($_SESSION['warehouses'][$action]['products'][$id]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } elseif ($vars['action'] == 'price') {
-                $_SESSION['warehouses'][$action]['products'][$id][$vars['action']] = $app->xss(str_replace([','], '', $_POST['value']));
+
+            } elseif ($subAction === 'price') {
+                $value = str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+                $_SESSION['warehouses'][$action]['products'][$id][$subAction] = $value;
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-            } elseif ($vars['action'] == 'amount') {
-                $value = $app->xss(str_replace([','], '', $_POST['value']));
+
+            } elseif ($subAction === 'amount') {
+                $value = (float)str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+
                 if ($value < 0) {
                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
-                } else {
-                    $getAmount = $app->get("products", ["id", "amount"], ["id" => $_SESSION["warehouses"][$action]['products'][$id]['products']]);
-                    if ($value > $getAmount['amount']) {
-                        $_SESSION["warehouses"][$action]['products'][$id][$vars['action']] = $getAmount['amount'];
-                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
-                    } else {
-                        $_SESSION["warehouses"][$action]['products'][$id][$vars['action']] = $value;
-                        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-                    }
+                    return;
                 }
+
+                $productId = $_SESSION['warehouses'][$action]['products'][$id]['products'] ?? null;
+                $getAmount = $productId ? $app->get("products", ["id", "amount"], ["id" => $productId]) : null;
+
+                if ($getAmount && $value > ($getAmount['amount'] ?? 0)) {
+                    $_SESSION['warehouses'][$action]['products'][$id][$subAction] = $getAmount['amount'];
+                    echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không đủ")]);
+                } else {
+                    $_SESSION['warehouses'][$action]['products'][$id][$subAction] = $value;
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                }
+
             } else {
-                $_SESSION['warehouses'][$action]['products'][$id][$vars['action']] = $app->xss($_POST['value']);
+                $value = $app->xss($_POST['value'] ?? '');
+                $_SESSION['warehouses'][$action]['products'][$id][$subAction] = $value;
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             }
-        } elseif ($vars['field'] == 'date' || $vars['field'] == 'content') {
 
-            $_SESSION['warehouses'][$action][$vars['field']] = $app->xss($_POST['value']);
+        } elseif (in_array($field, ['date', 'content'])) {
+            $value = $app->xss($_POST['value'] ?? '');
+            $_SESSION['warehouses'][$action][$field] = $value;
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($vars['field'] == 'cancel') {
+
+        } elseif ($field === 'cancel') {
             unset($_SESSION['warehouses'][$action]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } elseif ($vars['field'] == 'completed') {
-            $datas = $_SESSION['warehouses'][$action];
+
+        } elseif ($field === 'completed') {
+            $datas = $_SESSION['warehouses'][$action] ?? [];
             $total_products = 0;
-            foreach ($datas['products'] as $value_amount) {
-                $total_products += $value_amount['amount'] * $value_amount['price'];
-                if ($value_amount['amount'] == '' || $value_amount['amount'] == 0 || $value_amount['amount'] < 0) {
-                    $error_warehouses = 'true';
+
+            foreach ($datas['products'] ?? [] as $value_amount) {
+                $amount = $value_amount['amount'] ?? 0;
+                $price = $value_amount['price'] ?? 0;
+                $total_products += $amount * $price;
+
+                if ($amount === '' || $amount == 0 || $amount < 0) {
+                    $error_warehouses = true;
                 }
             }
 
-            if ($datas['stores']['id'] == '' || $datas['content'] == '' || count($datas['products']) == 0) {
+            $required = [
+                $datas['stores']['id'] ?? '',
+                $datas['content'] ?? '',
+                count($datas['products'] ?? [])
+            ];
+
+            if (in_array('', $required, true) || count($datas['products'] ?? []) == 0) {
                 $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
-            } elseif ($error_warehouses == 'true') {
+            } elseif ($error_warehouses === true) {
                 $error = ['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập số lượng")];
+            } else {
+                $error = [];
             }
 
-            if (count($error) == 0) {
+            if (empty($error)) {
                 $insert = [
                     "code" => 'error',
-                    "type" => $datas['type'],
-                    "data" => $datas['data'],
-                    "stores" => $datas['stores']['id'],
-                    "content" => $datas['content'],
+                    "type" => $datas['type'] ?? '',
+                    "data" => $datas['data'] ?? '',
+                    "stores" => $datas['stores']['id'] ?? '',
+                    "content" => $datas['content'] ?? '',
                     "user" => $app->getSession("accounts")['id'] ?? 0,
-                    "date" => $datas['date'],
+                    "date" => $datas['date'] ?? '',
                     "active" => $jatbi->active(30),
                     "date_poster" => date("Y-m-d H:i:s"),
                     "receive_status" => 1,
                 ];
+
                 $app->insert("warehouses", $insert);
                 $orderId = $app->id();
 
-                foreach ($datas['products'] as $key => $value) {
+                foreach ($datas['products'] as $value) {
                     $getProducts = $app->get("products", ["id", "amount", "amount_error"], ["id" => $value['products'], "deleted" => 0]);
-                    $app->update("products", ["amount" => $getProducts['amount'] - $value['amount'], "amount_error" => $getProducts['amount_error'] + $value['amount']], ["id" => $getProducts['id']]);
 
-                    $pro = [
-                        "warehouses" => $orderId,
-                        "data" => $insert['data'],
-                        "type" => $insert['type'],
-                        "products" => $value['products'],
-                        "amount" => str_replace([','], '', $value['amount']),
-                        "amount_total" => str_replace([','], '', $value['amount']),
-                        "price" => $value['price'],
-                        "notes" => $value['notes'],
-                        "date" => date("Y-m-d H:i:s"),
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                        "branch" => $value['branch'],
-                    ];
-                    $app->insert("warehouses_details", $pro);
-                    $GetID = $app->id();
+                    if ($getProducts) {
+                        $currentAmount = $getProducts['amount'] ?? 0;
+                        $currentError = $getProducts['amount_error'] ?? 0;
+                        $adjustAmount = $value['amount'] ?? 0;
 
-                    $warehouses_logs = [
-                        "type" => $insert['type'],
-                        "data" => $insert['data'],
-                        "warehouses" => $orderId,
-                        "details" => $GetID,
-                        "products" => $value['products'],
-                        "price" => $value['price'],
-                        "amount" => str_replace([','], '', $value['amount']),
-                        "total" => $value['amount'] * $value['price'],
-                        "notes" => $value['notes'],
-                        "date" => date('Y-m-d H:i:s'),
-                        "user" => $app->getSession("accounts")['id'] ?? 0,
-                        "stores" => $insert['stores'],
-                        "branch" => $value['branch'],
-                    ];
-                    $app->insert("warehouses_logs", $warehouses_logs);
-                    $pro_logs[] = $pro;
+                        $app->update("products", [
+                            "amount" => $currentAmount - $adjustAmount,
+                            "amount_error" => $currentError + $adjustAmount
+                        ], ["id" => $getProducts['id']]);
+
+                        $cleanAmount = str_replace(',', '', $value['amount'] ?? '0');
+
+                        $pro = [
+                            "warehouses" => $orderId,
+                            "data" => $insert['data'],
+                            "type" => $insert['type'],
+                            "products" => $value['products'],
+                            "amount" => $cleanAmount,
+                            "amount_total" => $cleanAmount,
+                            "price" => $value['price'] ?? 0,
+                            "notes" => $value['notes'] ?? '',
+                            "date" => date("Y-m-d H:i:s"),
+                            "user" => $app->getSession("accounts")['id'] ?? 0,
+                            "stores" => $insert['stores'],
+                            "branch" => $value['branch'] ?? ''
+                        ];
+                        $app->insert("warehouses_details", $pro);
+                        $GetID = $app->id();
+
+                        $warehouses_logs = [
+                            "type" => $insert['type'],
+                            "data" => $insert['data'],
+                            "warehouses" => $orderId,
+                            "details" => $GetID,
+                            "products" => $value['products'],
+                            "price" => $value['price'] ?? 0,
+                            "amount" => $cleanAmount,
+                            "total" => ($value['amount'] ?? 0) * ($value['price'] ?? 0),
+                            "notes" => $value['notes'] ?? '',
+                            "date" => date('Y-m-d H:i:s'),
+                            "user" => $app->getSession("accounts")['id'] ?? 0,
+                            "stores" => $insert['stores'],
+                            "branch" => $value['branch'] ?? ''
+                        ];
+                        $app->insert("warehouses_logs", $warehouses_logs);
+                        $pro_logs[] = $pro;
+                    }
                 }
-                $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action]]);
+
+                $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $_SESSION['warehouses'][$action] ?? []]);
                 unset($_SESSION['warehouses'][$action]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
