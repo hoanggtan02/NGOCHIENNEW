@@ -183,6 +183,7 @@ return [
                     'personnels.add' => $jatbi->lang("Thêm nhân viên"),
                     'personnels.edit' => $jatbi->lang("Sửa nhân viên"),
                     'personnels.deleted' => $jatbi->lang("Xóa nhân viên"),
+                    'personnels.evaluation' => $jatbi->lang("Đánh giá nhân viên"),
 
                     // Quyền cho Hợp đồng
                     'contract' => $jatbi->lang("Xem danh sách hợp đồng"),

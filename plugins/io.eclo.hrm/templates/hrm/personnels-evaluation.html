@@ -1,0 +1,142 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+
+            <div class="modal-header d-print-none">
+                <h5 class="modal-title"><?= $title ?? 'In Phiếu Đánh Giá' ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body" id="printable-evaluation"
+                style="font-family:'Times New Roman', Times, serif; font-size:12pt; color:#000; line-height:1.4; background:#fff;">
+
+                <div class="row mb-2 align-items-center"> <div class="col-2">
+                        <img src="<?= $setting['url'] ?? '' ?>/assets/img/logonh.png" alt="Logo" style="height:60px;">
+                    </div>
+                    
+                    <div class="col-8 text-center">
+                        <p style="font-weight:bold; margin:0; font-size: 11pt;">CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</p>
+                        <h4 style="font-weight:bold; margin-top: 10px;">PHIẾU ĐÁNH GIÁ NHÂN VIÊN</h4>
+                    </div>
+                    <div class="col-2">
+                        </div>
+                </div>
+
+                <table class="table table-borderless" style="font-size:12pt;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 15%;"><strong>Họ tên nhân viên:</strong></td>
+                            <td style="width: 55%; border-bottom: 1px dotted #000;"><?= htmlspecialchars($data['name'] ?? '') ?></td>
+                            <td style="width: 10%;"><strong>Mã NV:</strong></td>
+                            <td style="width: 20%; border-bottom: 1px dotted #000;"><?= htmlspecialchars($data['code'] ?? '') ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vị trí:</strong></td>
+                            <td style="border-bottom: 1px dotted #000;"><?= htmlspecialchars($data['position_name'] ?? '') ?></td>
+                            <td><strong>Bộ phận:</strong></td>
+                            <td style="border-bottom: 1px dotted #000;"><?= htmlspecialchars($data['office_name'] ?? '') ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ngày bắt đầu làm việc:</strong></td>
+                            <td style="border-bottom: 1px dotted #000;"><?= !empty($data['work_start_date']) ? date('d/m/Y', strtotime($data['work_start_date'])) : '' ?></td>
+                            <td><strong>Ngày đánh giá:</strong></td>
+                            <td style="border-bottom: 1px dotted #000;">.../ ... / ......</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="my-1 p-1" style="background-color: #fff9c4;"> <strong><u>Mục đích đánh giá:</u></strong>
+                </div>
+                <div class="row" style="font-size: 11pt;">
+                    <div class="col-6">
+                        <span style="border: 1px solid #000; width: 15px; height: 15px; display: inline-block; vertical-align: middle;"></span>
+                        Đánh giá định kỳ
+                    </div>
+                    <div class="col-6">
+                        <span style="border: 1px solid #000; width: 15px; height: 15px; display: inline-block; vertical-align: middle;"></span>
+                        Đánh giá thử việc
+                    </div>
+                </div>
+                <div class="row mt-1" style="font-size: 11pt;">
+                    <div class="col-6">
+                        <span style="border: 1px solid #000; width: 15px; height: 15px; display: inline-block; vertical-align: middle;"></span>
+                        Đánh giá khen thưởng
+                    </div>
+                    <div class="col-6">
+                        <span style="border: 1px solid #000; width: 15px; height: 15px; display: inline-block; vertical-align: middle;"></span>
+                        Đánh giá tăng lương đột xuất
+                    </div>
+                </div>
+
+                <table class="table table-bordered mt-2" style="font-size: 11pt; border-color: #000 !important;"> <thead style="background-color: #fff9c4;">
+                        <tr class="text-center">
+                            <th style="width: 10%; border: 1px solid #000; padding: 4px;">Đối Tượng Áp Dụng</th>
+                            <th style="width: 50%; border: 1px solid #000; padding: 4px;">Nội Dung Áp Dụng</th>
+                            <th style="width: 8%; border: 1px solid #000; padding: 4px;">1</th>
+                            <th style="width: 8%; border: 1px solid #000; padding: 4px;">2</th>
+                            <th style="width: 8%; border: 1px solid #000; padding: 4px;">3</th>
+                            <th style="width: 8%; border: 1px solid #000; padding: 4px;">4</th>
+                            <th style="width: 8%; border: 1px solid #000; padding: 4px;">5</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $i = 1;
+                        foreach($criteria_list as $id => $name): 
+                        ?>
+                        <tr>
+                            <?php if ($i === 1): ?>
+                            <td rowspan="12" class="text-center" style="writing-mode: vertical-rl; transform: rotate(180deg); font-weight: bold; border: 1px solid #000; vertical-align: middle;">
+                                A. Dành cho nhân viên
+                            </td>
+                            <?php endif; ?>
+                            
+                            <td style="border: 1px solid #000; padding: 4px;"><?= $i ?>. <?= htmlspecialchars($name) ?></td>
+                            
+                            <td class="text-center" style="height: 30px; border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                        </tr>
+                        <?php 
+                        $i++;
+                        endforeach; 
+                        ?>
+                        
+                        <tr>
+                            <td colspan="2" class="text-center" style="border: 1px solid #000; padding: 4px;"><strong>Total</strong></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                            <td class="text-center" style="border: 1px solid #000;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="mt-2"> <strong style="display: block; padding: 5px; background-color: #fff9c4; text-transform: uppercase;">KẾT LUẬN</strong>
+                    <div style="border: 1px solid #000; height: 80px; margin-top: 5px;"></div> </div>
+                <div class="mt-2"> <strong style="display: block; padding: 5px; background-color: #fff9c4; text-transform: uppercase;">ĐỀ XUẤT</strong>
+                    <div style="border: 1px solid #000; height: 80px; margin-top: 5px;"></div> </div>
+
+                <div class="mt-2 p-2" style="background-color: #fff9c4; text-transform: uppercase;"> <strong>DUYỆT</strong>
+                </div>
+                <div class="row mt-3" style="font-weight: bold;"> <div class="col-3 text-center">Giám đốc/ Quản lý</div>
+                    <div class="col-3 text-center">Quản Lý</div>
+                    <div class="col-3 text-center">Phòng nhân sự</div>
+                    <div class="col-3 text-center">Trưởng bộ phận</div>
+                </div>
+                 <div class="row" style="height: 60px;"> </div>
+
+            </div>
+
+                     <div class="modal-footer d-print-none">
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal"><?=$jatbi->lang("Hủy")?></button>
+                <button class="btn btn-success" onclick="window.print();">IN</button>
+            </div>
+        </div>
+    </div>
+</div>

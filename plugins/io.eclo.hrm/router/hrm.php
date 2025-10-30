@@ -165,6 +165,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 'permission' => ['personnels.deleted'],
                                 'action' => ['data-url' => '/hrm/personnels-deleted?box=' . $data['id'], 'data-action' => 'modal']
                             ],
+                              [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Đánh giá nhân viên"),
+                                'permission' => ['personnels.evaluation'],
+                                'action' => ['data-url' => '/hrm/personnels-evaluation/' . $data['id'], 'data-action' => 'modal']
+                            ],
                         ]
                     ]),
                 ];
@@ -9043,6 +9049,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     //     }
     // })->setPermissions(['hrm.overtime.deleted']);
 
+
     $app->router("/furlough-month", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $stores, $accStore) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Nghỉ phép tháng");
@@ -9539,4 +9546,81 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
         }
     })->setPermissions(['furlough-month.edit']);
+
+
+
+
+    $app->router('/personnels-evaluation/{id}', 'GET', function ($vars) use ($app, $jatbi, $template, $setting) {
+        $id = (int) ($vars['id'] ?? 0);
+        $vars['title'] = $jatbi->lang("In Phiếu Đánh Giá Nhân Viên");
+
+
+        $personnel_data = $app->get("personnels", "*", [
+            "id" => $id, 
+            "deleted" => 0
+        ]);
+
+        if (!$personnel_data) {
+            return $app->render($template . '/error.html', $vars, $jatbi->ajax());
+        }
+
+
+        if (!empty($personnel_data['office'])) {
+            $office = $app->get("offices", ["name"], ["id" => $personnel_data['office']]);
+            $personnel_data['office_name'] = $office['name'] ?? 'N/A';
+        } else {
+            $personnel_data['office_name'] = 'N/A';
+        }
+        
+
+        $latest_contract = $app->get("personnels_contract", 
+            ["position", "workday"], 
+            [
+                "personnels" => $id,
+                "deleted" => 0,
+                "ORDER" => ["date_contract" => "DESC"] 
+            ]
+        );
+
+    
+        if ($latest_contract) {
+    
+            if (!empty($latest_contract['position'])) {
+                $position = $app->get("hrm_positions", ["name"], ["id" => $latest_contract['position']]);
+                $personnel_data['position_name'] = $position['name'] ?? 'N/A';
+            } else {
+                $personnel_data['position_name'] = 'N/A';
+            }
+            
+   
+            $personnel_data['work_start_date'] = $latest_contract['workday'] ?? $personnel_data['date']; 
+        } else {
+         
+            $personnel_data['position_name'] = 'N/A';
+            $personnel_data['work_start_date'] = $personnel_data['date']; 
+        }
+
+        $vars['data'] = $personnel_data; 
+        
+
+        $vars['criteria_list'] = [
+            1 => $jatbi->lang('Chuyên môn nhân viên'),
+            2 => $jatbi->lang('Khối lượng công việc'),
+            3 => $jatbi->lang('Tính tự giác trong công việc'),
+            4 => $jatbi->lang('Tính lắng nghe và cải thiện'),
+            5 => $jatbi->lang('Tính sáng tạo, linh động'),
+            6 => $jatbi->lang('Tính phối hợp tổ chức'),
+            7 => $jatbi->lang('Tinh thần trách nhiệm'),
+            8 => $jatbi->lang('Tinh thần học hỏi'),
+            9 => $jatbi->lang('Giao tiếp tốt'),
+            10 => $jatbi->lang('Tuân thủ quy định của công ty'),
+            11 => $jatbi->lang('Tuân thủ quy trình hoạt động của công ty'),
+            12 => $jatbi->lang('Tuân thủ văn hóa của công ty'),
+        ];
+        
+
+        echo $app->render($template . '/hrm/personnels-evaluation.html', $vars, $jatbi->ajax());
+
+    })->setPermissions(['personnels.evaluation']);
+
 })->middleware('login');
