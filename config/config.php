@@ -126,6 +126,10 @@ $personnels_contracts = [
         "name" => 'Không xác định thời hạn',
         "id" => 2,
     ],
+    "3" => [
+        "name" => 'Thử việc',
+        "id" => 3,
+    ],
 ];
 
 $Status_invoices = [

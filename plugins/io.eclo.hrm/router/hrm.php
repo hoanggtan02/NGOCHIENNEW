@@ -1940,8 +1940,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
             $vars['offices'] = $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]);
             $vars['contract_type'] = [
+                ["value" => "", "text" => "Tất cả"],
                 ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
                 ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
+                ["value" => 3, "text" => $jatbi->lang("Thử việc")],
+            ];
+            $vars['insurance_status'] = [
+                ["value" => "", "text" => "Tất cả"],
+                ["value" => "official_has", "text" => "Chính thức – vô bảo hiểm"],
+                ["value" => "official_no", "text" => "Chính thức – chưa vô bảo hiểm"],
             ];
             echo $app->render($template . '/hrm/contract.html', $vars);
         } elseif ($app->method() === 'POST') {
@@ -1956,6 +1963,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
             $type = isset($_POST['type']) ? $_POST['type'] : '';
             $offices = isset($_POST['offices']) ? $_POST['offices'] : '';
+            $insurance_status = isset($_POST['insurance_status']) ? $_POST['insurance_status'] : '';
 
             $joins = [
                 "[>]personnels" => ["personnels" => "id"],
@@ -1980,6 +1988,28 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $where['AND']['personnels_contract.type'] = $type;
             if (!empty($offices))
                 $where['AND']['offices.id'] = $offices;
+            if (!empty($insurance_status)) {
+                if ($insurance_status === 'official_has') {
+                    // Chính thức – vô bảo hiểm
+                    // Lấy danh sách nhân viên có hợp đồng chính thức (type = 1,2)
+                    // và có tên trong bảng personnels_insurrance
+                    $insured_personnels = $app->select("personnels_insurrance", "personnels", [
+                        "deleted" => 0, "status" => 'A'
+                    ]);
+                    $where['AND']['personnels_contract.type'] = [1, 2]; // 1: XĐTH, 2: KXĐTH
+                    $where['AND']['personnels.id'] = $insured_personnels;
+
+                } elseif ($insurance_status === 'official_no') {
+                    // Chính thức – chưa vô bảo hiểm
+                    // Lấy danh sách nhân viên có hợp đồng chính thức
+                    // nhưng KHÔNG có trong bảng personnels_insurrance
+                    $insured_personnels = $app->select("personnels_insurrance", "personnels", [
+                        "deleted" => 0, "status" => 'A'
+                    ]);
+                    $where['AND']['personnels_contract.type'] = [1, 2];
+                    $where['AND']['personnels.id[!]'] = $insured_personnels;
+                }
+            }
             if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
@@ -2777,20 +2807,40 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
     $app->router("/contract-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Hợp đồng lao động");
+        
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
+            
             if (!empty($vars['data'])) {
-                $contract_id = $app->get("personnels_contract", "id", ["personnels" => $app->getSession("accounts")["personnels_id"], "deleted" => 0]);
-                if (($app->getSession("accounts")['your_self'] ?? 0) == 1 && $contract_id != $vars['id']) {
+                // Kiểm tra quyền xem hợp đồng của chính mình
+                $current_user_contract_id = $app->get("personnels_contract", "id", [
+                    "personnels" => $app->getSession("accounts")["personnels_id"] ?? 0,
+                    "deleted" => 0
+                ]);
+                
+                if (($app->getSession("accounts")['your_self'] ?? 0) == 1 && $current_user_contract_id != $vars['id']) {
                     echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
-                } else {
-                    $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", ["deleted" => 0, "contract" => $vars['data']['id'], "status" => 0, "ORDER" => ["id" => "DESC"]]);
-                    // $vars['salarys'] = $app->select("personnels_contract_salary_details", "*", ["type" => 1, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                    // $vars['allowances'] = $app->select("personnels_contract_salary_details", "*", ["type" => 2, "contract" => $vars['data']['id'], "status" => 0, "salary" => $vars['dataSalary']['id'], "deleted" => 0]);
-                    $vars['personnels_contracts'] = $setting['personnels_contracts'][$vars['data']['type']]['name'];
-                    $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]);
-                    echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
+                    return;
                 }
+
+                // Lấy dữ liệu bổ sung
+                $vars['personnel_name']   = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]) ?? '';
+                $vars['office_name']      = $app->get("offices", "name", ["id" => $vars['data']['offices']]) ?? '';
+                $vars['position_name']    = $app->get("hrm_positions", "name", ["id" => $vars['data']['position']]) ?? '';
+                $vars['user_name']        = $app->get("accounts", "name", ["id" => $vars['data']['user']]) ?? '';
+                
+                // Chỉ dùng loại hợp đồng có sẵn
+                $vars['contract_type_name'] = $setting['personnels_contracts'][$vars['data']['type']]['name'] ?? 'Không xác định';
+
+                // Lương bổ sung (nếu có bảng personnels_contract_salary)
+                $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", [
+                    "deleted" => 0,
+                    "contract" => $vars['data']['id'],
+                    "status" => 0,
+                    "ORDER" => ["id" => "DESC"]
+                ]);
+
+                echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
             } else {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             }

@@ -30,7 +30,7 @@
                             </div>
                             <hr class="border-secondary border-opacity-50 my-2">
                             <div class="px-3">
-                                <?=$app->component('select',[
+                            <?=$app->component('select',[
                                 "name"=>'personnels',
                                 "class"=>'filter-name',
                                 "options"=>$personnels,
@@ -38,15 +38,21 @@
                                 "placeholder"=>$jatbi->lang("Nhân viên"),
                                 "attr" => 'multiple',
                             ])?>
-                                <?=$app->component('select',[
+                            <?=$app->component('select',[
                                 "name"=>'type',
                                 "class"=>'filter-name',
                                 "options"=>$contract_type,
                                 "selected" => $data['type'] ?? '',
                                 "placeholder"=>$jatbi->lang("Loại hợp đồng"),
-                                "attr" => 'multiple',
                             ])?>
-                                <?=$app->component('select',[
+                            <?=$app->component('select',[
+                                "name"=>'insurance_status',
+                                "class"=>'filter-name',
+                                "options"=> $insurance_status,
+                                "selected" => $data['insurance_status'] ?? '',
+                                "placeholder"=>$jatbi->lang("Loại bảo hiểm"),
+                            ])?>
+                            <?=$app->component('select',[
                                 "name"=>'offices',
                                 "class"=>'filter-name',
                                 "placeholder"=>$jatbi->lang("Phòng ban"),
