@@ -59,6 +59,11 @@ return [
                         "router" => '/hrm/furlough',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'furlough-month' => [
+                        "name" => $jatbi->lang("Lịch nghỉ hàng tháng"),
+                        "router" => '/hrm/furlough-month',
+                        "icon" => '<i class="ti ti-clock"></i>',
+                    ],
                     'annual_leave' => [
                         "name" => $jatbi->lang("Nghi phép năm"),
                         "router" => '/hrm/annual_leave',
@@ -231,6 +236,11 @@ return [
                     'furlough.deleted' => $jatbi->lang("Xóa Nghỉ phép"),
                     'furlough.approve' => $jatbi->lang("Phê duyệt Nghỉ phép"),
 
+                    // Quyền cho Lịch nghỉ hàng tháng
+                    'furlough-month' => $jatbi->lang("Lịch nghỉ hàng tháng"),
+                    'furlough-month.add' => $jatbi->lang("Thêm Lịch nghỉ hàng tháng"),
+                    'furlough-month.edit' => $jatbi->lang("Sửa Lịch nghỉ hàng tháng"),
+                    'furlough-month.deleted' => $jatbi->lang("Xóa Lịch nghỉ hàng tháng"),
 
                     // Quyền cho Nghỉ phép năm
                     'annual_leave' => $jatbi->lang("Nghỉ phép năm"),
@@ -254,7 +264,7 @@ return [
                     'time-late' => $jatbi->lang("Đi trễ về sớm"),
                     'time-late.add' => $jatbi->lang("Thêm Đi trễ về sớm"),
                     'time-late.edit' => $jatbi->lang("Sửa Đi trễ về sớm"),
-                    'time-late.deleted' => $jatbi->lang("Xóa Đi trễ về sớm"),    
+                    'time-late.deleted' => $jatbi->lang("Xóa Đi trễ về sớm"),
 
                     'salary-advance' => $jatbi->lang("Ứng lương"),
                     'salary-advance.add' => $jatbi->lang("Thêm Ứng lương"),

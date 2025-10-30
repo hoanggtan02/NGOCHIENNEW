@@ -8084,486 +8084,477 @@ $app->router('/ingredient-import', ['GET'], function ($vars) use ($app, $jatbi, 
 })->setPermissions(['warehouses-import']);
 
 // --- ROUTER HIỂN THỊ TRANG CHUYỂN HÀNG (MOVE) ---
-$app->router("/warehouses-move", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
-    $jatbi->permission('warehouses-move');
-    $action = "move";
-    $vars['title'] = $jatbi->lang("Chuyển hàng"); // Title cho trang chuyển hàng
+// $app->router("/warehouses-move", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
+//     $jatbi->permission('warehouses-move');
+//     $action = "move";
+//     $vars['title'] = $jatbi->lang("Chuyển hàng"); // Title cho trang chuyển hàng
 
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_move
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
+//     // 1. Lấy config và đọc cookie
+//     $cookie_config = $setting['warehouse_ticket_cookie'];
+//     $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_move
+//     $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
+//     $needs_cookie_update = false;
 
-    // Logic khởi tạo session cũ:
-    // if($_SESSION['warehouses'][$action]['type']==''){ $_SESSION['warehouses'][$action]['type'] = $action; }
-    // if($_SESSION['warehouses'][$action]['data']==''){ $_SESSION['warehouses'][$action]['data'] = 'products'; }
-    // if($_SESSION['warehouses'][$action]['date']==''){ $_SESSION['warehouses'][$action]['date'] = date("Y-m-d"); }
-    // (Helper đã xử lý các default này)
+//     // Logic khởi tạo session cũ:
+//     // if($_SESSION['warehouses'][$action]['type']==''){ $_SESSION['warehouses'][$action]['type'] = $action; }
+//     // if($_SESSION['warehouses'][$action]['data']==''){ $_SESSION['warehouses'][$action]['data'] = 'products'; }
+//     // if($_SESSION['warehouses'][$action]['date']==''){ $_SESSION['warehouses'][$action]['date'] = date("Y-m-d"); }
+//     // (Helper đã xử lý các default này)
 
-    // Tự động chọn cửa hàng gửi (Giữ nguyên logic)
-    if (count($stores) == 1 && empty($cookie_data['stores'])) {
-        $store_id = array_values($accStore)[0] ?? 0;
-        $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
-        if ($store_info) {
-             $cookie_data['stores'] = $store_info;
-             $needs_cookie_update = true;
-        }
-    }
+//     // Tự động chọn cửa hàng gửi (Giữ nguyên logic)
+//     if (count($stores) == 1 && empty($cookie_data['stores'])) {
+//         $store_id = array_values($accStore)[0] ?? 0;
+//         $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
+//         if ($store_info) {
+//              $cookie_data['stores'] = $store_info;
+//              $needs_cookie_update = true;
+//         }
+//     }
 
-    // Lưu cookie nếu cần
-    if ($needs_cookie_update) {
-        if (json_encode($cookie_data) === false) { /* log */ }
-        else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
-    }
+//     // Lưu cookie nếu cần
+//     if ($needs_cookie_update) {
+//         if (json_encode($cookie_data) === false) { /* log */ }
+//         else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
+//     }
 
-    // Chuẩn bị $vars cho view (Giống import nhưng dùng $action = 'move')
-    $vars['data'] = $cookie_data;
-    $vars['action'] = $action;
+//     // Chuẩn bị $vars cho view (Giống import nhưng dùng $action = 'move')
+//     $vars['data'] = $cookie_data;
+//     $vars['action'] = $action;
 
-    // Làm giàu $SelectProducts (Giống import)
-    $cookie_products = $cookie_data['products'] ?? [];
-    $enriched_products = [];
-    if (!empty($cookie_products)) {
-        // ... (Code làm giàu $enriched_products giống hệt /warehouses-import) ...
-         $product_ids = array_keys($cookie_products);
-         if(!empty($product_ids)) {
-             $products_info = $app->select("products", [ /* joins */ ], [ /* fields */ ], ["products.id" => $product_ids]);
-             $products_map = array_column($products_info, null, 'id');
-             foreach ($cookie_products as $key => $item) { /* ... merge ... */ }
-         }
-    }
-    $vars['SelectProducts'] = $enriched_products;
+//     // Làm giàu $SelectProducts (Giống import)
+//     $cookie_products = $cookie_data['products'] ?? [];
+//     $enriched_products = [];
+//     if (!empty($cookie_products)) {
+//         // ... (Code làm giàu $enriched_products giống hệt /warehouses-import) ...
+//          $product_ids = array_keys($cookie_products);
+//          if(!empty($product_ids)) {
+//              $products_info = $app->select("products", [ /* joins */ ], [ /* fields */ ], ["products.id" => $product_ids]);
+//              $products_map = array_column($products_info, null, 'id');
+//              foreach ($cookie_products as $key => $item) { /* ... merge ... */ }
+//          }
+//     }
+//     $vars['SelectProducts'] = $enriched_products;
 
-    // Options Cửa hàng gửi (Giống import)
-    $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng gửi')]];
-    if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
-    $vars['store_options'] = $store_options;
+//     // Options Cửa hàng gửi (Giống import)
+//     $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng gửi')]];
+//     if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
+//     $vars['store_options'] = $store_options;
 
-    // Options Quầy gửi (Giống import)
-    $selected_store_id = $cookie_data['stores']['id'] ?? 0;
-    $branch_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
-    $vars['branch_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy gửi')]], $branch_opts_query);
+//     // Options Quầy gửi (Giống import)
+//     $selected_store_id = $cookie_data['stores']['id'] ?? 0;
+//     $branch_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_id, "status" => 'A']);
+//     $vars['branch_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy gửi')]], $branch_opts_query);
 
-    // Options Cửa hàng nhận (Lấy tất cả store?)
-    // Code gốc không rõ lấy $stores_receive từ đâu, tạm lấy tất cả
-    $all_stores_receive = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
-    $vars['store_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng nhận')]], $all_stores_receive);
+//     // Options Cửa hàng nhận (Lấy tất cả store?)
+//     // Code gốc không rõ lấy $stores_receive từ đâu, tạm lấy tất cả
+//     $all_stores_receive = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
+//     $vars['store_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng nhận')]], $all_stores_receive);
 
-    // Options Quầy nhận (Dựa vào cửa hàng nhận đã chọn trong cookie)
-    $selected_store_receive_id = $cookie_data['stores_receive']['id'] ?? 0;
-    $branch_receive_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_receive_id, "status" => 'A']);
-    $vars['branch_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy nhận')]], $branch_receive_opts_query);
+//     // Options Quầy nhận (Dựa vào cửa hàng nhận đã chọn trong cookie)
+//     $selected_store_receive_id = $cookie_data['stores_receive']['id'] ?? 0;
+//     $branch_receive_opts_query = $app->select("branch", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $selected_store_receive_id, "status" => 'A']);
+//     $vars['branch_receive_options'] = array_merge([['value' => '', 'text' => $jatbi->lang('Chọn quầy nhận')]], $branch_receive_opts_query);
 
-    // Render view (Có thể là file khác hoặc cùng file với import?)
-    echo $app->render($template . '/warehouses/move.html', $vars); // Giả sử là move.html
-})->setPermissions(['warehouses-move']);
-
-
-// --- ROUTER HIỂN THỊ TRANG HỦY HÀNG (CANCEL) ---
-$app->router("/warehouses-cancel/{product_id:[0-9]+}", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
-    $jatbi->permission('warehouses-cancel');
-    $action = "cancel";
-    $product_id = (int) ($vars['product_id'] ?? 0);
-    $vars['title'] = $jatbi->lang("Hủy hàng sản phẩm"); // Title
-
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_cancel
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
-
-    $product_data = null; // Thông tin sản phẩm đang hủy
-
-    // Logic khởi tạo session gốc:
-    // if($data['id']!=$_SESSION['warehouses'][$action]['products']){ unset($_SESSION['warehouses'][$action]); }
-    // Kiểm tra xem có đang hủy sản phẩm khác không
-    $current_product_in_cookie = $cookie_data['products'] ?? 0; // products chỉ lưu ID cho cancel
-    if (is_array($current_product_in_cookie)) $current_product_in_cookie = key($current_product_in_cookie);
-
-    if ($current_product_in_cookie != $product_id || $product_id == 0) {
-        $product_data = $app->get("products", ["id", "vendor", "units", "name", "code"], ["id" => $product_id, "deleted" => 0]);
-        if (!$product_data) {
-             // header("HTTP/1.0 404 Not Found"); die(); // Giữ logic gốc
-              $app->redirect('/products'); // Hoặc redirect
-              return;
-        }
-        $needs_cookie_update = true;
-        // Khởi tạo cookie mới
-        $cookie_data = get_warehouse_ticket_cookie_data($app, $action); // Lấy default
-        $cookie_data['vendor'] = $product_data['vendor']; // Lưu ID vendor
-        $cookie_data['products'] = $product_data['id']; // Chỉ lưu ID sản phẩm
-        // Mặc định cửa hàng nếu chưa chọn (giữ logic cũ)
-        if (empty($cookie_data['stores'])) {
-            $store_id = array_values($accStore)[0] ?? 0;
-            $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
-            if ($store_info) $cookie_data['stores'] = $store_info;
-        }
-         $cookie_data['content'] = $jatbi->lang("Hủy hàng sản phẩm:") . " #" . $product_data['code']; // Gán content
-
-        // Lấy các lô hàng (Giữ nguyên logic query)
-        $cookie_data['warehouses'] = []; // Reset trước khi nạp
-        $warehouses = $app->select("warehouses_details", "*", [
-            "type" => 'import',
-            "products" => $product_data['id'],
-            "stores" => $cookie_data['stores']['id'] ?? 0, // Dùng store ID từ cookie
-            "deleted" => 0,
-            "amount_total[>]" => 0,
-            "ORDER" => ["id" => "ASC"] // Nên sort theo ID hoặc date
-        ]);
-        foreach ($warehouses as $value) {
-            if(isset($value['id'])) {
-                $cookie_data['warehouses'][$value['id']] = [
-                    "id" => $value['id'], "products" => $value['products'], "vendor" => $value['vendor'],
-                    "duration" => $value['duration'] ?? null, "amount_total" => $value['amount_total'],
-                    "amount" => '', // Số lượng hủy = rỗng
-                    "price" => $value['price'], "units" => $product_data['units'],
-                    "date" => $value['date'], "stores" => $value['stores'],
-                ];
-            }
-        }
-    } else {
-        // Nếu hủy cùng sản phẩm, chỉ lấy lại thông tin sp
-        $product_data = $app->get("products", ["id", "name", "code"], ["id" => $product_id]);
-         if (!$product_data) { $app->redirect('/products'); return; }
-    }
-
-    // Lưu cookie nếu cần
-    if ($needs_cookie_update) {
-        if (json_encode($cookie_data) === false) { /* log */ }
-        else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
-    }
-
-    // Chuẩn bị $vars cho view
-    $vars['data'] = $cookie_data;
-    $vars['action'] = $action;
-    $vars['product_data'] = $product_data; // Truyền thông tin sản phẩm
-    $vars['id'] = $product_id; // Truyền ID sản phẩm
-
-     // Options Cửa hàng (Giữ nguyên)
-    $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng')]];
-    if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
-    $vars['store_options'] = $store_options;
-
-    // Render view (cần tạo file view mới hoặc dùng chung?)
-    echo $app->render($template . '/warehouses/cancel.html', $vars); // Giả sử là cancel.html
-})->setPermissions(['warehouses-cancel']);
+//     // Render view (Có thể là file khác hoặc cùng file với import?)
+//     echo $app->render($template . '/warehouses/move.html', $vars); // Giả sử là move.html
+// })->setPermissions(['warehouses-move']);
 
 
+// // --- ROUTER HIỂN THỊ TRANG HỦY HÀNG (CANCEL) ---
+// $app->router("/warehouses-cancel/{product_id:[0-9]+}", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $setting) {
+//     $jatbi->permission('warehouses-cancel');
+//     $action = "cancel";
+//     $product_id = (int) ($vars['product_id'] ?? 0);
+//     $vars['title'] = $jatbi->lang("Hủy hàng sản phẩm"); // Title
+
+//     // 1. Lấy config và đọc cookie
+//     $cookie_config = $setting['warehouse_ticket_cookie'];
+//     $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action; // warehouse_ticket_cancel
+//     $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
+//     $needs_cookie_update = false;
+
+//     $product_data = null; // Thông tin sản phẩm đang hủy
+
+//     // Logic khởi tạo session gốc:
+//     // if($data['id']!=$_SESSION['warehouses'][$action]['products']){ unset($_SESSION['warehouses'][$action]); }
+//     // Kiểm tra xem có đang hủy sản phẩm khác không
+//     $current_product_in_cookie = $cookie_data['products'] ?? 0; // products chỉ lưu ID cho cancel
+//     if (is_array($current_product_in_cookie)) $current_product_in_cookie = key($current_product_in_cookie);
+
+//     if ($current_product_in_cookie != $product_id || $product_id == 0) {
+//         $product_data = $app->get("products", ["id", "vendor", "units", "name", "code"], ["id" => $product_id, "deleted" => 0]);
+//         if (!$product_data) {
+//              // header("HTTP/1.0 404 Not Found"); die(); // Giữ logic gốc
+//               $app->redirect('/products'); // Hoặc redirect
+//               return;
+//         }
+//         $needs_cookie_update = true;
+//         // Khởi tạo cookie mới
+//         $cookie_data = get_warehouse_ticket_cookie_data($app, $action); // Lấy default
+//         $cookie_data['vendor'] = $product_data['vendor']; // Lưu ID vendor
+//         $cookie_data['products'] = $product_data['id']; // Chỉ lưu ID sản phẩm
+//         // Mặc định cửa hàng nếu chưa chọn (giữ logic cũ)
+//         if (empty($cookie_data['stores'])) {
+//             $store_id = array_values($accStore)[0] ?? 0;
+//             $store_info = $app->get("stores", "*", ["id" => $store_id, "status" => 'A', "deleted" => 0]);
+//             if ($store_info) $cookie_data['stores'] = $store_info;
+//         }
+//          $cookie_data['content'] = $jatbi->lang("Hủy hàng sản phẩm:") . " #" . $product_data['code']; // Gán content
+
+//         // Lấy các lô hàng (Giữ nguyên logic query)
+//         $cookie_data['warehouses'] = []; // Reset trước khi nạp
+//         $warehouses = $app->select("warehouses_details", "*", [
+//             "type" => 'import',
+//             "products" => $product_data['id'],
+//             "stores" => $cookie_data['stores']['id'] ?? 0, // Dùng store ID từ cookie
+//             "deleted" => 0,
+//             "amount_total[>]" => 0,
+//             "ORDER" => ["id" => "ASC"] // Nên sort theo ID hoặc date
+//         ]);
+//         foreach ($warehouses as $value) {
+//             if(isset($value['id'])) {
+//                 $cookie_data['warehouses'][$value['id']] = [
+//                     "id" => $value['id'], "products" => $value['products'], "vendor" => $value['vendor'],
+//                     "duration" => $value['duration'] ?? null, "amount_total" => $value['amount_total'],
+//                     "amount" => '', // Số lượng hủy = rỗng
+//                     "price" => $value['price'], "units" => $product_data['units'],
+//                     "date" => $value['date'], "stores" => $value['stores'],
+//                 ];
+//             }
+//         }
+//     } else {
+//         // Nếu hủy cùng sản phẩm, chỉ lấy lại thông tin sp
+//         $product_data = $app->get("products", ["id", "name", "code"], ["id" => $product_id]);
+//          if (!$product_data) { $app->redirect('/products'); return; }
+//     }
+
+//     // Lưu cookie nếu cần
+//     if ($needs_cookie_update) {
+//         if (json_encode($cookie_data) === false) { /* log */ }
+//         else { $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']); }
+//     }
+
+//     // Chuẩn bị $vars cho view
+//     $vars['data'] = $cookie_data;
+//     $vars['action'] = $action;
+//     $vars['product_data'] = $product_data; // Truyền thông tin sản phẩm
+//     $vars['id'] = $product_id; // Truyền ID sản phẩm
+
+//      // Options Cửa hàng (Giữ nguyên)
+//     $store_options = [['value' => '', 'text' => $jatbi->lang('Chọn cửa hàng')]];
+//     if (!empty($stores)) { foreach ($stores as $store) { if (isset($store['value'])) { $store_options[] = $store; } } }
+//     $vars['store_options'] = $store_options;
+
+//     // Render view (cần tạo file view mới hoặc dùng chung?)
+//     echo $app->render($template . '/warehouses/cancel.html', $vars); // Giả sử là cancel.html
+// })->setPermissions(['warehouses-cancel']);
 
 
-// Sửa: Thêm $setting vào use
-$app->router('/warehouses-update/{action:import|move|cancel}/{entity}/{operation}(/{id:[0-9]+})?', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) { // Đổi tên $product thành $entity, $do thành $operation
-    $app->header(['Content-Type' => 'application/json; charset=utf-8']);
-    $action = $vars['action'];       // 'import', 'move', 'cancel'
-    $entity = $vars['entity'];       // 'stores', 'branch', 'products', 'warehouses', 'date', 'content', 'completed', etc.
-    $operation = $vars['operation']; // 'add', 'deleted', 'price', 'amount', 'moves'(cho completed move) or ID/Key
-    $id = isset($vars['id']) ? (int)$vars['id'] : null; // ID sản phẩm, ID lô hàng, hoặc null
+// // Sửa: Thêm $setting vào use
+// $app->router('/warehouses-update/{action:import|move|cancel}/{entity}/{operation}(/{id:[0-9]+})?', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) { // Đổi tên $product thành $entity, $do thành $operation
+//     $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+//     $action = $vars['action'];       // 'import', 'move', 'cancel'
+//     $entity = $vars['entity'];       // 'stores', 'branch', 'products', 'warehouses', 'date', 'content', 'completed', etc.
+//     $operation = $vars['operation']; // 'add', 'deleted', 'price', 'amount', 'moves'(cho completed move) or ID/Key
+//     $id = isset($vars['id']) ? (int)$vars['id'] : null; // ID sản phẩm, ID lô hàng, hoặc null
 
-    // 1. Lấy config và đọc cookie
-    $cookie_config = $setting['warehouse_ticket_cookie'];
-    $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action;
-    $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
-    $needs_cookie_update = false;
+//     // 1. Lấy config và đọc cookie
+//     $cookie_config = $setting['warehouse_ticket_cookie'];
+//     $cookie_name = ($cookie_config['name'] ?? 'warehouse_ticket') . '_' . $action;
+//     $cookie_data = get_warehouse_ticket_cookie_data($app, $action);
+//     $needs_cookie_update = false;
 
-    // Khởi tạo biến (Giữ nguyên)
-    $error = []; $total_products = 0; $error_warehouses = false; $kiemtra = false;
-    $sanpham_kiemtra = []; $kiemtracuahang = false; $cancel_amount = 0;
-    $AmountMinus = false; $pro_logs = []; $move_error = []; // Thêm $move_error
+//     // Khởi tạo biến (Giữ nguyên)
+//     $error = []; $total_products = 0; $error_warehouses = false; $kiemtra = false;
+//     $sanpham_kiemtra = []; $kiemtracuahang = false; $cancel_amount = 0;
+//     $AmountMinus = false; $pro_logs = []; $move_error = []; // Thêm $move_error
 
-    // --- Xử lý theo $entity (Giữ nguyên cấu trúc if/elseif) ---
+//     // --- Xử lý theo $entity (Giữ nguyên cấu trúc if/elseif) ---
 
-    if ($entity == 'stores') {
-        $value = $_POST['value'] ?? null;
-        $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($value), "deleted"=>0, "status"=>'A']);
-        if ($data) {
-            $cookie_data['stores'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
-            if ($action == 'cancel') {
-                 $product_id_for_cancel = $cookie_data['products'] ?? 0;
-                 if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
-                 if ($product_id_for_cancel > 0) {
-                     $datas_units = $app->get("products", ["units"], ["id" => $product_id_for_cancel]);
-                     $cookie_data['warehouses'] = [];
-                     $warehouses = $app->select("warehouses_details", "*", [ /* query giữ nguyên */ ]);
-                     foreach ($warehouses as $value_wh) {
-                         if(isset($value_wh['id'])) { $cookie_data['warehouses'][$value_wh['id']] = [ /* gán giữ nguyên */ ]; }
-                     }
-                 } else { /* log */ }
-            } elseif ($action == 'move') { $cookie_data['products'] = []; $cookie_data['branch'] = null; }
-            elseif ($action == 'import') {
-                 $cookie_data['branch'] = null;
-                 if ($cookie_data['import_type'] == '') $cookie_data['products'] = [];
-            }
-        } else { $error['content'] = $jatbi->lang("Cửa hàng không hợp lệ"); }
+//     if ($entity == 'stores') {
+//         $value = $_POST['value'] ?? null;
+//         $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($value), "deleted"=>0, "status"=>'A']);
+//         if ($data) {
+//             $cookie_data['stores'] = ["id" => $data['id'], "name" => $data['name']];
+//             $needs_cookie_update = true;
+//             if ($action == 'cancel') {
+//                  $product_id_for_cancel = $cookie_data['products'] ?? 0;
+//                  if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
+//                  if ($product_id_for_cancel > 0) {
+//                      $datas_units = $app->get("products", ["units"], ["id" => $product_id_for_cancel]);
+//                      $cookie_data['warehouses'] = [];
+//                      $warehouses = $app->select("warehouses_details", "*", [ /* query giữ nguyên */ ]);
+//                      foreach ($warehouses as $value_wh) {
+//                          if(isset($value_wh['id'])) { $cookie_data['warehouses'][$value_wh['id']] = [ /* gán giữ nguyên */ ]; }
+//                      }
+//                  } else { /* log */ }
+//             } elseif ($action == 'move') { $cookie_data['products'] = []; $cookie_data['branch'] = null; }
+//             elseif ($action == 'import') {
+//                  $cookie_data['branch'] = null;
+//                  if ($cookie_data['import_type'] == '') $cookie_data['products'] = [];
+//             }
+//         } else { $error['content'] = $jatbi->lang("Cửa hàng không hợp lệ"); }
 
-    } elseif ($entity == 'check-update') { // $operation là product_key/ID
-        $product_key = $operation;
-        $value = $_POST['value'] ?? null;
-        $status_value = ($value == '1') ? 1 : 0;
-        if (isset($cookie_data['products'][$product_key])) {
-             $cookie_data['products'][$product_key]['status'] = $status_value;
-             $needs_cookie_update = true;
-        } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu."); }
+//     } elseif ($entity == 'check-update') { // $operation là product_key/ID
+//         $product_key = $operation;
+//         $value = $_POST['value'] ?? null;
+//         $status_value = ($value == '1') ? 1 : 0;
+//         if (isset($cookie_data['products'][$product_key])) {
+//              $cookie_data['products'][$product_key]['status'] = $status_value;
+//              $needs_cookie_update = true;
+//         } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu."); }
 
-    } elseif ($entity == 'branch') {
-        $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['branch'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
-            if ($action == 'move') { $cookie_data['products'] = []; }
-            else if ($action == 'import' && $cookie_data['import_type'] == '') { $cookie_data['products'] = []; }
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng không hợp lệ");
-             else { $cookie_data['branch'] = null; $needs_cookie_update = true;
-                   if ($action == 'move' || ($action == 'import' && $cookie_data['import_type'] == '')) $cookie_data['products'] = [];
-             }
-        }
-    } elseif ($entity == 'branch_receive') { // action 'move'
-        $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['branch_receive'] = ["id" => $data['id'], "name" => $data['name']];
-            $needs_cookie_update = true;
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng nhận không hợp lệ");
-             else { $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
-        }
-    } elseif ($entity == 'warehouses') { // action 'cancel', $operation = 'amount', $id = batch_id
-        $batch_id = (int)$id;
-        $field_to_update = $operation;
-        $value_str = $_POST['value'] ?? '';
-        $value = (float) str_replace([','], '', $app->xss($value_str));
+//     } elseif ($entity == 'branch') {
+//         $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+//         if ($data) {
+//             $cookie_data['branch'] = ["id" => $data['id'], "name" => $data['name']];
+//             $needs_cookie_update = true;
+//             if ($action == 'move') { $cookie_data['products'] = []; }
+//             else if ($action == 'import' && $cookie_data['import_type'] == '') { $cookie_data['products'] = []; }
+//         } else {
+//              if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng không hợp lệ");
+//              else { $cookie_data['branch'] = null; $needs_cookie_update = true;
+//                    if ($action == 'move' || ($action == 'import' && $cookie_data['import_type'] == '')) $cookie_data['products'] = [];
+//              }
+//         }
+//     } elseif ($entity == 'branch_receive') { // action 'move'
+//         $data = $app->get("branch", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+//         if ($data) {
+//             $cookie_data['branch_receive'] = ["id" => $data['id'], "name" => $data['name']];
+//             $needs_cookie_update = true;
+//         } else {
+//              if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Quầy hàng nhận không hợp lệ");
+//              else { $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
+//         }
+//     } elseif ($entity == 'warehouses') { // action 'cancel', $operation = 'amount', $id = batch_id
+//         $batch_id = (int)$id;
+//         $field_to_update = $operation;
+//         $value_str = $_POST['value'] ?? '';
+//         $value = (float) str_replace([','], '', $app->xss($value_str));
 
-        if ($field_to_update == 'amount') {
-            if (!isset($cookie_data['warehouses'][$batch_id])) { $error['content'] = $jatbi->lang("Lô hàng không tồn tại trong phiếu hủy."); }
-            elseif ($value < 0) { $error['content'] = $jatbi->lang("Không thể cập nhật số lượng âm"); }
-            else {
-                $amount_total = (float) ($cookie_data['warehouses'][$batch_id]['amount_total'] ?? 0);
-                if ($amount_total >= $value) { $cookie_data['warehouses'][$batch_id]['amount'] = $value; $needs_cookie_update = true; }
-                else { $cookie_data['warehouses'][$batch_id]['amount'] = $amount_total; $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng hủy lớn hơn tồn"); }
-            }
-        } else { $error['content'] = $jatbi->lang("Thao tác không hợp lệ với lô hàng."); }
+//         if ($field_to_update == 'amount') {
+//             if (!isset($cookie_data['warehouses'][$batch_id])) { $error['content'] = $jatbi->lang("Lô hàng không tồn tại trong phiếu hủy."); }
+//             elseif ($value < 0) { $error['content'] = $jatbi->lang("Không thể cập nhật số lượng âm"); }
+//             else {
+//                 $amount_total = (float) ($cookie_data['warehouses'][$batch_id]['amount_total'] ?? 0);
+//                 if ($amount_total >= $value) { $cookie_data['warehouses'][$batch_id]['amount'] = $value; $needs_cookie_update = true; }
+//                 else { $cookie_data['warehouses'][$batch_id]['amount'] = $amount_total; $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng hủy lớn hơn tồn"); }
+//             }
+//         } else { $error['content'] = $jatbi->lang("Thao tác không hợp lệ với lô hàng."); }
 
-    } elseif ($entity == 'stores_receive') { // action 'move'
-        $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
-        if ($data) {
-            $cookie_data['stores_receive'] = ["id" => $data['id'], "name" => $data['name']];
-            $cookie_data['branch_receive'] = null; $needs_cookie_update = true;
-        } else {
-             if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Cửa hàng nhận không hợp lệ");
-             else { $cookie_data['stores_receive'] = null; $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
-        }
-    } elseif ($entity == 'data') { // Đổi loại dữ liệu
-        $cookie_data['products'] = []; $cookie_data['data'] = $app->xss($_POST['value']);
-        $needs_cookie_update = true;
-    } elseif ($entity == 'products') {
-        $product_id = (int)$id; // ID sản phẩm
+//     } elseif ($entity == 'stores_receive') { // action 'move'
+//         $data = $app->get("stores", ["id", "name"], ["id" => $app->xss($_POST['value'])]);
+//         if ($data) {
+//             $cookie_data['stores_receive'] = ["id" => $data['id'], "name" => $data['name']];
+//             $cookie_data['branch_receive'] = null; $needs_cookie_update = true;
+//         } else {
+//              if (!empty($_POST['value'])) $error['content'] = $jatbi->lang("Cửa hàng nhận không hợp lệ");
+//              else { $cookie_data['stores_receive'] = null; $cookie_data['branch_receive'] = null; $needs_cookie_update = true; }
+//         }
+//     } elseif ($entity == 'data') { // Đổi loại dữ liệu
+//         $cookie_data['products'] = []; $cookie_data['data'] = $app->xss($_POST['value']);
+//         $needs_cookie_update = true;
+//     } elseif ($entity == 'products') {
+//         $product_id = (int)$id; // ID sản phẩm
 
-        if ($operation == 'add') {
-             $data = $app->get("products", "*", ["id" => $product_id]);
-             if ($data) {
-                  $stock_amount = (float) ($data['amount'] ?? 0);
-                  if ($stock_amount <= 0 && $action == 'move') { $error['content'] = $jatbi->lang("Số lượng không đủ"); }
-                  if (empty($error)) {
-                      if (!isset($cookie_data['products'][$product_id])) {
-                          // Thêm mới (Giữ nguyên cấu trúc gán session gốc)
-                          $cookie_data['products'][$product_id] = [
-                             "products" => $data['id'], "amount_buy" => 0, "amount" => 1, "price" => 0,
-                             "images" => $data['images'], "code" => $data['code'], "name" => $data['name'],
-                             "categorys" => $data['categorys'], "default_code" => $data['default_code'],
-                             "units" => $data['units'], "notes" => $data['notes'],
-                             "crafting" => $data['crafting'], "warehouses" => $stock_amount,
-                          ];
-                          $needs_cookie_update = true;
-                      } else {
-                          // Tăng số lượng (Giữ nguyên logic)
-                          $getPro = $cookie_data['products'][$product_id];
-                          $value = (float)($getPro['amount'] ?? 0) + 1;
-                          if ($value > $stock_amount && $action == 'move') {
-                             $cookie_data['products'][$product_id]['amount'] = $stock_amount;
-                             $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
-                          } else {
-                             $cookie_data['products'][$product_id]['amount'] = $value;
-                             $needs_cookie_update = true;
-                          }
-                      }
-                  }
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại"); }
-        } elseif ($operation == 'deleted') {
-             unset($cookie_data['products'][$product_id]); $needs_cookie_update = true;
-        } elseif ($operation == 'price') {
-             if (isset($cookie_data['products'][$product_id])) {
-                 $cookie_data['products'][$product_id]['price'] = (float) str_replace(',', '', $app->xss($_POST['value']));
-                 $needs_cookie_update = true;
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-        } elseif ($operation == 'amount') {
-             $value_str = $_POST['value'] ?? '0';
-             $value = (float) str_replace([','], '', $app->xss($value_str));
-             if (!isset($cookie_data['products'][$product_id])) { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-             elseif ($value < 0) { $error['content'] = $jatbi->lang("Số lượng không âm"); }
-             else {
-                 if ($action == 'move' || $action == 'cancel') { // Sửa: Check cả cancel? Logic cũ có check cancel
-                     $getAmount = $app->get("products", ["amount"], ["id" => $product_id]);
-                     $stock_amount = (float) ($getAmount['amount'] ?? 0);
-                     if ($value > $stock_amount) {
-                         $cookie_data['products'][$product_id]['amount'] = $stock_amount;
-                         $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
-                     } else {
-                         $cookie_data['products'][$product_id]['amount'] = $value;
-                         $needs_cookie_update = true;
-                     }
-                 } else {
-                     $cookie_data['products'][$product_id]['amount'] = $value;
-                     $needs_cookie_update = true;
-                 }
-             }
-        } else { // Cập nhật notes, duration, amount_buy...
-             $field_to_update = $operation;
-             $value = $_POST['value'] ?? '';
-             if (isset($cookie_data['products'][$product_id])) {
-                 if (in_array($field_to_update, ['notes', 'duration', 'amount_buy'])) { // Giữ nguyên các field
-                     $val_processed = ($field_to_update == 'amount_buy') ? (float) str_replace(',', '', $app->xss($value)) : $app->xss($value);
-                     $cookie_data['products'][$product_id][$field_to_update] = $val_processed;
-                     $needs_cookie_update = true;
-                 } else { $error['content'] = $jatbi->lang("Trường cập nhật không hợp lệ."); }
-             } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
-        }
-    } elseif ($entity == 'date' || $entity == 'content') {
-        $cookie_data[$entity] = $app->xss($_POST['value']);
-        $needs_cookie_update = true;
-    } elseif ($entity == 'cancel') { // Hủy phiếu
-        $app->deleteCookie($cookie_name);
-        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        return;
-    } elseif ($entity == 'completed') { // Hoàn tất phiếu
-        $datas = $cookie_data; // Dùng dữ liệu từ cookie
+//         if ($operation == 'add') {
+//              $data = $app->get("products", "*", ["id" => $product_id]);
+//              if ($data) {
+//                   $stock_amount = (float) ($data['amount'] ?? 0);
+//                   if ($stock_amount <= 0 && $action == 'move') { $error['content'] = $jatbi->lang("Số lượng không đủ"); }
+//                   if (empty($error)) {
+//                       if (!isset($cookie_data['products'][$product_id])) {
+//                           // Thêm mới (Giữ nguyên cấu trúc gán session gốc)
+//                           $cookie_data['products'][$product_id] = [
+//                              "products" => $data['id'], "amount_buy" => 0, "amount" => 1, "price" => 0,
+//                              "images" => $data['images'], "code" => $data['code'], "name" => $data['name'],
+//                              "categorys" => $data['categorys'], "default_code" => $data['default_code'],
+//                              "units" => $data['units'], "notes" => $data['notes'],
+//                              "crafting" => $data['crafting'], "warehouses" => $stock_amount,
+//                           ];
+//                           $needs_cookie_update = true;
+//                       } else {
+//                           // Tăng số lượng (Giữ nguyên logic)
+//                           $getPro = $cookie_data['products'][$product_id];
+//                           $value = (float)($getPro['amount'] ?? 0) + 1;
+//                           if ($value > $stock_amount && $action == 'move') {
+//                              $cookie_data['products'][$product_id]['amount'] = $stock_amount;
+//                              $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
+//                           } else {
+//                              $cookie_data['products'][$product_id]['amount'] = $value;
+//                              $needs_cookie_update = true;
+//                           }
+//                       }
+//                   }
+//              } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại"); }
+//         } elseif ($operation == 'deleted') {
+//              unset($cookie_data['products'][$product_id]); $needs_cookie_update = true;
+//         } elseif ($operation == 'price') {
+//              if (isset($cookie_data['products'][$product_id])) {
+//                  $cookie_data['products'][$product_id]['price'] = (float) str_replace(',', '', $app->xss($_POST['value']));
+//                  $needs_cookie_update = true;
+//              } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
+//         } elseif ($operation == 'amount') {
+//              $value_str = $_POST['value'] ?? '0';
+//              $value = (float) str_replace([','], '', $app->xss($value_str));
+//              if (!isset($cookie_data['products'][$product_id])) { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
+//              elseif ($value < 0) { $error['content'] = $jatbi->lang("Số lượng không âm"); }
+//              else {
+//                  if ($action == 'move' || $action == 'cancel') { // Sửa: Check cả cancel? Logic cũ có check cancel
+//                      $getAmount = $app->get("products", ["amount"], ["id" => $product_id]);
+//                      $stock_amount = (float) ($getAmount['amount'] ?? 0);
+//                      if ($value > $stock_amount) {
+//                          $cookie_data['products'][$product_id]['amount'] = $stock_amount;
+//                          $needs_cookie_update = true; $error['content'] = $jatbi->lang("Số lượng không đủ");
+//                      } else {
+//                          $cookie_data['products'][$product_id]['amount'] = $value;
+//                          $needs_cookie_update = true;
+//                      }
+//                  } else {
+//                      $cookie_data['products'][$product_id]['amount'] = $value;
+//                      $needs_cookie_update = true;
+//                  }
+//              }
+//         } else { // Cập nhật notes, duration, amount_buy...
+//              $field_to_update = $operation;
+//              $value = $_POST['value'] ?? '';
+//              if (isset($cookie_data['products'][$product_id])) {
+//                  if (in_array($field_to_update, ['notes', 'duration', 'amount_buy'])) { // Giữ nguyên các field
+//                      $val_processed = ($field_to_update == 'amount_buy') ? (float) str_replace(',', '', $app->xss($value)) : $app->xss($value);
+//                      $cookie_data['products'][$product_id][$field_to_update] = $val_processed;
+//                      $needs_cookie_update = true;
+//                  } else { $error['content'] = $jatbi->lang("Trường cập nhật không hợp lệ."); }
+//              } else { $error['content'] = $jatbi->lang("Sản phẩm không tồn tại trong phiếu"); }
+//         }
+//     } elseif ($entity == 'date' || $entity == 'content') {
+//         $cookie_data[$entity] = $app->xss($_POST['value']);
+//         $needs_cookie_update = true;
+//     } elseif ($entity == 'cancel') { // Hủy phiếu
+//         $app->deleteCookie($cookie_name);
+//         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+//         return;
+//     } elseif ($entity == 'completed') { // Hoàn tất phiếu
+//         $datas = $cookie_data; // Dùng dữ liệu từ cookie
 
-        // --- Logic kiểm tra (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
-        // $warehouses1 = $app->get("warehouses", "receive_status", ...); // Giữ nguyên
-        // $kiemtra = 'false'; // Sửa thành boolean
-        // ... (Toàn bộ khối kiểm tra giữ nguyên) ...
-        $warehouses1_receive_status = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
-        $kiemtra = false; $sanpham_kiemtra = []; $kiemtracuahang = false;
-        $error_warehouses = false; $AmountMinus = false; $cancel_amount = 0; $move_error = []; // Thêm move_error
+//         // --- Logic kiểm tra (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
+//         // $warehouses1 = $app->get("warehouses", "receive_status", ...); // Giữ nguyên
+//         // $kiemtra = 'false'; // Sửa thành boolean
+//         // ... (Toàn bộ khối kiểm tra giữ nguyên) ...
+//         $warehouses1_receive_status = $app->get("warehouses", "receive_status", ["id" => $datas['move'] ?? 0, "deleted" => 0]);
+//         $kiemtra = false; $sanpham_kiemtra = []; $kiemtracuahang = false;
+//         $error_warehouses = false; $AmountMinus = false; $cancel_amount = 0; $move_error = []; // Thêm move_error
 
-        if (isset($datas['products']) && is_array($datas['products'])) {
-            foreach ($datas['products'] as $value_amount) {
-                 if (!is_array($value_amount) || !isset($value_amount['products'])) continue;
-                 $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
-                 $current_amount = (float)($value_amount['amount'] ?? 0);
-                 $total_products += $current_amount * (float)($value_amount['price'] ?? 0);
-                 if ($current_amount <= 0 && $action != 'cancel') { $error_warehouses = true; }
-                 if ($action == 'move') {
-                     $stock = (float)($name_po['amount'] ?? 0);
-                     if ($stock < $current_amount) { $kiemtra = true; $sanpham_kiemtra[] = $name_po['code'] ?? ('ID:'.$value_amount['products']); }
-                 }
-                 if ($action == 'import') {
-                     if (($name_po['stores'] ?? null) != ($datas['stores']['id'] ?? null) || ($name_po['branch'] ?? null) != ($datas['branch']['id'] ?? null)) {
-                         if (empty($datas['move']) && empty($datas['purchase'])) { $kiemtracuahang = true; }
-                     }
-                 }
-            }
-        } elseif ($action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("Không có sản phẩm trong phiếu.")]; }
+//         if (isset($datas['products']) && is_array($datas['products'])) {
+//             foreach ($datas['products'] as $value_amount) {
+//                  if (!is_array($value_amount) || !isset($value_amount['products'])) continue;
+//                  $name_po = $app->get("products", ["amount", "code", "stores", "branch"], ["id" => $value_amount['products']]);
+//                  $current_amount = (float)($value_amount['amount'] ?? 0);
+//                  $total_products += $current_amount * (float)($value_amount['price'] ?? 0);
+//                  if ($current_amount <= 0 && $action != 'cancel') { $error_warehouses = true; }
+//                  if ($action == 'move') {
+//                      $stock = (float)($name_po['amount'] ?? 0);
+//                      if ($stock < $current_amount) { $kiemtra = true; $sanpham_kiemtra[] = $name_po['code'] ?? ('ID:'.$value_amount['products']); }
+//                  }
+//                  if ($action == 'import') {
+//                      if (($name_po['stores'] ?? null) != ($datas['stores']['id'] ?? null) || ($name_po['branch'] ?? null) != ($datas['branch']['id'] ?? null)) {
+//                          if (empty($datas['move']) && empty($datas['purchase'])) { $kiemtracuahang = true; }
+//                      }
+//                  }
+//             }
+//         } elseif ($action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("Không có sản phẩm trong phiếu.")]; }
 
-        if ($action == 'move' && $kiemtra) { $error = ['status'=>'error','content' => 'Mã hết SL hoặc SL xuất vượt tồn: '.implode(", ",array_unique($sanpham_kiemtra))]; }
-        if ($action == 'import' && $kiemtracuahang) { $error = ['status'=>'error','content' => 'Cửa hàng/quầy SP không khớp phiếu'];}
-        if ($error_warehouses && $action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("SL không hợp lệ (>0).")]; }
+//         if ($action == 'move' && $kiemtra) { $error = ['status'=>'error','content' => 'Mã hết SL hoặc SL xuất vượt tồn: '.implode(", ",array_unique($sanpham_kiemtra))]; }
+//         if ($action == 'import' && $kiemtracuahang) { $error = ['status'=>'error','content' => 'Cửa hàng/quầy SP không khớp phiếu'];}
+//         if ($error_warehouses && $action != 'cancel') { $error = ["status" => 'error', 'content' => $jatbi->lang("SL không hợp lệ (>0).")]; }
 
-        if ($action == 'cancel') { /* ... (Logic kiểm tra cancel giữ nguyên) ... */ }
-        // Sửa: Kiểm tra $operation thay $router['4']
-        if ($action == 'move' && $operation == 'moves') { /* ... (Logic kiểm tra move moves giữ nguyên) ... */ }
-        // Kiểm tra lỗi trống (Giữ nguyên, sửa $branch_id_check)
-        $store_id_check = $datas['stores']['id'] ?? null;
-        $branch_id_check = $datas['branch']['id'] ?? null;
-        $products_check = $datas['products'] ?? [];
-        $warehouses_check = $datas['warehouses'] ?? [];
-        if (empty($store_id_check) || ($action != 'cancel' && empty($branch_id_check)) || empty($datas['type']) || empty($datas['content']) || (empty($products_check) && $action != 'cancel') || (empty($warehouses_check) && $action == 'cancel')) { /* ... gán lỗi ... */ }
-        elseif (($datas['move'] ?? 0) > 0 && ($warehouses1_receive_status ?? null) == 2) { $error = ['status'=>'error','content'=>$jatbi->lang("Phiếu này đã được nhập")]; }
-        // --- Kết thúc logic kiểm tra ---
+//         if ($action == 'cancel') { /* ... (Logic kiểm tra cancel giữ nguyên) ... */ }
+//         // Sửa: Kiểm tra $operation thay $router['4']
+//         if ($action == 'move' && $operation == 'moves') { /* ... (Logic kiểm tra move moves giữ nguyên) ... */ }
+//         // Kiểm tra lỗi trống (Giữ nguyên, sửa $branch_id_check)
+//         $store_id_check = $datas['stores']['id'] ?? null;
+//         $branch_id_check = $datas['branch']['id'] ?? null;
+//         $products_check = $datas['products'] ?? [];
+//         $warehouses_check = $datas['warehouses'] ?? [];
+//         if (empty($store_id_check) || ($action != 'cancel' && empty($branch_id_check)) || empty($datas['type']) || empty($datas['content']) || (empty($products_check) && $action != 'cancel') || (empty($warehouses_check) && $action == 'cancel')) { /* ... gán lỗi ... */ }
+//         elseif (($datas['move'] ?? 0) > 0 && ($warehouses1_receive_status ?? null) == 2) { $error = ['status'=>'error','content'=>$jatbi->lang("Phiếu này đã được nhập")]; }
+//         // --- Kết thúc logic kiểm tra ---
 
-        if (empty($error)) {
-            // --- Logic Xử Lý Chính (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
-            // $insert = [ ... ]; // Giữ nguyên logic gán $insert
-             $insert = [
-                 "code" => ($action == 'import' || $action == 'cancel') ? ($action == 'import' ? 'PN' : 'PH') : 'PX',
-                 "type" => $action, "data" => $datas['data'],
-                 "stores" => $datas['stores']['id'] ?? null, "branch" => $datas['branch']['id'] ?? null,
-                 "stores_receive" => $datas['stores_receive']['id'] ?? null, "branch_receive" => $datas['branch_receive']['id'] ?? null,
-                 "content" => $datas['content'], "vendor" => $datas['vendor']['id'] ?? null,
-                 "user" => $app->getSession("accounts")['id'] ?? 0, "date" => $datas['date'],
-                 "active" => $jatbi->active(30), "date_poster" => date("Y-m-d H:i:s"),
-                 "purchase" => $datas['purchase'] ?? null, "move" => $datas['move'] ?? null,
-                 // "receive_status" => ... // Giữ nguyên logic gán
-             ];
-             if ($action == 'import' && isset($datas['move']) && $datas['move'] > 0) { $insert['receive_status'] = 1; }
-             elseif ($action == 'move') { $insert['receive_status'] = 1; } // Phiếu move mới
+//         if (empty($error)) {
+//             // --- Logic Xử Lý Chính (GIỮ NGUYÊN CODE GỐC, dùng $datas) ---
+//             // $insert = [ ... ]; // Giữ nguyên logic gán $insert
+//              $insert = [
+//                  "code" => ($action == 'import' || $action == 'cancel') ? ($action == 'import' ? 'PN' : 'PH') : 'PX',
+//                  "type" => $action, "data" => $datas['data'],
+//                  "stores" => $datas['stores']['id'] ?? null, "branch" => $datas['branch']['id'] ?? null,
+//                  "stores_receive" => $datas['stores_receive']['id'] ?? null, "branch_receive" => $datas['branch_receive']['id'] ?? null,
+//                  "content" => $datas['content'], "vendor" => $datas['vendor']['id'] ?? null,
+//                  "user" => $app->getSession("accounts")['id'] ?? 0, "date" => $datas['date'],
+//                  "active" => $jatbi->active(30), "date_poster" => date("Y-m-d H:i:s"),
+//                  "purchase" => $datas['purchase'] ?? null, "move" => $datas['move'] ?? null,
+//                  // "receive_status" => ... // Giữ nguyên logic gán
+//              ];
+//              if ($action == 'import' && isset($datas['move']) && $datas['move'] > 0) { $insert['receive_status'] = 1; }
+//              elseif ($action == 'move') { $insert['receive_status'] = 1; } // Phiếu move mới
 
-             $app->insert("warehouses", $insert);
-             $orderId = $app->id();
+//              $app->insert("warehouses", $insert);
+//              $orderId = $app->id();
 
-             // Update purchase/move status (Giữ nguyên)
-             if (isset($datas['purchase']) && $datas['purchase'] > 0) { /* ... update purchase ... */ }
-             if (isset($datas['move']) && $datas['move'] > 0) { /* ... update warehouses (move) ... */ }
+//              // Update purchase/move status (Giữ nguyên)
+//              if (isset($datas['purchase']) && $datas['purchase'] > 0) { /* ... update purchase ... */ }
+//              if (isset($datas['move']) && $datas['move'] > 0) { /* ... update warehouses (move) ... */ }
 
-             // Xử lý products (Giữ nguyên logic)
-             if (isset($datas['products']) && is_array($datas['products'])) {
-                 foreach ($datas['products'] as $key1 => $value) { /* ... (Toàn bộ logic phức tạp giữ nguyên) ... */ }
-             }
+//              // Xử lý products (Giữ nguyên logic)
+//              if (isset($datas['products']) && is_array($datas['products'])) {
+//                  foreach ($datas['products'] as $key1 => $value) { /* ... (Toàn bộ logic phức tạp giữ nguyên) ... */ }
+//              }
 
-             // Xử lý warehouses (cho action cancel) (Giữ nguyên logic)
-             $amount = 0;
-             if ($action == 'cancel' && isset($datas['warehouses']) && is_array($datas['warehouses'])) {
-                 foreach ($datas['warehouses'] as $key => $value) {
-                     if ($value['amount'] > 0) { /* ... (Toàn bộ logic xử lý cancel giữ nguyên) ... */ }
-                 }
-                 // Cập nhật tồn kho tổng (Giữ nguyên)
-                 $product_id_for_cancel = $datas['products'] ?? 0;
-                 if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
-                 if($product_id_for_cancel > 0) { $app->update("products", ["amount[-]" => $amount], ["id" => $product_id_for_cancel]); }
-             }
-            // --- Kết thúc Logic Xử Lý Chính ---
+//              // Xử lý warehouses (cho action cancel) (Giữ nguyên logic)
+//              $amount = 0;
+//              if ($action == 'cancel' && isset($datas['warehouses']) && is_array($datas['warehouses'])) {
+//                  foreach ($datas['warehouses'] as $key => $value) {
+//                      if ($value['amount'] > 0) { /* ... (Toàn bộ logic xử lý cancel giữ nguyên) ... */ }
+//                  }
+//                  // Cập nhật tồn kho tổng (Giữ nguyên)
+//                  $product_id_for_cancel = $datas['products'] ?? 0;
+//                  if (is_array($product_id_for_cancel)) $product_id_for_cancel = key($product_id_for_cancel);
+//                  if($product_id_for_cancel > 0) { $app->update("products", ["amount[-]" => $amount], ["id" => $product_id_for_cancel]); }
+//              }
+//             // --- Kết thúc Logic Xử Lý Chính ---
 
-            // Ghi log (Giữ nguyên)
-            $log_details_data = ($action == 'cancel') ? ($datas['warehouses'] ?? []) : ($datas['products'] ?? []);
-            $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $log_details_data, $datas]);
+//             // Ghi log (Giữ nguyên)
+//             $log_details_data = ($action == 'cancel') ? ($datas['warehouses'] ?? []) : ($datas['products'] ?? []);
+//             $jatbi->logs('warehouses', $action, [$insert, $pro_logs, $log_details_data, $datas]);
 
-            // Thông báo (Giữ nguyên)
-            if ($insert['type'] == 'import') { /* ... */ } elseif ($insert['type'] == 'move') { /* ... */ }
+//             // Thông báo (Giữ nguyên)
+//             if ($insert['type'] == 'import') { /* ... */ } elseif ($insert['type'] == 'move') { /* ... */ }
 
-            // Sửa: Xóa cookie
-            $app->deleteCookie($cookie_name);
+//             // Sửa: Xóa cookie
+//             $app->deleteCookie($cookie_name);
 
-            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
-        } else {
-            // Giữ nguyên: Trả về lỗi
-            echo json_encode(['status' => 'error', 'content' => $error['content']]);
-            // Sửa: Lưu lại cookie khi có lỗi để user sửa
-            $needs_cookie_update = true; // Đánh dấu cần lưu lại cookie lỗi
-        }
-    } else {
-        // Trường hợp $entity không hợp lệ
-        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Hành động không hợp lệ.")]);
-    }
+//             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+//         } else {
+//             // Giữ nguyên: Trả về lỗi
+//             echo json_encode(['status' => 'error', 'content' => $error['content']]);
+//             // Sửa: Lưu lại cookie khi có lỗi để user sửa
+//             $needs_cookie_update = true; // Đánh dấu cần lưu lại cookie lỗi
+//         }
+//     } else {
+//         // Trường hợp $entity không hợp lệ
+//         echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Hành động không hợp lệ.")]);
+//     }
 
-    // --- Lưu cookie nếu $needs_cookie_update là true ---
-    // (Bao gồm cả trường hợp lỗi trong completed)
-    if ($needs_cookie_update) {
-         if (json_encode($cookie_data) === false) {
-             error_log("CRITICAL ERROR: Failed to encode cookie data before saving in POST /warehouses-update. Action: {$action}. Data: " . print_r($cookie_data, true));
-         } else {
-            $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
-         }
-    }
+//     // --- Lưu cookie nếu $needs_cookie_update là true ---
+//     // (Bao gồm cả trường hợp lỗi trong completed)
+//     if ($needs_cookie_update) {
+//          if (json_encode($cookie_data) === false) {
+//              error_log("CRITICAL ERROR: Failed to encode cookie data before saving in POST /warehouses-update. Action: {$action}. Data: " . print_r($cookie_data, true));
+//          } else {
+//             $app->setCookie($cookie_name, json_encode($cookie_data), $cookie_config['expire'], $cookie_config['path']);
+//          }
+//     }
 
-}); // Kết thúc router POST
+// }); // Kết thúc router POST
 
-
-
-
-
-
-
-    
 
     $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
