@@ -599,13 +599,13 @@ class Jatbi
 
 			case 'SET':
 				$accountStores = $this->_getAccountStores();
-				$activeList = array_column($accountStores, 'active');
+				$activeList = array_column($accountStores, 'id');
 
 				if (empty($cookie)) {
-					$newCookieValue = (count($accountStores) === 1) ? $accountStores[0]['active'] : 0;
+					$newCookieValue = (count($accountStores) === 1) ? $accountStores[0]['id'] : 0;
 					$this->app->setCookie("stores", $newCookieValue, time() + ((3600 * 24 * 30) * 12), '/');
-				} elseif (count($accountStores) === 1 && $cookie != $accountStores[0]['active']) {
-					$this->app->setCookie("stores", $accountStores[0]['active'], time() + ((3600 * 24 * 30) * 12), '/');
+				} elseif (count($accountStores) === 1 && $cookie != $accountStores[0]['id']) {
+					$this->app->setCookie("stores", $accountStores[0]['id'], time() + ((3600 * 24 * 30) * 12), '/');
 				} elseif (count($accountStores) > 1 && !in_array($cookie, $activeList)) {
 					$this->app->setCookie("stores", 0, time() + ((3600 * 24 * 30) * 12), '/');
 				}
@@ -619,16 +619,16 @@ class Jatbi
 				break;
 
 			case 'GET':
-				if (!empty($cookie) && $cookie != 0) {
-					$result = $this->app->get("stores", "*", ["deleted" => 0, "status" => 'A', "active" => $cookie]);
+				if (!empty($cookie) && count($cookie) == 1) {
+					$result = $this->app->get("stores", "*", ["deleted" => 0, "status" => 'A', "id" => $cookie['value']]);
 				} else {
 					$result = ["name" => $this->lang("Tất cả"), "active" => 0];
 				}
 				break;
 
 			case 'ID':
-				if (!empty($cookie) && $cookie != 0) {
-					$result = $this->app->get("stores", "id", ["deleted" => 0, "status" => 'A', "active" => $cookie]);
+				if (!empty($cookie) && count($cookie) == 1) {
+					$result = $this->app->get("stores", "id", ["deleted" => 0, "status" => 'A', "id" => $cookie['value']]);
 				} else {
 					$result = 0;
 				}
@@ -640,7 +640,7 @@ class Jatbi
 					$result = $allStores[0]['id'];
 				} elseif ($post != null) {
 					$result = $post;
-				} elseif (!empty($cookie) && $cookie != 0 && in_array($cookie, array_column($allStores, 'active'))) {
+				} elseif (!empty($cookie) && count($cookie) == 1 && in_array($cookie['value'], array_column($allStores, 'id'))) {
 					$result = $this->app->get("stores", "id", ["active" => $cookie]);
 				}
 				break;
