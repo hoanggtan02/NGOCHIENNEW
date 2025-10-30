@@ -269,22 +269,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $result = $app->action(function () use ($app, $jatbi, $insert_data) {
 
                 $app->insert("personnels", $insert_data);
-                $new_personnel_id = $app->id(); 
+                $new_personnel_id = $app->id();
 
                 if (!$new_personnel_id) {
                     return false;
                 }
 
                 $furlough_type = $app->get("furlough_categorys", "id", ["code" => "NPN", "deleted" => 0]);
-                $furlough_id = $furlough_type ?? null; 
+                $furlough_id = $furlough_type ?? null;
 
                 $annual_leave_data = [
                     "profile_id" => $new_personnel_id,
-                    "furlough_id" => $furlough_id, 
-                    "year" => date('Y'), 
-                    "total_accrued" => 0, 
+                    "furlough_id" => $furlough_id,
+                    "year" => date('Y'),
+                    "total_accrued" => 0,
                     "carried_over" => 0,
-                    "days_used" => 0, 
+                    "days_used" => 0,
                     // "notes" => "Tạo tự động khi thêm mới nhân viên",
                     "account" => $app->getSession("accounts")['id'] ?? 0,
                     "date" => date("Y-m-d H:i:s"),
@@ -298,7 +298,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             });
 
             if ($result) {
-                $jatbi->logs('personnels', 'add', $insert_data); 
+                $jatbi->logs('personnels', 'add', $insert_data);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới nhân viên thành công (đã tạo phép năm)."), 'reload' => true]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra, không thể thêm nhân viên hoặc tạo phép năm.")]);
@@ -1586,29 +1586,26 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $personnel = $_GET['personnels'] ?? '';
             $store_ids = array_column($stores, 'value');
 
-
             $year = date('Y', strtotime($month_year));
             $month = date('m', strtotime($month_year));
             $totalDays = date("t", strtotime($month_year));
             $lastDayOfMonth = "$year-$month-$totalDays";
 
+            // === 1. LẤY DANH SÁCH NHÂN VIÊN ===
             $wherePersonnel = [
                 "deleted" => 0,
                 "status" => 'A',
                 "stores" => $store_ids,
             ];
-            if (!empty($officeF))
-                $wherePersonnel['office'] = $officeF;
-            if (!empty($personnel))
-                $wherePersonnel['id'] = $personnel;
-
+            if (!empty($officeF)) $wherePersonnel['office'] = $officeF;
+            if (!empty($personnel)) $wherePersonnel['id'] = $personnel;
 
             $personnel_list = $app->select("personnels", ["id", "name"], ["ORDER" => ["name" => "ASC"]] + $wherePersonnel);
-            if (empty($personnel_list))
-                exit("Không có nhân viên nào thỏa mãn điều kiện.");
+            if (empty($personnel_list)) exit("Không có nhân viên nào thỏa mãn điều kiện.");
 
             $personnel_ids = array_column($personnel_list, 'id');
 
+            // === 2. LẤY CA LÀM VIỆC (ROSTER) ===
             $all_rosters = $app->select("rosters", [
                 "personnels",
                 "timework",
@@ -1620,6 +1617,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "ORDER" => ["personnels" => "ASC", "date" => "ASC"]
             ]);
 
+            $roster_schedule_map = [];
+            foreach ($all_rosters as $roster) {
+                $roster_schedule_map[$roster['personnels']][$roster['date']] = $roster['timework'];
+            }
+
+            // === 3. LẤY CHI TIẾT CA (TIMEWORK) ===
             $all_timework_details = $app->select("timework_details", [
                 "id",
                 "timework",
@@ -1629,67 +1632,115 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "off"
             ]);
 
-
-            $roster_schedule_map = [];
-            foreach ($all_rosters as $roster) {
-                $roster_schedule_map[$roster['personnels']][$roster['date']] = $roster['timework'];
-            }
-
             $timework_details_map = [];
             foreach ($all_timework_details as $detail) {
                 $timework_details_map[$detail['timework']][$detail['week']] = $detail;
             }
 
+            // === 4. LẤY NGHỈ PHÉP ĐÃ DUYỆT (status = 'A') ===
+            $leave_requests = $app->select("hrm_leave_request_details", [
+                "[>]hrm_leave_requests" => ["leave_request_id" => "id"]
+            ], [
+                "hrm_leave_requests.profile_id",
+                "hrm_leave_request_details.leave_date",
+                "hrm_leave_request_details.leave_session"
+            ], [
+                "hrm_leave_requests.profile_id" => $personnel_ids,
+                "hrm_leave_requests.deleted" => 0,
+                "hrm_leave_requests.status" => 'A', // ĐÃ DUYỆT
+                "hrm_leave_request_details.leave_date[>=]" => "$year-$month-01",
+                "hrm_leave_request_details.leave_date[<=]" => $lastDayOfMonth
+            ]);
+
+            $leave_map = [];
+            foreach ($leave_requests as $leave) {
+                $pid = $leave['profile_id'];
+                $date = $leave['leave_date'];
+                $session = $leave['leave_session'];
+                $leave_map[$pid][$date] = $session;
+            }
+
+            // === 5. XÂY DỰNG LỊCH CHO TỪNG NHÂN VIÊN ===
             $roster_map = [];
+            $off_days = []; // Đếm ngày OFF + NP
+            $work_hours = []; // Tổng công
 
             foreach ($personnel_ids as $pid) {
                 $current_timework_id = null;
+                $off_days[$pid] = 0;
+                $work_hours[$pid] = 0;
 
+                // Lấy ca làm việc cuối cùng
                 if (isset($roster_schedule_map[$pid])) {
-                    foreach ($roster_schedule_map[$pid] as $date => $timework_id) {
-                        $current_timework_id = $timework_id;
+                    $dates = array_keys($roster_schedule_map[$pid]);
+                    rsort($dates);
+                    foreach ($dates as $d) {
+                        if ($d <= $lastDayOfMonth) {
+                            $current_timework_id = $roster_schedule_map[$pid][$d];
+                            break;
+                        }
                     }
                 }
 
                 for ($day = 1; $day <= $totalDays; $day++) {
                     $current_date_str = sprintf('%s-%s-%02d', $year, $month, $day);
+                    $week_day = date('N', strtotime($current_date_str));
 
+                    if (isset($leave_map[$pid][$current_date_str])) {
+                        $session = $leave_map[$pid][$current_date_str];
+                        if ($session === 'full_day') {
+                            $roster_map[$pid][$current_date_str] = 'OFF';
+                            $off_days[$pid]++;
+                        } elseif ($session === 'morning') {
+                            $roster_map[$pid][$current_date_str] = 'OFF:S';
+                            $off_days[$pid] += 0.5;
+                            $work_hours[$pid] += 0.5;
+                        } elseif ($session === 'afternoon') {
+                            $roster_map[$pid][$current_date_str] = 'OFF:C';
+                            $off_days[$pid] += 0.5;
+                            $work_hours[$pid] += 0.5;
+                        }
+                        continue;
+                    }
+
+                    // --- KIỂM TRA CA LÀM VIỆC ---
                     if (isset($roster_schedule_map[$pid][$current_date_str])) {
                         $current_timework_id = $roster_schedule_map[$pid][$current_date_str];
                     }
+
                     if ($current_timework_id === null) {
                         $roster_map[$pid][$current_date_str] = '';
                         continue;
                     }
-
-                    $week_day = date('N', strtotime($current_date_str));
 
                     if (isset($timework_details_map[$current_timework_id][$week_day])) {
                         $detail = $timework_details_map[$current_timework_id][$week_day];
 
                         if ($detail['off'] == 1) {
                             $roster_map[$pid][$current_date_str] = 'OFF';
+                            $off_days[$pid]++;
                         } elseif (!empty($detail['time_from']) && !empty($detail['time_to']) && $detail['time_from'] != '00:00:00') {
                             $hours = (strtotime($detail['time_to']) - strtotime($detail['time_from'])) / 3600;
                             $cong = round($hours / 8, 2);
                             $roster_map[$pid][$current_date_str] = $cong;
+                            $work_hours[$pid] += $cong;
                         } else {
                             $roster_map[$pid][$current_date_str] = '';
                         }
                     } else {
                         $roster_map[$pid][$current_date_str] = 'OFF';
+                        $off_days[$pid]++;
                     }
                 }
             }
 
-
-            // --- TẠO EXCEL ---
+            // === 6. TẠO FILE EXCEL ===
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle("LichLamViec_Thang_{$month}_{$year}");
 
             // Tiêu đề
-            $sheet->setCellValue('A1', "LỊCH LÀM VIỆC THÁNG $month.$year");
+            $sheet->setCellValue('A1', "LỊCH LÀM VIỆC & NGHỈ PHÉP THÁNG $month/$year");
             $mergeToCol = Coordinate::stringFromColumnIndex(3 + $totalDays + 3);
             $sheet->mergeCells("A1:$mergeToCol" . '1');
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
@@ -1700,14 +1751,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $sheet->setCellValue('A2', 'STT')->mergeCells('A2:A3');
             $sheet->setCellValue('B2', 'Họ và tên')->mergeCells('B2:B3');
 
-            $days_of_week_map = ['1' => 'Thứ Hai', '2' => 'Thứ Ba', '3' => 'Thứ Tư', '4' => 'Thứ Năm', '5' => 'Thứ Sáu', '6' => 'Thứ Bảy', '7' => 'Chủ Nhật'];
+            $days_of_week_map = ['1' => 'T2', '2' => 'T3', '3' => 'T4', '4' => 'T5', '5' => 'T6', '6' => 'T7', '7' => 'CN'];
             foreach (range(1, $totalDays) as $day) {
                 $colLetter = Coordinate::stringFromColumnIndex(2 + $day);
-
                 $sheet->setCellValue($colLetter . '2', str_pad($day, 2, '0', STR_PAD_LEFT));
                 $week_day = date('N', strtotime("$year-$month-$day"));
                 $sheet->setCellValue($colLetter . '3', $days_of_week_map[$week_day]);
-
                 $sheet->getStyle($colLetter . '3')->getAlignment()->setTextRotation(90);
                 $sheet->getStyle($colLetter . '3')->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
@@ -1715,9 +1764,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
 
             $lastDayColIndex = 2 + $totalDays;
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '2', 'CÔNG')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '3');
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '2', 'GHI CHÚ')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '3');
-            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '2', 'TỔNG NGÀY NGHỈ')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '3');
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '2', 'TỔNG CÔNG')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . '3');
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '2', 'TỔNG NGHỈ')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . '3');
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '2', 'GHI CHÚ')->mergeCells(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '2:' . Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . '3');
 
             // Style header
             $headerRange = 'A2:' . $sheet->getHighestColumn() . '3';
@@ -1732,36 +1781,34 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $sheet->setCellValue('A' . $rowIndex, $index + 1);
                 $sheet->setCellValue('B' . $rowIndex, $personnel['name']);
 
-                $totalWork = 0;
-                $offCount = 0;
-
                 foreach (range(1, $totalDays) as $day) {
                     $current_date_str = "$year-$month-" . str_pad($day, 2, '0', STR_PAD_LEFT);
                     $value = $roster_map[$pid][$current_date_str] ?? '';
 
-                    if ($value === 'OFF') {
-                        $offCount++;
-                    } elseif (is_numeric($value)) {
-                        $totalWork += $value;
-                    }
-
                     $colLetter = Coordinate::stringFromColumnIndex(2 + $day);
                     $sheet->setCellValue($colLetter . $rowIndex, $value);
+
+                    // Tô màu
+                    if ($value === 'OFF') {
+                        $sheet->getStyle($colLetter . $rowIndex)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCB');
+                    } elseif ($value === 'S' || $value === 'C') {
+                        $sheet->getStyle($colLetter . $rowIndex)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF99');
+                    } elseif ($value === 'OFF') {
+                        $sheet->getStyle($colLetter . $rowIndex)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('DDDDDD');
+                    }
                 }
 
-                // Công / Ghi chú / Ngày nghỉ
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . $rowIndex, $totalWork);
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . $rowIndex, '');
-                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . $rowIndex, $offCount);
+                // Tổng công / nghỉ
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 1) . $rowIndex, round($work_hours[$pid], 2));
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 2) . $rowIndex, round($off_days[$pid], 1));
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($lastDayColIndex + 3) . $rowIndex, '');
 
                 $rowIndex++;
             }
 
-            // Viền bảng
+            // Viền + kích thước
             $lastColLetter = $sheet->getHighestColumn();
             $sheet->getStyle('A2:' . $lastColLetter . ($rowIndex - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
-            // Độ rộng & chiều cao
             $sheet->getColumnDimension('A')->setAutoSize(true);
             $sheet->getColumnDimension('B')->setWidth(30);
             foreach (range(1, $totalDays) as $day) {
@@ -1775,7 +1822,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // Xuất file
             ob_end_clean();
-            $filename = "BangPhanCong_Thang_{$month}_{$year}.xlsx";
+            $filename = "LichLamViec_NghiPhep_Thang_{$month}_{$year}.xlsx";
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             header('Content-Disposition: attachment;filename="' . $filename . '"');
             header('Cache-Control: max-age=0');
@@ -3730,7 +3777,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             $where = [
                 "AND" => [
-                    "hrm_leave_requests.deleted" => 0
+                    "hrm_leave_requests.deleted" => 0,
+                    "furlough_categorys.code[!]" => "PT"
                 ],
                 "personnels.stores" => $accStore,
                 "LIMIT" => [$start, $length],
@@ -4015,7 +4063,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             } else {
                 $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $accStore]);
             }
-            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A"]); // Lấy thêm 'code'
+            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A"]);
             $vars['leave_details'] = [];
             echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
@@ -4217,135 +4265,247 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['furlough.add']);
 
+    $app->router("/furlough-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
+        $request_id = $vars['id'];
+        $vars['title'] = $jatbi->lang("Chỉnh sửa đơn xin nghỉ phép");
 
-    $app->router("/furlough-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
+        // Lấy đơn nghỉ phép
+        $request = $app->get("hrm_leave_requests", "*", [
+            "active" => $request_id,
+            "deleted" => 0
+        ]);
+
+
+        if (!$request) {
+            $vars['modalContent'] = $jatbi->lang("Không tìm thấy dữ liệu");
+            echo $app->render($setting['template'] . '/common/reward.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        if ($request['status'] === 'A') {
+            $vars['modalContent'] = $jatbi->lang("Đơn nghỉ phép đã được duyệt hoặc từ chối và không thể chỉnh sửa.");
+            echo $app->render($setting['template'] . '/common/reward.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        $account_id = $app->getSession("accounts")['id'] ?? 0;
+        $is_self = ($app->getSession("accounts")['your_self'] ?? 0) == 1;
+        $personnel_id = $request['profile_id'];
+
         if ($app->method() === 'GET') {
-            $vars['title'] = $jatbi->lang("Sửa Nghỉ phép");
-            $vars['data'] = $app->get("furlough", "*", ["id" => $vars['id'], "deleted" => 0]);
-            if (!empty($vars['data'])) {
-                $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
-                $vars['furlough_categorys'] = array_merge(
-                    [["value" => "", "text" => $jatbi->lang("Chọn")]],
-                    $app->select("furlough_categorys", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]])
-                );
-                echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
-            } else {
-                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
-            }
-        } elseif ($app->method() === 'POST') {
-            $app->header([
-                'Content-Type' => 'application/json',
+            $vars['data'] = $request;
+            // Chi tiết ngày nghỉ
+            $vars['leave_details'] = $app->select("hrm_leave_request_details", [
+                "leave_date",
+                "leave_session"
+            ], [
+                "leave_request_id" => $request['id'],
+                "ORDER" => ["leave_date" => "ASC"]
             ]);
-            $data = $app->get("furlough", "*", ["id" => $vars['id'], "deleted" => 0]);
-            if (!empty($data)) {
-                if ($app->xss($_POST['personnels']) == '' || $app->xss($_POST['furlough']) == '' || $app->xss($_POST['date_from']) == '' || $app->xss($_POST['date_to']) == '') {
-                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
-                    return;
-                }
-                if ($app->xss($_POST['date_from']) > $app->xss($_POST['date_to'])) {
-                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày nghỉ phép không hợp lệ")]);
-                    return;
-                }
-                if (
-                    $app->has("furlough", [
-                        "id[!]" => $data['id'],
-                        "date_from[<]" => $app->xss($_POST['date_from']),
-                        "date_to[>]" => $app->xss($_POST['date_from']),
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "deleted" => 0,
-                    ]) || $app->has("furlough", [
-                        "id[!]" => $data['id'],
-                        "date_from[<=]" => $app->xss($_POST['date_to']),
-                        "date_to[>=]" => $app->xss($_POST['date_to']),
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "deleted" => 0,
-                    ])
-                ) {
-                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày nghỉ phép bị trùng")]);
-                    return;
-                }
-                $getfurloughCat = $app->get("furlough_categorys", "*", [
-                    "id" => $app->xss($_POST['furlough']),
-                    "status" => "A",
+            // Danh sách nhân viên
+            if ($is_self) {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], [
                     "deleted" => 0,
+                    "id" => $app->getSession("accounts")['personnels_id']
                 ]);
-                if ($getfurloughCat['duration'] == 4) { // lấy ngày đầu tháng và cuối tháng
-                    $duration_from = date('Y-m-01', strtotime($app->xss($_POST['date_from'])));
-                    $duration_to = date('Y-m-t', strtotime($app->xss($_POST['date_from'])));
-                    $duration_lastday = date('Y-m-t', strtotime($app->xss($_POST['date_to'])));
-                    $plus = '+1 month';
-                } else { // lấy ngày đầu năm và cuối năm
-                    $duration_from = date('Y-01-01', strtotime($app->xss($_POST['date_from'])));
-                    $duration_to = date('Y-12-31', strtotime($app->xss($_POST['date_from'])));
-                    $duration_lastday = date('Y-12-31', strtotime($app->xss($_POST['date_to'])));
-                    $plus = '+1 year';
-                }
-                while ($duration_to <= $duration_lastday) {
-                    $get_furlough = $app->select("furlough", "*", [
-                        "id[!]" => $data['id'],
-                        "personnels" => $app->xss($_POST['personnels']),
-                        "furlough" => $getfurloughCat['id'],
-                        "deleted" => 0,
-                        "OR" => [
-                            "date_from[<>]" => [$duration_from, $duration_to],
-                            "date_to[<>]" => [$duration_from, $duration_to],
-                        ]
-                    ]);
-                    $i = 0;
-                    $total_days_off = 0;
-                    $furlough = [
-                        "date_from" => (strtotime($app->xss($_POST['date_from'])) > strtotime($duration_from))
-                            ? $app->xss($_POST['date_from'])
-                            : $duration_from,
-                        "date_to" => (strtotime($app->xss($_POST['date_to'])) < strtotime($duration_to))
-                            ? $app->xss($_POST['date_to'])
-                            : $duration_to,
-                    ];
-                    do {
-                        $day_from = $furlough['date_from'] > $duration_from ? $furlough['date_from'] : $duration_from;
-                        $day_to = $furlough['date_to'] < $duration_to ? $furlough['date_to'] : $duration_to;
-                        $day_from = new DateTime($day_from);
-                        $day_to = new DateTime($day_to);
-                        $interval = $day_from->diff($day_to);
-                        $total_days_off += $interval->days + 1;
-                        $furlough = $get_furlough[$i] ?? [];
-                        $i++;
-                    } while ($furlough);
-                    if ($total_days_off > $getfurloughCat['amount']) {
-                        echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Quá số ngày nghỉ phép ")]);
-                        return;
-                    }
-                    $duration_from = date('Y-m-01', strtotime($plus, strtotime($duration_from)));
-                    $duration_to = date('Y-m-t', strtotime($plus, strtotime($duration_to)));
-                }
-                $from = new DateTime($data['date_from']);
-                $to = new DateTime($data['date_to']);
-                $duration = $from->diff($to)->days + 1;
-                $insert = [
-                    "personnels" => $app->xss($_POST['personnels']),
-                    "furlough" => $app->xss($_POST['furlough']),
-                    "type" => $getfurloughCat['type'],
-                    "date_from" => $app->xss($_POST['date_from']),
-                    "date_to" => $app->xss($_POST['date_to']),
-                    "notes" => $app->xss($_POST['notes']),
-                    "status" => $app->xss($_POST['status']),
-                    "date" => date("Y-m-d H:i:s"),
-                    "user" => $app->getSession("accounts")['id'] ?? null,
-                ];
-                $app->update("furlough", $insert, ["id" => $data['id']]);
-                $app->delete("annual_leave", ["detai" => $data['id']]);
-                $app->insert("annual_leave", [
-                    "amount" => "-" . $duration,
-                    "month" => date("m", strtotime($data['date_from'])),
-                    "year" => date("Y", strtotime($data['date_from'])),
-                    "personnels" => $data['personnels'],
-                    "detai" => $data['id']
-                ]);
-                $jatbi->logs('hrm', 'furlough-edit', [$insert]);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
-                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], [
+                    "deleted" => 0,
+                    "stores" => $accStore
+                ]);
             }
+
+            // Loại phép
+            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], [
+                "deleted" => 0,
+                "status" => "A"
+            ]);
+
+
+            echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        // ==================== POST: CẬP NHẬT ĐƠN ====================
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $personnel_id = (int)($_POST['profile_id']);
+            $furlough_id = (int)($_POST['furlough_id']);
+            $leave_dates = $_POST['leave_date'] ?? [];
+            $leave_sessions = $_POST['leave_session'] ?? [];
+            $reason = $app->xss($_POST['reason'] ?? '');
+
+            if (empty($personnel_id) || empty($furlough_id) || empty($leave_dates)) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin bắt buộc.")]);
+                return;
+            }
+
+            // === 1. KIỂM TRA TỪNG NGÀY ===
+            $total_days = 0;
+            $first_valid_date = null;
+            $processed_dates = [];
+
+            foreach ($leave_dates as $index => $date_str) {
+                if (empty($date_str) || !isset($leave_sessions[$index])) continue;
+
+                $date_obj = date_create($date_str);
+                if (!$date_obj) continue;
+                $date_formatted = date_format($date_obj, 'Y-m-d');
+
+                if ($first_valid_date === null) $first_valid_date = $date_formatted;
+
+                $session = $leave_sessions[$index];
+                $days = ($session === 'full_day') ? 1.0 : 0.5;
+                $total_days += $days;
+
+                // Kiểm tra ngày lễ
+                $is_holiday = $app->has("holiday", [
+                    "AND" => [
+                        "date_from[<=]" => $date_formatted,
+                        "date_to[>=]" => $date_formatted,
+                        "deleted" => 0,
+                        "status" => "A"
+                    ]
+                ]);
+                if ($is_holiday) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày {$date_str} là ngày lễ.")]);
+                    return;
+                }
+
+                // Kiểm tra trùng đơn khác (ngoại trừ chính đơn này)
+                $overlap = $app->count("hrm_leave_request_details", [
+                    "[>]hrm_leave_requests" => ["leave_request_id" => "id"]
+                ], "hrm_leave_request_details.id", [
+                    "AND" => [
+                        "hrm_leave_requests.profile_id" => $personnel_id,
+                        "hrm_leave_requests.deleted" => 0,
+                        "hrm_leave_requests.status" => ['A', 'P'],
+                        "hrm_leave_requests.id[!]" => $request_id, // Bỏ qua đơn hiện tại
+                        "hrm_leave_request_details.leave_date" => $date_formatted,
+                        "OR" => [
+                            "hrm_leave_request_details.leave_session" => "full_day",
+                            "leave_session" => "full_day",
+                            "hrm_leave_request_details.leave_session" => $session
+                        ]
+                    ]
+                ]);
+
+                if ($overlap > 0) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày/Buổi {$date_str} đã tồn tại trong đơn khác.")]);
+                    return;
+                }
+
+                $processed_dates[] = ['date' => $date_formatted, 'session' => $session];
+            }
+
+            if ($total_days <= 0) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng chọn ít nhất một ngày nghỉ.")]);
+                return;
+            }
+
+            // === 2. KIỂM TRA SỐ DƯ PHÉP NĂM (NPN) ===
+            $furlough_info = $app->get("furlough_categorys", ["code", "amount", "duration"], ["id" => $furlough_id]);
+            if ($furlough_info && $furlough_info['code'] === 'NPN') {
+                $year = date('Y', strtotime($first_valid_date));
+                $balance = $app->get("annual_leave", ["total_accrued", "carried_over"], [
+                    "profile_id" => $personnel_id,
+                    "year" => $year,
+                    "deleted" => 0
+                ]);
+                $remaining = ($balance['total_accrued'] ?? 0) + ($balance['carried_over'] ?? 0);
+
+                // Trừ đi số ngày cũ của đơn này
+                $old_total = (float)$request['total_days'];
+                $net_increase = $total_days - $old_total;
+
+                if ($net_increase > $remaining) {
+                    echo json_encode([
+                        "status" => "error",
+                        "content" => $jatbi->lang("Số ngày phép năm vượt quá số dư ({$remaining} ngày).")
+                    ]);
+                    return;
+                }
+            }
+
+            // === 3. KIỂM TRA GIỚI HẠN THEO LOẠI PHÉP ===
+            if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
+                $amount = (float)$furlough_info['amount'];
+                $duration = $furlough_info['duration'];
+                $year = date('Y', strtotime($first_valid_date));
+                $month = date('m', strtotime($first_valid_date));
+
+                $sql = "
+                SELECT COALESCE(SUM(
+                    CASE WHEN d.leave_session = 'full_day' THEN 1.0 ELSE 0.5 END
+                ), 0) AS used_days
+                FROM hrm_leave_request_details d
+                INNER JOIN hrm_leave_requests r ON d.leave_request_id = r.id
+                WHERE r.profile_id = :profile_id
+                  AND r.furlough_id = :furlough_id
+                  AND r.deleted = 0
+                  AND r.status != 'D'
+                  AND r.id != :request_id
+                  AND " . ($duration == 5 ? "YEAR(d.leave_date) = :year" : "YEAR(d.leave_date) = :year AND MONTH(d.leave_date) = :month");
+
+                $params = [
+                    ':profile_id' => $personnel_id,
+                    ':furlough_id' => $furlough_id,
+                    ':request_id' => $request_id
+                ];
+                if ($duration == 5) {
+                    $params[':year'] = $year;
+                } else {
+                    $params[':year'] = $year;
+                    $params[':month'] = $month;
+                }
+
+                $stmt = $app->query($sql, $params);
+                $used_days = (float)($stmt->fetch()['used_days'] ?? 0);
+                $old_days = (float)$request['total_days'];
+                $new_total = $used_days + $total_days;
+
+                if ($new_total > $amount) {
+                    $cycle = $duration == 5 ? "năm {$year}" : "tháng {$month}/{$year}";
+                    echo json_encode([
+                        "status" => "error",
+                        "content" => $jatbi->lang("Vượt giới hạn phép: tối đa {$amount} ngày/{$cycle}. Đã dùng: {$used_days}, thêm: {$total_days}")
+                    ]);
+                    return;
+                }
+            }
+
+            // === 4. CẬP NHẬT CSDL (TRANSACTION) ===
+            $app->action(function () use ($app, $request_id, $personnel_id, $furlough_id, $total_days, $reason, $processed_dates) {
+                // Cập nhật đơn chính
+                $app->update("hrm_leave_requests", [
+                    "profile_id" => $personnel_id,
+                    "furlough_id" => $furlough_id,
+                    "total_days" => $total_days,
+                    "reason" => $reason,
+                    "status" => 'D',
+                    "account" => $app->getSession("accounts")['id'] ?? 0
+                ], ["id" => $request_id]);
+
+                // Xóa chi tiết cũ
+                $app->delete("hrm_leave_request_details", ["leave_request_id" => $request_id]);
+
+                // Thêm chi tiết mới
+                foreach ($processed_dates as $detail) {
+                    $app->insert("hrm_leave_request_details", [
+                        "leave_request_id" => $request_id,
+                        "leave_date" => $detail['date'],
+                        "leave_session" => $detail['session']
+                    ]);
+                }
+            });
+
+            // === 5. TRẢ KẾT QUẢ ===
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Cập nhật đơn thành công"),
+                'reload' => true
+            ]);
         }
     })->setPermissions(['furlough.edit']);
 
@@ -8883,4 +9043,500 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     //     }
     // })->setPermissions(['hrm.overtime.deleted']);
 
+    $app->router("/furlough-month", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $common, $stores, $accStore) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Nghỉ phép tháng");
+            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $accStore]);
+            $months = [];
+            $current_year = date('Y');
+            $current_month = date('m');
+
+            for ($i = -6; $i <= 6; $i++) {
+                $date = strtotime("$current_year-$current_month-01 $i month");
+                $y = date('Y', $date);
+                $m = date('m', $date);
+                $value = "$y-$m";
+                $text = "Tháng " . date('m/Y', $date);
+                $months[] = ['value' => $value, 'text' => $text];
+            }
+            $vars['months'] = $months;
+            echo $app->render($template . '/hrm/furlough-month.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'hrm_leave_requests.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $profile_filter = isset($_POST['profile']) ? $_POST['profile'] : '';
+            $date_filter = isset($_POST['date']) ? $jatbi->parseDateRange($_POST['date']) : null;
+            $month_filter = isset($_POST['month_year']) ? $_POST['month_year'] : '';
+
+            $join = [
+                "[>]personnels" => ["profile_id" => "id"],
+                "[>]furlough_categorys" => ["furlough_id" => "id"],
+                "[>]hrm_leave_request_details" => ["hrm_leave_requests.id" => "leave_request_id"],
+            ];
+            $where = [
+                "AND" => [
+                    "hrm_leave_requests.deleted" => 0,
+                    "furlough_categorys.code" => "PT"
+                ],
+                "personnels.stores" => $accStore,
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+                "GROUP" => ["hrm_leave_requests.id"],
+            ];
+            if ($searchValue) {
+                $where["AND"]["OR"] = ["personnels.name[~]" => $searchValue, "furlough_categorys.name[~]" => $searchValue];
+            }
+            if ($profile_filter) {
+                $where["AND"]["hrm_leave_requests.profile_id"] = $profile_filter;
+            }
+
+            if ($month_filter && strlen($month_filter) === 7) {
+                $where["AND"]["hrm_leave_request_details.leave_date[~]"] = $month_filter . "%";
+            }
+
+            if ($date_filter) {
+                $where["AND"]["hrm_leave_requests.id"] = $app->select("hrm_leave_request_details", "leave_request_id", [
+                    "leave_date[<>]" => [$date_filter[0], $date_filter[1]]
+                ]);
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
+
+            $count = $app->count("hrm_leave_requests", $join, "hrm_leave_requests.id", ["AND" => $where['AND']]);
+            $datas = [];
+
+            $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0]);
+            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['status_options'] = array_map(function ($key, $item) {
+                return ['value' => $key, 'text' => $item['name']];
+            }, array_keys($common['leave_request_status']), $common['leave_request_status']);
+
+            $requests = $app->select("hrm_leave_requests", $join, [
+                "hrm_leave_requests.id",
+                "hrm_leave_requests.active",
+                "hrm_leave_requests.total_days",
+                "hrm_leave_requests.status",
+                "personnels.name(profile_name)",
+                "furlough_categorys.name(furlough_name)"
+            ], $where);
+            $request_ids = array_column($requests, 'id');
+            $details = [];
+            if (!empty($request_ids)) {
+                $all_details = $app->select("hrm_leave_request_details", "*", ["leave_request_id" => $request_ids, "ORDER" => ["leave_date" => "ASC"]]);
+                foreach ($all_details as $detail) {
+                    $details[$detail['leave_request_id']][] = $detail;
+                }
+            }
+
+            foreach ($requests as $data) {
+
+                $session_names = [
+                    'full_day' => $jatbi->lang("Nguyên ngày"),
+                    'morning' => $jatbi->lang("Buổi sáng"),
+                    'afternoon' => $jatbi->lang("Buổi chiều"),
+                ];
+
+                $request_details = $details[$data['id']] ?? [];
+
+                $duration_parts = [];
+                if (!empty($request_details)) {
+                    foreach ($request_details as $detail) {
+                        $date_formatted = date('d/m/Y', strtotime($detail['leave_date']));
+                        $session_name = $session_names[$detail['leave_session']] ?? '';
+                        $session_str = !empty($session_name) ? " ({$session_name})" : '';
+                        $duration_parts[] = $date_formatted . $session_str;
+                    }
+                }
+
+                if (!empty($duration_parts)) {
+                    $duration = implode('<br>', $duration_parts);
+                } else {
+                    $duration = 'N/A';
+                }
+                $action_buttons = [];
+                $action_buttons[] = [
+                    'type' => 'button',
+                    'name' => $jatbi->lang("Sửa"),
+                    'permission' => ['furlough.edit'],
+                    'action' => ['data-url' => '/hrm/furlough-month-edit/' . $data['active'], 'data-action' => 'modal']
+                ];
+                $action_buttons[] = [
+                    'type' => 'button',
+                    'name' => $jatbi->lang("Xóa"),
+                    'permission' => ['furlough.deleted'],
+                    'action' => ['data-url' => '/hrm/furlough-deleted?box=' . $data['active'], 'data-action' => 'modal']
+                ];
+
+                $datas[] = [
+                    "checkbox" => $app->component("box", ["data" => $data['active'], "class" => "checker"]),
+                    "profile_name" => $data['profile_name'],
+                    "furlough_name" => $data['furlough_name'],
+                    "duration" => $duration,
+                    "total_days" => $data['total_days'],
+                    // "status" => $app->component("clickable_approval", [
+                    //     "url" => "/hrm/furlough-status/" . $data['active'],
+                    //     "data" => $data['status'],
+                    //     "permission" => ['furlough.approve']
+                    // ]),
+                    "action" => $app->component("action", ["button" => $action_buttons]),
+                ];
+            }
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas ?? []
+            ]);
+        }
+    })->setPermissions(['furlough-month']);
+
+    $app->router("/furlough-month-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
+        $vars['title'] = $jatbi->lang("Tạo Đơn xin nghỉ phép");
+
+        if ($app->method() === 'GET') {
+            // --- Phần GET: Hiển thị form ---
+            $vars['data'] = ['status' => 'pending', 'leave_session' => 'full_day'];
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $app->getSession("accounts")['personnels_id']]);
+            } else {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $accStore]);
+            }
+            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A", "code" => "PT"]); // Lấy thêm 'code'
+            $vars['leave_details'] = [];
+            echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            // --- Phần POST: Xử lý dữ liệu form ---
+            $app->header(['Content-Type' => 'application/json']);
+
+            // 1. Lấy dữ liệu và kiểm tra cơ bản
+            $personnel_id = (int)($_POST['profile_id']);
+            $furlough_id = (int)($_POST['furlough_id']);
+            $leave_dates = $_POST['leave_date'];
+            $leave_sessions = $_POST['leave_session'];
+            $reason = $app->xss($_POST['reason'] ?? '');
+
+            if (empty($personnel_id) || empty($furlough_id) || empty($leave_dates)) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin bắt buộc (Nhân viên, Loại phép, Ngày nghỉ)")]);
+                return;
+            }
+
+            // 2. Tính toán tổng số ngày nghỉ và kiểm tra tính hợp lệ từng ngày
+            $total_days = 0;
+            $first_valid_date = null;
+            $processed_dates = []; // Để lưu các ngày đã xử lý
+
+            foreach ($leave_dates as $index => $date_str) {
+                // Bỏ qua nếu ngày trống hoặc session không hợp lệ
+                if (empty($date_str) || !isset($leave_sessions[$index])) {
+                    continue;
+                }
+                $date_obj = date_create($date_str);
+                if (!$date_obj) continue;
+                $date_formatted = date_format($date_obj, 'Y-m-d');
+
+                // Lấy ngày hợp lệ đầu tiên
+                if ($first_valid_date === null) {
+                    $first_valid_date = $date_formatted;
+                }
+
+                $session = $leave_sessions[$index];
+                $days_for_this_entry = ($session === 'full_day') ? 1.0 : 0.5;
+                $total_days += $days_for_this_entry;
+
+                // ---- THÊM KIỂM TRA CHO TỪNG NGÀY ----
+                // a) Kiểm tra ngày lễ (bảng holiday)
+                $is_holiday = $app->has("holiday", [
+                    "AND" => [
+                        "date_from[<=]" => $date_formatted,
+                        "date_to[>=]" => $date_formatted,
+                        "deleted" => 0,
+                        "status" => "A"
+                    ]
+                ]);
+                if ($is_holiday) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày {$date_str} là ngày lễ, không thể xin nghỉ.")]);
+                    return;
+                }
+
+                // c) Kiểm tra trùng lặp đơn nghỉ phép khác (hrm_leave_requests & hrm_leave_request_details)
+                $overlap_check = $app->count("hrm_leave_request_details", [
+                    "[>]hrm_leave_requests" => ["leave_request_id" => "id"]
+                ], "hrm_leave_request_details.id", [
+                    "AND" => [
+                        "hrm_leave_requests.profile_id" => $personnel_id,
+                        "hrm_leave_requests.deleted" => 0,
+                        "hrm_leave_requests.status" => ['A'], // Chỉ kiểm tra đơn đang chờ hoặc đã duyệt
+                        "hrm_leave_request_details.leave_date" => $date_formatted,
+                        "OR" => [
+                            "hrm_leave_request_details.leave_session" => "full_day", // Nếu đã có đơn cả ngày
+                            "leave_session" => "full_day",                      // Hoặc nếu đang xin cả ngày
+                            "hrm_leave_request_details.leave_session" => $session // Hoặc nếu trùng buổi
+                        ]
+                    ]
+                ]);
+
+                if ($overlap_check > 0) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày/Buổi {$date_str} đã tồn tại trong một đơn nghỉ phép khác.")]);
+                    return;
+                }
+                // ---- KẾT THÚC KIỂM TRA TỪNG NGÀY ----
+
+                $processed_dates[$index] = ['date' => $date_formatted, 'session' => $session]; // Lưu lại ngày đã xử lý
+            }
+
+            // 3. Kiểm tra lại nếu không có ngày hợp lệ nào
+            if ($total_days <= 0 || $first_valid_date === null) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng chọn ít nhất một ngày nghỉ hợp lệ")]);
+                return;
+            }
+
+            // 4. KIỂM TRA SỐ DƯ (NẾU LÀ PHÉP NĂM)
+            // Lấy thông tin loại phép đã chọn
+            $furlough_info = $app->get("furlough_categorys", ["id", "code", "amount", "duration"], ["id" => $furlough_id]);
+
+
+            if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
+                $amount = (float)$furlough_info['amount'];
+                $duration = $furlough_info['duration']; // 4=tháng, 5=năm
+
+                $year = date('Y', strtotime($first_valid_date));
+                $month = date('m', strtotime($first_valid_date));
+
+                // DÙNG NAMED PARAMETER → KHÔNG LỖI bindValue
+                $sql = "
+                    SELECT COALESCE(SUM(
+                        CASE WHEN d.leave_session = 'full_day' THEN 1.0 ELSE 0.5 END
+                    ), 0) AS used_days
+                    FROM hrm_leave_request_details d
+                    INNER JOIN hrm_leave_requests r ON d.leave_request_id = r.id
+                    WHERE r.profile_id = :profile_id
+                    AND r.furlough_id = :furlough_id
+                    AND r.deleted = 0
+                    AND r.status != 'D'
+                    AND " . ($duration == 5
+                    ? "YEAR(d.leave_date) = :year"
+                    : "YEAR(d.leave_date) = :year AND MONTH(d.leave_date) = :month"
+                );
+
+                $params = [
+                    ':profile_id' => $personnel_id,
+                    ':furlough_id' => $furlough_id,
+                ];
+
+                if ($duration == 5) {
+                    $params[':year'] = $year;
+                } else {
+                    $params[':year'] = $year;
+                    $params[':month'] = $month;
+                }
+
+                try {
+                    $stmt = $app->query($sql, $params);
+                    $row = $stmt->fetch();
+                    $used_days = (float)($row['used_days'] ?? 0);
+                } catch (Exception $e) {
+                    $used_days = 0;
+                }
+
+                if (($used_days + $total_days) > $amount) {
+                    $cycle_text = $duration == 5 ? "năm {$year}" : "tháng {$month}/{$year}";
+                    echo json_encode([
+                        "status" => "error",
+                        "content" => $jatbi->lang("Loại phép này chỉ được nghỉ tối đa {$amount} ngày/{$cycle_text}. Đã dùng: {$used_days}, yêu cầu thêm: {$total_days}")
+                    ]);
+                    return;
+                }
+            }
+
+            // 5. Lưu vào CSDL (Transaction)
+            $app->action(function () use ($app, $jatbi, $personnel_id, $furlough_id, $total_days, $reason, $processed_dates) {
+                // Bảng hrm_leave_requests
+                $request_data = [
+                    "active" => $jatbi->active(),
+                    "profile_id" => $personnel_id,
+                    "furlough_id" => $furlough_id,
+                    "total_days" => $total_days,
+                    "reason" => $reason,
+                    "status" => 'A',
+                    "account" => $app->getSession("accounts")['id'] ?? 0,
+                    "date" => date("Y-m-d H:i:s"),
+                ];
+                $app->insert("hrm_leave_requests", $request_data);
+                $leave_request_id = $app->id();
+
+                foreach ($processed_dates as $detail) {
+                    $app->insert("hrm_leave_request_details", [
+                        "leave_request_id" => $leave_request_id,
+                        "leave_date" => $detail['date'],
+                        "leave_session" => $detail['session']
+                    ]);
+                }
+                $jatbi->logs('leave_request', 'add', $request_data);
+            });
+
+            // 6. Trả về thành công
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Tạo đơn thành công"),
+                'reload' => true
+            ]);
+        }
+    })->setPermissions(['furlough-month.add']);
+
+    $app->router("/furlough-month-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore) {
+        $request_active = $vars['id'];  // active từ URL
+        $vars['title'] = $jatbi->lang("Chỉnh sửa đơn xin nghỉ phép");
+
+        // === 1. LẤY ĐƠN THEO active ===
+        $request = $app->get("hrm_leave_requests", "*", [
+            "active" => $request_active,
+            "deleted" => 0
+        ]);
+
+        if (!$request) {
+            $vars['modalContent'] = $jatbi->lang("Không tìm thấy dữ liệu");
+            echo $app->render($setting['template'] . '/common/reward.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        $request_db_id = $request['id'];  // ← ID CSDL THẬT
+
+        $account_id = $app->getSession("accounts")['id'] ?? 0;
+        $is_self = ($app->getSession("accounts")['your_self'] ?? 0) == 1;
+
+        if ($app->method() === 'GET') {
+            $vars['data'] = $request;
+            $vars['leave_details'] = $app->select("hrm_leave_request_details", [
+                "leave_date",
+                "leave_session"
+            ], [
+                "leave_request_id" => $request_db_id,
+                "ORDER" => ["leave_date" => "ASC"]
+            ]);
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "id" => $app->getSession("accounts")['personnels_id']]);
+            } else {
+                $vars['profiles'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "stores" => $accStore]);
+            }
+            $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)", "code"], ["deleted" => 0, "status" => "A", "code" => "PT"]);
+
+
+
+
+            echo $app->render($template . '/hrm/furlough-post.html', $vars, $jatbi->ajax());
+            return;
+        }
+
+        // ==================== POST ====================
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+
+            if (empty($_POST['profile_id']) || empty($_POST['furlough_id']) || empty($_POST['leave_date'])) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin bắt buộc.")]);
+                return;
+            }
+            $personnel_id = (int)($_POST['profile_id']);
+            $furlough_id = (int)($_POST['furlough_id']);
+            $leave_dates = $_POST['leave_date'] ?? [];
+            $leave_sessions = $_POST['leave_session'] ?? [];
+            $reason = $app->xss($_POST['reason'] ?? '');
+
+            $total_days = 0;
+            $first_valid_date = null;
+            $processed_dates = [];
+
+            foreach ($leave_dates as $index => $date_str) {
+                if (empty($date_str) || !isset($leave_sessions[$index])) continue;
+
+                $date_obj = date_create($date_str);
+                if (!$date_obj) continue;
+                $date_formatted = date_format($date_obj, 'Y-m-d');
+
+                if ($first_valid_date === null) $first_valid_date = $date_formatted;
+
+                $session = $leave_sessions[$index];
+                $days = ($session === 'full_day') ? 1.0 : 0.5;
+                $total_days += $days;
+
+                // Kiểm tra ngày lễ
+                $is_holiday = $app->has("holiday", [
+                    "AND" => [
+                        "date_from[<=]" => $date_formatted,
+                        "date_to[>=]" => $date_formatted,
+                        "deleted" => 0,
+                        "status" => "A"
+                    ]
+                ]);
+                if ($is_holiday) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày {$date_str} là ngày lễ.")]);
+                    return;
+                }
+
+                // === KIỂM TRA TRÙNG: LOẠI TRỪ CHÍNH ĐƠN NÀY ===
+                $overlap = $app->count("hrm_leave_request_details", [
+                    "[>]hrm_leave_requests" => ["leave_request_id" => "id"]
+                ], "hrm_leave_request_details.id", [
+                    "AND" => [
+                        "hrm_leave_requests.profile_id" => $personnel_id,
+                        "hrm_leave_requests.deleted" => 0,
+                        "hrm_leave_requests.status" => ['A', 'P'],
+                        "hrm_leave_requests.id[!]" => $request_db_id,  // ← DÙNG id CSDL
+                        "hrm_leave_request_details.leave_date" => $date_formatted,
+                        "OR" => [
+                            "hrm_leave_request_details.leave_session" => "full_day",
+                            "leave_session" => "full_day",
+                            "hrm_leave_request_details.leave_session" => $session
+                        ]
+                    ]
+                ]);
+
+                if ($overlap > 0) {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày/Buổi {$date_str} đã tồn tại trong đơn khác.")]);
+                    return;
+                }
+
+                $processed_dates[] = ['date' => $date_formatted, 'session' => $session];
+            }
+
+            if ($total_days <= 0) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng chọn ít nhất một ngày nghỉ.")]);
+                return;
+            }
+
+            $app->action(function () use ($app, $request_db_id, $personnel_id, $furlough_id, $total_days, $reason, $processed_dates) {
+                $app->update("hrm_leave_requests", [
+                    "profile_id" => $personnel_id,
+                    "furlough_id" => $furlough_id,
+                    "total_days" => $total_days,
+                    "reason" => $reason,
+                    "status" => 'A',
+                    "account" => $app->getSession("accounts")['id'] ?? 0
+                ], ["id" => $request_db_id]);
+
+                $app->delete("hrm_leave_request_details", ["leave_request_id" => $request_db_id]);
+
+                foreach ($processed_dates as $detail) {
+                    $app->insert("hrm_leave_request_details", [
+                        "leave_request_id" => $request_db_id,
+                        "leave_date" => $detail['date'],
+                        "leave_session" => $detail['session']
+                    ]);
+                }
+            });
+
+            echo json_encode([
+                'status' => 'success',
+                'content' => $jatbi->lang("Cập nhật đơn thành công"),
+                'reload' => true
+            ]);
+        }
+    })->setPermissions(['furlough-month.edit']);
 })->middleware('login');
