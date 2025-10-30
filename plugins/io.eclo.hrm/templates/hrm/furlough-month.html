@@ -15,10 +15,9 @@
         </div>
         <div class="filter-search">
             <form method="GET" data-pjax>
-                <div class="d-flex align-items-center justify-content-end">
+            <div class="d-flex align-items-center justify-content-end">
                     <div class="dropdown">
-                        <button
-                            class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                        <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
                             type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
                             <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
                         </button>
@@ -30,16 +29,23 @@
                             <hr class="border-secondary border-opacity-50 my-2">
                             <div class="px-3">
                                 <?=$app->component('select',[
-                                "name"=>'personnels',
-                                "options"=>$personnels ?? [],
-                                "selected" => $app->xss($_GET['$personnels'] ?? ''),
-                                "placeholder"=>$jatbi->lang("Nhân viên"),
-                                "attr" => 'multiple',
-                                "class"=>'filter-name',
-                            ])?>
+                                    "name"=>'personnels',
+                                    "options"=>$personnels ?? [],
+                                    "selected" => $app->xss($_GET['$personnels'] ?? ''),
+                                    "placeholder"=>$jatbi->lang("Nhân viên"),
+                                    "attr" => 'multiple',
+                                    "class"=>'filter-name',
+                                ])?>
+                                <?=$app->component('select', [
+                                    "name" => 'month_year',  // ĐỔI TÊN THÀNH month_year
+                                    "options" => $months,
+                                    "placeholder" => $jatbi->lang("Chọn tháng"),
+                                    "class" => 'filter-name',
+                                    "value" => $_GET['month_year'] ?? date('Y-m') // giữ giá trị đã chọn
+                                ])?>
                                 <?=$app->component('select-status',[
-                                "value" => $app->xss($_GET['status'] ?? ''),
-                            ])?>
+                                    "value" => $app->xss($_GET['status'] ?? ''),
+                                ])?>
                             </div>
                             <hr class="border-secondary border-opacity-50 my-2">
                             <div class="px-3 py-2 text-end w-100">
@@ -50,11 +56,11 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
-    <?php if($jatbi->permission(['furlough.deleted']) == 'true' || $jatbi->permission(['furlough.add']) == 'true'){ ?>
+    <?php if($jatbi->permission(['furlough.deleted']) == 'true' || $jatbi->permission(['furlough-month.add']) == 'true'){ ?>
     <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
         <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
             style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
@@ -70,10 +76,10 @@
                 </a>
             </li>
             <?php } ?>
-            <?php if($jatbi->permission(['furlough.add']) == 'true'){ ?>
+            <?php if($jatbi->permission(['furlough-month.add']) == 'true'){ ?>
             <li class="my-2">
                 <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-url="<?=$jatbi->url('/hrm/furlough-add')?>"
+                    data-action="modal" data-url="<?=$jatbi->url('/hrm/furlough-month-add')?>"
                     style="--width:50px;--height:50px;">
                     <i class="ti ti-plus fs-3" aria-hidden="true"></i>
                 </a>
@@ -84,6 +90,13 @@
     <?php } ?>
     <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
         <div class="card-body">
+            <?php if($jatbi->permission(['rosters.edit']) == 'true'){ ?>
+            <div class="custom-buttons d-none">
+                <a href="/hrm/rosters-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>" class="btn btn-eclo">
+                    <?=$jatbi->lang("Xuất bảng phân công")?>
+                </a>
+            </div>
+            <?php } ?>
             <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
                 data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
                 data-state-save='true' style="width:100%">
@@ -97,7 +110,7 @@
                         <th data-name="furlough_name"><?=$jatbi->lang("Loại phép")?></th>
                         <th data-name="duration" data-orderable="false"><?=$jatbi->lang("Thời gian nghỉ")?></th>
                         <th data-name="total_days"><?=$jatbi->lang("Tổng ngày")?></th>
-                        <th data-name="status"><?=$jatbi->lang("Trạng thái")?></th>
+                        <!-- <th data-name="status"><?=$jatbi->lang("Trạng thái")?></th> -->
                         <th data-name="action" data-orderable="false"><?=$jatbi->lang("Tùy chọn")?></th>
                     </tr>
                 </thead>

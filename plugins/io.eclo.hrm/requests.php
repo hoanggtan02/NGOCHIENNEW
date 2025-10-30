@@ -136,9 +136,6 @@ return [
                         "icon" => '<i class="fas fa-grin-hearts"></i>',
                     ],
 
-
-
-
                 ],
                 "main" => 'false',
                 "permission" => [
