@@ -2330,7 +2330,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 'value' => '',
                 'text' => $jatbi->lang('Tất cả')
             ]);
-             if (count($stores) > 1) {
+            if (count($stores) > 1) {
                 array_unshift($stores, [
                     'value' => '',
                     'text' => $jatbi->lang('Tất cả')
@@ -2360,13 +2360,13 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
-         $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
+            $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
             $dateFilter = isset($_POST['date']) ? $_POST['date'] : '';
 
             // Lấy thông tin cửa hàng của tài khoản từ session để áp dụng logic lọc
             $session = $app->getSession("accounts");
             $account = isset($session['id']) ? $app->get("accounts", ["stores"], ["id" => $session['id']]) : null;
-            
+
 
             // --- 2. Xây dựng truy vấn với JOIN ---
             $joins = [
@@ -2394,7 +2394,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                     'products.code[~]' => $searchValue,
                 ];
             }
-              if ($store != "") {
+            if ($store != "") {
                 $where['AND']['products.stores'] = $store;
             }
 
@@ -2659,14 +2659,26 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router('/products', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template, $stores) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Kho thành phẩm");
-            array_unshift($stores, [
+            if (count($stores) > 1) {
+                array_unshift($stores, [
+                    'value' => '',
+                    'text' => $jatbi->lang('Tất cả')
+                ]);
+            }
+            $vars['stores'] = $stores;
+
+            $branchs = $accStore == 0
+                ? $app->select("branch", ["id (value)", "name (text)"], ["status" => 'A', "deleted" => 0, "stores" => $stores[0]['id']])
+                : $app->select("branch", ["id (value)", "name (text)"], ["status" => 'A', "deleted" => 0, "stores" => $accStore]);
+            array_unshift($branchs, [
                 'value' => '',
                 'text' => $jatbi->lang('Tất cả')
             ]);
-            $vars['stores'] = $stores;
+            $vars['branchs'] = $branchs;
+
             $vars['categorys'] = array_merge([['value' => '', 'text' => $jatbi->lang('Tất cả')]], $app->select('categorys', ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']));
-            $vars['groups'] = array_merge([['value' => '', 'text' => $jatbi->lang('Tất cả')]], $app->select('groups', ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']));
-            $vars['branchs'] = $app->select("branch", ['id (value)', 'name (text)'], ["deleted" => 0, "status" => 'A']);
+            $vars['groups'] = array_merge([['value' => '', 'text' => $jatbi->lang('Tất cả')]], $app->select('products_group', ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']));
+
             $vars['units'] = array_merge([['value' => '', 'text' => $jatbi->lang('Tất cả')]], $app->select('units', ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']));
 
 
@@ -2683,11 +2695,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             $filter_categorys = isset($_POST['categorys']) ? $_POST['categorys'] : '';
-            $filter_branch = isset($_POST['branch']) ? $_POST['branch'] : '';
+
             $filter_units = isset($_POST['units']) ? $_POST['units'] : '';
             $filter_status = isset($_POST['status']) ? $_POST['status'] : '';
-            $filter_groups = isset($_POST['groups']) ? $_POST['groups'] : '';
+            $groupFilter = isset($_POST['group']) ? $_POST['group'] : '';
             $store = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
+            $branchss = isset($_POST['branchss']) ? $app->xss($_POST['branchss']) : '';
 
 
             $sosanhFilter = isset($_POST['sosanh']) ? $_POST['sosanh'] : '';
@@ -2714,14 +2727,14 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             if (!empty($filter_categorys)) {
                 $where["AND"]["products.categorys"] = $filter_categorys;
             }
-            if (!empty($filter_branch) && $stores = null) {
-                $where["AND"]["products.branch"] = $filter_branch;
+            if (!empty($branchss)) {
+                $where["AND"]["products.branch"] = $branchss;
             }
             if (!empty($filter_units)) {
                 $where["AND"]["products.units"] = $filter_units;
             }
-            if (!empty($filter_groups)) {
-                $where["AND"]["products.group"] = $filter_groups;
+            if (!empty($groupFilter)) {
+                $where['AND']['products.group'] = $groupFilter;
             }
             if (!empty($filter_status)) {
                 $where["AND"]["products.status"] = $filter_status;
@@ -4763,12 +4776,12 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
             $where = [
                 "AND" => [
-                    "logs.deleted" => 0, 
-                    "logs.dispatch" => $type, 
-                    "logs.action" => ['add', 'edit', 'delete', 'deleted'], 
+                    "logs.deleted" => 0,
+                    "logs.dispatch" => $type,
+                    "logs.action" => ['add', 'edit', 'delete', 'deleted'],
                     "logs.date[<>]" => [$date_from, $date_to]
-                    ]
-                ];
+                ]
+            ];
             if (!empty($filter_user))
                 $where['AND']['logs.user'] = $filter_user;
 
@@ -7064,7 +7077,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             if ($subAction === 'add') {
                 $productId = $app->xss($id);
                 $data = $app->get("products", [
-                    "id", "price", "vendor", "images", "code", "name", "categorys", "default_code", "units", "notes", "branch", "amount"
+                    "id",
+                    "price",
+                    "vendor",
+                    "images",
+                    "code",
+                    "name",
+                    "categorys",
+                    "default_code",
+                    "units",
+                    "notes",
+                    "branch",
+                    "amount"
                 ], ["id" => $productId]);
 
                 if (!empty($data) && is_array($data)) {
@@ -7123,7 +7147,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
 
             } elseif ($subAction === 'amount') {
-                $value = (float)str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
+                $value = (float) str_replace(',', '', $app->xss($_POST['value'] ?? '0'));
 
                 if ($value < 0) {
                     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không âm")]);
