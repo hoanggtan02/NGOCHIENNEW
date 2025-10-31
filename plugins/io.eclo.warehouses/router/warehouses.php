@@ -3197,7 +3197,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         }
     })->setPermissions(['products.deleted']);
 
-    $app->router("/products_amount_status", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router("/products_amount_status", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         $vars['title'] = $jatbi->lang("Cập nhật số lượng");
         if ($app->method() === 'GET') {
             echo $app->render($setting['template'] . '/common/status.html', $vars, $jatbi->ajax());
@@ -3236,6 +3236,28 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $jatbi->trash('/products/products-amount_status', "Cập nhật trạng thái sản phẩm: " . implode(', ', $names), ["database" => 'products', "data" => $updated_ids]);
 
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    })->setPermissions(['products.edit']);
+
+    $app->router("/products-status/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        if ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $data = $app->get("products",["id","status"],["id"=>$app->xss($vars['id'])]);
+			if($data>1){
+				if($data['status']==='A'){
+					$status = "D";
+				} 
+				elseif($data['status']==='D'){
+					$status = "A";
+				}
+				$app->update("products",["status"=>$status],["id"=>$data['id']]);
+				$jatbi->logs('products','status',["data"=>$data,"status"=>$status]);
+				echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+			}else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Không tìm thấy sản phẩm hợp lệ")]);
+            }
         }
     })->setPermissions(['products.edit']);
 
