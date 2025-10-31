@@ -74,60 +74,22 @@
             </form>
         </div>
     </div>
-    <?php if($jatbi->permission(['contract.deleted']) == 'true' || $jatbi->permission(['contract.add']) == 'true'){ ?>
-    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
-        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
-            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="ti ti-menu-2 fs-1" aria-hidden="true"></i>
-        </button>
-        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
-            <?php if($jatbi->permission(['contract.deleted']) == 'true'){ ?>
-            <li class="my-2">
-                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-checkbox="input.checker"
-                    data-url="<?=$jatbi->url('/hrm/contract-deleted')?>" style="--width:50px;--height:50px;">
-                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
-                </a>
-            </li>
-            <?php } ?>
-            <?php if($jatbi->permission(['contract.add']) == 'true'){ ?>
-            <li class="my-2">
-                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-url="<?=$jatbi->url('/hrm/contract-add')?>"
-                    style="--width:50px;--height:50px;">
-                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
-                </a>
-            </li>
-            <?php } ?>
-        </ul>
-    </div>
-    <?php } ?>
     <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
         <div class="card-body">
-            <?php if($jatbi->permission(['contract.edit']) == 'true'){ ?>
-            <div class="custom-buttons d-none">
-                <a href="/hrm/contract-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>" class="btn btn-eclo">
-                    <?=$jatbi->lang("Xuất excel")?>
-                </a>
-            </div>
-            <?php } ?>
             <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
                 data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
                 data-state-save='true' style="width:100%">
                 <thead>
-                    <tr>
-                        <th data-name="checkbox" data-orderable="false" class="text-center" style="width: 1%;">
-                            <div class="form-check"><input class="form-check-input checkall" type="checkbox"
-                                    data-checkbox="input.checker"></div>
-                        </th>
+                    <tr>    
                         <th data-name="personnel_name"><?=$jatbi->lang("Nhân viên")?></th>
                         <th data-name="office_name"><?=$jatbi->lang("Phòng ban")?></th>
-                        <th data-name="type"><?=$jatbi->lang("Loại hợp đồng")?></th>
                         <th data-name="code"><?=$jatbi->lang("Số hợp đồng")?></th>
-                        <th data-name="salary"><?=$jatbi->lang("Lương cơ bản")?></th>
-                        <th data-name="duration"><?=$jatbi->lang("Thời hạn hợp đồng")?></th>
-                        <th data-name="date_end"><?=$jatbi->lang("Còn lại")?></th>
                         <th data-name="workday"><?=$jatbi->lang("Ngày làm việc")?></th>
+                        <!-- <th data-name="type"><?=$jatbi->lang("Loại hợp đồng")?></th> -->
+                        <th data-name="salary"><?=$jatbi->lang("Lương cơ bản")?></th>
+                        <th data-name="salary_diligence"><?=$jatbi->lang("Lương trách nhiệm")?></th>
+                        <th data-name="salary_allowance"><?=$jatbi->lang("Phụ cấp")?></th>
+                        <th data-name="total_salary"><?=$jatbi->lang("Tổng lương")?></th>
                         <th data-name="action" data-orderable="false" data-class="text-end">
                             <?=$jatbi->lang("Tùy chọn")?>
                         </th>

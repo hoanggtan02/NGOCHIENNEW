@@ -36,6 +36,9 @@
               <div><span class="text-gray-600">Bằng cấp:</span> <span class="fw-semibold"><?=$data['certificate'] ?? ''?></span></div>
               <div><span class="text-gray-600">Sức khỏe:</span> <span class="fw-semibold"><?=$data['health'] ?? ''?></span></div>
               <div><span class="text-gray-600">Lương cơ bản:</span> <span class="fw-semibold text-success"><?=number_format($data['salary'] ?? 0)?> VND</span></div>
+              <div><span class="text-gray-600">Lương trách nhiệm:</span> <span class="fw-semibold text-success"><?=number_format($data['salary_diligence'] ?? 0)?> VND</span></div>
+              <div><span class="text-gray-600">Lương phụ cấp:</span> <span class="fw-semibold text-success"><?=number_format($data['salary_allowance'] ?? 0)?> VND</span></div>
+
             </div>
           </div>
 

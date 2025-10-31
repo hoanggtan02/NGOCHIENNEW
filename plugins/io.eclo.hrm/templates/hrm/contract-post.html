@@ -36,9 +36,13 @@
                                 <label class="form-label"><?=$jatbi->lang("Thời hạn hợp đồng")?> <span
                                         class="text-danger">*</span></label>
                                 <div class="input-group">
-                                    <input type="number" name="duration" class="form-control rounded-start-4 p-3 bg-body" placeholder="<?=$jatbi->lang("Thời hạn hợp đồng")?>" 
-                                    value="<?=$data['duration'] ?? ''?>" required>
-                                    <span class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
+                                    <input type="number" name="duration"
+                                        class="form-control rounded-start-4 p-3 bg-body" placeholder="<?=$jatbi->lang("
+                                        Thời hạn hợp đồng")?>"
+                                    value="
+                                    <?=$data['duration'] ?? ''?>" required>
+                                    <span
+                                        class="input-group-text rounded-end-4 p-3 bg-body"><?=$jatbi->lang("Tháng")?></span>
                                 </div>
                             </div>
                             <?=$app->component('select',[
@@ -61,20 +65,28 @@
                                 "placeholder"=>$jatbi->lang("Công việc"),
                                 "required" => 'true',
                             ])?>
-                         <?=$app->component('select',[
+                            <?=$app->component('select',[
                                 "name"=>'positions',
                                 "options"=>$positions,
                                 "selected" => $data['position'] ?? '',
                                 "placeholder"=>$jatbi->lang("Chức vụ"),
                                 "required" => 'true',
                             ])?>
+                            <?=$app->component('input', [
+                                "name" => 'salary_allowance',
+                                "placeholder" => $jatbi->lang("Tiền phụ cấp"),
+                                "value" => $data['salary_allowance'] ?? '',
+                                "type" => "tel",
+                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+                            ])?>
+
                         </div>
                         <div class="col-lg-6">
                             <?=$app->component('input',[
                                 "name"=>'interview',
                                 "placeholder"=>$jatbi->lang("Ngày phỏng vấn"),
                                 "value" => $data['interview'] ?? '',
-                                "type" => "date",
+                                "type" => "date",   
                             ])?>
                             <?=$app->component('input',[
                                 "name"=>'workday',
@@ -97,14 +109,21 @@
                                 "placeholder"=>$jatbi->lang("Sức khỏe"),
                                 "value" => $data['health'] ?? '',
                             ])?>
-                       
+
                             <?=$app->component('input', [
                                 "name" => 'salary',
                                 "placeholder" => $jatbi->lang("Tiền lương cơ bản"),
                                 "value" => $data['salary'] ?? '',
                                 "type" => "tel",
                                 "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
-                                "required" => true,
+                            ])?>
+
+                            <?=$app->component('input', [
+                                "name" => 'salary_diligence',
+                                "placeholder" => $jatbi->lang("Tiền lương trách nhiệm"),
+                                "value" => $data['salary_diligence'] ?? '',
+                                "type" => "tel",
+                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
                             ])?>
                         </div>
 
