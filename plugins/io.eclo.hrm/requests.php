@@ -19,6 +19,11 @@ return [
                         "router" => '/hrm/contract',
                         "icon" => '<i class="ti ti-file-text"></i>',
                     ],
+                    'contract-salary' => [
+                        "name" => $jatbi->lang("Bảng lương"),
+                        "router" => '/hrm/contract-salary',
+                        "icon" => '<i class="ti ti-file-text"></i>',
+                    ],
                     'insurrance' => [
                         "name" => $jatbi->lang("Bảo hiểm"),
                         "router" => '/hrm/insurrance',
@@ -190,6 +195,8 @@ return [
                     'contract.add' => $jatbi->lang("Thêm hợp đồng"),
                     'contract.edit' => $jatbi->lang("Sửa hợp đồng"),
                     'contract.deleted' => $jatbi->lang("Xóa hợp đồng"),
+                    'contract-salary' => $jatbi->lang("Xem lịch sử lương hợp đồng"),
+                    
 
                     // Quyền cho Bảo hiểm
                     'insurrance' => $jatbi->lang("Xem thông tin bảo hiểm"),

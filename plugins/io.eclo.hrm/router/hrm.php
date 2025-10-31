@@ -165,7 +165,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 'permission' => ['personnels.deleted'],
                                 'action' => ['data-url' => '/hrm/personnels-deleted?box=' . $data['id'], 'data-action' => 'modal']
                             ],
-                              [
+                            [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Đánh giá nhân viên"),
                                 'permission' => ['personnels.evaluation'],
@@ -1994,17 +1994,18 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     // Lấy danh sách nhân viên có hợp đồng chính thức (type = 1,2)
                     // và có tên trong bảng personnels_insurrance
                     $insured_personnels = $app->select("personnels_insurrance", "personnels", [
-                        "deleted" => 0, "status" => 'A'
+                        "deleted" => 0,
+                        "status" => 'A'
                     ]);
                     $where['AND']['personnels_contract.type'] = [1, 2]; // 1: XĐTH, 2: KXĐTH
                     $where['AND']['personnels.id'] = $insured_personnels;
-
                 } elseif ($insurance_status === 'official_no') {
                     // Chính thức – chưa vô bảo hiểm
                     // Lấy danh sách nhân viên có hợp đồng chính thức
                     // nhưng KHÔNG có trong bảng personnels_insurrance
                     $insured_personnels = $app->select("personnels_insurrance", "personnels", [
-                        "deleted" => 0, "status" => 'A'
+                        "deleted" => 0,
+                        "status" => 'A'
                     ]);
                     $where['AND']['personnels_contract.type'] = [1, 2];
                     $where['AND']['personnels.id[!]'] = $insured_personnels;
@@ -2026,6 +2027,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'personnels_contract.type',
                 'personnels_contract.date_contract',
                 'personnels_contract.date_end',
+                'personnels.id(personnels_id)',
                 'personnels.name(personnel_name)',
                 'offices.name(office_name)'
             ], $where, function ($data) use (&$datas, $jatbi, $app, $setting) {
@@ -2047,6 +2049,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     'workday' => date("d/m/Y", timestamp: strtotime(datetime: $data['workday'])),
                     "action" => ($app->component("action", [
                         "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem chi tiết lương"),
+                                'permission' => ['contract'],
+                                'action' => ['data-url' => '/hrm/contract-salary/' . ($data['personnels_id'] ?? ''), 'data-action' => 'modal']
+                            ],
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Xem"),
@@ -2084,6 +2092,217 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ]);
         }
     })->setPermissions(['contract']);
+
+    $app->router("/contract-salary/{id}", ['GET'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $vars['title'] = $jatbi->lang("Lịch sử lương nhân viên");
+        if ($app->method() === 'GET') {
+            $personnel_id = $vars['id'];
+
+            $vars['personnel_data'] = $app->get("personnels", ["id", "name", "code"], [
+                "id" => $personnel_id,
+                "deleted" => 0
+            ]);
+
+            if (empty($vars['personnel_data'])) {
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                return;
+            }
+
+            $current_personnel_id = $app->getSession("accounts")["personnels_id"] ?? 0;
+            $is_your_self = $app->getSession("accounts")['your_self'] ?? 0;
+
+            if ($is_your_self == 1 && $personnel_id != $current_personnel_id) {
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                return;
+            }
+
+            $contracts = $app->select("personnels_contract", [
+                "id",
+                "salary",
+                "code",
+                "type",
+                "salary_diligence",
+                "salary_allowance",
+                "date_contract",
+                "date_end",
+                "position",
+            ], [
+                "personnels" => $personnel_id,
+                "deleted" => 0,
+                "ORDER" => ["date_contract" => "DESC"]
+            ]);
+
+
+            $vars['contracts_list'] = [];
+
+            if (!empty($contracts)) {
+                foreach ($contracts as $contract) {
+                    $contract['position_name'] = $app->get("hrm_positions", "name", ["id" => $contract['position']]) ?? '';
+                    $contract['contract_type_name'] = $setting['personnels_contracts'][$contract['type']]['name'] ?? 'Không xác định';
+
+                    $vars['contracts_list'][] = $contract;
+                }
+            }
+
+            echo $app->render($template . '/hrm/personnel-salary-history.html', $vars, $jatbi->ajax());
+        }
+    })->setPermissions(['contract']);
+
+    $app->router('/contract-salary', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting, $accStore) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Bảng lương nhân viên");
+            $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
+            $vars['offices'] = $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]);
+            $vars['contract_type'] = [
+                ["value" => "", "text" => "Tất cả"],
+                ["value" => 1, "text" => $jatbi->lang("Xác định thời hạn")],
+                ["value" => 2, "text" => $jatbi->lang("Không xác định thời hạn")],
+                ["value" => 3, "text" => $jatbi->lang("Thử việc")],
+            ];
+            $vars['insurance_status'] = [
+                ["value" => "", "text" => "Tất cả"],
+                ["value" => "official_has", "text" => "Chính thức – vô bảo hiểm"],
+                ["value" => "official_no", "text" => "Chính thức – chưa vô bảo hiểm"],
+            ];
+            echo $app->render($template . '/hrm/contract-salary.html', $vars);
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json; charset=utf-8']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'personnels_contract.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
+            $type = isset($_POST['type']) ? $_POST['type'] : '';
+            $offices = isset($_POST['offices']) ? $_POST['offices'] : '';
+            $insurance_status = isset($_POST['insurance_status']) ? $_POST['insurance_status'] : '';
+
+            $joins = [
+                "[>]personnels" => ["personnels" => "id"],
+                "[>]offices" => ["offices" => "id"],
+            ];
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        'personnels.name[~]' => $searchValue,
+                        'personnels_contract.code[~]' => $searchValue,
+                    ],
+                    "personnels_contract.deleted" => 0,
+                    "personnels.stores" => $accStore,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+            ];
+
+            if (!empty($personnels))
+                $where['AND']['personnels.id'] = $personnels;
+            if (!empty($type))
+                $where['AND']['personnels_contract.type'] = $type;
+            if (!empty($offices))
+                $where['AND']['offices.id'] = $offices;
+            if (!empty($insurance_status)) {
+                if ($insurance_status === 'official_has') {
+
+                    $insured_personnels = $app->select("personnels_insurrance", "personnels", [
+                        "deleted" => 0,
+                        "status" => 'A'
+                    ]);
+                    $where['AND']['personnels_contract.type'] = [1, 2]; // 1: XĐTH, 2: KXĐTH
+                    $where['AND']['personnels.id'] = $insured_personnels;
+                } elseif ($insurance_status === 'official_no') {
+                    $insured_personnels = $app->select("personnels_insurrance", "personnels", [
+                        "deleted" => 0,
+                        "status" => 'A'
+                    ]);
+                    $where['AND']['personnels_contract.type'] = [1, 2];
+                    $where['AND']['personnels.id[!]'] = $insured_personnels;
+                }
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
+
+            $count = $app->count("personnels_contract", $joins, ['personnels_contract.id'], $where['AND']);
+            $datas = [];
+
+            $app->select("personnels_contract", $joins, [
+                'personnels_contract.id',
+                'personnels_contract.code',
+                'personnels_contract.salary',
+                'personnels_contract.duration',
+                'personnels_contract.workday',
+                'personnels_contract.type',
+                'personnels_contract.date_contract',
+                'personnels_contract.date_end',
+                'personnels_contract.salary_diligence',
+                'personnels_contract.salary_allowance',
+                'personnels.id(personnels_id)',
+                'personnels.name(personnel_name)',
+                'offices.name(office_name)'
+            ], $where, function ($data) use (&$datas, $jatbi, $app, $setting) {
+
+                $start_date = date("Y-m-d", strtotime($data['date_contract']));
+                $end_date = date("Y-m-d", strtotime($start_date . " +" . $data['duration'] . " month"));
+                $diff_seconds = strtotime($end_date) - strtotime(date("Y-m-d"));
+                $remaining_days = round($diff_seconds / (60 * 60 * 24));
+
+                $datas[] = [
+                    "personnel_name" => $data['personnel_name'] ?? "",
+                    "office_name" => $data['office_name'] ?? "",
+                    // "type" => $setting['personnels_contracts'][$data['type']]['name'] ?? "",
+                    "workday" => date("d/m/Y", timestamp: strtotime(datetime: $data['workday'])),
+                    "code" => $data['code'] ?? "",
+                    "salary" => number_format($data['salary'] ?? 0),
+                    "salary_diligence" => number_format($data['salary_diligence'] ?? 0),
+                    "salary_allowance" => number_format($data['salary_allowance'] ?? 0),
+                    "total_salary" => number_format(($data['salary'] + $data['salary_diligence'] + $data['salary_allowance']) ?? 0),
+                    "action" => ($app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem chi tiết lương"),
+                                'permission' => ['contract'],
+                                'action' => ['data-url' => '/hrm/contract-salary/' . ($data['personnels_id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem"),
+                                'permission' => ['contract'],
+                                'action' => ['data-url' => '/hrm/contract-view/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['contract.edit'],
+                                'action' => ['data-url' => '/hrm/contract-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['contract.deleted'],
+                                'action' => ['data-url' => '/hrm/contract-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("In"),
+                                'permission' => ['contract'],
+                                'action' => ['data-url' => '/hrm/contract-print/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                        ]
+                    ]))
+                ];
+            });
+
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas,
+            ]);
+        }
+    })->setPermissions(['contract-salary']);
 
     $app->router('/contract-excel', 'GET', function ($vars) use ($app, $setting, $stores) {
         try {
@@ -2400,7 +2619,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                 "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
+                "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                 "notes" => $app->xss($_POST['notes']),
                 "date" => date("Y-m-d H:i:s"),
@@ -2560,7 +2780,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                 "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
+                "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                 "notes" => $app->xss($_POST['notes']),
                 "date" => date("Y-m-d H:i:s"),
@@ -2728,7 +2949,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                     "salary"             => $app->xss(str_replace([','], '', $_POST['salary'])),
                     // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                    // "salary_diligence"	=> $app->xss(str_replace([','],'',$_POST['salary_diligence'])),
+                    "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                    "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                     // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                     "notes" => $app->xss($_POST['notes']),
                     "date" => date("Y-m-d H:i:s"),
@@ -2807,17 +3029,17 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
     $app->router("/contract-view/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Hợp đồng lao động");
-        
+
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels_contract", "*", ["id" => $vars['id'], "deleted" => 0]);
-            
+
             if (!empty($vars['data'])) {
                 // Kiểm tra quyền xem hợp đồng của chính mình
                 $current_user_contract_id = $app->get("personnels_contract", "id", [
                     "personnels" => $app->getSession("accounts")["personnels_id"] ?? 0,
                     "deleted" => 0
                 ]);
-                
+
                 if (($app->getSession("accounts")['your_self'] ?? 0) == 1 && $current_user_contract_id != $vars['id']) {
                     echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
                     return;
@@ -2828,7 +3050,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $vars['office_name']      = $app->get("offices", "name", ["id" => $vars['data']['offices']]) ?? '';
                 $vars['position_name']    = $app->get("hrm_positions", "name", ["id" => $vars['data']['position']]) ?? '';
                 $vars['user_name']        = $app->get("accounts", "name", ["id" => $vars['data']['user']]) ?? '';
-                
+
                 // Chỉ dùng loại hợp đồng có sẵn
                 $vars['contract_type_name'] = $setting['personnels_contracts'][$vars['data']['type']]['name'] ?? 'Không xác định';
 
@@ -2952,6 +3174,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             "personnels_contract.type",
             "personnels_contract.duration",
             "personnels_contract.salary",
+            "personnels_contract.salary_diligence",
+            "personnels_contract.salary_allowance",
             "personnels_contract.offices",
             "personnels_contract.interview",
             "personnels_contract.workday",
@@ -9606,7 +9830,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
 
         $personnel_data = $app->get("personnels", "*", [
-            "id" => $id, 
+            "id" => $id,
             "deleted" => 0
         ]);
 
@@ -9621,37 +9845,38 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         } else {
             $personnel_data['office_name'] = 'N/A';
         }
-        
 
-        $latest_contract = $app->get("personnels_contract", 
-            ["position", "workday"], 
+
+        $latest_contract = $app->get(
+            "personnels_contract",
+            ["position", "workday"],
             [
                 "personnels" => $id,
                 "deleted" => 0,
-                "ORDER" => ["date_contract" => "DESC"] 
+                "ORDER" => ["date_contract" => "DESC"]
             ]
         );
 
-    
+
         if ($latest_contract) {
-    
+
             if (!empty($latest_contract['position'])) {
                 $position = $app->get("hrm_positions", ["name"], ["id" => $latest_contract['position']]);
                 $personnel_data['position_name'] = $position['name'] ?? 'N/A';
             } else {
                 $personnel_data['position_name'] = 'N/A';
             }
-            
-   
-            $personnel_data['work_start_date'] = $latest_contract['workday'] ?? $personnel_data['date']; 
+
+
+            $personnel_data['work_start_date'] = $latest_contract['workday'] ?? $personnel_data['date'];
         } else {
-         
+
             $personnel_data['position_name'] = 'N/A';
-            $personnel_data['work_start_date'] = $personnel_data['date']; 
+            $personnel_data['work_start_date'] = $personnel_data['date'];
         }
 
-        $vars['data'] = $personnel_data; 
-        
+        $vars['data'] = $personnel_data;
+
 
         $vars['criteria_list'] = [
             1 => $jatbi->lang('Chuyên môn nhân viên'),
@@ -9667,10 +9892,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             11 => $jatbi->lang('Tuân thủ quy trình hoạt động của công ty'),
             12 => $jatbi->lang('Tuân thủ văn hóa của công ty'),
         ];
-        
+
 
         echo $app->render($template . '/hrm/personnels-evaluation.html', $vars, $jatbi->ajax());
-
     })->setPermissions(['personnels.evaluation']);
-
 })->middleware('login');
