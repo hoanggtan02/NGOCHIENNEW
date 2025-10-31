@@ -5731,7 +5731,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         if (!$data) {
             $vars['modalContent'] = $jatbi->lang("Không tìm thấy dữ liệu ghi nhận đi trễ/về sớm.");
-            echo $app->render($template . '/common/reward.html', $vars);
+            echo $app->render($setting['template'] . '/common/reward.html', $vars);
             return;
         }
 

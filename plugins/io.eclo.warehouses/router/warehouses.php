@@ -3200,7 +3200,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
     $app->router("/products_amount_status", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Cập nhật số lượng");
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/status.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/status.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
