@@ -1814,7 +1814,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
 
     $app->router('/other_commission_costs-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         if ($app->method() === 'GET') {
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
@@ -1827,7 +1827,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
     $app->router('/other_commission_costs-update/add/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         if ($app->method() === 'GET') {
             $vars['url'] = "/drivers/other_commission_costs";
-            echo $app->render($template . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $action = 'add';
