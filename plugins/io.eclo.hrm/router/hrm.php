@@ -3063,56 +3063,81 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['contract']);
 
     //Bao hiem
-    $app->router('/insurrance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
+    $app->router('/insurrance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template, $accStore) {
         $vars['title'] = $jatbi->lang("Bảo hiểm");
         if ($app->method() === 'GET') {
             $store_ids = array_column($stores, column_key: 'value');
-            $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $store_ids, "ORDER" => ["name" => "ASC"]]);
+            $vars['insurance_status'] = [
+                ["value" => "", "text" => "Tất cả"],
+                ["value" => "official_has", "text" => "Chính thức – vô bảo hiểm"],
+                ["value" => "official_no", "text" => "Chính thức – chưa vô bảo hiểm"],
+            ];
+            $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
             echo $app->render($template . '/hrm/insurrance.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
-            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
-            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
-            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
-            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
-            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'personnels_insurrance.id';
-            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $draw = intval($_POST['draw'] ?? 0);
+            $start = intval($_POST['start'] ?? 0);
+            $length = intval($_POST['length'] ?? ($setting['site_page'] ?? 10));
+            $searchValue = $_POST['search']['value'] ?? '';
+            $orderName = $_POST['order'][0]['name'] ?? 'personnels.id';
+            $orderDir = strtoupper($_POST['order'][0]['dir'] ?? 'DESC');
+            $personnels = $_POST['personnels'] ?? '';
+            $insurance_status = isset($_POST['insurance_status']) ? $_POST['insurance_status'] : '';
             $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
-            $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
 
             $joins = [
-                "[>]personnels" => ["personnels" => "id"],
+                "[>]personnels_insurrance" => ["id" => "personnels"],
             ];
-            $store_ids = array_column($stores, column_key: 'value');
 
+            // ✅ Gom điều kiện cho đúng cấu trúc SQL
             $where = [
                 "AND" => [
-                    "OR" => [
+                    "personnels.deleted" => 0,
+                    "personnels.stores" => $accStore,
+                    // cho phép cả có hoặc chưa có bảo hiểm
+                    "OR #insurance-null" => [
+                        "personnels_insurrance.id[!]" => null,
+                        "personnels_insurrance.id" => null,
+                    ],
+                    // bộ lọc tìm kiếm
+                    "OR #search" => [
+                        "personnels.name[~]" => $searchValue,
                         "personnels_insurrance.social[~]" => $searchValue,
                         "personnels_insurrance.health[~]" => $searchValue,
-                        "personnels.name[~]" => $searchValue,
                     ],
-                    "personnels_insurrance.deleted" => 0,
-                    "personnels_insurrance.status[<>]" => $status,
-                    "personnels.stores" => $store_ids,
                 ],
                 "LIMIT" => [$start, $length],
-                "ORDER" => [$orderName => strtoupper($orderDir)],
+                "ORDER" => [$orderName => $orderDir],
             ];
+
+            if (!empty($status)) {
+                $where['AND']['personnels_insurrance.status'] = $status;
+            }
             if (!empty($personnels)) {
                 $where['AND']['personnels.id'] = $personnels;
+            }
+            if (!empty($insurance_status)) {
+                if ($insurance_status === 'official_has') {
+                    $where['AND']['personnels_insurrance.id[!]'] = null; // có bảo hiểm
+                } elseif ($insurance_status === 'official_no') {
+                    $where['AND']['personnels_insurrance.id'] = null; // chưa có bảo hiểm
+                }
             }
 
             if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
 
-            $count = $app->count("personnels_insurrance", $joins, "personnels_insurrance.id", $where['AND']);
+            $count = $app->count("personnels", $joins, "personnels.id", $where['AND']);
             $datas = [];
 
-            $app->select("personnels_insurrance", $joins, [
-                'personnels_insurrance.id',
+            $app->select("personnels", $joins, [
+                'personnels.id(personnel_id)',
+                'personnels.name(personnel_name)',
+                'personnels.status(personnel_status)',
+                'personnels_insurrance.id(insurrance_id)',
                 'personnels_insurrance.price',
                 'personnels_insurrance.social',
                 'personnels_insurrance.social_date',
@@ -3122,48 +3147,53 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'personnels_insurrance.health_place',
                 'personnels_insurrance.date',
                 'personnels_insurrance.status',
-                'personnels.name(personnel_name)',
             ], $where, function ($data) use (&$datas, $jatbi, $app) {
+
+                $has_insurrance = !empty($data['insurrance_id']);
+
                 $datas[] = [
-                    "checkbox" => $app->component("box", ["data" => $data['id']]),
-                    "personnel_name" => $data['personnel_name'],
-                    "price" => number_format($data['price']),
-                    "social" => $data['social'],
-                    'social_date' => date("d/m/Y", timestamp: strtotime(datetime: $data['social_date'])),
-                    "social_place" => $data['social_place'],
-                    "health" => $data['health'],
-                    'health_date' => date("d/m/Y", timestamp: strtotime(datetime: $data['health_date'])),
-                    "health_place" => $data['health_place'],
-                    "date" => $jatbi->datetime($data['date'], 'datetime'),
-                    "status" => $app->component("status", [
-                        "url" => "/hrm/insurrance-status/" . $data['id'],
-                        "data" => $data['status'],
-                        "permission" => ['insurrance.edit']
-                    ]),
+                    "checkbox" => $app->component("box", ["data" => $data['insurrance_id'] ?? '']),
+                    "personnel_name" => $data['personnel_name'] ?? '',
+                    "price" => $has_insurrance ? number_format($data['price']) : '',
+                    "social" => $data['social'] ?? '',
+                    "social_date" => !empty($data['social_date']) ? date("d/m/Y", strtotime($data['social_date'])) : '',
+                    "social_place" => $data['social_place'] ?? '',
+                    "health" => $data['health'] ?? '',
+                    "health_date" => !empty($data['health_date']) ? date("d/m/Y", strtotime($data['health_date'])) : '',
+                    "health_place" => $data['health_place'] ?? '',
+                    "date" => !empty($data['date']) ? $jatbi->datetime($data['date'], 'datetime') : '',
+                    "status" => $has_insurrance
+                        ? $app->component("status", [
+                            "url" => "/hrm/insurrance-status/" . $data['insurrance_id'],
+                            "data" => $data['status'],
+                            "permission" => ['insurrance.edit']
+                        ])
+                        : '<span class="badge bg-warning text-dark small">Chưa có</span>',
                     "action" => ($app->component("action", [
                         "button" => [
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Xem"),
                                 'permission' => ['insurrance'],
-                                'action' => ['data-url' => '/hrm/insurrance-view/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                                'action' => ['data-url' => '/hrm/insurrance-view/' . ($data['insurrance_id'] ?? ''), 'data-action' => 'modal']
                             ],
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Sửa"),
                                 'permission' => ['insurrance.edit'],
-                                'action' => ['data-url' => '/hrm/insurrance-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                                'action' => ['data-url' => '/hrm/insurrance-edit/' . ($data['insurrance_id'] ?? ''), 'data-action' => 'modal']
                             ],
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Xóa"),
                                 'permission' => ['insurrance.deleted'],
-                                'action' => ['data-url' => '/hrm/insurrance-deleted?box=' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                                'action' => ['data-url' => '/hrm/insurrance-deleted?box=' . ($data['insurrance_id'] ?? ''), 'data-action' => 'modal']
                             ],
                         ]
                     ]))
                 ];
             });
+
             echo json_encode([
                 "draw" => $draw,
                 "recordsTotal" => $count,

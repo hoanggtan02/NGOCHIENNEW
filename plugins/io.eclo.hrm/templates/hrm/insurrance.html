@@ -38,6 +38,13 @@
                                 "placeholder"=>$jatbi->lang("Nhân viên"),
                                 "required" => 'true',
                             ])?>
+                            <?=$app->component('select',[
+                                "name"=>'insurance_status',
+                                "class"=>'filter-name',
+                                "options"=> $insurance_status,
+                                "selected" => $data['insurance_status'] ?? '',
+                                "placeholder"=>$jatbi->lang("Loại bảo hiểm"),
+                            ])?>
                                 <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
