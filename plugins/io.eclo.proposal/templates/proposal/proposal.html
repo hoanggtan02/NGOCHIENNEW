@@ -258,85 +258,119 @@
                 <div class="filter-search">
                     <div class="d-flex align-items-center justify-content-end">
                         <div class="dropdown">
-                            <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
+                            <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasProposal" aria-controls="offcanvasProposal">
                                 <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 min-width bg-blur" style="--min-width:300px;--min-width-xs:100vw">
-                                <div class="fw-semibold py-2 px-3">
-                                    <?=$jatbi->lang("Điều kiện lọc")?>
-                                </div>
-                                <hr class="border-secondary border-opacity-50 my-2">
-                                <div class="px-3">
-                                    <?=$app->component('select',[
-                                        "name"=>'status',
-                                        "placeholder"=>$jatbi->lang("Trạng thái"),
-                                        "selected" => $app->xss($_GET['status'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $status ?? [],
-                                    ])?>
-                                    <?=$app->component('select',[
-                                        "name"=>'type',
-                                        "placeholder"=>$jatbi->lang("Loại"),
-                                        "selected" => $app->xss($_GET['type'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $type ?? [],
-                                    ])?>
-                                    <?=$app->component('select',[
-                                        "name"=>'account',
-                                        "placeholder"=>$jatbi->lang("Tài khoản"),
-                                        "selected" => $app->xss($_GET['account'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $accounts ?? [],
-                                    ])?>
-                                    <?=$app->component('select',[
-                                        "name"=>'workflows',
-                                        "placeholder"=>$jatbi->lang("Quy trình"),
-                                        "selected" => $app->xss($_GET['workflows'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $workflows ?? [],
-                                    ])?>
-                                    <?=$app->component('select',[
-                                        "name"=>'form',
-                                        "placeholder"=>$jatbi->lang("Hình thức"),
-                                        "selected" => $app->xss($_GET['form'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $forms ?? [],
-                                    ])?>
-                                    <?=$app->component('select',[
-                                        "name"=>'category',
-                                        "placeholder"=>$jatbi->lang("Hạng mục"),
-                                        "selected" => $app->xss($_GET['category'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" multiple data-actions-box="true"',
-                                        "options" => $categorys ?? [],
-                                    ])?>
-                                    <?=$app->component('input',[
-                                        "name"=>'date',
-                                        "placeholder"=>$jatbi->lang("Ngày dự kiến"),
-                                        "selected" => $app->xss($_GET['date'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" data-datepicker',
-                                        "value" => $date ?? '',
-                                    ])?>
-                                    <?=$app->component('input',[
-                                        "name"=>'create',
-                                        "placeholder"=>$jatbi->lang("Ngày đề xuất"),
-                                        "selected" => $app->xss($_GET['create'] ?? ''),
-                                        "class" => 'filter-name',
-                                        "attr" => 'data-width="100%" data-datepicker',
-                                        "value" => $create ?? ''
-                                    ])?>
-                                </div>
-                                <hr class="border-secondary border-opacity-50 my-2">
-                                <div class="px-3 py-2 text-end w-100">
-                                    <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
-                                    <button type="button" class="btn btn-eclo px-3 rounded-pill py-2 button-filter" data-bs-toggle="dropdown"><?=$jatbi->lang("Tìm")?></button>
-                                </div>
+                            <div class="d-print-none offcanvas offcanvas-end bg-blur bg-body bg-opacity-50 border-0 shadow-lg width pt-standalone" style="--width:280px;--blur:5px;" tabindex="-1" id="offcanvasProposal" aria-labelledby="offcanvasProposalLabel">
+                                  <div class="justify-content-center align-items-center">
+                                    <div class="offcanvas-header">
+                                      <h5 class="mb-0"><?=$jatbi->lang("Điều kiện lọc")?></h5>
+                                    </div>
+                                  </div>
+                                  <div class="offcanvas-body p-0">
+                                    <div class="px-3">
+                                        <?=$app->component('input',[
+                                            "name"=>'id',
+                                            "placeholder"=>$jatbi->lang("Mã đề xuất"),
+                                            "selected" => $app->xss($_GET['id'] ?? ''),
+                                            "class" => 'filter-name',
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'status',
+                                            "placeholder"=>$jatbi->lang("Trạng thái"),
+                                            "selected" => $app->xss($_GET['status'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $status ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'type',
+                                            "placeholder"=>$jatbi->lang("Loại"),
+                                            "selected" => $app->xss($_GET['type'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $type ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'account',
+                                            "placeholder"=>$jatbi->lang("Tài khoản đề xuất"),
+                                            "selected" => $app->xss($_GET['account'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $accounts ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'workflows',
+                                            "placeholder"=>$jatbi->lang("Quy trình"),
+                                            "selected" => $app->xss($_GET['workflows'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $workflows ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'form',
+                                            "placeholder"=>$jatbi->lang("Hình thức"),
+                                            "selected" => $app->xss($_GET['form'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $forms ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'category',
+                                            "placeholder"=>$jatbi->lang("Hạng mục"),
+                                            "selected" => $app->xss($_GET['category'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $categorys ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'customers',
+                                            "placeholder"=>$jatbi->lang("Khách hàng"),
+                                            "selected" => $app->xss($_GET['customers'] ?? ''),
+                                            "attr" => 'data-width="100%" data-select-load="true" data-select-url="/customers/search" data-method="POST" data-keyword="keyword"',
+                                            "id" => "customers",
+                                            "class" => 'filter-name',
+                                            "options" => $customers ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'vendors',
+                                            "placeholder"=>$jatbi->lang("Nhà cung cấp"),
+                                            "selected" => $app->xss($_GET['vendors'] ?? ''),
+                                            "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/vendors" data-method="POST" data-keyword="keyword"',
+                                            "id" => "vendors",
+                                            "class" => 'filter-name',
+                                            "options" => $vendors ?? [],
+                                        ])?>
+                                        <?=$app->component('select',[
+                                            "name"=>'accounts',
+                                            "placeholder"=>$jatbi->lang("Nhân viên"),
+                                            "selected" => $app->xss($_GET['accounts'] ?? ''),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" multiple data-actions-box="true"',
+                                            "options" => $accounts ?? [],
+                                        ])?>
+                                        <?=$app->component('input',[
+                                            "name"=>'date',
+                                            "placeholder"=>$jatbi->lang("Ngày dự kiến"),
+                                            "selected" => $app->xss($_GET['date'] ?? $date),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" data-datepicker',
+                                            "value" => $date ?? '',
+                                        ])?>
+                                        <?=$app->component('input',[
+                                            "name"=>'create',
+                                            "placeholder"=>$jatbi->lang("Ngày đề xuất"),
+                                            "selected" => $app->xss($_GET['create'] ?? $create),
+                                            "class" => 'filter-name',
+                                            "attr" => 'data-width="100%" data-datepicker',
+                                            "value" => $create ?? ''
+                                        ])?>
+                                    </div>
+                                  </div>
+                                  <div class="offcanvas-footer d-flex p-2">
+                                        <button type="button" class="btn btn-light px-3 mx-1 w-100 rounded-pill py-2 reset-filter" data-bs-dismiss="offcanvas"><?=$jatbi->lang("Làm mới")?></button>
+                                        <button type="button" class="btn btn-eclo px-3 mx-1 w-100 rounded-pill py-2 button-filter" data-bs-dismiss="offcanvas"><?=$jatbi->lang("Tìm")?></button>
+                                  </div>
                             </div>
                         </div>
                     </div>

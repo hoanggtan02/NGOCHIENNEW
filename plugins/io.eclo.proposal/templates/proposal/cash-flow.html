@@ -50,19 +50,19 @@
                         <table class="table table-bordered table-hover bg-transparent mb-0 small" style="min-width: 1200px;">
                             <thead class="bg-transparent">
                                 <tr>
-                                    <th rowspan="2" style="min-width: 100px; position: sticky; left: 0; z-index: 2;">NGÀY</th>
+                                    <th rowspan="2" class="border-primary border-end border-start-0" style="min-width: 100px; position: sticky; left: 0; z-index: 2;">NGÀY</th>
                                     <?php foreach ($dongtien as $date => $data): ?>
-                                        <th colspan="4" class="text-center text-nowrap small">
+                                        <th colspan="4" class="text-center text-nowrap small   border-primary border-end">
                                             <?= date("d/m/Y", strtotime($date)) ?>
                                         </th>
                                     <?php endforeach; ?>
                                 </tr>
                                 <tr class="small">
                                     <?php foreach ($dongtien as $date => $data): ?>
-                                        <th class="text-nowrap text-body">Kế hoạch</th>
-                                        <th class="text-nowrap text-success">Thực tế</th>
-                                        <th class="text-nowrap text-primary">Chênh lệch</th>
-                                        <th class="text-nowrap text-info">Tỷ lệ</th>
+                                        <th class="text-nowrap text-body ">Kế hoạch</th>
+                                        <th class="text-nowrap text-success ">Thực tế</th>
+                                        <th class="text-nowrap text-primary ">Chênh lệch</th>
+                                        <th class="text-nowrap text-info   border-primary border-end">Tỷ lệ</th>
                                     <?php endforeach; ?>
                                 </tr>
                             </thead>
@@ -76,20 +76,31 @@
                                     ];
                                 ?>
                                 <?php foreach ($rows as $key => $info): ?>
-                                    <tr class="<?= $info['class'] ?>">
-                                        <th scope="row" style="min-width: 100px; position: sticky; left: 0; z-index: 2;"><?= $info['label'] ?></th>
-                                        <?php foreach ($dongtien as $dayData): ?>
+                                    <tr class="<?= $info['class'] ?> ">
+                                        <?php 
+                                            if($key=='thu'){
+                                                $type = 1;
+                                            }
+                                            elseif($key=='chi'){
+                                                $type = 2;
+                                            }
+                                            else{
+                                                $type = '1,2';
+                                            }
+                                        ?>
+                                        <th scope="row" class="border-primary border-end border-start-0" style="min-width: 100px; position: sticky; left: 0; z-index: 2; border-right:1px solid #000"><?= $info['label'] ?></th>
+                                        <?php foreach ($dongtien as $date => $dayData): ?>
                                             <?php $item = $dayData[$key]; ?>
                                             <!-- Kế hoạch -->
                                             <td class="fw-bold"><?=number_format($item['kehoach']) ?></td>
                                             <!-- Thực thu/chi -->
-                                            <td class="fw-bold"><?=number_format($item['thucthu']) ?></td>
+                                            <td class="fw-bold"><a href="/proposal/cash-bank?type=<?= urlencode($type) ?>&date=<?= date('d/m/Y', strtotime($date)) ?> - <?= date('d/m/Y', strtotime($date)) ?>" data-pjax class="text-success"><?=number_format($item['thucthu']) ?></a></td>
                                             <!-- Tổng -->
                                             <td class="fw-bold <?= $item['tong'] < 0 ? 'text-danger' : 'text-primary' ?>">
                                                 <?=number_format($item['tong']) ?>
                                             </td>
                                             <!-- Tỷ lệ -->
-                                            <td class="fw-bold <?= $item['tile'] < 100 ? 'text-danger' : 'text-success' ?>">
+                                            <td class="fw-bold   border-primary border-end <?= $item['tile'] < 100 ? 'text-danger' : 'text-success' ?>">
                                                 <?= $item['tile'] ?>%
                                             </td>
                                         <?php endforeach; ?>

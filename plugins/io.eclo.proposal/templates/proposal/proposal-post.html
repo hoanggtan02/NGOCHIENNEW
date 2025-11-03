@@ -1,21 +1,17 @@
 <div class="container pb-5 mb-5">
     <div class="mb-3 d-flex justify-content-between align-items-center">
         <div>
-            <h4 class="mb-0 fw-bold text-body">
-                <?=$title?>
-            </h4>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
             <ul class="breadcrumb small mb-0">
                 <li class="breadcrumb-item small">
                     <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
                 </li>
-                <li class="breadcrumb-item small text-body" aria-current="page">
-                    <?=$title?>
-                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
             </ul>
         </div>
         <div class="text-body">
             <strong><?=$jatbi->lang("Đã lưu nháp")?>:</strong>
-            <?=$jatbi->datetime($data['modify'])?>
+            <?=$jatbi->datetime($data['modify'])?>          
         </div>
     </div>
     <div class="row g-5">
@@ -61,18 +57,25 @@
                                 "options" => $categorys,
                                 "required" => 'true',
                             ])?>
+                            <?=$app->component('select',[
+                                "name"=>'objects',
+                                "placeholder"=>$jatbi->lang("Đối tượng"),
+                                "selected" => $data['objects'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/objects" data-method="POST" data-keyword="keyword" data-action="change" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"objects","value":"this.val"}\'',
+                                "id" => "objects",
+                                "options" => $objects,
+                            ])?>
                             <?=$app->component('input',[
                                 "name"=>'target',
                                 "placeholder"=>$jatbi->lang("Mục tiêu"),
                                 "value" => $data['target'] ?? '',
                                 "class" => 'filter-name',         
                                 "type" => "text",
-                                "required" => 'true',
                                 "attr" => 'data-action="blur" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"target","value":"this.val"}\' ',
                             ])?>
                             <?=$app->component('input',[
                                 "name"=>'date',
-                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "placeholder"=>$jatbi->lang("Ngày dự kiến"),
                                 "value" => $data['date'] ?? date("Y-m-d"),
                                 "class" => 'filter-name',         
                                 "type" => "date",
@@ -124,8 +127,8 @@
                             <?=$app->component('select',[
                                 "name"=>'stores',
                                 "placeholder"=>$jatbi->lang("Cửa hàng"),
-                                "selected" => $data['stores'] ?? '',
-                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/brands" data-method="POST" data-keyword="keyword" data-action="change" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"stores","value":"this.val"}\'',
+                                "selected" => $data['stores'] ?? $app->getCookie('stores')['text'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/stores" data-method="POST" data-keyword="keyword" data-action="change" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"stores","value":"this.val"}\'',
                                 "id" => "stores",
                                 "options" => $stores,
                             ])?>
@@ -207,6 +210,8 @@
                                 "type" => "text",
                                 "attr" => 'data-action="blur" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"tags","value":"this.val"}\' ',
                             ])?>
+                            <button type="button" class="btn btn-sm btn-primary text-light rounded-pill fw-bold" data-action="modal" data-url="/proposal/remind/<?=$data['active']?>"><i class="fa-solid fa-bolt me-2"></i>Thêm  Nhắc nhở</button>
+                            <button type="button" class="btn btn-sm btn-info text-light rounded-pill fw-bold" data-action="modal" data-url="/proposal/remind-views/<?=$data['active']?>"><i class="fa-solid fa-bolt me-2"></i>Lịch sử nhắc nhở</button>
                         </div>
                     </div>
                 </div>
@@ -218,34 +223,30 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <strong class="d-block"><?=$jatbi->lang("Chi tiết thêm")?></strong>
                         <div>
-                            <button type="button"
-                                class="btn btn-sm btn-eclo rounded-3 py-1 px-2 ms-2 d-flex align-items-center justify-content-center"
-                                data-action="click" data-url="/proposal/update/<?=$data['active']?>" data-toast="true"
-                                data-table-load="datatable-details" data-form='{"type":"details","code":"create"}'><i
-                                    class="ti ti-plus fs-4"></i> <?=$jatbi->lang("Thêm")?></button>
+                            <button type="button" class="btn btn-sm btn-eclo rounded-3 py-1 px-2 ms-2 d-flex align-items-center justify-content-center" data-action="click" data-url="/proposal/update/<?=$data['active']?>" data-toast="true"  data-table-load="datatable-details" data-form='{"type":"details","code":"create"}'><i class="ti ti-plus fs-4"></i> <?=$jatbi->lang("Thêm")?></button>
                         </div>
                     </div>
-                    <table id="datatable-details" data-table class="table align-middle" data-type="POST"
-                        data-server="true" data-processing="true" data-page-length="10" data-searching="true"
-                        data-paging="true" data-state-save='true' style="width:100%">
+                    <table id="datatable-details" 
+                            data-table 
+                            class="table align-middle" 
+                            data-type="POST" 
+                            data-server="true" 
+                            data-processing="true" 
+                            data-page-length="10"
+                            data-searching="true"
+                            data-paging="true"
+                            data-state-save='true'
+                            style="width:100%">
                         <thead>
                             <tr>
-                                <th data-name="type" data-orderable="true" class="text-nowrap text-start"
-                                    data-visible="true" data-class=""><?=$jatbi->lang("Loại")?></th>
-                                <th data-name="content" data-orderable="true" class="text-nowrap text-start"
-                                    data-visible="true" data-class=""><?=$jatbi->lang("Nội dung")?></th>
-                                <th data-name="price" data-orderable="true" class="text-nowrap text-start"
-                                    data-visible="true" data-class=""><?=$jatbi->lang("Đơn giá")?></th>
-                                <th data-name="amount" data-orderable="false" class="text-nowrap " data-visible="true"
-                                    data-class=""><?=$jatbi->lang("Số lượng")?></th>
-                                <th data-name="units" data-orderable="false" class="text-nowrap " data-visible="true"
-                                    data-class=""><?=$jatbi->lang("Đơn vị")?></th>
-                                <th data-name="total" data-orderable="false" class="text-nowrap " data-visible="true"
-                                    data-class=""><?=$jatbi->lang("Thành tiền")?></th>
-                                <th data-name="notes" data-orderable="false" class="text-nowrap " data-visible="true"
-                                    data-class=""><?=$jatbi->lang("Ghi chú")?></th>
-                                <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true"
-                                    data-class="text-end"></th>
+                                <th data-name="type" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Loại")?></th>
+                                <th data-name="content" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Nội dung")?></th>
+                                <th data-name="price" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Đơn giá")?></th>
+                                <th data-name="amount" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Số lượng")?></th>
+                                <th data-name="units" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Đơn vị")?></th>
+                                <th data-name="total" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Thành tiền")?></th>
+                                <th data-name="notes" data-orderable="false" class="text-nowrap " data-visible="true" data-class=""><?=$jatbi->lang("Ghi chú")?></th>
+                                <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"></th>
                             </tr>
                         </thead>
                         <tfoot>
@@ -270,25 +271,17 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <strong class="d-block"><?=$jatbi->lang("Chứng từ kèm theo")?></strong>
                         <div>
-                            <a class="btn btn-sm btn-eclo rounded-3 py-1 px-2 ms-2 d-flex align-items-center justify-content-center"
-                                href="#" data-action="modal"
-                                data-url="<?=$jatbi->url('/files/upload/main?type=proposal&proposal='.$data['active'])?>"><i
-                                    class="ti ti-plus fs-4"></i> <?=$jatbi->lang("Tải tệp lên")?></a>
+                            <a class="btn btn-sm btn-eclo rounded-3 py-1 px-2 ms-2 d-flex align-items-center justify-content-center" href="#" data-action="modal" data-url="<?=$jatbi->url('/files/upload/main?type=proposal&proposal='.$data['active'])?>"><i class="ti ti-plus fs-4"></i> <?=$jatbi->lang("Tải tệp lên")?></a>
                         </div>
                     </div>
                     <div class="row g-4 mt-4">
                         <?php foreach($files as $file){ ?>
-                        <div class="col-lg-3">
-                            <div class="btn card p-2 rounded-4 shadow border-0 h-100" data-action="modal"
-                                data-url="/files/files-views/<?=$file['active']?>">
-                                <span class="file-icon me-2 rounded-3 lazyload mb-4"
-                                    data-bgset="<?=$jatbi->getFileIcon($file['active'])?>"
-                                    style="--width:100%;--height:200px;"></span>
-                                <strong>
-                                    <?=$file['name']?>
-                                </strong>
+                            <div class="col-lg-3">
+                                <div class="btn card p-2 rounded-4 shadow border-0 h-100" data-action="modal" data-url="/files/files-views/<?=$file['active']?>">
+                                    <span class="file-icon me-2 rounded-3 lazyload mb-4" data-bgset="<?=$jatbi->getFileIcon($file['active'])?>" style="--width:100%;--height:200px;"></span>
+                                    <strong><?=$file['name']?></strong>
+                                </div>
                             </div>
-                        </div>
                         <?php } ?>
                     </div>
                 </div>
@@ -297,10 +290,8 @@
     </div>
     <div class="position-fixed bottom-0 start-0 w-100 bg-body py-2 pb-standalone">
         <div class="text-center text-md-right">
-            <button class="btn btn-danger text-light mx-2 fw-bold" data-load="/proposal/list/draft/" data-confirm="true"
-                data-url="/proposal/proposal-update/5061/cancel/">Xóa bản nháp</button>
-            <button class="btn btn-success text-light mx-2 fw-bold" data-action="modal"
-                data-url="/proposal/completed/<?=$data['active']?>">Gửi đề xuất</button>
+            <button class="btn btn-danger text-light mx-2 fw-bold" data-load="/proposal/list/draft/" data-confirm="true" data-url="/proposal/proposal-update/5061/cancel/">Xóa bản nháp</button>
+            <button class="btn btn-success text-light mx-2 fw-bold" data-action="modal" data-url="/proposal/completed/<?=$data['active']?>">Gửi đề xuất</button>
         </div>
     </div>
 </div>

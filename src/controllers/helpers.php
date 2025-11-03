@@ -628,7 +628,7 @@ class Jatbi
 
 			case 'ID':
 				if (!empty($cookie) && count($cookie) == 1) {
-					$result = $this->app->get("stores", "id", ["deleted" => 0, "status" => 'A', "id" => $cookie['value']]);
+					$result = $this->app->get("stores", "id", ["deleted" => 0, "status" => 'A', "id" => $cookie[0]['value']]);
 				} else {
 					$result = 0;
 				}

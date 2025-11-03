@@ -45,11 +45,14 @@
                         <a href="<?=$jatbi->url('/proposal/config/target')?>" data-pjax class="p-2 d-block bg-transparent list-group-item <?=$type=='target'?'text-eclo fw-bold':''?>">
                             <i class="ti ti-target me-2 btn btn-sm "></i><?=$jatbi->lang("Hạng mục")?>
                         </a>
-                        <a href="<?=$jatbi->url('/proposal/config/object')?>" data-pjax class="p-2 d-block bg-transparent list-group-item <?=$type=='object'?'text-eclo fw-bold':''?>">
-                            <i class="ti ti-object-scan me-2 btn btn-sm "></i><?=$jatbi->lang("Đối tượng")?>
-                        </a>
                         <a href="<?=$jatbi->url('/proposal/config/process')?>" data-pjax class="p-2 d-block bg-transparent list-group-item <?=$type=='process'?'text-eclo fw-bold':''?>">
                             <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Quy trình")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/groups')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Nhóm")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/objects')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Đối tượng")?>
                         </a>
                         <a href="<?=$jatbi->url('/proposal/config/account-code')?>" data-pjax class="p-2 d-block bg-transparent list-group-item <?=$type=='account-code'?'text-eclo fw-bold':''?>">
                             <i class="ti ti-abacus me-2 btn btn-sm "></i><?=$jatbi->lang("Mã tài khoản")?>

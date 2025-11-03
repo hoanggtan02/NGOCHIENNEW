@@ -11,21 +11,11 @@
 				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
 					<div class="row g-3">
 						<div class="col-lg-12">
-							<?=$app->component('select',[
-                                "name"=>'type',
-                                "placeholder"=>$jatbi->lang("Loại"),
-                                "selected" => $data['type'],
-                                "attr" => 'data-width="100%"',
-                                "required" => "true",
-                                "id" => "province",
-                                "options" => $types,
-                            ])?>
-							<?=$app->component('select',[
-                                "name"=>'form[]',
-                                "placeholder"=>$jatbi->lang("Hình thức"),
-                                "selected" => $data['form'],
-                                "attr" => 'data-width="100%" multiple data-parent="#province" data-load="true" data-url="/proposal/config/form-search" data-method="POST" data-keyword="keyword" data-max-length="1"',
-                                "required" => "true",
+							<?=$app->component('input',[
+                                "name"=>'code',
+                                "placeholder"=>$jatbi->lang("Mã"),
+                                "value" => $data['code'] ?? '',
+                                "required" => 'true',
                             ])?>
 							<?=$app->component('input',[
                                 "name"=>'name',
@@ -34,16 +24,9 @@
                                 "required" => 'true',
                             ])?>
 							<?=$app->component('input',[
-                                "name"=>'code',
-                                "placeholder"=>$jatbi->lang("Mã"),
-                                "value" => $data['code'] ?? '',
-                                "required" => 'true',
-                            ])?>
-							<?=$app->component('input',[
                                 "name"=>'position',
                                 "placeholder"=>$jatbi->lang("Vị trí"),
                                 "value" => $data['position'] ?? '',
-                                "required" => 'true',
                             ])?>
 							<?=$app->component('textarea',[
                                 "name"=>'notes',

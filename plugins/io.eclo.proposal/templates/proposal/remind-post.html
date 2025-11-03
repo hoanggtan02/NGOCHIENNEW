@@ -1,0 +1,25 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-sm pt-standalone">
+		<div class="modal-content rounded-5">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<?=$app->component('input',[
+                        "name"=>'date',
+                        "placeholder"=>$jatbi->lang("Ngày"),
+                        "value" => date("Y-m-d H:i:s",strtotime($data['date'])) ?? date("Y-m-d H:i:s"),
+                        "class" => 'filter-name',         
+                        "type" => "datetime-local",
+                        "required" => 'true',
+                    ])?>
+                    <button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Khởi tạo")?></button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

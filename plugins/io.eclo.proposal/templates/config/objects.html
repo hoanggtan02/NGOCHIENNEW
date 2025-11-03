@@ -19,14 +19,14 @@
         <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
             <?php if($jatbi->permission(['proposal.config.deleted']) == 'true'){ ?>
             <li class="my-2">
-                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="/proposal/config/workflows-deleted" style="--width:50px;--height:50px;">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-checkbox="input.checker" data-url="/proposal/config/objects-deleted" style="--width:50px;--height:50px;">
                     <i class="ti ti-trash fs-3" aria-hidden="true"></i>
                 </a>
             </li>
             <?php } ?>
             <?php if($jatbi->permission(['proposal.config.add']) == 'true'){ ?>
             <li class="my-2">
-                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-url="/proposal/config/workflows-add" style="--width:50px;--height:50px;">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1" data-action="modal" data-url="/proposal/config/objects-add" style="--width:50px;--height:50px;">
                     <i class="ti ti-plus fs-3" aria-hidden="true"></i>
                 </a>
             </li>
@@ -45,11 +45,14 @@
                         <a href="<?=$jatbi->url('/proposal/config/target')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
                             <i class="ti ti-target me-2 btn btn-sm "></i><?=$jatbi->lang("Hạng mục")?>
                         </a>
-                        <a href="<?=$jatbi->url('/proposal/config/object')?>" data-pjax class="p-2 d-block bg-transparent list-group-item text-eclo fw-bold">
-                            <i class="ti ti-object-scan me-2 btn btn-sm "></i><?=$jatbi->lang("Đối tượng")?>
-                        </a>
                         <a href="<?=$jatbi->url('/proposal/config/workflows')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
                             <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Quy trình")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/groups')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-category-plus me-2 btn btn-sm "></i><?=$jatbi->lang("Nhóm")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/proposal/config/objects')?>" data-pjax class="p-2 d-block bg-transparent list-group-item text-eclo fw-bold">
+                            <i class="ti ti-object-scan me-2 btn btn-sm "></i><?=$jatbi->lang("Đối tượng")?>
                         </a>
                         <a href="<?=$jatbi->url('/proposal/config/diagram')?>" data-pjax class="p-2 d-block bg-transparent list-group-item">
                             <i class="ti ti-sitemap me-2 btn btn-sm "></i><?=$jatbi->lang("Sơ đồ tài khoản")?>
@@ -64,12 +67,29 @@
         <div class="col-lg-9">
             <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
                 <div class="card-body">
-
-                    <div class="action-buttons">
-                        <button id="save-btn" class="action-btn" title="Lưu Workflow"><i class="fas fa-save"></i></button>
-                        <button id="add-node-btn" class="action-btn" title="Thêm bước mới"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <div id="workflow-container"></div>
+                   <div class="custom-buttons d-none"></div>
+                   <table id="datatable" 
+                        data-table 
+                        class="table align-middle" 
+                        data-type="POST" 
+                        data-server="true" 
+                        data-processing="true" 
+                        data-page-length="10"
+                        data-searching="true"
+                        data-paging="true"
+                        data-state-save='true'
+                        style="width:100%">
+                    <thead>
+                        <tr>
+                            <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><div class="form-check"><input class="form-check-input checkall" type="checkbox" value="" data-checkbox="input.checker"></div></th>
+                            <th data-name="id" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="text-start"><?=$jatbi->lang("ID")?></th>
+                            <th data-name="code" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Mã")?></th>
+                            <th data-name="name" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Tên")?></th>
+                            <th data-name="status" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
+                            <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                        </tr>
+                    </thead>
+                </table>
                 </div>
             </div>
         </div>

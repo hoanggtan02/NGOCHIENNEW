@@ -1,0 +1,145 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-xl pt-standalone">
+		<div class="modal-content rounded-5">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row">
+						<div class="col-lg-4">
+							<?=$app->component('select',[
+                                "name"=>'type',
+                                "placeholder"=>$jatbi->lang("Loại"),
+                                "selected" => $data['type'] ?? '',
+                                "attr" => 'data-width="100%"',
+                                "id" => "type",
+                                "options" => $types,
+                                "required" => 'true',
+                            ])?>
+						</div>
+						<div class="col-lg-4">
+							<?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => $data['date'] ?? date("Y-m-d"),
+                                "type" => 'date',
+                                "required" => 'true',
+                            ])?>
+						</div>
+						<div class="col-lg-4">
+							<?=$app->component('input',[
+                                "name"=>'code',
+                                "placeholder"=>$jatbi->lang("Số chứng từ"),
+                                "value" => $data['code'] ?? '',
+                                "required" => 'true',
+                            ])?>
+						</div>
+						<div class="col-lg-12">
+							<?=$app->component('textarea',[
+                                "name"=>'content',
+                                "placeholder"=>$jatbi->lang("Diễn giải"),
+                                "value" => $data['content'] ?? '',
+                            ])?>
+						</div>
+						<div class="col-lg-12">
+							<div class="table-responsive">
+								<table class="table table-bordered table-striped align-middle">
+									<thead>
+										<tr>
+											<th colspan="6">
+												<div class="d-flex align-items-center justify-content-between">
+													<div>Chi tiết</div>
+													<div><button type="button" class="btn btn-sm p-0" data-action="clone" data-target=".data-account-items" data-clone=".account-items"><i class="ti ti-plus fs-5 text-primary"></i></button></div>
+												</div>
+											</th>
+										</tr>
+										<tr>
+											<th>Tài khoản</th>
+											<th>Ghi Nợ</th>
+											<th>Ghi Có</th>
+											<th>Đối tượng</th>
+											<th>Diễn giải</th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody class="data-account-items">
+										<tr class="account-items">
+											<td class="p-0">
+												<?=$app->component('select',[
+					                                "name"=>'accountid[]',
+					                                "placeholder"=>$jatbi->lang("Mã tài khoản"),
+					                                "selected" => $data['accountid'] ?? '',
+					                                "attr" => 'data-width="100%"',
+					                                "class" => "rounded-0 bg-transparent border-0" ,
+                           							"div" => false,
+					                                "options" => $accountants,
+					                                "required" => 'true',
+					                            ])?>
+											</td>
+											<td class="p-0">
+												<?=$app->component('input',[
+					                                "name"=>'debit_amount[]',
+					                                "placeholder"=>$jatbi->lang("Ghi nợ"),
+					                                "value" => $data['debit_amount'] ?? '',
+					                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+                            						"div" => false,
+                            						"class" => "rounded-0 bg-transparent border-0" ,
+                            						"emptyOption" => false,
+					                                "required" => 'true',
+					                            ])?>
+											</td>
+											<td class="p-0">
+												<?=$app->component('input',[
+					                                "name"=>'credit_amount[]',
+					                                "placeholder"=>$jatbi->lang("Ghi có"),
+					                                "value" => $data['credit_amount'] ?? '',
+					                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+					                                "div" => false,
+					                                "class" => "rounded-0 bg-transparent border-0" ,
+					                                "emptyOption" => false,
+					                                "required" => 'true',
+					                            ])?>
+					                        </td>
+											<td class="p-0">
+												<?=$app->component('input',[
+					                                "name"=>'object[]',
+					                                "placeholder"=>$jatbi->lang("Đối tượng"),
+					                                "value" => $data['object'] ?? '',
+					                                "div" => false,
+					                                "class" => "rounded-0 bg-transparent border-0" ,
+					                                "emptyOption" => false,
+					                                "required" => 'true',
+					                            ])?>
+					                        </td>
+											<td class="p-0">
+												<?=$app->component('input',[
+					                                "name"=>'content[]',
+					                                "placeholder"=>$jatbi->lang("Diễn giải"),
+					                                "value" => $data['content'] ?? '',
+					                                "div" => false,
+					                                "class" => "rounded-0 bg-transparent border-0" ,
+					                                "emptyOption" => false,
+					                                "required" => 'true',
+					                            ])?>
+											</td>
+											<td class="p-0">
+												<button type="button" class="btn btn-sm p-1 text-danger"  data-action="deleted-clone" data-target="this" data-closest=".account-items" data-target="this" data-remove="remove"><i class="ti ti-trash fs-5"></i></button>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<div class="col-lg-12">
+							<button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>

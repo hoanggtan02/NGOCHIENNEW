@@ -1,9 +1,9 @@
 {
     "name": "Proposal",
-    "version": "1.0.0",
+    "version": "2.0.5",
     "install" : "true",
     "id": "io.eclo.proposal",
     "author": "ECLO",
     "description": "Đề Xuất",
-    "requires": "1.0.0"
+    "requires": "2.0.5"
 }

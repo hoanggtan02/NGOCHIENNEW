@@ -1,0 +1,64 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1"  data-bs-backdrop="static">
+	<div class="modal-dialog modal-sm pt-standalone">
+		<div class="modal-content rounded-5">
+			<div class="d-flex w-100 justify-content-end align-items-center position-relative">
+				<button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" aria-label="Close " style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+					<i class="ti ti-x fs-4"></i>
+				</button>
+			</div>
+			<div class="modal-body">
+				<h5 class="fw-bold text-body mb-3"><?=$title?></h5>
+				<form method="POST" action="<?=$_SERVER['REQUEST_URI']?>">
+					<div class="row g-3">
+						<div class="col-lg-12">
+                            <?=$app->component('input',[
+                                "name"=>'price',
+                                "placeholder"=>$jatbi->lang("Số tiền thực"),
+                                "value" => $data['price'] ?? '',
+                                "class" => 'filter-name',         
+                                "type" => "tel",
+                                "required" => 'true',
+                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+                            ])?>
+                            <?=$app->component('input',[
+                                "name"=>'date',
+                                "placeholder"=>$jatbi->lang("Ngày"),
+                                "value" => $data['date'] ?? date("Y-m-d"),
+                                "class" => 'filter-name',         
+                                "type" => "date",
+                                "required" => 'true',
+                            ])?>
+		                    <?=$app->component('select',[
+		                        "name"=>'form',
+		                        "placeholder"=>$jatbi->lang("Hình thức"),
+		                        "selected" => $data['form'] ?? '',
+		                        "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/form" data-method="POST" data-keyword="keyword" ',
+		                        "id" => "form",
+		                        "options" => $forms ?? [],
+		                        "required" => 'true',
+		                    ])?>
+		                    <?=$app->component('select',[
+		                        "name"=>'category',
+		                        "placeholder"=>$jatbi->lang("Hạng mục"),
+		                        "selected" => $data['category'] ?? '',
+		                        "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/categorys" data-method="POST" data-keyword="keyword"',
+		                        "id" => "category",
+		                        "options" => $categorys ?? [],
+		                        "required" => 'true',
+		                    ])?>
+							<?=$app->component('textarea',[
+                                "name"=>'content',
+                                "placeholder"=>$jatbi->lang("Nội dung"),
+                                "value" => '',
+                            ])?>
+							<a class="btn btn-sm btn-eclo rounded-pill py-3 px-2 ms-2 d-flex align-items-center justify-content-center mb-3" href="#" data-action="modal" data-url="<?=$jatbi->url('/files/upload/main?type=proposal&proposal='.$data['active'])?>" data-multi="upload"><i class="ti ti-plus fs-4"></i> <?=$jatbi->lang("Tải tệp lên")?></a>
+						</div>
+						<div class="col-lg-12">
+							<button type="submit" class="btn btn-success w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Bút toán")?></button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
