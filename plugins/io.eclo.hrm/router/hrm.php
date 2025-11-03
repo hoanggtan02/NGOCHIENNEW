@@ -149,6 +149,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             ],
                             [
                                 'type' => 'button',
+                                'name' => $jatbi->lang("Xem chi tiết hợp đồng"),
+                                'permission' => ['contract'],
+                                'action' => ['data-url' => '/hrm/contract-view-personnel/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
                                 'name' => $jatbi->lang("Gương mặt"),
                                 'permission' => ['personnels.edit'],
                                 'action' => ['data-url' => '/hrm/personnels-face/' . $data['id'], 'data-action' => 'modal']
@@ -1607,11 +1613,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "status" => 'A',
                 "stores" => $store_ids,
             ];
-            if (!empty($officeF)) $wherePersonnel['office'] = $officeF;
-            if (!empty($personnel)) $wherePersonnel['id'] = $personnel;
+            if (!empty($officeF))
+                $wherePersonnel['office'] = $officeF;
+            if (!empty($personnel))
+                $wherePersonnel['id'] = $personnel;
 
             $personnel_list = $app->select("personnels", ["id", "name"], ["ORDER" => ["name" => "ASC"]] + $wherePersonnel);
-            if (empty($personnel_list)) exit("Không có nhân viên nào thỏa mãn điều kiện.");
+            if (empty($personnel_list))
+                exit("Không có nhân viên nào thỏa mãn điều kiện.");
 
             $personnel_ids = array_column($personnel_list, 'id');
 
@@ -2330,11 +2339,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]district_new(dn)" => ["p.ward-new" => "id"],
             ];
 
-            $where = ["AND" => [
-                "pc.deleted" => 0,
-                "p.deleted" => 0,
-                "p.stores" => $store_ids
-            ], "ORDER" => ["p.name" => "ASC"]];
+            $where = [
+                "AND" => [
+                    "pc.deleted" => 0,
+                    "p.deleted" => 0,
+                    "p.stores" => $store_ids
+                ],
+                "ORDER" => ["p.name" => "ASC"]
+            ];
 
             if (!empty($personnels_filter))
                 $where['AND']['p.id'] = $personnels_filter;
@@ -2623,7 +2635,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                 "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                "salary_diligence" => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
                 "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                 "notes" => $app->xss($_POST['notes']),
@@ -2784,7 +2796,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
                 "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                 // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                "salary_diligence" => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
                 "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                 // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                 "notes" => $app->xss($_POST['notes']),
@@ -2904,7 +2916,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
                     return;
                 }
-                if ($app->xss($_POST['date_contract']) >  $date_end) {
+                if ($app->xss($_POST['date_contract']) > $date_end) {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Ngày kết thúc phải lơn hơn ngày hợp đoòng")]);
                     return;
                 }
@@ -2951,9 +2963,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "date_contract" => $app->xss($_POST['date_contract']),
                     "date_end" => $date_end,
                     // "salary_date" => date("Y-m-01", strtotime($app->xss($_POST['salary_date']))),
-                    "salary"             => $app->xss(str_replace([','], '', $_POST['salary'])),
+                    "salary" => $app->xss(str_replace([','], '', $_POST['salary'])),
                     // "salary_eat" 		=> $app->xss(str_replace([','],'',$_POST['salary_eat'])),
-                    "salary_diligence"    => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
+                    "salary_diligence" => $app->xss(str_replace([','], '', $_POST['salary_diligence'])),
                     "salary_allowance" => $app->xss(str_replace([','], '', $_POST['salary_allowance'])),
                     // "salary_overtime" 	=> $app->xss(str_replace([','],'',$_POST['salary_overtime'])),
                     "notes" => $app->xss($_POST['notes']),
@@ -3050,10 +3062,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
 
                 // Lấy dữ liệu bổ sung
-                $vars['personnel_name']   = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]) ?? '';
-                $vars['office_name']      = $app->get("offices", "name", ["id" => $vars['data']['offices']]) ?? '';
-                $vars['position_name']    = $app->get("hrm_positions", "name", ["id" => $vars['data']['position']]) ?? '';
-                $vars['user_name']        = $app->get("accounts", "name", ["id" => $vars['data']['user']]) ?? '';
+                $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]) ?? '';
+                $vars['office_name'] = $app->get("offices", "name", ["id" => $vars['data']['offices']]) ?? '';
+                $vars['position_name'] = $app->get("hrm_positions", "name", ["id" => $vars['data']['position']]) ?? '';
+                $vars['user_name'] = $app->get("accounts", "name", ["id" => $vars['data']['user']]) ?? '';
 
                 // Chỉ dùng loại hợp đồng có sẵn
                 $vars['contract_type_name'] = $setting['personnels_contracts'][$vars['data']['type']]['name'] ?? 'Không xác định';
@@ -4309,7 +4321,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $days_to_subtract = $data['total_days'];
 
                 $annual = $app->get("annual_leave", ["days_used"], [
-                    "year"       => $year,
+                    "year" => $year,
                     "profile_id" => $profile_id
                 ]);
 
@@ -4318,7 +4330,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     $app->update("annual_leave", [
                         "days_used" => $newDays
                     ], [
-                        "year"       => $year,
+                        "year" => $year,
                         "profile_id" => $profile_id
                     ]);
                 }
@@ -4349,10 +4361,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         "days_used" => $days_to_add,
                         "profile_id" => $profile_id,
                         "total_accrued" => 0,
-                        "carried_over"  => 0,
-                        "account"       => $app->getSession("accounts")['id'] ?? null,
-                        "date"          => date("Y-m-d H:i:s"),
-                        "active"        => $jatbi->active(32)
+                        "carried_over" => 0,
+                        "account" => $app->getSession("accounts")['id'] ?? null,
+                        "date" => date("Y-m-d H:i:s"),
+                        "active" => $jatbi->active(32)
                     ]);
                 }
             }
@@ -4385,8 +4397,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header(['Content-Type' => 'application/json']);
 
             // 1. Lấy dữ liệu và kiểm tra cơ bản
-            $personnel_id = (int)($_POST['profile_id']);
-            $furlough_id = (int)($_POST['furlough_id']);
+            $personnel_id = (int) ($_POST['profile_id']);
+            $furlough_id = (int) ($_POST['furlough_id']);
             $leave_dates = $_POST['leave_date'];
             $leave_sessions = $_POST['leave_session'];
             $reason = $app->xss($_POST['reason'] ?? '');
@@ -4407,7 +4419,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     continue;
                 }
                 $date_obj = date_create($date_str);
-                if (!$date_obj) continue;
+                if (!$date_obj)
+                    continue;
                 $date_formatted = date_format($date_obj, 'Y-m-d');
 
                 // Lấy ngày hợp lệ đầu tiên
@@ -4490,7 +4503,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
 
             if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
-                $amount = (float)$furlough_info['amount'];
+                $amount = (float) $furlough_info['amount'];
                 $duration = $furlough_info['duration']; // 4=tháng, 5=năm
 
                 $year = date('Y', strtotime($first_valid_date));
@@ -4527,7 +4540,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 try {
                     $stmt = $app->query($sql, $params);
                     $row = $stmt->fetch();
-                    $used_days = (float)($row['used_days'] ?? 0);
+                    $used_days = (float) ($row['used_days'] ?? 0);
                 } catch (Exception $e) {
                     $used_days = 0;
                 }
@@ -4644,8 +4657,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         if ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
-            $personnel_id = (int)($_POST['profile_id']);
-            $furlough_id = (int)($_POST['furlough_id']);
+            $personnel_id = (int) ($_POST['profile_id']);
+            $furlough_id = (int) ($_POST['furlough_id']);
             $leave_dates = $_POST['leave_date'] ?? [];
             $leave_sessions = $_POST['leave_session'] ?? [];
             $reason = $app->xss($_POST['reason'] ?? '');
@@ -4661,13 +4674,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $processed_dates = [];
 
             foreach ($leave_dates as $index => $date_str) {
-                if (empty($date_str) || !isset($leave_sessions[$index])) continue;
+                if (empty($date_str) || !isset($leave_sessions[$index]))
+                    continue;
 
                 $date_obj = date_create($date_str);
-                if (!$date_obj) continue;
+                if (!$date_obj)
+                    continue;
                 $date_formatted = date_format($date_obj, 'Y-m-d');
 
-                if ($first_valid_date === null) $first_valid_date = $date_formatted;
+                if ($first_valid_date === null)
+                    $first_valid_date = $date_formatted;
 
                 $session = $leave_sessions[$index];
                 $days = ($session === 'full_day') ? 1.0 : 0.5;
@@ -4730,7 +4746,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $remaining = ($balance['total_accrued'] ?? 0) + ($balance['carried_over'] ?? 0);
 
                 // Trừ đi số ngày cũ của đơn này
-                $old_total = (float)$request['total_days'];
+                $old_total = (float) $request['total_days'];
                 $net_increase = $total_days - $old_total;
 
                 if ($net_increase > $remaining) {
@@ -4744,7 +4760,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // === 3. KIỂM TRA GIỚI HẠN THEO LOẠI PHÉP ===
             if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
-                $amount = (float)$furlough_info['amount'];
+                $amount = (float) $furlough_info['amount'];
                 $duration = $furlough_info['duration'];
                 $year = date('Y', strtotime($first_valid_date));
                 $month = date('m', strtotime($first_valid_date));
@@ -4775,8 +4791,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
 
                 $stmt = $app->query($sql, $params);
-                $used_days = (float)($stmt->fetch()['used_days'] ?? 0);
-                $old_days = (float)$request['total_days'];
+                $used_days = (float) ($stmt->fetch()['used_days'] ?? 0);
+                $old_days = (float) $request['total_days'];
                 $new_total = $used_days + $total_days;
 
                 if ($new_total > $amount) {
@@ -4836,7 +4852,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 return;
             }
             $datas = $app->select("hrm_leave_requests", "*", [
-                "active"  => $boxid,
+                "active" => $boxid,
             ]);
 
             if (empty($datas)) {
@@ -4865,7 +4881,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
                     // Lấy days_used dưới dạng mảng → tránh lỗi offset
                     $annual = $app->get("annual_leave", ["days_used"], [
-                        "year"       => $year,
+                        "year" => $year,
                         "profile_id" => $profile_id
                     ]);
 
@@ -4874,7 +4890,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         $app->update("annual_leave", [
                             "days_used" => $newDays
                         ], [
-                            "year"       => $year,
+                            "year" => $year,
                             "profile_id" => $profile_id
                         ]);
                         $updatedAnnual = true;
@@ -4889,7 +4905,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $msg .= " " . $jatbi->lang("(Đã cập nhật lại ngày phép năm)");
             }
             echo json_encode([
-                'status'  => 'success',
+                'status' => 'success',
                 'content' => $msg
             ]);
         }
@@ -5203,12 +5219,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "user" => $data['user_name'],
                     "action" => $app->component("action", [
                         "button" => array_merge(
-                            $data['type'] != 1 ? [[
-                                'type' => 'button',
-                                'name' => $jatbi->lang("Xem"),
-                                'permission' => ['reward-discipline'],
-                                'action' => ['data-url' => '/hrm/discipline-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
-                            ]] : [],
+                            $data['type'] != 1 ? [
+                                [
+                                    'type' => 'button',
+                                    'name' => $jatbi->lang("Xem"),
+                                    'permission' => ['reward-discipline'],
+                                    'action' => ['data-url' => '/hrm/discipline-views/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                                ]
+                            ] : [],
                             [
                                 [
                                     'type' => 'button',
@@ -6049,7 +6067,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'ttl.id'; // Use alias
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
-            $status_filter = isset($_POST['status']) && ctype_digit($_POST['status']) ? (int)$_POST['status'] : null;
+            $status_filter = isset($_POST['status']) && ctype_digit($_POST['status']) ? (int) $_POST['status'] : null;
             $filter_date = isset($_POST['date']) ? $_POST['date'] : '';
 
 
@@ -6082,11 +6100,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             // Add filters for date range, specific personnel if needed from $_POST
             // Example:
             if (!empty($_POST['personnels'])) {
-                $where["AND"]["ttl.personnels"] = (int)$_POST['personnels'];
+                $where["AND"]["ttl.personnels"] = (int) $_POST['personnels'];
             }
 
             if (!empty($_POST['type'])) {
-                $where["AND"]["ttl.type"] = (int)$_POST['type'];
+                $where["AND"]["ttl.type"] = (int) $_POST['type'];
             }
 
             if (!empty($filter_date)) {
@@ -6146,8 +6164,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['time-late']);
 
-    $app->router('/timekeeping-time-late-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
-        $id = (int)$vars['id'];
+    $app->router('/timekeeping-time-late-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template,$setting) {
+        $id = (int) $vars['id'];
         $vars['title'] = $jatbi->lang("Sửa Ghi Nhận Đi trễ/Về sớm");
 
         // Lấy dữ liệu hiện tại
@@ -6171,17 +6189,17 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header(['Content-Type' => 'application/json']);
             $post = $app->request->getParsedBody(); // Lấy dữ liệu an toàn hơn
 
-            if (empty($post['personnels']) || empty($post['date']) || empty($post['type']) || !isset($post['time_late']) || !ctype_digit((string)$post['time_late'])) {
+            if (empty($post['personnels']) || empty($post['date']) || empty($post['type']) || !isset($post['time_late']) || !ctype_digit((string) $post['time_late'])) {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng điền đủ thông tin hợp lệ (Nhân viên, Ngày giờ, Loại, Số phút).")]);
                 return;
             }
 
             // Chuẩn bị dữ liệu cập nhật
             $update_data = [
-                "personnels" => (int)$post['personnels'],
-                "type" => (int)$post['type'], // 1=Late, 2=Early
+                "personnels" => (int) $post['personnels'],
+                "type" => (int) $post['type'], // 1=Late, 2=Early
                 "date" => date("Y-m-d", strtotime($post['date'])),
-                "time_late" => (int)$post['time_late'], // Số phút
+                "time_late" => (int) $post['time_late'], // Số phút
                 // "status" => isset($post['status']) ? (int)$post['status'] : $data['status'], // Cập nhật status nếu có
                 "notes" => $app->xss($post['notes'] ?? ''), // Thêm trường notes nếu có trong form
                 "user" => $app->getSession("accounts")['id'] ?? 0, // Ghi nhận người sửa
@@ -6411,8 +6429,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // --- Filter Personnel ---
             $wherePersonnel = ["AND" => ["deleted" => 0, "status" => 'A', "stores" => $stores]];
-            if (!empty($officeF)) $wherePersonnel['AND']['office'] = $officeF;
-            if (!empty($personnelF)) $wherePersonnel['AND']['id'] = $personnelF;
+            if (!empty($officeF))
+                $wherePersonnel['AND']['office'] = $officeF;
+            if (!empty($personnelF))
+                $wherePersonnel['AND']['id'] = $personnelF;
 
             $personnel_list = $app->select("personnels", ["id", "code", "name", "office"], $wherePersonnel);
             if (empty($personnel_list)) {
@@ -6466,9 +6486,11 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             // --- Create Data Maps ---
             $timekeeping_map = [];
-            foreach ($timekeeping_data as $tk) $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
+            foreach ($timekeeping_data as $tk)
+                $timekeeping_map[$tk['personnels']][$tk['date']] = $tk;
             $leave_map = [];
-            foreach ($leaveRequestsAll as $l) $leave_map[$l['profile_id']][$l['leave_date']][] = $l;
+            foreach ($leaveRequestsAll as $l)
+                $leave_map[$l['profile_id']][$l['leave_date']][] = $l;
             $rosters_map = [];
             foreach ($rosters_data as $roster) {
                 if (!isset($rosters_map[$roster['personnels']]) || strtotime($roster['date']) > strtotime($rosters_map[$roster['personnels']]['date'])) {
@@ -6476,7 +6498,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 }
             }
             $timework_details_map = [];
-            foreach ($timework_details_data as $detail) $timework_details_map[$detail['timework']][$detail['week']] = $detail;
+            foreach ($timework_details_data as $detail)
+                $timework_details_map[$detail['timework']][$detail['week']] = $detail;
 
             $holidayMap = [];
             foreach ($holidaysAll as $h) {
@@ -6487,7 +6510,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
                         $holidayMap[$currentDateStr] = [
                             'name' => $h['name'] ?? 'Lễ',
-                            'rate' => (float)($h['salary'] ?? 1.5)
+                            'rate' => (float) ($h['salary'] ?? 1.5)
                         ];
                     }
                 }
@@ -6496,7 +6519,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             foreach ($overtime_data as $ot) {
                 $currentDateStr = $ot['work_date'];
                 if ($currentDateStr >= $start_date_month && $currentDateStr <= $end_date_month) {
-                    $overtime_map[$ot['profile_id']][$currentDateStr] = ['approved_hours' => (float)($ot['total_hours'] ?? 0), 'rate' => (float)($ot['multiplier'] ?? 1.0)];
+                    $overtime_map[$ot['profile_id']][$currentDateStr] = ['approved_hours' => (float) ($ot['total_hours'] ?? 0), 'rate' => (float) ($ot['multiplier'] ?? 1.0)];
                 }
             }
 
@@ -6557,7 +6580,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                             $leaveTextParts[] = ($leaveDetail['category_code'] ?? $leaveDetail['category_name']) . $sessionText;
                         }
                         $leaveTextValue = implode(', ', $leaveTextParts);
-                        if ($is_full_day_leave || $day_leave_value >= 1.0) $is_full_day_leave = true;
+                        if ($is_full_day_leave || $day_leave_value >= 1.0)
+                            $is_full_day_leave = true;
                         $leave_days_count += $day_leave_value;
                     }
 
@@ -6612,7 +6636,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 }
                             }
 
-                            if ($is_holiday) $day_raw_overtime_hours += $actual_hours_for_cong; // Add base holiday hours to raw total
+                            if ($is_holiday)
+                                $day_raw_overtime_hours += $actual_hours_for_cong; // Add base holiday hours to raw total
 
                         } else {
                             // --- OFF DAY WORK ---
@@ -6636,8 +6661,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                         }
 
                         if (!$is_holiday) {
-                            if ($week_day == 7) $total_sunday_hours += $actual_hours_for_cong;
-                            else $total_day_hours += $actual_hours_for_cong;
+                            if ($week_day == 7)
+                                $total_sunday_hours += $actual_hours_for_cong;
+                            else
+                                $total_day_hours += $actual_hours_for_cong;
                         }
                         $raw_overtime_hours += $day_raw_overtime_hours;
                         $total_counted_hours_effect += $day_base_hours_effect + $day_ot_hours_effect;
@@ -6723,8 +6750,10 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             foreach ($summary_headers as $main => $subs) {
                 $headers_row6[] = $main;
-                for ($i = 0; $i < count($subs) - 1; $i++) $headers_row6[] = '';
-                foreach ($subs as $sub) $headers_row7[] = $sub;
+                for ($i = 0; $i < count($subs) - 1; $i++)
+                    $headers_row6[] = '';
+                foreach ($subs as $sub)
+                    $headers_row7[] = $sub;
             }
             $sheet->fromArray($headers_row6, null, 'A6');
             $sheet->fromArray($headers_row7, null, 'A7');
@@ -6905,7 +6934,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "personnels" => []
                 ];
 
-                if (empty($SelectPer)) continue; // Skip if no personnel in this office
+                if (empty($SelectPer))
+                    continue; // Skip if no personnel in this office
 
                 $perIds = array_column($SelectPer, "id"); // Get IDs for batch queries
 
@@ -7127,7 +7157,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 return; // Stop execution if validation fails
             }
 
-            $personnel_id = (int)$app->xss($_POST['personnels']);
+            $personnel_id = (int) $app->xss($_POST['personnels']);
             // --- CORRECTED: Extract date and time from the single $_POST['date'] field ---
             $datetime_input = $_POST['date']; // e.g., "2025-10-26T08:30" or "2025-10-26 08:30:00"
             $datetime_ts = strtotime($datetime_input);
@@ -7139,7 +7169,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $time_str = date("H:i:s", $datetime_ts); // Extract Time part
             // --- END CORRECTION ---
 
-            $status = (int)$app->xss($_POST['status']); // 1 = checkin, 2 = checkout
+            $status = (int) $app->xss($_POST['status']); // 1 = checkin, 2 = checkout
             $notes = $app->xss($_POST['notes']);
             $current_user_id = $app->getSession("accounts")['id'] ?? 0;
             $now_datetime = date("Y-m-d H:i:s");
@@ -7237,7 +7267,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 "type" => 1,
                                 "personnels" => $personnel_id,
                                 "date" => $incident_date,
-                                "time_late" => (int)round($day_late_minutes),
+                                "time_late" => (int) round($day_late_minutes),
                                 "timekeeping" => $timekeeping_id,
                                 "date_poster" => $now_datetime,
                                 "user" => $current_user_id,
@@ -7255,7 +7285,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                                 "type" => 2,
                                 "personnels" => $personnel_id,
                                 "date" => $incident_date,
-                                "time_late" => (int)round($day_early_minutes),
+                                "time_late" => (int) round($day_early_minutes),
                                 "timekeeping" => $timekeeping_id,
                                 "date_poster" => $now_datetime,
                                 "user" => $current_user_id,
@@ -8811,11 +8841,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "[>]personnels" => ["profile_id" => "id"],
                 "[>]furlough_categorys" => ["furlough_id" => "id"]
             ];
-            $where = ["AND" => [
-                "annual_leave.deleted" => 0,
-                "annual_leave.year" => $year,
-                "personnels.stores" => $accStore,
-            ], "LIMIT" => [$start, $length], "ORDER" => ["personnels.name" => "ASC"]];
+            $where = [
+                "AND" => [
+                    "annual_leave.deleted" => 0,
+                    "annual_leave.year" => $year,
+                    "personnels.stores" => $accStore,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => ["personnels.name" => "ASC"]
+            ];
             if ($searchValue) {
                 $where["AND"]["OR"] = ["personnels.name[~]" => $searchValue, "personnels.code[~]" => $searchValue];
             }
@@ -8846,20 +8880,22 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "carried_over" => $data['carried_over'],
                     "days_used" => $data['days_used'],
                     "remaining" => $remaining,
-                    "action" => $app->component("action", ["button" => [
-                        [
-                            'type' => 'button',
-                            'name' => $jatbi->lang("Sửa"),
-                            'permission' => ['annual_leave.edit'],
-                            'action' => ['data-url' => '/hrm/annual_leave-edit/' . $data['active'], 'data-action' => 'modal']
-                        ],
-                        // [
-                        //     'type' => 'button',
-                        //     'name' => $jatbi->lang("Xem"),
-                        //     'permission' => ['annual_leave.edit'],
-                        //     'action' => ['data-url' => '/hrm/annual_leave-views/' . $data['active'], 'data-action' => 'modal']
-                        // ],
-                    ]]),
+                    "action" => $app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['annual_leave.edit'],
+                                'action' => ['data-url' => '/hrm/annual_leave-edit/' . $data['active'], 'data-action' => 'modal']
+                            ],
+                            // [
+                            //     'type' => 'button',
+                            //     'name' => $jatbi->lang("Xem"),
+                            //     'permission' => ['annual_leave.edit'],
+                            //     'action' => ['data-url' => '/hrm/annual_leave-views/' . $data['active'], 'data-action' => 'modal']
+                            // ],
+                        ]
+                    ]),
                 ];
             });
             echo json_encode([
@@ -8873,7 +8909,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
     $app->router('/annual_leave-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $template) {
         $personnel_id = $vars['id'];
-        $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : date('Y');
         $personnel_info = $app->get("personnels", ["name", "code"], ["id" => $personnel_id]);
 
         $vars['title'] = $jatbi->lang("Chi tiết nghỉ phép năm ") . $year . " - " . ($personnel_info['name'] ?? 'N/A');
@@ -8896,9 +8932,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             echo $app->render($template . '/hrm/annual_leave-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
-            $profile_id = (int)$_POST['personnels'];
-            $furlough_id = (int)$_POST['furlough_id'];
-            $year = (int)$_POST['year'];
+            $profile_id = (int) $_POST['personnels'];
+            $furlough_id = (int) $_POST['furlough_id'];
+            $year = (int) $_POST['year'];
 
             if (empty($profile_id) || empty($furlough_id) || empty($year)) {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin")]);
@@ -8914,8 +8950,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "profile_id" => $profile_id,
                 "furlough_id" => $furlough_id,
                 "year" => $year,
-                "total_accrued" => (float)$_POST['total_accrued'],
-                "carried_over" => (float)$_POST['carried_over'],
+                "total_accrued" => (float) $_POST['total_accrued'],
+                "carried_over" => (float) $_POST['carried_over'],
                 "notes" => $app->xss($_POST['notes']),
                 "account" => $app->getSession("accounts")['id'] ?? 0,
                 "date" => date("Y-m-d H:i:s"),
@@ -8940,9 +8976,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             echo $app->render($template . '/hrm/annual_leave-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
-            $profile_id = (int)$_POST['personnels'];
-            $furlough_id = (int)$_POST['furlough_id'];
-            $year = (int)$_POST['year'];
+            $profile_id = (int) $_POST['personnels'];
+            $furlough_id = (int) $_POST['furlough_id'];
+            $year = (int) $_POST['year'];
 
             if (empty($profile_id) || empty($furlough_id) || empty($year)) {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin")]);
@@ -8959,8 +8995,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "profile_id" => $profile_id,
                 "furlough_id" => $furlough_id,
                 "year" => $year,
-                "total_accrued" => (float)$_POST['total_accrued'],
-                "carried_over" => (float)$_POST['carried_over'],
+                "total_accrued" => (float) $_POST['total_accrued'],
+                "carried_over" => (float) $_POST['carried_over'],
                 "notes" => $app->xss($_POST['notes']),
                 "modify" => date("Y-m-d H:i:s"),
             ];
@@ -9127,7 +9163,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "date[~]" => $current_year . '-%'
             ]);
 
-            $new_number = (int)$max_code_number + 1;
+            $new_number = (int) $max_code_number + 1;
 
             $vars['data']['code'] = $new_number;
             $vars['personnels'] = array_map(
@@ -9145,14 +9181,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
 
             $insert = [
-                "code"          => $app->xss($_POST['code']),
-                "contract"      => $app->xss($_POST['personnels']),
-                "content"       => $app->xss($_POST['content']),
-                "date"          => $app->xss($_POST['date']),
-                "date_poster"   => $app->xss($_POST['date_poster']),
-                "type"          => 2,
-                "off"           => $app->xss($_POST['off']),
-                "notes"         => $app->xss($_POST['notes']),
+                "code" => $app->xss($_POST['code']),
+                "contract" => $app->xss($_POST['personnels']),
+                "content" => $app->xss($_POST['content']),
+                "date" => $app->xss($_POST['date']),
+                "date_poster" => $app->xss($_POST['date_poster']),
+                "type" => 2,
+                "off" => $app->xss($_POST['off']),
+                "notes" => $app->xss($_POST['notes']),
             ];
 
 
@@ -9168,9 +9204,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $app->update("personnels", [
                 "status_type" => 1,
-                "date_off"    => $insert['date'],
-                "type"        => $type,
-                "off"         => $insert['off']
+                "date_off" => $insert['date'],
+                "type" => $type,
+                "off" => $insert['off']
             ], ["id" => $insert['contract']]);
 
             $jatbi->logs('contract_annex', 'add', [$insert]);
@@ -9211,14 +9247,14 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
 
             $update = [
-                "code"          => $app->xss($_POST['code']),
-                "contract"      => $app->xss($_POST['personnels']),
-                "content"       => $app->xss($_POST['content']),
-                "date"          => $app->xss($_POST['date']),
-                "date_poster"   => $app->xss($_POST['date_poster']),
-                "type"          => 2,
-                "off"           => $app->xss($_POST['off']),
-                "notes"         => $app->xss($_POST['notes']),
+                "code" => $app->xss($_POST['code']),
+                "contract" => $app->xss($_POST['personnels']),
+                "content" => $app->xss($_POST['content']),
+                "date" => $app->xss($_POST['date']),
+                "date_poster" => $app->xss($_POST['date_poster']),
+                "type" => 2,
+                "off" => $app->xss($_POST['off']),
+                "notes" => $app->xss($_POST['notes']),
             ];
 
 
@@ -9234,9 +9270,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             $app->update("personnels", [
                 "status_type" => 1,
-                "date_off"    => $update['date'],
-                "type"        => $type,
-                "off"         => $update['off']
+                "date_off" => $update['date'],
+                "type" => $type,
+                "off" => $update['off']
             ], ["id" => $update['contract']]);
 
             $jatbi->logs('contract_annex', 'edit', $update, ["id" => $id]);
@@ -9661,12 +9697,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $total_hours = round(abs($end->getTimestamp() - $start->getTimestamp()) / 3600, 2);
             $post_data = [
                 "active" => $jatbi->active(),
-                "profile_id" => (int)$_POST['profile_id'],
+                "profile_id" => (int) $_POST['profile_id'],
                 "work_date" => $app->xss($_POST['work_date']),
                 "start_time" => $app->xss($_POST['start_time']),
                 "end_time" => $app->xss($_POST['end_time']),
                 "total_hours" => $total_hours,
-                "multiplier" => (float)$_POST['multiplier'],
+                "multiplier" => (float) $_POST['multiplier'],
                 "reason" => $app->xss($_POST['reason']),
                 "status" => 'pending',
                 "account" => $app->getSession("accounts")['id'] ?? 0,
@@ -9694,7 +9730,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $end = new DateTime($_POST['end_time']);
             $total_hours = round(abs($end->getTimestamp() - $start->getTimestamp()) / 3600, 2);
             $post_data = [
-                "profile_id" => (int)$_POST['profile_id'],
+                "profile_id" => (int) $_POST['profile_id'],
                 "work_date" => $app->xss($_POST['work_date']),
                 "start_time" => $app->xss($_POST['start_time']),
                 "end_time" => $app->xss($_POST['end_time']),
@@ -9951,8 +9987,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header(['Content-Type' => 'application/json']);
 
             // 1. Lấy dữ liệu và kiểm tra cơ bản
-            $personnel_id = (int)($_POST['profile_id']);
-            $furlough_id = (int)($_POST['furlough_id']);
+            $personnel_id = (int) ($_POST['profile_id']);
+            $furlough_id = (int) ($_POST['furlough_id']);
             $leave_dates = $_POST['leave_date'];
             $leave_sessions = $_POST['leave_session'];
             $reason = $app->xss($_POST['reason'] ?? '');
@@ -9973,7 +10009,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     continue;
                 }
                 $date_obj = date_create($date_str);
-                if (!$date_obj) continue;
+                if (!$date_obj)
+                    continue;
                 $date_formatted = date_format($date_obj, 'Y-m-d');
 
                 // Lấy ngày hợp lệ đầu tiên
@@ -10038,7 +10075,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
 
             if ($furlough_info && $furlough_info['amount'] > 0 && in_array($furlough_info['duration'], [4, 5])) {
-                $amount = (float)$furlough_info['amount'];
+                $amount = (float) $furlough_info['amount'];
                 $duration = $furlough_info['duration']; // 4=tháng, 5=năm
 
                 $year = date('Y', strtotime($first_valid_date));
@@ -10075,7 +10112,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 try {
                     $stmt = $app->query($sql, $params);
                     $row = $stmt->fetch();
-                    $used_days = (float)($row['used_days'] ?? 0);
+                    $used_days = (float) ($row['used_days'] ?? 0);
                 } catch (Exception $e) {
                     $used_days = 0;
                 }
@@ -10178,8 +10215,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng điền đủ thông tin bắt buộc.")]);
                 return;
             }
-            $personnel_id = (int)($_POST['profile_id']);
-            $furlough_id = (int)($_POST['furlough_id']);
+            $personnel_id = (int) ($_POST['profile_id']);
+            $furlough_id = (int) ($_POST['furlough_id']);
             $leave_dates = $_POST['leave_date'] ?? [];
             $leave_sessions = $_POST['leave_session'] ?? [];
             $reason = $app->xss($_POST['reason'] ?? '');
@@ -10189,13 +10226,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $processed_dates = [];
 
             foreach ($leave_dates as $index => $date_str) {
-                if (empty($date_str) || !isset($leave_sessions[$index])) continue;
+                if (empty($date_str) || !isset($leave_sessions[$index]))
+                    continue;
 
                 $date_obj = date_create($date_str);
-                if (!$date_obj) continue;
+                if (!$date_obj)
+                    continue;
                 $date_formatted = date_format($date_obj, 'Y-m-d');
 
-                if ($first_valid_date === null) $first_valid_date = $date_formatted;
+                if ($first_valid_date === null)
+                    $first_valid_date = $date_formatted;
 
                 $session = $leave_sessions[$index];
                 $days = ($session === 'full_day') ? 1.0 : 0.5;
@@ -10350,4 +10390,52 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         echo $app->render($template . '/hrm/personnels-evaluation.html', $vars, $jatbi->ajax());
     })->setPermissions(['personnels.evaluation']);
+
+
+    // Route MỚI để xem hợp đồng bằng ID NHÂN VIÊN
+$app->router("/contract-view-personnel/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+        $vars['title'] = $jatbi->lang("Hợp đồng lao động");
+
+        if ($app->method() === 'GET') {
+            $personnel_id = $vars['id']; // Đây là ID Nhân viên từ URL
+
+            // Kiểm tra quyền "your_self"
+            $current_user_personnel_id = $app->getSession("accounts")["personnels_id"] ?? 0;
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1 && $current_user_personnel_id != $personnel_id) {
+                // Người này đang cố xem hợp đồng của người khác
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                return;
+            }
+
+            // SỬA LỖI: Tìm hợp đồng DỰA TRÊN personnel_id, lấy cái mới nhất
+            $vars['data'] = $app->get("personnels_contract", "*", [
+                "personnels" => $personnel_id,
+                "deleted" => 0,
+                "ORDER" => ["date_contract" => "DESC"] // Lấy hợp đồng mới nhất
+            ]);
+
+            if (!empty($vars['data'])) {
+                // ... (code xử lý khi tìm thấy vẫn giữ nguyên)
+                $vars['personnel_name'] = $app->get("personnels", "name", ["id" => $vars['data']['personnels']]) ?? '';
+                $vars['office_name'] = $app->get("offices", "name", ["id" => $vars['data']['offices']]) ?? '';
+                $vars['position_name'] = $app->get("hrm_positions", "name", ["id" => $vars['data']['position']]) ?? '';
+                $vars['user_name'] = $app->get("accounts", "name", ["id" => $vars['data']['user']]) ?? '';
+                $vars['contract_type_name'] = $setting['personnels_contracts'][$vars['data']['type']]['name'] ?? 'Không xác định';
+                $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", [
+                    "deleted" => 0,
+                    "contract" => $vars['data']['id'], 
+                    "status" => 0,
+                    "ORDER" => ["id" => "DESC"]
+                ]);
+
+                echo $app->render($template . '/hrm/contract-view.html', $vars, $jatbi->ajax());
+            } else {
+                // === SỬA Ở ĐÂY ===
+                // Phải render file HTML báo lỗi, không phải echo JSON
+                $vars['error_message'] = $jatbi->lang("Nhân viên này chưa có hợp đồng.");
+                echo $app->render($setting['template'] . '/pages/error.html', $vars, $jatbi->ajax());
+                return;
+            }
+        }
+    })->setPermissions(['contract']);
 })->middleware('login');
