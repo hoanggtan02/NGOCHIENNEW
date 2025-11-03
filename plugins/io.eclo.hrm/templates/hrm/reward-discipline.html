@@ -14,45 +14,54 @@
             </ul>
         </div>
         <div class="filter-search">
-            <div class="d-flex align-items-center justify-content-end">
-                <div class="dropdown">
-                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
-                        style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
-                        <div class="fw-semibold py-2 px-3">
-                            <?=$jatbi->lang("Điều kiện lọc")?>
-                        </div>
-                        <hr class="border-secondary border-opacity-50 my-2">
-                        <div class="px-3">
-                            <?=$app->component('select',[
-                                "name"=>'personnels',
-                                "class"=>'filter-name',
-                                "options"=>$personnels,
-                                "selected" => $app->xss($_GET['personnels'] ?? ''),
-                                "placeholder"=>$jatbi->lang("Nhân viên"),
-                                "attr" => 'multiple',
-                            ])?>
-                            <?=$app->component('select',[
-                                "name"=>'type',
-                                "class"=>'filter-name',
-                                "options"=>$types,
-                                "selected" => $app->xss($_GET['type'] ?? ''),
-                                "placeholder"=>$jatbi->lang("Loại"),
-                            ])?>
-                        </div>
-                        <hr class="border-secondary border-opacity-50 my-2">
-                        <div class="px-3 py-2 text-end w-100">
-                            <button type="button"
-                                class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
-                            <button type="button"
-                                class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+            <form method="GET" data-pjax>
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="dropdown">
+                        <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                            <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end border-0 bg-body bg-opacity-25 shadow-lg rounded-4 min-width bg-blur"
+                            style="--blur:10px;--min-width:300px;--min-width-xs:100vw">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?=$app->component('select',[
+                                    "name"=>'personnels',
+                                    "class"=>'filter-name',
+                                    "options"=>$personnels,
+                                    "selected" => $app->xss($_GET['personnels'] ?? ''),
+                                    "placeholder"=>$jatbi->lang("Nhân viên"),
+                                    "attr" => 'multiple',
+                                ])?>
+                                <?=$app->component('select',[
+                                    "name"=>'type',
+                                    "class"=>'filter-name',
+                                    "options"=>$types,
+                                    "selected" => $app->xss($_GET['type'] ?? ''),
+                                    "placeholder"=>$jatbi->lang("Loại"),
+                                ])?>
+                                <?=$app->component('select',[
+                                    "name"=>'months',
+                                    "class"=>'filter-name',
+                                    "options"=>$months,
+                                    "selected" => $app->xss($_GET['months'] ?? ''),
+                                    "placeholder"=>$jatbi->lang("Tháng"),
+                                ])?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3 py-2 text-end w-100">
+                                <button type="button"
+                                    class="btn btn-light px-3 py-2 rounded-pill reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                                <button type="button"
+                                    class="btn btn-eclo px-3 py-2 rounded-pill button-filter"><?=$jatbi->lang("Tìm")?></button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -96,8 +105,31 @@
 
     <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
         <div class="card-body">
+            <?php if($jatbi->permission(['rosters.edit']) == 'true'){ ?>
             <div class="custom-buttons d-none">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-eclo dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="ti ti-report"></i> <?=$jatbi->lang('Xuất excel')?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 bg-blur shadow-lg rounded-4"
+                        style="--blur:10px;">
+                        <li>
+                            <a href="/hrm/reward-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>"
+                                class="dropdown-item">
+                                <?=$jatbi->lang("Xuất khen thưởng")?>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/hrm/discipline-excel?<?=htmlspecialchars($_SERVER['QUERY_STRING'])?>"
+                                class="dropdown-item">
+                                <?=$jatbi->lang("Xuất kỉ luật")?>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
+            <?php } ?>
             <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
                 data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
                 data-state-save='true' style="width:100%">
@@ -113,7 +145,7 @@
                             <?=$jatbi->lang("Nhân viên")?>
                         </th>
                         <th data-name="price" data-orderable="false" data-class="text-nowrap">
-                            <?=$jatbi->lang("Số tiền")?>
+                            <?=$jatbi->lang("Số tiền / Phần trăm")?>
                         </th>
                         <th data-name="date" data-orderable="false" data-class="text-start">
                             <?=$jatbi->lang("Ngày áp dụng")?>

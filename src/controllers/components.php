@@ -73,7 +73,7 @@ $app->setComponent('clickable_approval', function ($vars) use ($app, $jatbi) {
 
         default:
             $text = $jatbi->lang("Không xác định");
-            $class = 'btn-secondary'; 
+            $class = 'btn-secondary';
             break;
     }
 
@@ -418,7 +418,41 @@ $app->setComponent('input-price-vat', function ($vars) use ($jatbi) {
     echo '</div>';
 });
 
+$app->setComponent('input-price-percent', function ($vars) use ($jatbi) {
 
+    $type = isset($vars['type']) ? htmlspecialchars($vars['type']) : 'text';
+    $placeholder = isset($vars['placeholder']) ? htmlspecialchars($vars['placeholder']) : '';
+
+    $value_name = isset($vars['value_name']) ? htmlspecialchars($vars['value_name']) : 'value';
+    $value_value = isset($vars['value_value']) ? htmlspecialchars($vars['value_value']) : '';
+    $type_name = isset($vars['type_name']) ? htmlspecialchars($vars['type_name']) : 'value_type';
+    $type_value = isset($vars['type_value']) ? $vars['type_value'] : 'money';
+
+    $class = isset($vars['class']) ? ' ' . htmlspecialchars($vars['class']) : '';
+    $id = isset($vars['id']) ? ' id="' . htmlspecialchars($vars['id']) . '"' : '';
+    $attr = isset($vars['attr']) ? ' ' . $vars['attr'] : '';
+    $required = !empty($vars['required']) ? ' required' : '';
+    $disabled = !empty($vars['disabled']) ? ' disabled' : '';
+
+    echo '<div class="mb-3">';
+    if ($placeholder) {
+        echo '<label class="form-label" for="' . htmlspecialchars($value_name) . '">' . $placeholder . ($required ? ' <span class="text-danger">*</span>' : '') . '</label>';
+    }
+
+    echo '<div class="input-group">';
+
+    echo '<input type="' . $type . '" class="form-control rounded-4 p-3 bg-body number' . $class . '"' . $id . ' name="' . $value_name . '" value="' . $value_value . '" placeholder="' . $placeholder . '"' . $attr . $required . $disabled . '>';
+
+    echo '<select name="' . $type_name . '" class="form-select rounded-4 p-3 bg-body" style="max-width: 150px;"' . $disabled . $required . '>';
+
+    echo '<option value="money"' . ($type_value == 'money' ? ' selected' : '') . '>' . $jatbi->lang('Số tiền') . '</option>';
+    echo '<option value="percent"' . ($type_value == 'percent' ? ' selected' : '') . '>' . $jatbi->lang('Phần trăm') . ' (%)</option>';
+
+    echo '</select>';
+
+    echo '</div>';
+    echo '</div>';
+});
 
 
 // Select Component

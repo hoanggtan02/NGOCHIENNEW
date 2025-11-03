@@ -52,6 +52,8 @@
 						<tr><td class="fw-bold"><?=$jatbi->lang("Giới tính")?></td><td><?=$data['gender'] == 1 ? "Nam" : ($data['gender'] == 2 ? "Nữ" : "")?></td></tr>
 						<tr><td class="fw-bold"><?=$jatbi->lang("Điện thoại")?></td><td><?=$data['phone']?></td></tr>
 						<tr><td class="fw-bold"><?=$jatbi->lang("Email")?></td><td><?=$data['email']?></td></tr>
+						<tr><td class="fw-bold"><?=$jatbi->lang("Tên người thân")?></td><td><?=$data['relative_name']?></td></tr>
+						<tr><td class="fw-bold"><?=$jatbi->lang("Số điện thoại người thân")?></td><td><?=$data['relative_phone']?></td></tr>
 						<tr><td class="fw-bold"><?=$jatbi->lang("Loại giấy tờ")?></td>
 							<td>
 								<?=$data['idtype'] == 1 ? "CMND" : (

@@ -32,15 +32,29 @@
                                 "type" => 'date',
                                 "required" => 'true',
                             ])?>
-                            <?=$app->component('input',[
-                                "name"=>'price',
-                                "placeholder"=>$jatbi->lang("Số tiền"),
-                                "value" => $data['price'] ?? '',
+                            <?php
+                                $display_type = (!empty($data['percent']) && (float)$data['percent'] > 0) ? 'percent' : 'money';
+                                
+                                if ($display_type == 'percent') {
+                                    $display_value = $data['percent'] ?? '';
+                                } else {
+                                    $display_value = $data['price'] ?? '';
+                                }
+                            ?>
+
+                            <?=$app->component('input-price-percent', [
+                                "placeholder" => $jatbi->lang('Giá trị'),
                                 "type" => 'tel',
-                                "required" => 'true',
-                                "attr" =>'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."'
+                                "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="."',
+                                
+                                "value_value" => $display_value,
+                                
+                                "type_value" => $display_type,
+                                
+                                "required" => true
                             ])?>
-                            <?=$app->component('input',[
+
+                            <?=$app->component('textarea',[
                                 "name"=>'content',
                                 "placeholder"=>$jatbi->lang("Nội dung"),
                                 "value" => $data['content'] ?? '',

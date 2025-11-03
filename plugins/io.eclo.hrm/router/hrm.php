@@ -253,6 +253,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "user" => $app->getSession("accounts")['id'] ?? null,
                 "stores" => $app->xss($_POST['stores']),
                 "office" => $app->xss($_POST['office']),
+                "relative_name" => $app->xss($_POST['relative_name']),
+                "relative_phone" => $app->xss($_POST['relative_phone']),
             ];
 
             if ($is_same_address) {
@@ -424,6 +426,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "user" => $app->getSession("accounts")['id'] ?? null,
                 "stores" => $app->xss($_POST['stores']),
                 "office" => $app->xss($_POST['office']),
+                "relative_name" => $app->xss($_POST['relative_name']),
+                "relative_phone" => $app->xss($_POST['relative_phone']),
             ];
 
             if ($is_same_address) {
@@ -5086,6 +5090,19 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ["value" => 1, "text" => $jatbi->lang("Khen thưởng")],
                 ["value" => 2, "text" => $jatbi->lang("Kỷ luật")],
             ];
+            $months = [];
+            $current_year = date('Y');
+            $current_month = date('m');
+
+            for ($i = -6; $i <= 6; $i++) {
+                $date = strtotime("$current_year-$current_month-01 $i month");
+                $y = date('Y', $date);
+                $m = date('m', $date);
+                $value = "$y-$m";
+                $text = "Tháng " . date('m/Y', $date);
+                $months[] = ['value' => $value, 'text' => $text];
+            }
+            $vars['months'] = $months;
             echo $app->render($template . '/hrm/reward-discipline.html', $vars);
         }
         if ($app->method() === 'POST') {
@@ -5099,6 +5116,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $personnels = isset($_POST['personnels']) ? $_POST['personnels'] : '';
             $type = isset($_POST['type']) ? $_POST['type'] : '';
+            $month_filter = isset($_POST['months']) ? $_POST['months'] : '';
 
             $joins = [
                 "[>]personnels" => ["personnels" => "id"],
@@ -5123,6 +5141,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             if (!empty($type)) {
                 $where['AND']['reward_discipline.type'] = $type;
             }
+            if ($month_filter && strlen($month_filter) === 7) {
+                $where["AND"]["reward_discipline.date[~]"] = $month_filter . "%";
+            }
             if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
                 $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
             }
@@ -5136,6 +5157,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'reward_discipline.price',
                 'reward_discipline.date',
                 'reward_discipline.content',
+                'reward_discipline.percent',
                 'reward_discipline.date_poster',
                 'accounts.name(user_name)',
                 'personnels.name(personnel_name)',
@@ -5144,8 +5166,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "type" => $data['type'] == 1 ? "Khen thưởng" : "Kỷ luật",
                     "personnel_name" => $data['personnel_name'],
-                    "price" => number_format($data['price']),
-                    "date" => $data['date'],
+                    "price" => (float)$data['percent'] > 0 ? $data['percent'] . " %" : number_format($data['price']),
+                    "date" => date('d/m/Y', strtotime($data['date'])) ?? "",
                     "content" => $data['content'],
                     "date_poster" => $data['date_poster'],
                     "user" => $data['user_name'],
@@ -5181,6 +5203,373 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 "recordsFiltered" => $count,
                 "data" => $datas,
             ]);
+        }
+    })->setPermissions(['reward-discipline']);
+
+
+    $app->router('/reward-excel', 'GET', function ($vars) use ($app, $jatbi, $accStore) {
+        try {
+            $searchValue = $_GET['search']['value'] ?? '';
+            $personnels = $_GET['personnels'] ?? '';
+            $month_filter = $_GET['months'] ?? '';
+
+            $joins = [
+                "[>]personnels" => ["personnels" => "id"],
+                "[>]accounts" => ["reward_discipline.user" => "id"],
+                "[>]offices" => ["personnels.office" => "id"],
+            ];
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "personnels.name[~]" => $searchValue,
+                        "reward_discipline.price[~]" => $searchValue,
+                        "reward_discipline.content[~]" => $searchValue,
+                    ],
+                    "reward_discipline.deleted" => 0,
+                    "personnels.stores" => $accStore,
+                    "reward_discipline.type" => 1,
+                ],
+                "ORDER" => ["reward_discipline.id" => "DESC"],
+            ];
+            $title_month = '';
+            $file_month = '';
+
+            // Nếu có lọc tháng (dạng YYYY-MM)
+            if (!empty($month_filter) && preg_match('/^\d{4}-\d{2}$/', $month_filter)) {
+                $date_obj = DateTime::createFromFormat('Y-m', $month_filter);
+                $title_month = ' THÁNG ' . $date_obj->format('m.Y');
+                $file_month = '_' . $date_obj->format('m_Y');
+            } else {
+                // Không có lọc → chỉ ghi "DANH SÁCH THƯỞNG"
+                $title_month = '';
+                $file_month = '';
+            }
+            if (!empty($personnels)) {
+                $where['AND']['personnels.id'] = $personnels;
+            }
+            if ($month_filter && strlen($month_filter) === 7) {
+                $where["AND"]["reward_discipline.date[~]"] = $month_filter . "%";
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
+
+            $columns = [
+                'personnels.name(personnel_name)',
+                'offices.name(department_name)',
+                'reward_discipline.content',
+                'reward_discipline.price',
+                'reward_discipline.percent',
+                'reward_discipline.notes',
+            ];
+
+            $report_data = $app->select("reward_discipline", $joins, $columns, $where);
+
+            // --- TẠO FILE EXCEL ---
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('THƯỞNG ');
+
+            // === TIÊU ĐỀ CHÍNH ===
+            $sheet->mergeCells('A1:F1');
+            $sheet->setCellValue('A1', 'DANH SÁCH THƯỞNG' . $title_month);
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => [
+                    'bold' => true,
+                    'size' => 16,
+                    'name' => 'Arial',
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFD9EAD3'],
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(35);
+
+            // === TÊN SHEET ===
+            $sheet->setTitle('THƯỞNG' . ($file_month ?: ''));
+
+            // === HEADER BẢNG (DÒNG 2) ===
+            $headers = ['Stt', 'Họ và tên', 'Bộ phận', 'Lý do khen thưởng', 'Mức thưởng', 'Ghi chú'];
+            $sheet->fromArray($headers, null, 'A2');
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'size' => 11,
+                    'color' => ['argb' => 'FF000000'],
+                    'name' => 'Arial',
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFD9EAD3'],
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ];
+            $sheet->getStyle('A2:F2')->applyFromArray($headerStyle);
+            $sheet->getRowDimension(2)->setRowHeight(25);
+
+            // === DỮ LIỆU ===
+            $row_index = 3;
+            foreach ($report_data as $index => $data) {
+                $price_display = $data['percent'] > 0 ? $data['percent'] . ' %' : number_format((float)$data['price'], 0, ',', '.');
+
+                $sheet->setCellValue('A' . $row_index, $index + 1);
+                $sheet->setCellValue('B' . $row_index, $data['personnel_name']);
+                $sheet->setCellValue('C' . $row_index, $data['department_name'] ?? '');
+                $sheet->setCellValue('D' . $row_index, $data['content']);
+                $sheet->setCellValue('E' . $row_index, $price_display);
+                $sheet->setCellValue('F' . $row_index, $data['notes'] ?? '');
+
+                // Căn giữa cột STT, Mức thưởng
+                $sheet->getStyle('A' . $row_index . ':A' . $row_index)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('E' . $row_index . ':E' . $row_index)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Viền toàn bộ ô
+                $sheet->getStyle("A$row_index:F$row_index")->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => 'FF000000'],
+                        ],
+                    ],
+                ]);
+
+                $row_index++;
+            }
+
+            // Nếu không có dữ liệu → thêm dòng trống
+            if (empty($report_data)) {
+                for ($i = 0; $i < 6; $i++) {
+                    $empty_row = $row_index++;
+                    $sheet->mergeCells("A$empty_row:F$empty_row");
+                    $sheet->getStyle("A$empty_row:F$empty_row")->applyFromArray([
+                        'borders' => [
+                            'allBorders' => ['borderStyle' => Border::BORDER_THIN],
+                        ],
+                    ]);
+                }
+            }
+
+            // === ĐỊNH DẠNG CỘT - KÍCH THƯỚC CỐ ĐỊNH NHƯ EXCEL GỐC ===
+            $sheet->getColumnDimension('A')->setWidth(6);   // STT
+            $sheet->getColumnDimension('B')->setWidth(25);  // Họ tên
+            $sheet->getColumnDimension('C')->setWidth(15);  // Bộ phận
+            $sheet->getColumnDimension('D')->setWidth(30);  // Lý do
+            $sheet->getColumnDimension('E')->setWidth(15);  // Mức thưởng
+            $sheet->getColumnDimension('F')->setWidth(20);  // Ghi chú
+
+            // === PHẦN CHỮ KÝ - GIỐNG HỆT EXCEL ===
+            $sig_start = $row_index + 2;
+
+            // Dòng 1: BAN GIÁM ĐỐC | HCNS
+            $sheet->mergeCells("A$sig_start:C$sig_start");
+            $sheet->setCellValue("A$sig_start", 'BAN GIÁM ĐỐC');
+            $sheet->getStyle("A$sig_start")->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle("A$sig_start")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->mergeCells("D$sig_start:F$sig_start");
+            $sheet->setCellValue("D$sig_start", 'HCNS');
+            $sheet->getStyle("D$sig_start")->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle("D$sig_start")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Dòng tên (cách 4 dòng)
+            $name_row = $sig_start + 4;
+            $sheet->mergeCells("D$name_row:F$name_row");
+            $sheet->setCellValue("D$name_row", 'Lê Thị Phương');
+            $sheet->getStyle("D$name_row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            // Dòng trống giữa
+            for ($i = 1; $i <= 3; $i++) {
+                $empty_sig = $sig_start + $i;
+                $sheet->getRowDimension($empty_sig)->setRowHeight(20);
+            }
+
+            // === XUẤT FILE ===
+            ob_end_clean();
+            $file_name = 'DANH_SACH_THUONG' . $file_month . '.xlsx'; // Ví dụ: DANH_SACH_THUONG_02_2025.xlsx
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $file_name . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (Exception $e) {
+            ob_end_clean();
+            http_response_code(500);
+            exit("Lỗi: " . $e->getMessage());
+        }
+    })->setPermissions(['reward-discipline']);
+
+    $app->router('/discipline-excel', 'GET', function ($vars) use ($app, $jatbi, $accStore) {
+        try {
+            $searchValue = $_GET['search']['value'] ?? '';
+            $personnels = $_GET['personnels'] ?? '';
+            $month_filter = $_GET['months'] ?? '';
+
+            $joins = [
+                "[>]personnels" => ["personnels" => "id"],
+                "[>]accounts" => ["reward_discipline.user" => "id"],
+                "[>]offices" => ["personnels.office" => "id"],
+            ];
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "personnels.name[~]" => $searchValue,
+                        "reward_discipline.price[~]" => $searchValue,
+                        "reward_discipline.content[~]" => $searchValue,
+                    ],
+                    "reward_discipline.deleted" => 0,
+                    "personnels.stores" => $accStore,
+                    "reward_discipline.type" => 2,
+                ],
+                "ORDER" => ["reward_discipline.id" => "DESC"],
+            ];
+
+            if (!empty($personnels)) {
+                $where['AND']['personnels.id'] = $personnels;
+            }
+            if (!empty($month_filter) && preg_match('/^\d{4}-\d{2}$/', $month_filter)) {
+                $where["AND"]["reward_discipline.date[~]"] = $month_filter . "%";
+            }
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 1) {
+                $where['AND']['personnels.id'] = $app->getSession("accounts")['personnels_id'];
+            }
+
+            $columns = [
+                'personnels.name(personnel_name)',
+                'offices.name(department_name)',
+                'reward_discipline.content',
+                'reward_discipline.price',
+                'reward_discipline.percent',
+            ];
+
+            $report_data = $app->select("reward_discipline", $joins, $columns, $where);
+
+            $title_month = '';
+            $file_month = '';
+            $sheet_title = 'PHẠT';
+            if (!empty($month_filter) && preg_match('/^\d{4}-\d{2}$/', $month_filter)) {
+                $date_obj = DateTime::createFromFormat('Y-m', $month_filter);
+                $title_month = ' THÁNG ' . $date_obj->format('m.Y');
+                $file_month = '_' . $date_obj->format('m_Y');
+                $sheet_title .= $file_month;
+            }
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle($sheet_title);
+
+            $sheet->mergeCells('A1:E1');
+            $sheet->setCellValue('A1', 'DANH SÁCH PHẠT' . $title_month);
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 16, 'name' => 'Arial'],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFD9EAD3'],
+                ],
+            ]);
+            $sheet->getRowDimension(1)->setRowHeight(35);
+
+            $headers = ['Stt', 'Họ và tên', 'Bộ phận', 'Lỗi vi phạm', 'Hình thức xử lý'];
+            $sheet->fromArray($headers, null, 'A2');
+            $headerStyle = [
+                'font' => ['bold' => true, 'size' => 11, 'name' => 'Arial'],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FFD9EAD3'],
+                ],
+                'borders' => [
+                    'allBorders' => ['borderStyle' => Border::BORDER_THIN],
+                ],
+            ];
+            $sheet->getStyle('A2:E2')->applyFromArray($headerStyle);
+            $sheet->getRowDimension(2)->setRowHeight(25);
+
+            $row_index = 3;
+            foreach ($report_data as $index => $data) {
+                // $price_clean = preg_replace('/[^\d]/', '', (string)$data['price']);
+                $penalty_display = $data['percent'] > 0
+                    ? $data['percent'] . ' %'
+                    : (number_format($data['price']) ?? '');
+
+                $sheet->setCellValue('A' . $row_index, $index + 1);
+                $sheet->setCellValue('B' . $row_index, $data['personnel_name']);
+                $sheet->setCellValue('C' . $row_index, $data['department_name'] ?? '');
+                $sheet->setCellValue('D' . $row_index, $data['content']);
+                $sheet->setCellValue('E' . $row_index, $penalty_display);
+
+                $sheet->getStyle('A' . $row_index)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("A$row_index:E$row_index")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+                $row_index++;
+            }
+
+            if (empty($report_data)) {
+                for ($i = 0; $i < 6; $i++) {
+                    $empty_row = $row_index++;
+                    $sheet->mergeCells("A$empty_row:E$empty_row");
+                    $sheet->getStyle("A$empty_row:E$empty_row")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                }
+            }
+
+            $sheet->getColumnDimension('A')->setWidth(6);
+            $sheet->getColumnDimension('B')->setWidth(25);
+            $sheet->getColumnDimension('C')->setWidth(15);
+            $sheet->getColumnDimension('D')->setWidth(35);
+            $sheet->getColumnDimension('E')->setWidth(18);
+
+            $sig_start = $row_index + 2;
+            $sheet->mergeCells("C$sig_start:E$sig_start");
+            $sheet->setCellValue("C$sig_start", 'HCNS');
+            $sheet->getStyle("C$sig_start")->getFont()->setBold(true)->setSize(11);
+            $sheet->getStyle("C$sig_start")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $name_row = $sig_start + 4;
+            $sheet->mergeCells("C$name_row:E$name_row");
+            $sheet->setCellValue("C$name_row", 'Lê Thị Phương');
+            $sheet->getStyle("C$name_row")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            for ($i = 1; $i <= 3; $i++) {
+                $sheet->getRowDimension($sig_start + $i)->setRowHeight(20);
+            }
+
+            ob_end_clean();
+            $file_name = 'DANH_SACH_PHAT' . $file_month . '.xlsx';
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $file_name . '"');
+            header('Cache-Control: max-age=0');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+            exit;
+        } catch (Exception $e) {
+            ob_end_clean();
+            http_response_code(500);
+            exit("Lỗi: " . $e->getMessage());
         }
     })->setPermissions(['reward-discipline']);
 
@@ -5274,6 +5663,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['reward-discipline']);
 
     $app->router("/reward-discipline-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
+
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thêm Khen thưởng kỉ luật");
             $vars['personnels'] = $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "stores" => $accStore, "ORDER" => ["name" => "ASC"]]);
@@ -5283,23 +5673,38 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             ];
             echo $app->render($template . '/hrm/reward-discipline-post.html', $vars, $jatbi->ajax());
         }
+
         if ($app->method() === 'POST') {
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
-            if ($app->xss($_POST['type']) == '' || $app->xss($_POST['personnels']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['price']) == '') {
+
+            if ($app->xss($_POST['type']) == '' || $app->xss($_POST['personnels']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '') {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
             } else {
+                $value_raw = $app->xss($_POST['value']);
+                $value_type = $app->xss($_POST['value_type']);
+                $price = 0;
+                $percent = 0;
+
+                if ($value_type == 'money') {
+                    $price = $app->xss(str_replace([','], '', $value_raw));
+                } else {
+                    $percent = $app->xss($value_raw);
+                }
+
                 $insert = [
                     "personnels" => $app->xss($_POST['personnels']),
                     "type" => $app->xss($_POST['type']),
                     "date" => $app->xss($_POST['date']),
-                    "price" => $app->xss(str_replace([','], '', $_POST['price'])),
+                    "price" => $price,
+                    "percent" => $percent,
                     "content" => $app->xss($_POST['content']),
                     "notes" => $app->xss($_POST['notes']),
                     "date_poster" => date("Y-m-d H:i:s"),
                     "user" => $app->getSession("accounts")['id'] ?? null,
                 ];
+
                 $app->insert("reward_discipline", $insert);
                 $jatbi->logs('hrm', 'reward-discipline-add', [$insert]);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
@@ -5308,6 +5713,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     })->setPermissions(['reward-discipline.add']);
 
     $app->router("/reward-discipline-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $accStore) {
+
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Sửa Khen thưởng kỉ luật");
             $vars['data'] = $app->get("reward_discipline", "*", ["id" => $vars['id'], "deleted" => 0]);
@@ -5327,22 +5733,41 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 'Content-Type' => 'application/json',
             ]);
             $data = $app->get("reward_discipline", "*", ["id" => $vars['id'], "deleted" => 0]);
+
             if (!empty($data)) {
-                if ($app->xss($_POST['type']) == '' || $app->xss($_POST['personnels']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['price']) == '') {
+
+                if ($app->xss($_POST['type']) == '' || $app->xss($_POST['personnels']) == '' || $app->xss($_POST['date']) == '' || $app->xss($_POST['value']) == '') {
                     echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
                 } else {
-                    $insert = [
+
+                    $value_raw = $app->xss($_POST['value']);
+                    $value_type = $app->xss($_POST['value_type']);
+
+                    $price = 0;
+                    $percent = 0;
+
+                    if ($value_type == 'money') {
+                        $price = $app->xss(str_replace([','], '', $value_raw));
+                    } else {
+                        $percent = $app->xss($value_raw);
+                    }
+
+                    $update = [
                         "personnels" => $app->xss($_POST['personnels']),
                         "type" => $app->xss($_POST['type']),
                         "date" => $app->xss($_POST['date']),
-                        "price" => $app->xss(str_replace([','], '', $_POST['price'])),
+
+                        "price" => $price,
+                        "percent" => $percent,
+
                         "content" => $app->xss($_POST['content']),
                         "notes" => $app->xss($_POST['notes']),
                         "date_poster" => date("Y-m-d H:i:s"),
                         "user" => $app->getSession("accounts")['id'] ?? null,
                     ];
-                    $app->update("reward_discipline", $insert, ["id" => $data['id']]);
-                    $jatbi->logs('hrm', 'reward-discipline-edit', [$insert]);
+
+                    $app->update("reward_discipline", $update, ["id" => $data['id']]);
+                    $jatbi->logs('hrm', 'reward-discipline-edit', [$update]);
                     echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
                 }
             } else {
