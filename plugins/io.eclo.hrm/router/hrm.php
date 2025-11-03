@@ -5206,7 +5206,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reward-discipline']);
 
-
     $app->router('/reward-excel', 'GET', function ($vars) use ($app, $jatbi, $accStore) {
         try {
             $searchValue = $_GET['search']['value'] ?? '';
