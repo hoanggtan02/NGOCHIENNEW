@@ -119,6 +119,7 @@ return [
                     'default_code.deleted' => $jatbi->lang("Xóa mã cố định"),
 
                     'warehouses-import' => $jatbi->lang("Nhập hàng"),
+                    'warehouses' => $jatbi->lang("Kho hàng"),
                     'warehouses-import-history' => $jatbi->lang("Lịch sử nhập hàng"),
                     // 'warehouses-move'=>$lang['chuyen-hang'],
                     'warehouses-move-history' => $jatbi->lang("Lich sử chuyển hàng"),

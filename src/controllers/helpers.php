@@ -544,7 +544,7 @@ class Jatbi
 			$this->cachedAccountBrands = [];
 			return [];
 		}
-
+		
 		$this->cachedAccountBrands = $this->app->select("stores_linkables", [
 			"[>]stores" => ["stores" => "id"]
 		], [
@@ -558,7 +558,7 @@ class Jatbi
 			"stores.deleted" => 0,
 			"ORDER" => ["stores_linkables.id" => "ASC"]
 		]);
-
+		
 		return $this->cachedAccountBrands;
 	}
 
@@ -650,7 +650,7 @@ class Jatbi
 				if (!empty($cookie) && count($cookie) == 1) {
 					$storeId = null;
 					foreach ($accountStores as $store) {
-						if ($store['id'] == $cookie['value']) {
+						if ($store['id'] == $cookie[0]['value']) {
 							$storeId = $store['id'];
 							break;
 						}

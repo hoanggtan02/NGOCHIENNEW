@@ -459,10 +459,10 @@
                     $vars['stores'][] = $app->get("stores",["id (value)","name (text)"],["id"=>$data['stores']]);
                     $vars['objects'][] = $app->get("proposal_objects",["id (value)","name (text)"],["id"=>$data['objects']]);
                     $files = $app->select("proposal_files",[
-                        "[>]files" => ["files"=>"id"],
+                        "[>]file" => ["files"=>"id"],
                     ],[
-                        "files.active",
-                        "files.name",
+                        "file.active",
+                        "file.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -664,10 +664,10 @@
                         $vars['data']['total_price'] = $data['price']+$data['vat_price'];
                     }
                     $files = $app->select("proposal_files",[
-                        "[>]files" => ["files"=>"id"],
+                        "[>]file" => ["files"=>"id"],
                     ],[
-                        "files.active",
-                        "files.name",
+                        "file.active",
+                        "file.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -1154,6 +1154,7 @@
                         "stores_linkables.stores" => $jatbi->stores(),
                     ]
                 ];
+                
                 $app->select("proposal_form", [
                     "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_form"]]
                 ],[

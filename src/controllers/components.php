@@ -699,3 +699,31 @@ $app->setComponent('brands', function ($vars) use ($app, $setting, $jatbi) {
         echo '</select></div>';
     }
 });
+
+// Stores Component
+$app->setComponent('stores', function ($vars) use ($app, $setting, $jatbi) {
+    $name = isset($vars['name']) ? $vars['name'] : '';
+    $selected = isset($vars['selected']) ? $vars['selected'] : [];
+    $multi = isset($vars['multi']) ? 'multiple' : null;
+    $stores_json = $app->getCookie('stores') ?? json_encode([]);
+	$cookie = json_decode($stores_json, true);
+    $placeholder = isset($vars['placeholder']) ? $vars['placeholder'] : '';
+    $options = $jatbi->stores("SELECT");
+    $class = isset($vars['class']) ? ' ' . htmlspecialchars($vars['class']) : '';
+    $id = isset($vars['id']) ? ' id="' . htmlspecialchars($vars['id']) . '"' : '';
+    $attr = isset($vars['attr']) ? $vars['attr'] : '';
+    $required = isset($vars['required']) ? $vars['required'] : '';
+
+    // Nếu không có cookie hoặc cookie là 0
+    if (!$cookie || count($cookie) > 1) {
+        echo '<div class="mb-3">
+                <label for="' . htmlspecialchars($name) . '" class="form-label fw-bold">' . $placeholder . ' ' . ($required ? '<span class="text-danger">*</span>' : '') . '</label>
+                <select data-select data-style="form-select py-3 rounded-4 w-100 bg-body" data-live-search="true" data-width="100%" class="'  . $class . '"' . $id . ' ' . $attr . ' name="stores' . ($multi ? '[]' : '') . '" ' . $multi . ' data-actions-box="true">';
+        foreach ($options as $option) {
+            $isSelected = is_array($selected) ? in_array($option['id'], $selected) : $selected == $option['id'];
+            echo '<option value="' . htmlspecialchars($option['id']) . '"' . ($isSelected ? ' selected' : '') . '>' . htmlspecialchars($option['name']) . '</option>';
+        }
+
+        echo '</select></div>';
+    }
+});
