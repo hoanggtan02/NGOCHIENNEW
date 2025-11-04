@@ -7,6 +7,7 @@ $template = __DIR__ . '/../templates';
 $jatbi = $app->getValueData('jatbi');
 $common = $jatbi->getPluginCommon('io.eclo.proposal');
 $setting = $app->getValueData('setting');
+$account = $app->getValueData('account');
 // Xử lý session và stores (giữ nguyên từ expenditure.php)
 $stores_json = $app->getCookie('stores') ?? json_encode([]);
 $stores = json_decode($stores_json, true);
@@ -26,7 +27,7 @@ if (isset($session['id'])) {
     }
 }
 
-$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $template, $accStore, $stores) {
+$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $account, $template, $accStore, $stores) {
 
     // Route: Danh sách tin tuyển dụng
     $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores) {
@@ -143,11 +144,9 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "created_date" => $data['created_date'],
                     "stores" => $data['store_name'],
                     "user" => $data['user_name'],
-                    "status" => $app->component("status", [
-                        "url" => "/recruitment/job_postings-status/" . $data['active'],
-                        "data" => $data['status'],
-                        "permission" => ['job_postings.edit']
-                    ]),
+                    "status" => $data['status'] == 'A'
+                        ? '<span class="badge bg-success">' . $jatbi->lang("Đã duyệt") . '</span>'
+                        : '<span class="badge bg-warning">' . $jatbi->lang("Chờ duyệt") . '</span>',
                     "action" => $app->component("action", [
                         "button" => [
                             [
@@ -231,11 +230,16 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['job_postings']);
 
     // Route: Thêm tin tuyển dụng
-    $app->router("/job_postings-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
+    $app->router("/job_postings-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$account ,$template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Thêm tin tuyển dụng");
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
             $vars['job_postings'] = $app->select("hrm_positions", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+
+            $vars['forms'] = $app->select("proposal_form", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+            // $vars['workflows'] = $app->select("proposal_workflows", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+            // $vars['categorys'] = $app->select("proposal_target", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+
             echo $app->render($template . '/recruitment/job_postings-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
@@ -255,12 +259,25 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "requirements" => $app->xss($_POST['requirements']),
                     "jobs" => $data_to_save,
                     "interest" => $app->xss($_POST['interest']),
-                    "status" => 'A',
+                    "status" => 'D',
                     "user" => $app->getSession("accounts")['id'],
                     "created_date" => date("Y-m-d H:i:s"),
                     "active" => $jatbi->active(32),
                     "stores" => $input_stores,
                 ];
+                $insert_proposals = [
+                    "type" => 3,
+                    "date" => date("Y-m-d"),
+                    "modify" => date("Y-m-d H:i:s"),
+                    "create" => date("Y-m-d H:i:s"),
+                    "account" => $account['id'],
+                    "status" => 0,
+                    "code" => time(),
+                    "stores" => $jatbi->stores('ID'),
+                    "stores_id" => $jatbi->stores('ID'),
+                    "active" => $jatbi->active(),
+                ];
+                $app->insert("proposals", $insert_proposals);
                 $app->insert("job_postings", $insert);
                 $jatbi->logs('job_postings', 'add', $insert);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
@@ -284,6 +301,10 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         $vars['data']['jobs'] = @unserialize($data['jobs']);
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
+            $vars['forms'] = $app->select("proposal_form", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['workflows'] = $app->select("proposal_workflows", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['categorys'] = $app->select("proposal_target", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+
             echo $app->render($template . '/recruitment/job_postings-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
