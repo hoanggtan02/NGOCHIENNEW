@@ -640,8 +640,8 @@ class Jatbi
 					$result = $allStores[0]['id'];
 				} elseif ($post != null) {
 					$result = $post;
-				} elseif (!empty($cookie) && count($cookie) == 1 && in_array($cookie['value'], array_column($allStores, 'id'))) {
-					$result = $this->app->get("stores", "id", ["active" => $cookie]);
+				} elseif (!empty($cookie) && count($cookie) == 1 && in_array($cookie[0]['value'], array_column($allStores, 'id'))) {
+					$result = $this->app->get("stores", "id", ["id" => $cookie[0]['value']]);
 				}
 				break;
 
