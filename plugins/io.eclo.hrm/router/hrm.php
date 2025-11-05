@@ -279,11 +279,50 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 $insert_data['permanent_province_new'] = $app->xss($_POST['permanent_province_new'] ?? 0);
                 $insert_data['permanent_ward_new'] = $app->xss($_POST['permanent_ward_new'] ?? 0);
             }
-            $result = $app->action(function () use ($app, $jatbi, $insert_data) {
+            $result = $app->action(function () use ($app, $jatbi, $insert_data, $stores, $accStore) {
 
                 $app->insert("personnels", $insert_data);
                 $new_personnel_id = $app->id();
-
+                if (count($stores) > 1) {
+                    $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
+                    $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
+                    if (!is_array($input_stores)) {
+                        $input_stores = [$input_stores];
+                    }
+                    $input_stores = array_map([$app, 'xss'], $input_stores);
+                    if (empty($input_stores)) {
+                        $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+                    }
+                } else {
+                    $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
+                }
+                $insert_account = [
+                    "type" => 0,
+                    "name" => $app->xss($_POST['name']),
+                    "account" => $app->xss($_POST['account']),
+                    "email" => $app->xss($_POST['email']),
+                    "permission" => $app->xss($_POST['permission']),
+                    "phone" => $app->xss($_POST['phone']),
+                    "gender" => $app->xss($_POST['gender']),
+                    "birthday" => $app->xss($_POST['birthday']),
+                    "password" => password_hash($app->xss($_POST['password']), PASSWORD_DEFAULT),
+                    "active" => $jatbi->active(),
+                    "date" => date('Y-m-d H:i:s'),
+                    "stores" => serialize($input_stores),
+                    // "login"         => 'create',
+                    "status" => $app->xss($_POST['status']),
+                    // "lang"          => $_COOKIE['lang'] ?? 'vi',
+                ];
+                $app->insert("accounts", $insert_account);
+                $account_id = $app->id();
+                $jatbi->logs('hrm', 'accounts-add', [$insert_account]);
+                // $jatbi->setStores("add",'accounts',$account_id,$_POST['stores'] ?? '');
+                // 3️⃣ Cập nhật lại bảng nhân viên
+                $app->update("personnels", [
+                    "account" => $account_id
+                ], [
+                    "id" => $new_personnel_id
+                ]);
                 if (!$new_personnel_id) {
                     return false;
                 }
@@ -318,48 +357,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 return $new_personnel_id;
             });
 
-            $personnel_id = $app->id();
-            if (count($stores) > 1) {
-                $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
-                $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
-                if (!is_array($input_stores)) {
-                    $input_stores = [$input_stores];
-                }
-                $input_stores = array_map([$app, 'xss'], $input_stores);
-                if (empty($input_stores)) {
-                    $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
-                }
-            } else {
-                $input_stores = $app->select("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0, "ORDER" => ["id" => "ASC"]]);
-            }
-            $insert_account = [
-                "type" => 0,
-                "name" => $app->xss($_POST['name']),
-                "account" => $app->xss($_POST['account']),
-                "email" => $app->xss($_POST['email']),
-                "permission" => $app->xss($_POST['permission']),
-                "phone" => $app->xss($_POST['phone']),
-                "gender" => $app->xss($_POST['gender']),
-                "birthday" => $app->xss($_POST['birthday']),
-                "password" => password_hash($app->xss($_POST['password']), PASSWORD_DEFAULT),
-                "active" => $jatbi->active(),
-                "date" => date('Y-m-d H:i:s'),
-                "stores" => serialize($input_stores),
-                // "login"         => 'create',
-                "status" => $app->xss($_POST['status']),
-                // "lang"          => $_COOKIE['lang'] ?? 'vi',
-            ];
-            $app->insert("accounts", $insert_account);
-            $account_id = $app->id();
-            // $jatbi->setStores("add",'accounts',$account_id,$_POST['stores'] ?? '');
-            // 3️⃣ Cập nhật lại bảng nhân viên
-            $app->update("personnels", [
-                "account" => $account_id
-            ], [
-                "id" => $personnel_id
-            ]);
+            
             $jatbi->logs('hrm', 'personnels-add', [$insert_data]);
-            $jatbi->logs('hrm', 'accounts-add', [$insert_account]);
+            
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới thành công")]);
         }
     })->setPermissions(['personnels.add']);
