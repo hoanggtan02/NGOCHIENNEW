@@ -43,36 +43,37 @@
                         </div>
                         <div class="col-lg-4">
                             <?=$app->component('select',[
-                                "name"        => 'forms', 
-                                "options"     => $forms ?? [], 
-                                "placeholder" => $jatbi->lang("Hình thức"),
-                                "selected"    => $data['forms'] ?? '', 
-                                "required"    => 'true',
-                                "id"          => 'select_forms' 
+                                "name"=>'form',
+                                "placeholder"=>$jatbi->lang("Hình thức"),
+                                "selected" => $data['form'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/form" data-method="POST" data-keyword="keyword"',
+                                "id" => "form",
+                                "options" => $forms ?? [],
+                                "required" => 'true',
                             ])?>
                         </div>
 
                         <div class="col-lg-4">
                             <?=$app->component('select',[
-                                "name"        => 'workflows', 
-                                "options"     => $workflows ?? [], 
-                                "placeholder" => $jatbi->lang("Quy trình"),
-                                "selected"    => $data['workflows'] ?? '',
-                                "required"    => 'true',
-                                "id"          => 'select_workflows', 
-                                "attr"        => 'data-width="100%" data-parent="#select_forms" data-load="true" data-url="/api/get-workflows" data-method="POST" data-keyword="keyword" data-max-length="1"'
+                                "name"=>'workflows',
+                                "placeholder"=>$jatbi->lang("Quy trình"),
+                                "selected" => $data['workflows'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true"  data-parent="#form" data-select-url="/proposal/search/workflows" data-method="POST" data-keyword="keyword"',
+                                "id" => "workflows",
+                                "options" => $workflows ?? [],
+                                "required" => 'true',
                             ])?>
                         </div>
 
                         <div class="col-lg-4">
                             <?=$app->component('select',[
-                                "name"        => 'categorys', 
-                                "options"     => $categorys ?? [], 
-                                "placeholder" => $jatbi->lang("Hạng mục"),
-                                "selected"    => $data['categorys'] ?? '',
-                                "required"    => 'true',
-                                "id"          => 'select_categorys', 
-                                "attr"        => 'data-width="100%" data-parent="#select_workflows" data-load="true" data-url="/api/get-categories" data-method="POST" data-keyword="keyword" data-max-length="1"'
+                                "name"=>'category',
+                                "placeholder"=>$jatbi->lang("Hạng mục"),
+                                "selected" => $data['category'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true"  data-parent="#workflows" data-select-url="/proposal/search/categorys" data-method="POST" data-keyword="keyword"',
+                                "id" => "category",
+                                "options" => $categorys ?? [],
+                                "required" => 'true',
                             ])?>
                         </div>
                         <div class="form-group">

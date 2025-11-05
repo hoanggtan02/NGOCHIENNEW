@@ -2,7 +2,9 @@
 if (!defined('ECLO')) die("Hacking attempt");
 
 use ECLO\App;
-
+$ClassProposals = new Proposal($app);
+$app->setValueData('process',$ClassProposals);
+$getprocess = $app->getValueData('process');
 $template = __DIR__ . '/../templates';
 $jatbi = $app->getValueData('jatbi');
 $common = $jatbi->getPluginCommon('io.eclo.proposal');
@@ -27,7 +29,7 @@ if (isset($session['id'])) {
     }
 }
 
-$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $account, $template, $accStore, $stores) {
+$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $account, $template, $accStore, $stores, $getprocess) {
 
     // Route: Danh sách tin tuyển dụng
     $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores) {
@@ -144,9 +146,11 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "created_date" => $data['created_date'],
                     "stores" => $data['store_name'],
                     "user" => $data['user_name'],
-                    "status" => $data['status'] == 'A'
-                        ? '<span class="badge bg-success">' . $jatbi->lang("Đã duyệt") . '</span>'
-                        : '<span class="badge bg-warning">' . $jatbi->lang("Chờ duyệt") . '</span>',
+                    "status" => $app->component("status", [
+                        "url" => "/recruitment/job_postings-status/" . $data['active'],
+                        "data" => $data['status'],
+                        "permission" => ['job_postings.edit']
+                    ]),
                     "action" => $app->component("action", [
                         "button" => [
                             [
@@ -230,13 +234,18 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['job_postings']);
 
     // Route: Thêm tin tuyển dụng
-    $app->router("/job_postings-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$account ,$template, $stores, $accStore) {
+    $app->router("/job_postings-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$account ,$template, $stores, $accStore, $getprocess) {
         $vars['title'] = $jatbi->lang("Thêm tin tuyển dụng");
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
             $vars['job_postings'] = $app->select("hrm_positions", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
 
-            $vars['forms'] = $app->select("proposal_form", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['forms'] = $app->select("proposal_form", ["id (value)", "name (text)"], [
+                "deleted" => 0,
+                "status" => "A"
+            ]);
+
+            array_unshift($vars['forms'], ["value" => "", "text" => ""]);
             // $vars['workflows'] = $app->select("proposal_workflows", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
             // $vars['categorys'] = $app->select("proposal_target", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
 
@@ -259,26 +268,95 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                     "requirements" => $app->xss($_POST['requirements']),
                     "jobs" => $data_to_save,
                     "interest" => $app->xss($_POST['interest']),
-                    "status" => 'D',
+                    "status" => 'A',
                     "user" => $app->getSession("accounts")['id'],
                     "created_date" => date("Y-m-d H:i:s"),
                     "active" => $jatbi->active(32),
                     "stores" => $input_stores,
                 ];
-                $insert_proposals = [
-                    "type" => 3,
-                    "date" => date("Y-m-d"),
-                    "modify" => date("Y-m-d H:i:s"),
-                    "create" => date("Y-m-d H:i:s"),
-                    "account" => $account['id'],
-                    "status" => 0,
-                    "code" => time(),
-                    "stores" => $jatbi->stores('ID'),
-                    "stores_id" => $jatbi->stores('ID'),
-                    "active" => $jatbi->active(),
-                ];
-                $app->insert("proposals", $insert_proposals);
                 $app->insert("job_postings", $insert);
+                $job_id = $app->id();
+                $recruitment_proposal = [
+                    "job_posting_id" => $job_id,
+                    "form" => $_POST['form'] ?? 0,
+                    "target" => $_POST['category'] ?? 0,
+                    "workflows" => $_POST['workflows'] ?? 0,
+                    "active" => $jatbi->active(),
+                    "status" => 1,
+                ];
+                $app->insert("recruitment_proposal", $recruitment_proposal);
+                if (($recruitment_proposal['form'] > 0) && ($recruitment_proposal['target'] > 0) && ($recruitment_proposal['workflows'] > 0)) {
+                    $proposal = [
+                        "type"       => 3, // 3 = đề xuất tuyển dụng
+                        "form"       => $recruitment_proposal['form'],
+                        "workflows"  => $recruitment_proposal['workflows'],
+                        "category"   => $recruitment_proposal['target'],
+                        "price"      => 0, // có thể bỏ qua, vì tuyển dụng không có chi phí
+                        "reality"    => 0,
+                        "date"       => date("Y-m-d"),
+                        "modify"     => date("Y-m-d H:i:s"),
+                        "create"     => date("Y-m-d H:i:s"),
+                        "account"    => $app->getSession("accounts")['id'],
+                        "status"     => 0,
+                        "stores"     => $jatbi->stores('ID'),
+                        "stores_id"  => $jatbi->stores('ID'),
+                        "active"     => $jatbi->active(),
+                        "content"    => 'Đề xuất tuyển dụng: '.$insert['title'],
+                        "job_posting_id"=> $job_id,
+                    ];
+                    $proposal['create'] = date("Y-m-d H:i:s");
+                    $proposal['code'] = time();
+                    $proposal['active'] = $jatbi->active();
+                    $app->insert("proposals",$proposal);
+                    $ProposalID = $app->id();
+                    $jatbi->logs('proposal','proposal-create',$proposal);
+
+                    $insert_accounts = [
+                        "account" => $app->getSession("accounts")['id'],
+                        "proposal" => $ProposalID,
+                        "date" => date("Y-m-d H:i:s"),
+                    ];
+                    $app->insert("proposal_accounts",$insert_accounts);
+                    $process = $getprocess->workflows($ProposalID,$proposal['account']);
+
+                    if($process[0]){
+                        $app->update("proposal_process",["deleted"=>1],["proposal"=>$ProposalID,"workflows"=>$proposal['workflows']]);
+                        $proposal_process = [
+                            "proposal" => $ProposalID,
+                            "workflows" => $proposal['workflows'],
+                            "date" => date("Y-m-d H:i:s"),
+                            "account" => $app->getSession("accounts")['id'],
+                            "node"  => $process[0]['node_id'],
+                            "approval" => 1,
+                            "approval_date" => date("Y-m-d H:i:s"),
+                        ];
+                        $app->insert("proposal_process",$proposal_process);
+                        $proposal_process_ID = $app->id();
+                        $proposal_process_logs = [
+                            "proposal" => $ProposalID,
+                            "date" => date("Y-m-d H:i:s"),
+                            "account" => $app->getSession("accounts")['id'],
+                            "content" => 'Gửi đề xuất',
+                            "process" => $proposal_process_ID,
+                            "data" => json_encode($proposal_process),
+                        ];
+                        $app->insert("proposal_logs",$proposal_process_logs);
+                        $update = [
+                            "status" => 1,
+                            "process" => $process[0]['node_id'],
+                            "modify" => date("Y-m-d H:i:s"),
+                        ];
+                        $app->update("proposals",$update,["id"=>$ProposalID]);
+                        $content_notification = $account['name'].' đề xuất: '.$proposal['content'];
+                        $jatbi->notification($app->getSession("accounts")['id'],$process[1]['approver_account_id'],'Đề xuất #'.$ProposalID,$content_notification,'/proposal/views/'.$proposal['active'],'');
+                        $insert_accounts = [
+                            "account" => $process[1]['approver_account_id'],
+                            "proposal" => $ProposalID,
+                            "date" => date("Y-m-d H:i:s"),
+                        ];
+                        $app->insert("proposal_accounts",$insert_accounts);
+                    } 
+                }
                 $jatbi->logs('job_postings', 'add', $insert);
                 echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
             } else {
@@ -288,51 +366,183 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
     })->setPermissions(['job_postings.add']);
 
     // Route: Sửa tin tuyển dụng
-    $app->router("/job_postings-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
+    $app->router("/job_postings-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore, $account, $getprocess) {
         $vars['title'] = $jatbi->lang("Sửa tin tuyển dụng");
         $vars['job_postings'] = $app->select("hrm_positions", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
 
+        // Lấy dữ liệu job
         $data = $app->get("job_postings", "*", ["active" => $vars['id'], "deleted" => 0]);
         if (!$data) {
             echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
             return;
         }
+
+        // Lấy dữ liệu recruitment_proposal (nếu có)
+        $GetRecruit = $app->get("recruitment_proposal", "*", ["job_posting_id" => $data['id'], "deleted" => 0]);
+
+        // Đưa giá trị form/workflow/category hiện có vào dropdown (để hiển thị selected)
+        $vars['forms'][] = $app->get("proposal_form", ["id (value)", "name (text)"], ["id" => $GetRecruit['form'] ?? 0]);
+        $vars['workflows'][] = $app->get("proposal_workflows", ["id (value)", "name (text)"], ["id" => $GetRecruit['workflows'] ?? 0]);
+        $vars['categorys'][] = $app->get("proposal_target", ["id (value)", "name (text)"], ["id" => $GetRecruit['target'] ?? 0]);
+
         $vars['data'] = $data;
         $vars['data']['jobs'] = @unserialize($data['jobs']);
+
         if ($app->method() === 'GET') {
             $vars['stores'] = $stores;
-            $vars['forms'] = $app->select("proposal_form", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
-            $vars['workflows'] = $app->select("proposal_workflows", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
-            $vars['categorys'] = $app->select("proposal_target", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
-
             echo $app->render($template . '/recruitment/job_postings-post.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
-            $app->header(['Content-Type' => 'application/json']);
-            $error = [];
-            if (empty($app->xss($_POST['title'])) || empty($app->xss($_POST['description'])) || empty($app->xss($_POST['requirements']))) {
-                $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
-            } elseif (count($stores) > 1 && empty($app->xss($_POST['stores']))) {
-                $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng chọn cửa hàng")];
-            }
-            if (empty($error)) {
-                $input_stores = count($stores) > 1 ? $app->xss($_POST['stores']) : $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0]);
-                $jobs_array = $_POST['jobs'];
-                $data_to_save = serialize($jobs_array);
-                $update = [
-                    "title" => $app->xss($_POST['title']),
-                    "description" => $app->xss($_POST['description']),
-                    "requirements" => $app->xss($_POST['requirements']),
-                    "interest" => $app->xss($_POST['interest']),
-                    "jobs" => $data_to_save,
-                    "stores" => $input_stores,
-                ];
-                $app->update("job_postings", $update, ["id" => $data['id']]);
-                $jatbi->logs('job_postings', 'edit', $update);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => $_SERVER['HTTP_REFERER']]);
+            return;
+        }
+
+        // POST (cập nhật)
+        $app->header(['Content-Type' => 'application/json']);
+        $error = [];
+
+        if (empty($app->xss($_POST['title'])) || empty($app->xss($_POST['description'])) || empty($app->xss($_POST['requirements']))) {
+            $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
+        } elseif (count($stores) > 1 && empty($app->xss($_POST['stores']))) {
+            $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng chọn cửa hàng")];
+        }
+
+        if (!empty($error)) {
+            echo json_encode($error);
+            return;
+        }
+
+        $input_stores = count($stores) > 1 ? $app->xss($_POST['stores']) : $app->get("stores", "id", ["id" => $accStore, "status" => 'A', "deleted" => 0]);
+        $jobs_array = $_POST['jobs'] ?? [];
+        $data_to_save = serialize($jobs_array);
+        
+        // Update job_postings
+        $update = [
+            "title" => $app->xss($_POST['title']),
+            "description" => $app->xss($_POST['description']),
+            "requirements" => $app->xss($_POST['requirements']),
+            "interest" => $app->xss($_POST['interest']),
+            "jobs" => $data_to_save,
+            "stores" => $input_stores,
+        ];
+        $app->update("job_postings", $update, ["id" => $data['id']]);
+
+        // Update hoặc Insert recruitment_proposal (cần WHERE job_posting_id)
+        $recruitment_proposal = [
+            "form" => $_POST['form'] ?? 0,
+            "target" => $_POST['category'] ?? 0,
+            "workflows" => $_POST['workflows'] ?? 0,
+            "active" => $GetRecruit['active'] ?? $jatbi->active(),
+            "status" => 1,
+        ];
+
+        if ($GetRecruit && !empty($GetRecruit['id'])) {
+            // Update đúng 1 record liên kết với job
+            $app->update("recruitment_proposal", $recruitment_proposal, ["id" => $GetRecruit['id']]);
+            $recruitment_id = $GetRecruit['id'];
+        } else {
+            $recruitment_proposal["job_posting_id"] = $data['id'];
+            $app->insert("recruitment_proposal", $recruitment_proposal);
+            $recruitment_id = $app->id();
+        }
+
+        // Nếu đủ form/target/workflows thì tạo/update proposal
+        if ($recruitment_proposal['form'] > 0 && $recruitment_proposal['target'] > 0 && $recruitment_proposal['workflows'] > 0) {
+            // Kiểm tra proposal đã tồn tại cho job này chưa
+            $checkProposal = $app->get("proposals", ["id", "active", "workflows", "account"], ["job_posting_id" => $data['id'], "deleted" => 0]);
+
+            $user_id = $app->getSession("accounts")['id'];
+            $user_name = $app->getSession("accounts")['name'] ?? '';
+
+            // Chuẩn dữ liệu proposal
+            $proposalData = [
+                "type" => 3,
+                "form" => $recruitment_proposal['form'],
+                "workflows" => $recruitment_proposal['workflows'],
+                "category" => $recruitment_proposal['target'],
+                "price" => 0,
+                "reality" => 0,
+                "date" => date("Y-m-d"),
+                "modify" => date("Y-m-d H:i:s"),
+                "account" => $user_id,
+                "status" => 0,
+                "stores" => $jatbi->stores('ID'),
+                "stores_id" => $jatbi->stores('ID'),
+                "active" => $jatbi->active(),
+                "content" => 'Đề xuất tuyển dụng: ' . $app->xss($_POST['title']),
+                "job_posting_id" => $data['id'],
+            ];
+
+            if ($checkProposal && !empty($checkProposal['id'])) {
+                // Update existing
+                $app->update("proposals", $proposalData, ["id" => $checkProposal['id']]);
+                $ProposalID = $checkProposal['id'];
+                $proposalData['active'] = $checkProposal['active'];
+                $jatbi->logs('proposal', 'proposal-update', $proposalData);
             } else {
-                echo json_encode($error);
+                // Insert new
+                $proposalData['create'] = date("Y-m-d H:i:s");
+                $proposalData['code'] = time();
+                $proposalData['active'] = $proposalData['active']; // giữ giá trị active đã sinh
+                $app->insert("proposals", $proposalData);
+                $ProposalID = $app->id();
+                $jatbi->logs('proposal', 'proposal-create', $proposalData);
+            }
+
+            // Ghi người tạo (nếu chưa có)
+            $app->insert("proposal_accounts", [
+                "account" => $user_id,
+                "proposal" => $ProposalID,
+                "date" => date("Y-m-d H:i:s"),
+            ]);
+
+            // Lấy process và tạo bước đầu nếu có
+            $process = $getprocess->workflows($ProposalID, $proposalData['account']);
+
+            if (!empty($process[0])) {
+                $app->update("proposal_process", ["deleted" => 1], ["proposal" => $ProposalID, "workflows" => $proposalData['workflows']]);
+
+                $proposal_process = [
+                    "proposal" => $ProposalID,
+                    "workflows" => $proposalData['workflows'],
+                    "date" => date("Y-m-d H:i:s"),
+                    "account" => $user_id,
+                    "node" => $process[0]['node_id'],
+                    "approval" => 1,
+                    "approval_date" => date("Y-m-d H:i:s"),
+                ];
+                $app->insert("proposal_process", $proposal_process);
+                $proposal_process_ID = $app->id();
+
+                $app->insert("proposal_logs", [
+                    "proposal" => $ProposalID,
+                    "date" => date("Y-m-d H:i:s"),
+                    "account" => $user_id,
+                    "content" => 'Gửi đề xuất',
+                    "process" => $proposal_process_ID,
+                    "data" => json_encode($proposal_process),
+                ]);
+
+                $app->update("proposals", [
+                    "status" => 1,
+                    "process" => $process[0]['node_id'],
+                    "modify" => date("Y-m-d H:i:s"),
+                ], ["id" => $ProposalID]);
+
+                // Gửi notification nếu có approver tiếp theo
+                if (!empty($process[1]['approver_account_id'])) {
+                    $content_notification = $user_name . ' đề xuất: ' . $proposalData['content'];
+                    $jatbi->notification($user_id, $process[1]['approver_account_id'], 'Đề xuất #' . $ProposalID, $content_notification, '/proposal/views/' . $proposalData['active'], '');
+
+                    // Ghi đề tài khoản người duyệt
+                    $app->insert("proposal_accounts", [
+                        "account" => $process[1]['approver_account_id'],
+                        "proposal" => $ProposalID,
+                        "date" => date("Y-m-d H:i:s"),
+                    ]);
+                }
             }
         }
+
+        $jatbi->logs('job_postings', 'edit', $update);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công"), 'url' => $_SERVER['HTTP_REFERER']]);
     })->setPermissions(['job_postings.edit']);
 
     // Route: Xóa tin tuyển dụng
