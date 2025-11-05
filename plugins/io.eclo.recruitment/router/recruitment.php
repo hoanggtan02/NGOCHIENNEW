@@ -54,7 +54,7 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
             $searchValue = isset($_POST['search']['value']) ? $app->xss($_POST['search']['value']) : '';
             $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
-            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
 
             $status = isset($_POST['status']) ? [$_POST['status'], $_POST['status']] : '';

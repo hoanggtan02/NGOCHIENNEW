@@ -212,7 +212,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
     $app->router("/personnels-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Thêm Nhân viên");
         if ($app->method() === 'GET') {
-            // ... (Phần GET không thay đổi)
             $vars['permissions'] = $app->select("permission", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A"]);
             $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
             $vars['offices'] = array_merge([["value" => "", "text" => $jatbi->lang("Chọn")]], $app->select("offices", ["id (value)", "name (text)"], ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]));
@@ -299,7 +298,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "total_accrued" => 0,
                     "carried_over" => 0,
                     "days_used" => 0,
-                    // "notes" => "Tạo tự động khi thêm mới nhân viên",
                     "account" => $app->getSession("accounts")['id'] ?? 0,
                     "date" => date("Y-m-d H:i:s"),
                     "deleted" => 0,
@@ -308,22 +306,24 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
                 $app->insert("annual_leave", $annual_leave_data);
 
+                $insert = [
+                    "personnels" => $new_personnel_id,
+                    "offices" => $app->xss($_POST['office']),
+                    "workday" => $app->xss($_POST['workday']),
+                    "date" => date("Y-m-d H:i:s"),
+                    "user" => $app->getSession("accounts")['id'] ?? null,
+                ];
+                $app->insert("personnels_contract", $insert);
+
                 return $new_personnel_id;
             });
-
-            if ($result) {
-                $jatbi->logs('personnels', 'add', $insert_data);
-                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Thêm mới nhân viên thành công (đã tạo phép năm)."), 'reload' => true]);
-            } else {
-                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra, không thể thêm nhân viên hoặc tạo phép năm.")]);
-            }
 
             $personnel_id = $app->id();
             if (count($stores) > 1) {
                 $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
                 $input_stores = isset($_POST['stores']) ? $_POST['stores'] : [];
                 if (!is_array($input_stores)) {
-                    $input_stores = [$input_stores]; // ép chuỗi thành mảng
+                    $input_stores = [$input_stores];
                 }
                 $input_stores = array_map([$app, 'xss'], $input_stores);
                 if (empty($input_stores)) {
@@ -6164,7 +6164,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['time-late']);
 
-    $app->router('/timekeeping-time-late-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template,$setting) {
+    $app->router('/timekeeping-time-late-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         $id = (int) $vars['id'];
         $vars['title'] = $jatbi->lang("Sửa Ghi Nhận Đi trễ/Về sớm");
 
@@ -8831,11 +8831,15 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
-            $draw = intval($_POST['draw'] ?? 0);
-            $start = intval($_POST['start'] ?? 0);
-            $length = intval($_POST['length'] ?? 10);
-            $searchValue = $_POST['search']['value'] ?? '';
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : ($setting['site_page'] ?? 10);
+            $searchValue = isset($_POST['search']['value']) ? $app->xss($_POST['search']['value']) : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
             $year = $_POST['year'] ?? date('Y');
+
+
 
             $join = [
                 "[>]personnels" => ["profile_id" => "id"],
@@ -8848,7 +8852,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                     "personnels.stores" => $accStore,
                 ],
                 "LIMIT" => [$start, $length],
-                "ORDER" => ["personnels.name" => "ASC"]
+                "ORDER" => [$orderName => strtoupper($orderDir)],
             ];
             if ($searchValue) {
                 $where["AND"]["OR"] = ["personnels.name[~]" => $searchValue, "personnels.code[~]" => $searchValue];
@@ -8971,12 +8975,12 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         if ($app->method() === 'GET') {
             $vars['data'] = $data;
-            $vars['personnels'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            $vars['profile_id'] = $app->select("personnels", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
             $vars['furloughs'] = $app->select("furlough_categorys", ["id(value)", "name(text)"], ["deleted" => 0]);
             echo $app->render($template . '/hrm/annual_leave-post.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
-            $profile_id = (int) $_POST['personnels'];
+            $profile_id = (int) $_POST['profile_id'];
             $furlough_id = (int) $_POST['furlough_id'];
             $year = (int) $_POST['year'];
 
@@ -8985,7 +8989,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 return;
             }
 
-            // Kiểm tra trùng lặp (trừ bản ghi hiện tại)
             if ($app->has("annual_leave", ["id[!]" => $data['id'], "profile_id" => $profile_id, "furlough_id" => $furlough_id, "year" => $year])) {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Đã tồn tại cấu hình phép cho nhân viên này trong năm {$year}")]);
                 return;
@@ -10393,7 +10396,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
 
     // Route MỚI để xem hợp đồng bằng ID NHÂN VIÊN
-$app->router("/contract-view-personnel/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
+    $app->router("/contract-view-personnel/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Hợp đồng lao động");
 
         if ($app->method() === 'GET') {
@@ -10423,7 +10426,7 @@ $app->router("/contract-view-personnel/{id}", ['GET', 'POST'], function ($vars) 
                 $vars['contract_type_name'] = $setting['personnels_contracts'][$vars['data']['type']]['name'] ?? 'Không xác định';
                 $vars['dataSalary'] = $app->get("personnels_contract_salary", "*", [
                     "deleted" => 0,
-                    "contract" => $vars['data']['id'], 
+                    "contract" => $vars['data']['id'],
                     "status" => 0,
                     "ORDER" => ["id" => "DESC"]
                 ]);
