@@ -30,8 +30,8 @@
           <!-- CỘT 2 -->
           <div class="col-lg-6">
             <div class="d-flex flex-column gap-2">
-              <div><span class="text-gray-600">Ngày phỏng vấn:</span> <span class="fw-semibold"><?=date('d/m/Y', strtotime($data['interview']))?></span></div>
-              <div><span class="text-gray-600">Ngày làm việc:</span> <span class="fw-semibold"><?=date('d/m/Y', strtotime($data['workday']))?></span></div>
+              <div><span class="text-gray-600">Ngày phỏng vấn:</span> <span class="fw-semibold"> <?= !empty($data['interview']) ? date('d/m/Y', strtotime($data['interview'])) : '' ?></span></div>
+              <div><span class="text-gray-600">Ngày làm việc:</span> <span class="fw-semibold"><?=date('d/m/Y', strtotime($data['workday']?? ''))?></span></div>
               <div><span class="text-gray-600">Trình độ:</span> <span class="fw-semibold"><?=$data['degree'] ?? ''?></span></div>
               <div><span class="text-gray-600">Bằng cấp:</span> <span class="fw-semibold"><?=$data['certificate'] ?? ''?></span></div>
               <div><span class="text-gray-600">Sức khỏe:</span> <span class="fw-semibold"><?=$data['health'] ?? ''?></span></div>

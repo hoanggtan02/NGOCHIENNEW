@@ -41,7 +41,7 @@
                             <td><strong>Ngày bắt đầu làm việc:</strong></td>
                             <td style="border-bottom: 1px dotted #000;"><?= !empty($data['work_start_date']) ? date('d/m/Y', strtotime($data['work_start_date'])) : '' ?></td>
                             <td><strong>Ngày đánh giá:</strong></td>
-                            <td style="border-bottom: 1px dotted #000;">.../ ... / ......</td>
+                            <td style="border-bottom: 1px dotted #000;"><?= date('d/m/Y') ?></td>
                         </tr>
                     </tbody>
                 </table>

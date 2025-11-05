@@ -10346,9 +10346,9 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         if (!empty($personnel_data['office'])) {
             $office = $app->get("offices", ["name"], ["id" => $personnel_data['office']]);
-            $personnel_data['office_name'] = $office['name'] ?? 'N/A';
+            $personnel_data['office_name'] = $office['name'] ?? '';
         } else {
-            $personnel_data['office_name'] = 'N/A';
+            $personnel_data['office_name'] = '';
         }
 
 
@@ -10367,16 +10367,16 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
             if (!empty($latest_contract['position'])) {
                 $position = $app->get("hrm_positions", ["name"], ["id" => $latest_contract['position']]);
-                $personnel_data['position_name'] = $position['name'] ?? 'N/A';
+                $personnel_data['position_name'] = $position['name'] ?? '';
             } else {
-                $personnel_data['position_name'] = 'N/A';
+                $personnel_data['position_name'] = '';
             }
 
 
             $personnel_data['work_start_date'] = $latest_contract['workday'] ?? $personnel_data['date'];
         } else {
 
-            $personnel_data['position_name'] = 'N/A';
+            $personnel_data['position_name'] = '';
             $personnel_data['work_start_date'] = $personnel_data['date'];
         }
 
