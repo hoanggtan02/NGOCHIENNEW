@@ -371,6 +371,8 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         // ===== GET: Load form =====
         if ($app->method() === 'GET') {
             $vars['data'] = $app->get("personnels", "*", ["id" => $vars['id'], "deleted" => 0]);
+            $contract_data = $app->get("personnels_contract", ["workday", "offices"], ["personnels" => $vars['id']]);
+            $vars['data']['workday'] = $contract_data['workday'];
             if (!$vars['data']) {
                 echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
                 return;
@@ -455,7 +457,13 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
 
             $app->update("personnels", $update_personnel, ["id" => $vars['id']]);
-
+            $update_contract = [
+                "workday" => $app->xss($_POST['workday']),
+                "date" => date("Y-m-d H:i:s"),
+                "user" => $app->getSession("accounts")['id'] ?? null,
+            ];
+            // Cập nhật dựa trên personnel_id
+            $app->update("personnels_contract", $update_contract, ["personnels" => $vars['id']]);
             // ===== Cập nhật bảng accounts liên kết =====
             $account = $app->get("accounts", "*", ["id" => $data['account'], "deleted" => 0]);
             if ($account) {
