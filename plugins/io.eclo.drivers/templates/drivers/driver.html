@@ -29,10 +29,11 @@
                             <?=$app->component('select', [
                                 "name" => 'users',
                                 "placeholder" => $jatbi->lang('Thông tin tài xế'),
-                                "class" => "filter-name",
-                                "options" => $users ?? [],
-                                "selected" => $_GET['users'] ?? ''
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/api/drivers-search" data-method="POST" data-keyword="keyword"',
+                                "class" => 'filter-name',
+
                             ])?>
+
                             <?=$app->component('input',[
                                 "name"=>'date',
                                 "placeholder"=>$jatbi->lang("Ngày"),

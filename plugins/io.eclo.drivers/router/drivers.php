@@ -33,27 +33,12 @@ if (isset($session['id'])) {
     }
 }
 
-$app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $setting, $stores,$template, $accStore) {
+$app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $setting, $stores, $template, $accStore) {
 
-    $app->router('/driver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/driver', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thông tin tài xế");
-            $vars['users'] = array_merge(
-                [['value' => '', 'text' => $jatbi->lang('Tất cả')]],
-                array_map(
-                    fn($u) => ['value' => $u['value'], 'text' => $u['text'] . ' - ' . $u['phone']],
-                    $app->select(
-                        "accounts",
-                        ["id(value)", "name(text)", "phone"],
-                        ["deleted" => 0, "status" => "A", "ORDER" => ["name" => "ASC"]]
-                    )
-                )
-            );
-
-
             echo $app->render($template . '/drivers/driver.html', $vars);
-
-            // Xử lý yêu cầu POST: Lọc và trả về dữ liệu JSON cho bảng
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
 
@@ -153,21 +138,28 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
                     "status" => ($data['status'] == 0 ? '<span class="text-danger fw-bold">' . $jatbi->lang("Chưa thanh toán") . '</span>' : '<span class="text-success fw-bold">' . $jatbi->lang("Đã thanh toán") . '</span>'),
                     "accounts" => $data['creator_name'],
                     "action" => $app->component("action", [
-                        "button" => [
-                            [
+                        "button" => array_filter([
+                            ($data['status'] ?? 0) == 0 ? [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Sửa"),
                                 'permission' => ['driver.edit'],
-                                'action' => ['data-url' => '/drivers/driver-edit' . '/' . $data['id'], 'data-action' => 'modal']
-                            ],
+                                'action' => [
+                                    'data-url' => '/drivers/driver-edit/' . $data['id'],
+                                    'data-action' => 'modal'
+                                ]
+                            ] : null,
                             [
                                 'type' => 'button',
                                 'name' => $jatbi->lang("Xóa"),
                                 'permission' => ['driver.deleted'],
-                                'action' => ['data-url' => '/drivers/driver/deleted?box=' . $data['id'], 'data-action' => 'modal']
+                                'action' => [
+                                    'data-url' => '/drivers/driver/deleted?box=' . $data['id'],
+                                    'data-action' => 'modal'
+                                ]
                             ],
-                        ]
+                        ])
                     ]),
+
                 ];
             });
 
@@ -180,7 +172,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['driver']);
 
-    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
+    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
         if ($app->method() === 'GET') {
 
             $vars['title'] = $jatbi->lang("Đơn hàng");
@@ -396,7 +388,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['invoices']);
 
-    $app->router('/driver-payment', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/driver-payment', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thanh toán tài xế");
             $accounts_db = $app->select("accounts", ['id(value)', 'name(text)'], ['deleted' => 0, 'status' => 'A']);
@@ -543,7 +535,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     })->setPermissions(['driver-payment']);
 
-    $app->router("/driver-payment-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting) {
+    $app->router("/driver-payment-delete", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa phiếu thanh toán");
 
         if ($app->method() === 'GET') {
@@ -574,12 +566,12 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
                 $jatbi->logs('drivers_payment', 'delete', $datas);
                 $jatbi->trash('/driver-payment/restore', "Xóa phiếu thanh toán: " . implode(', ', $log_names), ["database" => 'drivers_payment', "data" => $box_ids]);
 
-                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công"), 'load' => 'true']);
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
             } else {
                 echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xảy ra hoặc không tìm thấy dữ liệu")]);
             }
         }
-    })->setPermissions(['driver-payment.delete']);
+    })->setPermissions(['driver-payment.deleted']);
 
     $app->router("/driver-payment-edit/{id}", 'GET', function ($vars) use ($app, $jatbi, $template, $stores, $accStore) {
         $vars['title'] = $jatbi->lang("Sửa Phiếu thanh toán tài xế");
@@ -882,8 +874,8 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     });
 
-        ob_start();
-        $app->router('/driver-payment/driver-excel', 'GET', function ($vars) use ($app, $jatbi, $setting) {
+    ob_start();
+    $app->router('/driver-payment/driver-excel', 'GET', function ($vars) use ($app, $jatbi, $setting) {
         try {
             $searchValue = $_GET['search']['value'] ?? ($_GET['name'] ?? '');
             $filter_user = $_GET['user'] ?? '';
@@ -1030,7 +1022,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         }
     });
 
-    $app->router('/other_commission_costs', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$template ,$setting) {
+    $app->router('/other_commission_costs', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Thanh toán hoa hồng khác");
 
@@ -1321,13 +1313,19 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
             ["deleted" => 0, "status" => 'A']
         );
 
+        $accountants_data = array_merge(
+            [["id" => "", "code" => "", "name" => ""]],
+            $accountants_data ?? []
+        );
+
         $vars['accountants'] = array_map(function ($item) {
             return [
                 'value' => $item['id'],
-                'text' => $item['code'] . ' - ' . $item['name']
+                'text'  => ($item['code'] && $item['name'])
+                    ? $item['code'] . ' - ' . $item['name']
+                    : '' 
             ];
         }, $accountants_data);
-
         $drivers_db = $app->select(
             "drivers",
             ["[>]accounts" => ["user" => "id"]],
@@ -1491,6 +1489,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         $data = $_SESSION['drivers'][$action] ?? [];
         $error = [];
         // Validate required fields
+
         if (empty($data['date']) || empty($data['driver']) || empty($data['debt']) || empty($data['has']) || empty($data['stores']['id'])) {
             $error = ["status" => 'error', 'content' => $jatbi->lang("Lỗi trống")];
         }
@@ -1812,7 +1811,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công')]);
     });
 
-    $app->router('/other_commission_costs-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/other_commission_costs-update/add/cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
         if ($app->method() === 'GET') {
             echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
@@ -1824,7 +1823,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
     });
 
 
-    $app->router('/other_commission_costs-update/add/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+    $app->router('/other_commission_costs-update/add/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi,$setting ,$template) {
         if ($app->method() === 'GET') {
             $vars['url'] = "/drivers/other_commission_costs";
             echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
@@ -1890,5 +1889,4 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
             }
         }
     });
-    
 })->middleware(names: 'login');

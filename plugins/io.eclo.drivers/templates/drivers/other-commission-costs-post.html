@@ -22,7 +22,7 @@
                                     "value" => $data['date'] ?? date("Y-m-d"), 
                                     "required" => true,
                                     "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
-                                            data-url="/drivers/other_commission_costs-update/add/date" data-load="this"'
+                                            data-url="/drivers/other_commission_costs-update/add/date"'
                                 ])?>
                             </div>
                             <div class="col-12">
@@ -32,7 +32,7 @@
                                     'required' => true,
                                     'options' => $drivers ?? [], 
                                     'selected' => $data['driver'] ?? '', 
-                                    'attr' => 'data-action="change" data-load="this" data-selector="[data-pos]"
+                                    'attr' => 'data-action="change" data-selector="[data-pos]"
                                                 data-url="/drivers/other_commission_costs-update/add/driver"
                                                 data-form=\'{"value": "this.val"}\''
                                 ])?>
@@ -47,7 +47,7 @@
                                     "value" => $data['price'] ?? '',
                                     "attr" => 'data-number="money" data-currency="" data-decimals="0" data-thousands="," data-decimal="." 
                                             data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
-                                            data-url="/drivers/other_commission_costs-update/add/price" data-load="this"'
+                                            data-url="/drivers/other_commission_costs-update/add/price"'
                                 ])?>
                             </div>
                             <div class="col-md-6">
@@ -58,7 +58,7 @@
                                     "required" => true,
                                     "selected" => $data['debt'] ?? '',
                                     "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\'data-selector="[data-pos]"
-                                            data-url="/drivers/other_commission_costs-update/add/debt" data-load="this"'
+                                            data-url="/drivers/other_commission_costs-update/add/debt"'
                                 ])?>
                             </div>
                             <div class="col-md-6">
@@ -69,7 +69,7 @@
                                     "required" => true,
                                     "selected" => $data['has'] ?? '',
                                     "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\'data-selector="[data-pos]"
-                                        data-url="/drivers/other_commission_costs-update/add/has" data-load="this"'
+                                        data-url="/drivers/other_commission_costs-update/add/has"'
                                 ])?>
                             </div>
                             <div class="col-12">
@@ -78,7 +78,7 @@
                                     "placeholder" => $jatbi->lang("Số phiếu"),
                                     "value" => $data['ballot'] ?? '',
                                     "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
-                                        data-url="/drivers/other_commission_costs-update/add/ballot" data-load="this"'
+                                        data-url="/drivers/other_commission_costs-update/add/ballot"'
                                 ])?>
                             </div>
                             <?php if(count($stores) > 1){?>
@@ -90,7 +90,7 @@
                                     "required" => true,
                                     "selected" => $data['stores']['id'] ?? '',
                                     "attr" => 'data-action="change" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
-                                            data-url="/drivers/other_commission_costs-update/add/stores" data-load="this"'
+                                            data-url="/drivers/other_commission_costs-update/add/stores"'
                                 ])?>
                             </div>
                             <?php } ?>
@@ -99,7 +99,7 @@
                                     "name" => "content", "placeholder" => $jatbi->lang("Nội dung"),
                                     "value" => $data['content'] ?? '',
                                     "attr" => 'data-action="blur" data-form=\'{"value": "this.val"}\' data-selector="[data-pos]"
-                                            data-url="/drivers/other_commission_costs-update/add/content" data-load="this"'
+                                            data-url="/drivers/other_commission_costs-update/add/content"'
                                 ])?>
                             </div>
                         </div>
