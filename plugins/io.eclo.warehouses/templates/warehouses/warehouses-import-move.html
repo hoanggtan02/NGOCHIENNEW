@@ -30,46 +30,35 @@
                                 "selected" => $app->xss($_GET['stores'] ?? ''),
                                 "class" => 'filter-name',
                                 "attr" => 'data-width="100%"',
-                                "options" => $stores_full ?? []
+                                "options" => $stores_full ?? [],
+                                "id" => "stores",
                             ])?>
-                            <div class="mb-2 fw-bold" data-fillter>
-                            <?php if($branch_receive_options){ 
-                                echo "Tất cả quầy hàng chuyển:<br>";
-                                foreach ($branch_receive_options as $branch) {
-                                    echo $branch['text'] . "<br>";
-                                }
-                            }else{ ?>
                             <?=$app->component('select',[
                                 "name"=>'branch',
                                 "placeholder"=>$jatbi->lang("Quầy hàng chuyển"),
                                 "selected" => $app->xss($_GET['branch'] ?? ''),
                                 "class" => 'filter-name',
-                                "attr" => 'data-width="100%"',
+                                "attr" => 'data-width="100%" data-parent="#stores" 
+                                        data-load="true" 
+                                        data-url="/api/branch" 
+                                        data-method="POST" 
+                                        data-keyword="keyword" 
+                                        data-max-length="1" ',
                                 "options" => $branchs ?? []
                             ])?>
-                            <?php } ?>
-                            </div>
                             <?=$app->component('select',[
                                 "name"=>'stores_receive',
-                                "placeholder"=>$jatbi->lang("Chuyển đến cửa hàng"),
-                                "selected" => $app->xss($_GET['stores'] ?? ''),
+                                "placeholder"=>$jatbi->lang("Chuyển từ cửa hàng"),
+                                "selected" => $app->xss($_GET['stores_receive'] ?? ''),
                                 "class" => 'filter-name',
-                                "attr" => 'data-width="100%" data-action="change" data-load="this" 
-                                            data-url="/stores1" data-selector="[data-fillter]"
-                                            data-form=\'{"value": "this.val"}\'',
-                                "options" => $stores ?? [],
-                                "id" => "stores_receive",    
+                                "attr" => 'data-width="100%"',
+                                "options" => $stores_full ?? [],
+                                "id" => "stores_receive",
                             ])?>
-                            <?php if(count($accStore) > 1){ 
-                            $branchs = $app->select("branch",["id(value)","name(text)","code"],["status"=>'A',"deleted"=>0,"
-                                stores"=>$data['stores'] ?? null ]);
-                            }else{
-                                $branchs = $app->select("branch",["id(value)","name(text)","code"],["stores"=>$accStore,"deleted"=> 0,"status"=>'A']);
-                            }?>
                             <?=$app->component('select',[
                                 "name"=>'branch_receive',
                                 "placeholder"=>$jatbi->lang("Quầy hàng đến"),
-                                "selected" => $data['branchss'] ?? "", 
+                                "selected" => $app->xss($_GET['branch_receive'] ?? ''),
                                 "class" => 'filter-name',
                                 "attr" => 'data-width="100%" data-parent="#stores_receive" 
                                 data-load="true" 
