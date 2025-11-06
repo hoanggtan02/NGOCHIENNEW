@@ -330,7 +330,7 @@
 					    				</div>
 					    			</div>
 					    			<?php } ?>
-					    			<?php if($data['point']>0){
+					    			<?php if(($data['point'] ?? 0 ) >0){
 					    				$getPoint = $database->get("point","*",["id"=>$data['point'],"status"=>"A"]);
 					    			?>
 					    				<?php if($getPoint['no_discount']==1 && $discount==0 || $getPoint['no_discount']==0){?>
@@ -431,7 +431,7 @@
                             </div>
 
                             <button class="btn btn-eclo rounded-circle p-0 ms-2" type="button" data-action="modal"
-                                data-url="/customers/customers-add/orders/<?=$action?>" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                data-url="/customers/customers-add-v2/orders/<?=$action?>" style="width: 40px; height: 40px; flex-shrink: 0;">
                                 <i class="ti ti-plus fs-4"></i>
                             </button>
                         </div>

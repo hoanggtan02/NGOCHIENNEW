@@ -17,6 +17,7 @@ $template = __DIR__ . '/../templates';
 $jatbi = $app->getValueData('jatbi');
 $common = $jatbi->getPluginCommon('io.eclo.proposal');
 $setting = $app->getValueData('setting');
+$account = $app->getValueData('account');
 $stores_json = $app->getCookie('stores') ?? json_encode([]);
 $stores = json_decode($stores_json, true);
 $session = $app->getSession("accounts");
@@ -35,7 +36,8 @@ if (isset($session['id'])) {
         $accStore[$itemStore['value']] = $itemStore['value'];
     }
 }
-$app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $setting, $accStore, $stores, $template) {
+
+$app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $setting, $accStore, $stores,$template, $account) {
     // Chứng từ bán hàng 
     $app->router('/license_sale', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
@@ -1222,7 +1224,8 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices-cancel']);
 
-    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
+
+    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template, $accStore, $account) {
         $vars['title'] = $jatbi->lang("Đơn hàng");
         if ($app->method() === 'GET') {
             $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
@@ -1242,12 +1245,20 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
 
             $filter_customers = isset($_POST['customers']) ? trim($_POST['customers']) : '';
             $filter_date = isset($_POST['date']) ? trim($_POST['date']) : '';
-            $filter_stores = isset($_POST['stores']) ? trim($_POST['stores']) : '';
+            $filter_stores = isset($_POST['stores']) ? trim($_POST['stores']) : $accStore;
             $filter_branch = isset($_POST['branch']) ? trim($_POST['branch']) : '';
             $filter_user = isset($_POST['user']) ? trim($_POST['user']) : '';
             $filter_status = isset($_POST['status']) ? trim($_POST['status']) : '';
             $filter_personnels = isset($_POST['personnels']) ? trim($_POST['personnels']) : '';
-
+            $search_acc = '';
+            $lock_or_unlock = 0;
+            if (($app->getSession("accounts")['your_self'] ?? 0) == 0) {
+                $search_acc = $filter_user ? [$filter_user, $filter_user] : '';
+                $lock_or_unlock = [0, 1];
+            } else {
+                $search_acc = [$account['id'], $account['id']];
+                $lock_or_unlock = 0;
+            }
             // --- 2. Xây dựng truy vấn với JOIN ---
             $joins = [
                 "[>]customers" => ["customers" => "id"],
@@ -1255,22 +1266,26 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
                 "[>]stores" => ["stores" => "id"],
                 "[>]branch" => ["branch" => "id"]
             ];
-
+            
             $where = [
                 "AND" => [
                     "invoices.deleted" => 0,
                     "invoices.type" => [1, 2],
                     "invoices.cancel" => [0, 1],
+                    'invoices.lock_or_unlock' => $lock_or_unlock,
                 ],
             ];
 
             // Áp dụng bộ lọc
             if (!empty($searchValue)) {
                 $where['AND']['OR'] = [
-                    "invoices.code[~]" => $searchValue,
+                    "invoices.id[~]" => $searchValue,
                     "invoices.notes[~]" => $searchValue,
                     "customers.name[~]" => $searchValue,
                 ];
+            }
+            if (!empty($search_acc)) {
+                $where["AND"]["invoices.user[<>]"] = $search_acc;
             }
             if (!empty($filter_customers)) {
                 $where['AND']['invoices.customers'] = $filter_customers;
@@ -1281,12 +1296,16 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             if (!empty($filter_status)) {
                 $where['AND']['invoices.status'] = $filter_status;
             }
-            if (!empty($filter_user)) {
-                $where['AND']['invoices.user'] = $filter_user;
-            }
+            // if (!empty($filter_user)) {
+            //     $where['AND']['invoices.user'] = $filter_user;
+            // }
             if (!empty($filter_stores)) {
+                if (!is_array($filter_stores)) $filter_stores = [$filter_stores];
                 $where['AND']['invoices.stores'] = $filter_stores;
+            } else {
+                $where['AND']['invoices.stores'] = $accStore;
             }
+
             if (!empty($filter_personnels)) {
                 $invoice_ids = $app->select("invoices_personnels", "invoices", ["personnels" => $filter_personnels]);
                 $where['AND']['invoices.id'] = $invoice_ids;
@@ -1381,7 +1400,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
 
                 $datas[] = [
                     "checkbox" => ($app->component("box", ["data" => $data['id'] ?? '']) ?? ''),
-                    "ma_hoa_don" => '<a class="text-nowrap pjax-load" href="/invoices/invoices-views/' . $data['id'] . '/">#' . ($setting['ballot_code']['invoices'] ?? '') . '-' . $data['code'] . $data['id'] . '</a>',
+                    "ma_hoa_don" => '<a class="text-nowrap pjax-load" href="/invoices/invoices-views/' . $data['id'] . '">#' . ($setting['ballot_code']['invoices'] ?? '') . '-' . $data['code'] . $data['id'] . '</a>',
                     "ma_doan" => $data['code_group'] ?? '',
                     "khach_hang" => $data['customer_name'] ?? "",
                     "san_pham_mua" => $products_html ?? "",
@@ -1495,7 +1514,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices']);
 
-    $app->router('/invoices-code-group/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router('/invoices-code-group/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = $vars['id'] ?? 0;
 
         // Lấy dữ liệu hóa đơn để làm việc
@@ -1509,7 +1528,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         if ($app->method() === 'GET') {
             // --- HIỂN THỊ FORM ---
             $vars['data'] = $data;
-            echo $app->render($setting['template'] . '/invoices/code-group-edit.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/invoices/code-group-edit.html', $vars, $jatbi->ajax());
         } elseif ($app->method() === 'POST') {
             // --- XỬ LÝ CẬP NHẬT ---
             $app->header(['Content-Type' => 'application/json']);
@@ -2528,29 +2547,54 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
     })->setPermissions(['invoices.cancel.confirm']);
 
     $app->router('/returns-add/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
+
         $vars['title'] = $jatbi->lang("Tạo đơn hàng trả");
         $dispatch = "returns";
         $action = $vars['id'];
         $vars['action'] = $action;
         $vars['dispatch'] = $dispatch;
-        $getInvoices = $app->get("invoices", ["id", "stores", "discount", "discount_customers", "code_group", "type_payments", "customers", "discount_card", 'branch', 'surcharge'], ["id" => $app->xss($vars['id']), "deleted" => 0, "stores" => $accStore]);
+
+        // ====== LẤY COOKIE HIỆN TẠI THEO DISPATCH ======
+        $cookieData = $app->getCookie($dispatch);
+        $cookies = $cookieData ? json_decode($cookieData, true) : [];
+        if (!is_array($cookies)) $cookies = [];
+
+        $getInvoices = $app->get("invoices", [
+            "id", "stores", "discount", "discount_customers", "code_group",
+            "type_payments", "customers", "discount_card", 'branch', 'surcharge'
+        ], [
+            "id" => $app->xss($vars['id']),
+            "deleted" => 0,
+            "stores" => $accStore
+        ]);
+
         if (!empty($getInvoices)) {
-            $getProducts = $app->select("invoices_products", ["id", "products", "nearsightedness", "colors", "categorys", "vendor", "amount", "price_old", "discount", "discount_price", "vat", "vat_type", "vat_price"], ["invoices" => $getInvoices['id'], "deleted" => 0]);
+            $getProducts = $app->select("invoices_products", [
+                "id", "products", "nearsightedness", "colors", "categorys", "vendor",
+                "amount", "price_old", "discount", "discount_price", "vat", "vat_type", "vat_price"
+            ], ["invoices" => $getInvoices['id'], "deleted" => 0]);
 
-            if (!isset($_SESSION[$dispatch][$action]['invoices'])) {
+            // ====== GIỐNG Y SESSION CŨ ======
+            if (!isset($cookies[$action]['invoices'])) {
+                $cookies[$action]['invoices'] = $getInvoices['id'];
+                $cookies[$action]['status'] = 1;
+                $cookies[$action]['type'] = 3;
+                $cookies[$action]['stores'] = $getInvoices['stores'];
+                $cookies[$action]['branch'] = $getInvoices['branch'];
+                $cookies[$action]['discount'] = $getInvoices['discount'];
+                $cookies[$action]['discount_customers'] = $getInvoices['discount_customers'];
+                $cookies[$action]['code_group'] = $getInvoices['code_group'];
 
-                $_SESSION[$dispatch][$action]['invoices'] = $getInvoices['id'];
-                $_SESSION[$dispatch][$action]['status'] = 1;
-                $_SESSION[$dispatch][$action]['type'] = 3;
-                $_SESSION[$dispatch][$action]['stores'] = $getInvoices['stores'];
-                $_SESSION[$dispatch][$action]['branch'] = $getInvoices['branch'];
-                $_SESSION[$dispatch][$action]['discount'] = $getInvoices['discount'];
-                $_SESSION[$dispatch][$action]['discount_customers'] = $getInvoices['discount_customers'];
-                $_SESSION[$dispatch][$action]['code_group'] = $getInvoices['code_group'];
-                $customers = $app->get("customers", ["id", "name", "phone", "email"], ["id" => $app->xss($getInvoices['customers'])]);
+                $customers = $app->get("customers", ["id", "name", "phone", "email"], [
+                    "id" => $app->xss($getInvoices['customers'])
+                ]);
                 if (!empty($customers)) {
-                    $getCard = $app->get("customers_card", "*", ["customers" => $getInvoices['discount_card'], "deleted" => 0, "ORDER" => ["discount" => "DESC", "id" => "DESC"]]);
-                    $_SESSION[$dispatch][$action]['customers'] = [
+                    $getCard = $app->get("customers_card", "*", [
+                        "customers" => $getInvoices['discount_card'],
+                        "deleted" => 0,
+                        "ORDER" => ["discount" => "DESC", "id" => "DESC"]
+                    ]);
+                    $cookies[$action]['customers'] = [
                         "id" => $customers['id'],
                         "name" => $customers['name'],
                         "phone" => $customers['phone'],
@@ -2558,14 +2602,20 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
                         "card" => $getCard,
                     ];
                     if (!empty($getCard)) {
-                        $_SESSION[$dispatch][$action]['discount_customers'] = $getCard['discount'];
-                        $_SESSION[$dispatch][$action]['discount_card'] = $getCard['id'];
+                        $cookies[$action]['discount_customers'] = $getCard['discount'];
+                        $cookies[$action]['discount_card'] = $getCard['id'];
                     }
                 }
+
                 foreach (($getProducts ?? []) as $key => $value) {
                     $product = $app->get("products", "id", ["id" => $value['products']]);
-                    $reTurn = $app->sum("invoices_products", "amount", ["returns" => $getInvoices['id'], "type" => 3, "deleted" => 0, "products" => $product]);
-                    $_SESSION[$dispatch][$action]['products'][$value['id']] = [
+                    $reTurn = $app->sum("invoices_products", "amount", [
+                        "returns" => $getInvoices['id'],
+                        "type" => 3,
+                        "deleted" => 0,
+                        "products" => $product
+                    ]);
+                    $cookies[$action]['products'][$value['id']] = [
                         "returns" => $value['id'],
                         "products" => $value['products'],
                         "nearsightedness" => $value['nearsightedness'],
@@ -2582,19 +2632,28 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
                         "vat_type" => $value['vat_type'],
                         "vat_price" => $value['vat_price'],
                     ];
-                    $_SESSION[$dispatch][$action]['vat'][$data['vat'] ?? null][$data['id'] ?? null] = $value['vat_price'];
+                    $cookies[$action]['vat'][$value['vat'] ?? null][$value['id'] ?? null] = $value['vat_price'];
                 }
-                $_SESSION[$dispatch][$action]['point'] = $app->get("point", "id", ["status" => 'A', "ORDER" => ["id" => "DESC"]]);
+
+                $cookies[$action]['point'] = $app->get("point", "id", [
+                    "status" => 'A',
+                    "ORDER" => ["id" => "DESC"]
+                ]);
             }
-            if (!isset($_SESSION[$dispatch][$action]['date'])) {
-                $_SESSION[$dispatch][$action]['date'] = date("Y-m-d");
+
+            if (!isset($cookies[$action]['date'])) {
+                $cookies[$action]['date'] = date("Y-m-d");
             }
-            $data = $_SESSION[$dispatch][$action];
+
+            // ====== LƯU LẠI COOKIE ======
+            $app->setCookie($dispatch, json_encode($cookies, JSON_UNESCAPED_UNICODE), time() + 86400);
+
+            // ====== PHẦN CÒN LẠI GIỮ NGUYÊN ======
+            $data = $cookies[$action];
             $getCus = $app->get("customers", ["id", "name"], ["id" => $data['customers']['id'] ?? ""]);
             $branchss = $app->select("branch", ["id", "name", "code"], ["deleted" => 0, "stores" => $data['stores'], "status" => 'A']);
             $branchssOption = [];
 
-            // Thêm dòng rỗng mặc định
             $branchssOption[] = [
                 "value" => "",
                 "text" => "Chọn quầy hàng"
@@ -2612,8 +2671,8 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             $vars['getCus'] = $getCus;
             $vars['branchss'] = $branchssOption;
             $vars['SelectProducts'] = $SelectProducts;
+
             $Status_invoicesOptions = [];
-            // thêm dòng rỗng
             $Status_invoicesOptions[] = [
                 "value" => "",
                 "text" => "Chọn một mục"
@@ -2625,13 +2684,13 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
                     "text" => $Status_invoice['name'],
                 ];
             }
+
             $vars['Status_invoices'] = $Status_invoicesOptions;
             $type_payments = $app->select("type_payments", ["id", "name", "has", "debt"], ["deleted" => 0, "status" => 'A', "main" => 0]);
             $vars['type_payments'] = $type_payments;
             $personnelsData = $app->select("personnels", ["id", "name", "code"], ["deleted" => 0, "status" => 'A', "stores" => $accStore]);
             $personnels = [];
 
-            // Thêm dòng rỗng mặc định
             $personnels[] = [
                 "value" => "",
                 "text" => "Nhân viên bán hàng"
@@ -2652,6 +2711,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
     })->setPermissions(['returns.add']);
+
 
 
     $app->router('/invoices-add', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
