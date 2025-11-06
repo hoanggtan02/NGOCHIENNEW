@@ -35,9 +35,9 @@ if (isset($session['id'])) {
         $accStore[$itemStore['value']] = $itemStore['value'];
     }
 }
-$app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $setting, $accStore, $stores,$template) {
+$app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $setting, $accStore, $stores, $template) {
     // Chứng từ bán hàng 
-    $app->router('/license_sale', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores,$template) {
+    $app->router('/license_sale', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
         if ($app->method() === 'GET') {
 
@@ -50,7 +50,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             $vars['personnels'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
 
             $vars['title'] = $jatbi->lang("Chứng từ bán hàng");
-            echo $app->render($template. '/invoices/license-sale.html', $vars);
+            echo $app->render($template . '/invoices/license-sale.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -288,7 +288,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             $filter_user = $_GET['user'] ?? '';
             $filter_personnels = $_GET['personnels'] ?? '';
             $filter_status = $_GET['status'] ?? '';
-            
+
             // Khởi tạo điều kiện WHERE
             $where = [
                 "AND" => [
@@ -560,7 +560,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
     })->setPermissions(['license_sale']);
 
     // tra hang
-    $app->router('/returns', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore,$template) {
+    $app->router('/returns', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Trả hàng");
         if ($app->method() === 'GET') {
             $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
@@ -792,7 +792,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
     })->setPermissions(['returns']);
 
     // hoa hong nhan vien 
-    $app->router('/invoices-commission', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
+    $app->router('/invoices-commission', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
         if ($app->method() === 'GET') {
             $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
             $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
@@ -1072,12 +1072,12 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices-commission']);
 
-    $app->router('/invoices-cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore,$template) {
+    $app->router('/invoices-cancel', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Hóa đơn đã hủy");
         if ($app->method() === 'GET') {
             $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
             $vars['stores'] = $stores;
-            echo $app->render($template. '/invoices/invoices-cancel.html', $vars);
+            echo $app->render($template . '/invoices/invoices-cancel.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -1222,13 +1222,13 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices-cancel']);
 
-    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
+    $app->router('/invoices', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
         $vars['title'] = $jatbi->lang("Đơn hàng");
         if ($app->method() === 'GET') {
             $vars['stores'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("stores", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
             $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
             $vars['personnels'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("personnels", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-            echo $app->render($template. '/invoices/invoices.html', $vars);
+            echo $app->render($template . '/invoices/invoices.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -1681,14 +1681,14 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices']);
 
-    $app->router('/insurance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores,$template) {
+    $app->router('/insurance', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $stores, $template) {
 
         $vars['title'] = $jatbi->lang("Bảo hành");
         if ($app->method() === 'GET') {
             $vars['title'] = $jatbi->lang("Bảo hành");
             $vars['stores'] = $stores;
             $vars['accounts'] = array_merge([["value" => "", "text" => $jatbi->lang("Tất cả")]], $app->select("accounts", ["id (value)", "name (text)"], ["deleted" => 0, "status" => 'A']));
-            echo $app->render($template. '/invoices/insurance.html', $vars);
+            echo $app->render($template . '/invoices/insurance.html', $vars);
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
@@ -1860,16 +1860,16 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
     })->setPermissions(['insurance']);
 
     // xem hoa don 
-    $app->router('/products_views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/products_views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['datas'] = $app->select("invoices_products", ["id", "products"], ["invoices" => $vars['id']]);
         if (!empty($vars['datas'])) {
-            echo $app->render($template . '/drivers/driver-views.html', $vars, $jatbi->ajax());
+            echo $app->render($template . '/invoices/driver-views.html', $vars, $jatbi->ajax());
         } else {
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
     })->setPermissions(['invoices']);
 
-    $app->router('/invoices-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/invoices-views/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = $vars['id'] ?? 0;
 
         $data = $app->get("invoices", [
@@ -2020,7 +2020,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         echo $app->render($template . '/invoices/invoices-views.html', $vars);
     })->setPermissions(['invoices']);
 
-    $app->router('/invoices-notes/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/invoices-notes/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = $vars['id'] ?? 0;
         $vars['title'] = $jatbi->lang("Thêm ghi chú");
 
@@ -2055,7 +2055,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices.edit']);
 
-    $app->router('/invoices-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/invoices-print/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = $vars['id'] ?? 0;
 
         $data = $app->get("invoices", "*", ["id" => $id]);
@@ -2116,7 +2116,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         $vars['data'] = $data;
         $vars['title'] = $jatbi->lang("In hóa đơn");
 
-        echo $app->render($template. '/invoices/print.html', $vars, $jatbi->ajax());
+        echo $app->render($template . '/invoices/print.html', $vars, $jatbi->ajax());
     })->setPermissions(['invoices']);
 
     $app->router('/returns-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
@@ -2218,7 +2218,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['returns.delete']);
 
-    $app->router('/invoices-update-customers/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/invoices-update-customers/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         $vars['title'] = $jatbi->lang("Sửa khách hàng");
         $dispatch = "update-customers";
         $action = $vars['id'];
@@ -2264,7 +2264,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     });
 
-    $app->router('/invoices-additional_information/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/invoices-additional_information/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = (int) ($vars['id'] ?? 0);
 
         $invoice = $app->get("invoices", "*", ["id" => $id, "deleted" => 0]);
@@ -2306,7 +2306,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices_additional_information.edit']);
 
-    $app->router('/payments-edit/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting,$template) {
+    $app->router('/payments-edit/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
         $action = 'payments';
         $vars['title'] = $jatbi->lang("Hình thức thanh toán");
         $invoices = $app->get("invoices", "id", ["id" => $app->xss($vars['id']), "deleted" => 0]);
@@ -2343,7 +2343,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
             }
             $vars['type_payments'] = $type_paymentsOptions;
             $vars['invoices'] = $invoices;
-            echo $app->render($template. '/invoices/payments-edit.html', $vars);
+            echo $app->render($template . '/invoices/payments-edit.html', $vars);
         } else {
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
         }
@@ -2459,7 +2459,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices.cancel.req']);
 
-    $app->router('/invoices-cancel-confirm/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/invoices-cancel-confirm/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
         $id = (int) ($vars['id'] ?? 0);
 
         // Lấy hóa đơn đang chờ xác nhận hủy
@@ -2527,7 +2527,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
         }
     })->setPermissions(['invoices.cancel.confirm']);
 
-    $app->router('/returns-add/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores,$template) {
+    $app->router('/returns-add/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Tạo đơn hàng trả");
         $dispatch = "returns";
         $action = $vars['id'];
@@ -2654,7 +2654,7 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
     })->setPermissions(['returns.add']);
 
 
-    $app->router('/invoices-add', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores,$template) {
+    $app->router('/invoices-add', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Tạo đơn hàng");
         $dispatch = "orders";
         $action = "add";
@@ -2775,154 +2775,147 @@ $app->group($setting['manager'] . "/invoices", function ($app) use ($jatbi, $set
 
 
 
-   $app->router('/invoices-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router('/invoices-delete', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
 
 
-    if ($app->method() === 'GET') {
-        $vars['title'] = $jatbi->lang("Xác nhận xóa hoá đơn");
-    
-        echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
-    } 
-   
-    elseif ($app->method() === 'POST') {
-        
-   
-        $app->header([
-            'Content-Type' => 'application/json',
-        ]);
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Xác nhận xóa hoá đơn");
 
-        // Lấy ID từ $_GET['box'] 
-        $ids_string = $app->xss($_GET['box'] ?? '');
-        
-        // Tách chuỗi ID thành mảng và lọc bỏ các giá trị rỗng
-        $ids = array_filter(explode(',', $ids_string));
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
 
-        if (empty($ids)) {
-      
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có hoá đơn nào được chọn')]);
-            return;
-        }
 
-        $datas = $app->select("invoices", ["id", "cancel", "code"], ["id" => $ids, "deleted" => 0]);
-
-        if (count($datas) > 0) {
-            $invoiceItems = []; 
-
-     
-            foreach ($datas as $data) {
-                $invoiceId = $data["id"];
-                $invoiceItems[] = $data['code'] ?? $invoiceId; 
-                
-            
-                $app->update("invoices", ["deleted" => 1], ["id" => $invoiceId]);
-                $app->update("invoices_details", ["deleted" => 1], ["invoices" => $invoiceId]);
-                $app->update("invoices_products", ["deleted" => 1], ["invoices" => $invoiceId]);
-                $app->update("invoices_transport", ["deleted" => 1], ["invoices" => $invoiceId]);
-                $app->update("expenditure", ["deleted" => 1], ["invoices" => $invoiceId]);
-                $app->update("drivers_payment_details", ["deleted" => 1], ["invoices" => $invoiceId]);
-                $app->update("invoices_personnels", ["deleted" => 1], ["invoices" => $invoiceId]);
-            }
-
-           
-            $jatbi->logs('invoices', 'delete', $datas);
-            $jatbi->trash('/invoices/invoices-restore', "Xóa hoá đơn: " . implode(', ', $invoiceItems), ["database" => 'invoices', "data" => $ids]);
-
-      
-            echo json_encode([
-                'status' => 'success',
-                'content' => $jatbi->lang('Cập nhật thành công'), 
-             
+            $app->header([
+                'Content-Type' => 'application/json',
             ]);
 
-        } else {
-  
-            echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Hoá đơn không tồn tại hoặc đã bị xoá')]);
+            // Lấy ID từ $_GET['box'] 
+            $ids_string = $app->xss($_GET['box'] ?? '');
+
+            // Tách chuỗi ID thành mảng và lọc bỏ các giá trị rỗng
+            $ids = array_filter(explode(',', $ids_string));
+
+            if (empty($ids)) {
+
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Không có hoá đơn nào được chọn')]);
+                return;
+            }
+
+            $datas = $app->select("invoices", ["id", "cancel", "code"], ["id" => $ids, "deleted" => 0]);
+
+            if (count($datas) > 0) {
+                $invoiceItems = [];
+
+
+                foreach ($datas as $data) {
+                    $invoiceId = $data["id"];
+                    $invoiceItems[] = $data['code'] ?? $invoiceId;
+
+
+                    $app->update("invoices", ["deleted" => 1], ["id" => $invoiceId]);
+                    $app->update("invoices_details", ["deleted" => 1], ["invoices" => $invoiceId]);
+                    $app->update("invoices_products", ["deleted" => 1], ["invoices" => $invoiceId]);
+                    $app->update("invoices_transport", ["deleted" => 1], ["invoices" => $invoiceId]);
+                    $app->update("expenditure", ["deleted" => 1], ["invoices" => $invoiceId]);
+                    $app->update("drivers_payment_details", ["deleted" => 1], ["invoices" => $invoiceId]);
+                    $app->update("invoices_personnels", ["deleted" => 1], ["invoices" => $invoiceId]);
+                }
+
+
+                $jatbi->logs('invoices', 'delete', $datas);
+                $jatbi->trash('/invoices/invoices-restore', "Xóa hoá đơn: " . implode(', ', $invoiceItems), ["database" => 'invoices', "data" => $ids]);
+
+
+                echo json_encode([
+                    'status' => 'success',
+                    'content' => $jatbi->lang('Cập nhật thành công'),
+
+                ]);
+            } else {
+
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Hoá đơn không tồn tại hoặc đã bị xoá')]);
+            }
         }
-    }
-
-})->setPermissions(['invoices.delete']);
+    })->setPermissions(['invoices.delete']);
 
 
-$app->router('/invoices-lock', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore,$template) {
+    $app->router('/invoices-lock', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
 
-    if ($app->method() === 'GET') {
-        $vars['title'] = $jatbi->lang("Khóa/Mở khóa sổ hoá đơn");
-        
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Khóa/Mở khóa sổ hoá đơn");
 
-        $vars['stores'] = array_merge(
-            [["value" => "", "text" => $jatbi->lang("Tất cả cửa hàng (hiện tại)")]], 
-            $app->select("stores", ["id (value)", "name (text)"], ["id" => $accStore, "deleted" => 0, "status" => 'A'])
-        );
-        
- 
-        echo $app->render($template . '/invoices/invoices-lock.html', $vars, $jatbi->ajax());
-    } 
 
-    elseif ($app->method() === 'POST') {
-        
-        $app->header(['Content-Type' => 'application/json']);
+            $vars['stores'] = array_merge(
+                [["value" => "", "text" => $jatbi->lang("Tất cả cửa hàng (hiện tại)")]],
+                $app->select("stores", ["id (value)", "name (text)"], ["id" => $accStore, "deleted" => 0, "status" => 'A'])
+            );
 
-        $date_from_str = $_POST['date_from'] ?? '';
-        $date_to_str = $_POST['date_to'] ?? '';
-        $lock_status = $_POST['lock'] ?? '1'; 
-        $store_id = $_POST['stores'] ?? '';
 
-        if (empty($date_from_str) || empty($date_to_str)) {
-            echo json_encode(['status'=>'error','content'=>$jatbi->lang('Lỗi trống')]); 
-            return;
+            echo $app->render($template . '/invoices/invoices-lock.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+
+            $app->header(['Content-Type' => 'application/json']);
+
+            $date_from_str = $_POST['date_from'] ?? '';
+            $date_to_str = $_POST['date_to'] ?? '';
+            $lock_status = $_POST['lock'] ?? '1';
+            $store_id = $_POST['stores'] ?? '';
+
+            if (empty($date_from_str) || empty($date_to_str)) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Lỗi trống')]);
+                return;
+            }
+
+
+            $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $date_from_str)));
+            $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $date_to_str)));
+
+
+            $store_where = ['stores' => $accStore];
+            if ($store_id !== '') {
+                $store_where = ['stores' => $store_id];
+            }
+
+
+            $where_condition = [
+                "date[<>]" => [$date_from, $date_to],
+                "deleted" => 0,
+            ];
+
+            if (!empty($store_where)) {
+                $where_condition = array_merge($where_condition, $store_where);
+            }
+
+            $invoices = $app->select("invoices", ["id", "date", "lock_or_unlock"], $where_condition);
+
+            if ($lock_status == '1') {
+                $lock = 'lock';
+                $new_lock_value = 1;
+                $old_lock_value = 0;
+            } else {
+                $lock = 'unlock';
+                $new_lock_value = 0;
+                $old_lock_value = 1;
+            }
+
+            $where_invoices_update = $where_condition;
+            $where_invoices_update["lock_or_unlock"] = $old_lock_value;
+            $app->update("invoices", ["lock_or_unlock" => $new_lock_value], $where_invoices_update);
+
+            $where_products_update = $where_condition;
+            $where_products_update["lock_or_unlock"] = $old_lock_value;
+            $app->update("invoices_products", ["lock_or_unlock" => $new_lock_value], $where_products_update);
+
+
+            $jatbi->logs('invoices', $lock, [$new_lock_value, $invoices]);
+
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang('Cập nhật thành công'), "url" => $_SERVER['HTTP_REFERER']]);
         }
+    })->setPermissions(['lock']);
 
 
-        $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $date_from_str)));
-        $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $date_to_str)));
-        
-
-        $store_where = ['stores' => $accStore];
-        if ($store_id !== '') {
-            $store_where = ['stores' => $store_id];
-        }
-
-
-        $where_condition = [
-            "date[<>]" => [$date_from, $date_to],
-            "deleted" => 0,
-        ];
-
-        if (!empty($store_where)) {
-            $where_condition = array_merge($where_condition, $store_where);
-        }
-
-        $invoices = $app->select("invoices", ["id", "date", "lock_or_unlock"], $where_condition);
-
-        if ($lock_status == '1') {
-            $lock = 'lock';
-            $new_lock_value = 1;
-            $old_lock_value = 0;
-        } else {
-            $lock = 'unlock';
-            $new_lock_value = 0;
-            $old_lock_value = 1;
-        }
-
-        $where_invoices_update = $where_condition;
-        $where_invoices_update["lock_or_unlock"] = $old_lock_value;
-        $app->update("invoices", ["lock_or_unlock" => $new_lock_value], $where_invoices_update);
-
-        $where_products_update = $where_condition;
-        $where_products_update["lock_or_unlock"] = $old_lock_value;
-        $app->update("invoices_products", ["lock_or_unlock" => $new_lock_value], $where_products_update);
-        
-      
-        $jatbi->logs('invoices', $lock, [$new_lock_value, $invoices]);
-
- 
-        echo json_encode(['status'=>'success','content'=>$jatbi->lang('Cập nhật thành công'),"url"=>$_SERVER['HTTP_REFERER']]);
-    }
-
-})->setPermissions(['lock']);
-    
-
-    $app->router('/invoices-update-personnels/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores,$template) {
+    $app->router('/invoices-update-personnels/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Sửa nhân viên bán hàng");
         $action = 'personnels';
         $invoices = $app->get("invoices", "id", ["id" => $app->xss($vars['id']), "deleted" => 0]);
@@ -2970,4 +2963,63 @@ $app->router('/invoices-lock', ['GET', 'POST'], function ($vars) use ($app, $jat
             return $app->render($setting['template'] . '/error.html', [], $jatbi->ajax());
         }
     })->setPermissions(['invoices_personnels.edit']);
+
+    $app->router('/invoices-cancel-req/{id}', ['GET', 'POST'], function ($vars) use ($app, $template,$accStore ,$jatbi, $setting) {
+        $id = $vars['id'] ?? 0;
+        $account = $app->getSession('accounts');
+
+        $data = $app->get("invoices", ["id","code"], [
+            "id" => $id,
+            "deleted" => 0,
+            "cancel" => 0,
+            "stores" => $accStore,
+        ]);
+
+        if (!$data) {
+            return $app->render($setting['template'] . 'common/error-modal.html', $vars, $jatbi->ajax());
+        }
+
+        $vars['title'] = $jatbi->lang('Yêu cầu hủy') . ' #' ./* $ballot_code['orders'] .*/  '-' . $data['code'] . $data['id'];
+
+        if ($app->method() === 'GET') {
+            $vars['data'] = $data;
+            echo $app->render($template . '/invoices/invoices-cancel-req.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+            $post = array_map([$app, 'xss'], $_POST);
+
+            // if (empty($post['token']) || $post['token'] !== $_SESSION['csrf-token']) {
+            //     echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Token không hợp lệ")]);
+            //     return;
+            // }
+
+            if (empty($post['content'])) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Vui lòng nhập lý do")]);
+                return;
+            }
+
+            // --- Cập nhật hủy ---
+            $update = [
+                "cancel_user"    => $account['id'],
+                "cancel_date"    => date('Y-m-d H:i:s'),
+                "cancel_content" => $post['content'],
+                "cancel"         => 1,
+            ];
+
+            $app->update("invoices", $update, ["id" => $id]);
+
+            // --- Ghi log ---
+            $app->insert("invoices_logs", [
+                "invoices" => $id,
+                "user" => $account['id'],
+                "date" => date("Y-m-d H:i:s"),
+                "content" => 'Yêu cầu hủy hóa đơn',
+                "datas" => json_encode([$id]),
+            ]);
+
+            $jatbi->logs('invoices', 'cancel', $update, $id);
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    })->setPermissions(['invoices.cancel.req']);
 })->middleware('login');

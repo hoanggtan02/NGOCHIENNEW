@@ -3772,4 +3772,38 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
             echo json_encode($datas);
         }
     })->setPermissions(['proposal']);
+
+    $app->router("/drivers-search", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        if ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+
+            $searchValue = $_POST['keyword'] ?? '';
+
+            // Điều kiện lọc
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "accounts.name[~]" => $searchValue,
+                        "accounts.phone[~]" => $searchValue,
+                    ],
+                    "accounts.deleted" => 0,
+                    "accounts.status" => 'A',
+                ],
+                "LIMIT" => 10 
+
+            ];
+
+            $datas = [];
+            $app->select("accounts", "*", $where, function ($data) use (&$datas) {
+                $datas[] = [
+                    "value" => $data['id'],
+                    "text"  => $data['name'] . " - " . $data['phone'], 
+                ];
+            });
+
+            echo json_encode($datas);
+        }
+    });
 })->middleware(names: 'login');

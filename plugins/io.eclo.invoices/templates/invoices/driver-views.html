@@ -1,0 +1,37 @@
+<div class="modal fade modal-load <?=$jatbi->ajax('load')?>" tabindex="-1">
+    <div class="modal-dialog modal-lg pt-standalone">
+        <div class="modal-content rounded-5 border-0 shadow-lg">
+            <div class="d-flex w-100 justify-content-end align-items-center position-relative">
+                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center" data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                    <i class="ti ti-x fs-4"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 class="modal-title mb-3"><?=$jatbi->lang('Sản phẩm')?></h5>
+                <div class="table-responsive">
+                    <table class="table align-middle" style="font-size:15px;">
+                        <tbody>
+                            <?php foreach ($datas as $key => $SelectProduct) {
+                                $details = $app->get("products", "*", ["id" => $SelectProduct['products']]);
+                                if ($details) { ?>
+                                    <tr>
+                                        <td><?=$details['code']?> - <?=$details['name']?></td>
+                                    </tr>
+                                <?php } else { ?>
+                                    <tr>
+                                        <td>Product not found (ID: <?=$SelectProduct['products']?>)</td>
+                                    </tr>
+                                <?php } ?>
+                            <?php } ?>
+                            <?php if (empty($datas)) { ?>
+                                <tr>
+                                    <td>No products found for this invoice.</td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

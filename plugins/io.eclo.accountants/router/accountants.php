@@ -863,7 +863,7 @@ $app->group($setting['manager'] . "/accountants", function ($app) use ($jatbi, $
             // echo $app->render($setting['template'] . '/accountants/expenditure-view.html', $vars, $jatbi->ajax());
             echo $app->render($template . '/config/expenditure-view.html', $vars, $jatbi->ajax());
         } else {
-            echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
+            echo $app->render($setting['template'] . 'common/error-modal.html', $vars, $jatbi->ajax());
         }
     })->setPermissions(['expenditure']);
 
