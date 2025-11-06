@@ -743,6 +743,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             "purchase" => $vars['id'],
             "deleted" => 0
         ]);
+        $var['Status_purchase']=$setting['Status_purchase']??[];
 
         // Lấy thông tin đơn hàng
         $purchase = $app->get("purchase", "*", [
