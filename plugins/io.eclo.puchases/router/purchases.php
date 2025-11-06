@@ -127,8 +127,6 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         }
     })->setPermissions(['vendors']);
 
-
-
     // --- ROUTER THÊM NHÀ CUNG CẤP ---
     $app->router('/vendors-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Thêm Nhà cung cấp");
@@ -264,7 +262,6 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         }
     })->setPermissions(['vendors.deleted']);
 
-
     $app->router('/vendors-status/{id}', 'POST', function ($vars) use ($app, $jatbi) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
         $id = $vars['id'] ?? 0;
@@ -280,11 +277,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
         }
     })->setPermissions(['vendors.edit']);
-
-
-
     //vendors-types
-
     $app->router('/vendors-types', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Loại nhà cung cấp");
 
@@ -506,7 +499,6 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             }
         }
     })->setPermissions(['vendors-types.add']);
-
 
     $app->router('/purchase', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
 
@@ -743,6 +735,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             "purchase" => $vars['id'],
             "deleted" => 0
         ]);
+        $vars['Status_purchase'] = $setting['Status_purchase'] ?? [];
 
         // Lấy thông tin đơn hàng
         $purchase = $app->get("purchase", "*", [
