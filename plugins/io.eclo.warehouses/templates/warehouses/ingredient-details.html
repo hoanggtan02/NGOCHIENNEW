@@ -33,8 +33,8 @@
                 <div class="card-body p-3">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item bg-transparent d-flex justify-content-between px-1 py-2"><span
-                                class="text-muted"><?=$jatbi->lang("Mã")?>:</span> <strong class="text-end">#
-                                <?=$data['code']?>
+                                class="text-muted"><?=$jatbi->lang("Mã")?>:</span> <strong class="text-end">
+                                #<?=$data['code']?>
                             </strong></li>
                         <li class="list-group-item bg-transparent d-flex justify-content-between px-1 py-2"><span
                                 class="text-muted"><?=$jatbi->lang("Số lượng")?>:</span> <strong class="text-end">
@@ -161,14 +161,15 @@
                                 <th data-name="totalImport" class="text-primary"></th>
                                 <th data-name="totalExport" class="text-success"></th>
                                 <th></th>
-                                
+
                                 <!-- <th data-name="totalMove" class="text-info"></th> -->
                                 <th data-name="totalCancel" class="text-danger"></th>
                                 <th data-name="totalPrice" class="text-success">
                                     <?=number_format($data['price'])?>
                                 </th>
                                 <th>Số lượng tồn:</th>
-                                <th data-name="totalStock" class="text-primary"><p></p> 
+                                <th data-name="totalStock" class="text-primary">
+                                    <p></p>
                                     <?=number_format($data['stock'], 1)?>
                                     <?=$data['unit_name']?>
                                 </th>
