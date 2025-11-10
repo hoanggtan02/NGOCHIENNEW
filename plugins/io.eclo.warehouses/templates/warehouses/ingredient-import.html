@@ -103,10 +103,10 @@
                                 <tr>
                                     <td>
                                         <strong>
-                                            <?= htmlspecialchars($item['code']) ?>
+                                            <?= htmlspecialchars($item['code'])?? '' ?>
                                         </strong><br>
                                         <small>
-                                            <?= htmlspecialchars($item['name']) ?>
+                                            <?= htmlspecialchars($item['name'])?? '' ?>
                                         </small>
                                     </td>
                                     <td class="text-end">

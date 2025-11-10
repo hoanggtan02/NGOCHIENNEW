@@ -118,9 +118,9 @@
                                         ?>
                                     </td>
                                     <td><strong>
-                                            <?= htmlspecialchars($item['code']) ?>
+                                            <?= htmlspecialchars($item['code'])?? '' ?>
                                         </strong><br><small>
-                                            <?= htmlspecialchars($item['name']) ?>
+                                            <?= htmlspecialchars($item['name'])?? '' ?>
                                         </small></td>
                                     <td class="text-end">
                                         <?= number_format($item['selling_price'] ?? 0) ?>
@@ -137,10 +137,10 @@
                                             value="<?= htmlspecialchars($item['amount']) ?>" min="1" data-load="this">
                                     </td>
                                     <td>
-                                        <?= htmlspecialchars($item['unit_name'] ?? 'N/A') ?>
+                                        <?= htmlspecialchars($item['unit_name'] ?? '') ?>
                                     </td>
                                     <td class="text-end fw-bold">
-                                        <?= number_format($line_total) ?>
+                                        <?= number_format($line_total)?? 0 ?>
                                     </td>
                                     <td>
                                         <input type="text" class="form-control form-control-sm blur-update"
@@ -164,17 +164,17 @@
                                 <tr>
                                     <td class="text-end fw-bold p-2">Tổng cộng</td>
                                     <td class="p-2"></td> <td class="text-end fw-bold p-2">
-                                        <?= number_format($total_selling_price) ?>
+                                        <?= number_format($total_selling_price)?? 0 ?>
                                     </td>
                                     <td class="text-center fw-bold p-2">
-                                        <?= number_format($total_stock_quantity) ?>
+                                        <?= number_format($total_stock_quantity)?? 0 ?>
                                     </td>
                                     <td class="text-center fw-bold p-2">
-                                        <?= number_format($total_amount) ?>
+                                        <?= number_format($total_amount)?? 0 ?>
                                     </td>
                                     <td class="p-2"></td>
                                     <td class="text-end fw-bold p-2">
-                                        <?= number_format($total) ?>
+                                        <?= number_format($total)?? 0 ?>
                                     </td>
                                     <td colspan="2" class="p-2"></td>
                                 </tr>

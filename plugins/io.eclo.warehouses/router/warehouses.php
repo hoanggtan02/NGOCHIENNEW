@@ -5350,10 +5350,11 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $app->select("warehouses", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $app) {
                 $datas[] = [
                     "id" => '<a class="btn dropdown-item" data-action="modal" data-url="/warehouses/ingredient-history-views/' . $data['id'] . '">#' . $data['code'] . $data['id'] . '</a>',
-                    "content" => $data['crafting']
-                        ? '<a class="btn dropdown-item" data-action="modal" data-url="/crafting/crafting-history-views/' . $data['crafting'] . '/">' . htmlspecialchars($data['content']) . '</a>'
-                        : htmlspecialchars($data['content']),
-                    "date_poster" => $jatbi->datetime($data['date_poster']),
+                    // "content" => $data['crafting']
+                    //     ? '<a class="btn dropdown-item" data-action="modal" data-url="/crafting/crafting-history-views/' . $data['crafting'] . '/">' . htmlspecialchars($data['content']) . '</a>'
+                    //     : htmlspecialchars($data['content']),
+                    "content" => htmlspecialchars($data['content']?? ''),
+                    "date_poster" => $jatbi->datetime($data['date_poster']?? ''),
                     "user" => htmlspecialchars($data['user_name'] ?? ''),
                     "action" => (string) ($app->component("action", [
                         "button" => [
@@ -7332,6 +7333,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
 
         if ($data) {
             $vars['title'] = $jatbi->lang("Nhập kho từ phiếu chế tác #" . $data['code'] . $data['id']);
+            $default_note_content = "Nhập hàng từ phiếu xuất kho chế tác #" . $data['code'] . $data['id'];
 
             $_SESSION['ingredient_import_crafting'] = [
                 'ingredients' => [],
@@ -7345,7 +7347,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             foreach ($details as $value) {
                 $getPro = $app->get("ingredient", ["id", "code", "name_ingredient", "units", "notes"], ["id" => $value['ingredient']]);
                 if ($getPro) {
-                    $unit_name = $app->get("units", "name", ["id" => $getPro['units']]) ?? 'N/A';
+                    $unit_name = $app->get("units", "name", ["id" => $getPro['units']]) ?? '';
 
 
                     $stock_quantity = $app->sum("warehouses_details", "amount_total", [
@@ -7365,7 +7367,7 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
                         "amount" => $value['amount'],
                         "price" => $value['price'] ?? 0,
                         "unit_name" => $unit_name,
-                        "notes" => $getPro['notes'] ?? '',
+                        "notes" => $default_note_content ?? '',
                     ];
                 }
             }
