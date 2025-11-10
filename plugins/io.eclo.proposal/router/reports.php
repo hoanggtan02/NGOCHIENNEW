@@ -173,10 +173,10 @@
             ]));
 
             $vars['doituongchinhanh'] = $app->select("proposals", [
-                "[>]stores" => ["proposals.stores" => "id"]
+                "[>]brands" => ["proposals.brands" => "id"]
             ], [
                 "proposals.id",
-                "stores.name",
+                "brands.name",
                 // "name" => App::raw("CASE 
                 //    WHEN customers.name IS NULL OR customers.name = '' 
                 //    THEN 'Không xác định' 
@@ -188,10 +188,10 @@
                 "total_khac" => App::raw("SUM(CASE WHEN proposals.type = 3 THEN proposals.price ELSE 0 END)"),
                 "total"      => App::raw("SUM(proposals.price)"),
             ],array_merge($where, [
-                "GROUP" => "proposals.stores",
+                "GROUP" => "proposals.brands",
                 "ORDER" => ["count" => "DESC"],
                 "LIMIT" => 5,
-                "stores.name[!]" => "",
+                "brands.name[!]" => "",
             ]));
 
             $vars['total'] = $summary;
@@ -237,7 +237,7 @@
             ], [
                 "deleted" => 0,
                 "date[<>]" => [$startDate, $endDate], // Lọc theo ngày của proposal
-                "stores_id" => $jatbi->stores(),
+                "brands_id" => $jatbi->brands(),
                 "status" => [2, 4] // 2 = Đã duyệt, 4 = Đã hoàn thành (cũng là đã duyệt)
             ]);
 
@@ -268,7 +268,7 @@
                 "pr.deleted" => 0,
                 "p.deleted" => 0,
                 "pr.reality_date[<>]" => [$startDate, $endDate], // Lọc theo ngày THỰC TẾ
-                "p.stores_id" => $jatbi->stores(),
+                "p.brands_id" => $jatbi->brands(),
                 "p.status" => 4 // Chỉ lấy thực tế của các proposals 'Đã hoàn thành' (theo logic code gốc)
             ]);
 
@@ -378,7 +378,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -398,9 +398,9 @@
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
-
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -455,8 +455,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -482,9 +482,9 @@
                 $header_ton_numeric = $header_thu - $header_chi;
                 
                 $headerData = [
-                    "thu" => number_format($header_thu),
-                    "chi" => number_format($header_chi),
-                    "ton" => number_format($header_ton_numeric)
+                    "thu" => $jatbi->money($header_thu),
+                    "chi" => $jatbi->money($header_chi),
+                    "ton" => $jatbi->money($header_ton_numeric)
                 ];
 
                 $footer_thu_period = $summary['period_thu'] ?? 0;
@@ -492,9 +492,9 @@
                 $footer_ton_numeric = $header_ton_numeric + $footer_thu_period - $footer_chi_period;
 
                 $footerData = [
-                    "thu" => number_format($footer_thu_period),
-                    "chi" => number_format($footer_chi_period),
-                    "ton" => number_format($footer_ton_numeric)
+                    "thu" => $jatbi->money($footer_thu_period),
+                    "chi" => $jatbi->money($footer_chi_period),
+                    "ton" => $jatbi->money($footer_ton_numeric)
                 ];
 
 
@@ -523,7 +523,7 @@
 
                     if ($is_date_asc_sort) {
                         $page_running_total += ($thu_val - $chi_val);
-                        $ton = number_format($page_running_total);
+                        $ton = $jatbi->money($page_running_total);
                     }
 
                     $datas[] = [
@@ -531,8 +531,8 @@
                         "form" => $data['form'] ?? '',
                         "category" => $data['category'] ?? '',
                         "account" => $data['accounts'] ?? '',
-                        "thu" => number_format($thu_val),
-                        "chi" => number_format($chi_val),
+                        "thu" => $jatbi->money($thu_val),
+                        "chi" => $jatbi->money($chi_val),
                         "ton" => $ton,
                         "date" => '<strong>'.$jatbi->date($data['date']).'</strong>',
                         "code" => '<a href="/proposal/views/'.$data['active'].'" data-pjax>#'.($data['id'] ?? '').'</a>',
@@ -580,7 +580,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -600,9 +600,9 @@
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
-
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -657,8 +657,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -684,9 +684,9 @@
                 $header_ton_numeric = $header_thu - $header_chi;
                 
                 $headerData = [
-                    "thu" => number_format($header_thu),
-                    "chi" => number_format($header_chi),
-                    "ton" => number_format($header_ton_numeric)
+                    "thu" => $jatbi->money($header_thu),
+                    "chi" => $jatbi->money($header_chi),
+                    "ton" => $jatbi->money($header_ton_numeric)
                 ];
 
                 $footer_thu_period = $summary['period_thu'] ?? 0;
@@ -694,9 +694,9 @@
                 $footer_ton_numeric = $header_ton_numeric + $footer_thu_period - $footer_chi_period;
 
                 $footerData = [
-                    "thu" => number_format($footer_thu_period),
-                    "chi" => number_format($footer_chi_period),
-                    "ton" => number_format($footer_ton_numeric)
+                    "thu" => $jatbi->money($footer_thu_period),
+                    "chi" => $jatbi->money($footer_chi_period),
+                    "ton" => $jatbi->money($footer_ton_numeric)
                 ];
 
 
@@ -725,7 +725,7 @@
 
                     if ($is_date_asc_sort) {
                         $page_running_total += ($thu_val - $chi_val);
-                        $ton = number_format($page_running_total);
+                        $ton = $jatbi->money($page_running_total);
                     }
 
                     $datas[] = [
@@ -733,8 +733,8 @@
                         "form" => $data['form'] ?? '',
                         "category" => $data['category'] ?? '',
                         "account" => $data['accounts'] ?? '',
-                        "thu" => number_format($thu_val),
-                        "chi" => number_format($chi_val),
+                        "thu" => $jatbi->money($thu_val),
+                        "chi" => $jatbi->money($chi_val),
                         "ton" => $ton,
                         "date" => '<strong>'.$jatbi->date($data['date']).'</strong>',
                         "code" => '<a href="/proposal/views/'.$data['active'].'" data-pjax>#'.($data['id'] ?? '').'</a>',
@@ -782,7 +782,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -801,9 +801,9 @@
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
-
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -858,8 +858,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -885,9 +885,9 @@
                 $header_ton_numeric = $header_thu - $header_chi;
                 
                 $headerData = [
-                    "thu" => number_format($header_thu),
-                    "chi" => number_format($header_chi),
-                    "ton" => number_format($header_ton_numeric)
+                    "thu" => $jatbi->money($header_thu),
+                    "chi" => $jatbi->money($header_chi),
+                    "ton" => $jatbi->money($header_ton_numeric)
                 ];
 
                 $footer_thu_period = $summary['period_thu'] ?? 0;
@@ -895,9 +895,9 @@
                 $footer_ton_numeric = $header_ton_numeric + $footer_thu_period - $footer_chi_period;
 
                 $footerData = [
-                    "thu" => number_format($footer_thu_period),
-                    "chi" => number_format($footer_chi_period),
-                    "ton" => number_format($footer_ton_numeric)
+                    "thu" => $jatbi->money($footer_thu_period),
+                    "chi" => $jatbi->money($footer_chi_period),
+                    "ton" => $jatbi->money($footer_ton_numeric)
                 ];
 
 
@@ -926,7 +926,7 @@
 
                     if ($is_date_asc_sort) {
                         $page_running_total += ($thu_val - $chi_val);
-                        $ton = number_format($page_running_total);
+                        $ton = $jatbi->money($page_running_total);
                     }
 
                     $datas[] = [
@@ -934,8 +934,8 @@
                         "form" => $data['form'] ?? '',
                         "category" => $data['category'] ?? '',
                         "account" => $data['accounts'] ?? '',
-                        "thu" => number_format($thu_val),
-                        "chi" => number_format($chi_val),
+                        "thu" => $jatbi->money($thu_val),
+                        "chi" => $jatbi->money($chi_val),
                         "ton" => $ton,
                         "date" => '<strong>'.$jatbi->date($data['date']).'</strong>',
                         "code" => '<a href="/proposal/views/'.$data['active'].'" data-pjax>#'.($data['id'] ?? '').'</a>',
@@ -978,8 +978,8 @@
                     "ORDER" => [$orderName => strtoupper($orderDir)]
                 ];
 
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);
@@ -1030,7 +1030,7 @@
                         'form' => $item['form'],
                         'target' => $item['target'],
                         'content' => $item['content'],
-                        'amount' => number_format($item['amount']),
+                        'amount' => $jatbi->money($item['amount']),
                         'debit' => $item['debit'],
                         'credit' => $item['credit'],
                     ];
@@ -1060,7 +1060,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposals.id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
 
                 $where = [
                     "AND" => [
@@ -1074,8 +1074,8 @@
                     "GROUP" => "proposals.id"
                 ];
 
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);
@@ -1104,7 +1104,7 @@
                     "[>]proposals_reality" => ["id" => "proposal"],
                 ];
 
-                $count = $app->count("proposals", $joins, "proposals.id", ["AND" => $where['AND'], "GROUP" => "proposals.id"]);
+                $count = $app->count("proposals", $joins, "proposals.id", ["AND" => $where['AND']]);
 
                 $proposals = $app->select("proposals", $joins, [
                     "proposals.id (proposal_id)",
@@ -1125,9 +1125,9 @@
                         'customer_name' => $item['customer_name'],
                         'date' => $jatbi->date($item['date']),
                         'content' => $item['content'],
-                        'amount' => number_format($item['price'] ?? 0),
-                        'paid' => number_format($item['reality'] ?? 0),
-                        'remaining' => number_format($remaining ?? 0),
+                        'amount' => $jatbi->money($item['price'] ?? 0),
+                        'paid' => $jatbi->money($item['reality'] ?? 0),
+                        'remaining' => $jatbi->money($remaining ?? 0),
                     ];
                 }
                 
@@ -1138,9 +1138,9 @@
                     "total_paid" => App::raw("SUM(CASE WHEN proposals_reality.deleted = 0 THEN proposals_reality.reality ELSE 0 END)"),
                 ], ["AND" => $summary_where]);
 
-                $footerData['amount'] = number_format($summary['total_amount'] ?? 0);
-                $footerData['paid'] = number_format($summary['total_paid'] ?? 0);
-                $footerData['remaining'] = number_format(($summary['total_amount'] - $summary['total_paid']) ?? 0);
+                $footerData['amount'] = $jatbi->money($summary['total_amount'] ?? 0);
+                $footerData['paid'] = $jatbi->money($summary['total_paid'] ?? 0);
+                $footerData['remaining'] = $jatbi->money(($summary['total_amount'] - $summary['total_paid']) ?? 0);
 
                 echo json_encode([
                     "draw" => $draw,
@@ -1167,7 +1167,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposals.id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
 
                 $where = [
                     "AND" => [
@@ -1180,8 +1180,8 @@
                     "LIMIT" => [$start, $length],
                     "GROUP" => "proposals.id"
                 ];
-                if (!empty($stores)) {
-                    $where["AND"]["proposals.stores_id"] = $stores;
+                if (!empty($brands)) {
+                    $where["AND"]["proposals.brands_id"] = $brands;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);
@@ -1210,7 +1210,7 @@
                     "[>]proposals_reality" => ["id" => "proposal"],
                 ];
 
-                $count = $app->count("proposals", $joins, "proposals.id", ["AND" => $where['AND'], "GROUP" => "proposals.id"]);
+                $count = $app->count("proposals", $joins, "proposals.id", ["AND" => $where['AND']]);
 
                 $proposals = $app->select("proposals", $joins, [
                     "proposals.id (proposal_id)",
@@ -1231,9 +1231,9 @@
                         'customer_name' => $item['customer_name'],
                         'date' => $jatbi->date($item['date']),
                         'content' => $item['content'],
-                        'amount' => number_format($item['price'] ?? 0),
-                        'paid' => number_format($item['reality'] ?? 0),
-                        'remaining' => number_format($remaining ?? 0),
+                        'amount' => $jatbi->money($item['price'] ?? 0),
+                        'paid' => $jatbi->money($item['reality'] ?? 0),
+                        'remaining' => $jatbi->money($remaining ?? 0),
                     ];
                 }
                 
@@ -1244,9 +1244,9 @@
                     "total_paid" => App::raw("SUM(CASE WHEN proposals_reality.deleted = 0 THEN proposals_reality.reality ELSE 0 END)"),
                 ], ["AND" => $summary_where]);
 
-                $footerData['amount'] = number_format($summary['total_amount'] ?? 0);
-                $footerData['paid'] = number_format($summary['total_paid'] ?? 0);
-                $footerData['remaining'] = number_format(($summary['total_amount'] - $summary['total_paid']) ?? 0);
+                $footerData['amount'] = $jatbi->money($summary['total_amount'] ?? 0);
+                $footerData['paid'] = $jatbi->money($summary['total_paid'] ?? 0);
+                $footerData['remaining'] = $jatbi->money(($summary['total_amount'] - $summary['total_paid']) ?? 0);
 
                 echo json_encode([
                     "draw" => $draw,

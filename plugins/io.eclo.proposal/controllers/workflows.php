@@ -123,7 +123,7 @@ class Proposal {
                 'node_name' => $current_node['name'],
                 'type' => $current_node['type'],
                 'approval_type' => (int)$current_node['approval'],
-                'approver_account_id' => $approver_id ?? 0,
+                'approver_account_id' => $approver_id ?? $requester_account_id,
                 'note' => $approver_type
             ];
 

@@ -24,42 +24,94 @@
         <div class="col-lg-9">
             <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 mb-4">
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-6 fw-bold text-uppercase"><?=$jatbi->lang("Đề xuất")?>: #<?=$data['id']?></div>
-                        <div class="col-lg-6 text-end">
-                            <?php if($data['status_id']==2 || $data['status_id']==3 || $data['status_id']==4){ ?>
-                                <button class="btn btn-sm btn-info py-1 rounded-pill fw-bold me-1"><i class="ti ti-printer me-1"></i> <?=$jatbi->lang("In đề xuất")?></button>
+                    <div class="row g-2 align-items-start">
+                      <!-- Cột trái -->
+                      <div class="col-lg-3 col-6 fw-bold text-uppercase text-truncate">
+                        <?=$jatbi->lang("Đề xuất")?>: #<?=$data['id']?>
+                      </div>
+
+                      <!-- Cột phải -->
+                      <div class="col-lg-9 col-6">
+                        <nav class="navbar navbar-expand-lg justify-content-lg-end p-0">
+                          <!-- Nút menu khi mobile -->
+                          <button class="navbar-toggler ms-auto border-0" type="button" data-bs-toggle="collapse" data-bs-target="#proposalActions" aria-controls="proposalActions" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="ti ti-menu-2 fs-3"></span>
+                          </button>
+
+                          <!-- Danh sách nút -->
+                          <div class="collapse navbar-collapse justify-content-lg-end mt-2 mt-lg-0" id="proposalActions">
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+                              <?php if(($data['account_id']==$account['id']) &&  ($data['status_id']==1 ||  $data['status_id']==2 ||  $data['status_id']==3) ){ ?>
+                                <button class="btn btn-sm btn-danger py-1 rounded-pill fw-bold text-light" data-action="modal" data-url="/proposal/cancel/<?=$data['active']?>">
+                                  <i class="ti ti-cancel me-1"></i> <?=$jatbi->lang("Hủy")?>
+                                </button>
+                              <?php } ?>
+
+                              <?php if($data['status_id']==2 ||  $data['status_id']==4){ ?>
+                                <button class="btn btn-sm btn-info py-1 rounded-pill fw-bold">
+                                  <i class="ti ti-printer me-1"></i> <?=$jatbi->lang("In đề xuất")?>
+                                </button>
                                 <?php if($jatbi->permission(['proposal.reality']) == 'true' && $checkReality<$data['price']){ ?>
-                                    <button class="btn btn-sm btn-primary text-light py-1 rounded-pill fw-bold me-1" data-action="modal" data-url="/proposal/reality/<?=$data['active']?>"><i class="ti ti-library me-1"></i> <?=$jatbi->lang("Bút toán")?> (<?=count($realitys ?? 0)?>)</button>
-                                <?php }?>
-                            <?php } ?>
-                            <?php if($data['status_id']==1){ ?>
-                            <div class="d-inline-block">
-                                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                  <button type="button" class="btn btn-sm btn-eclo py-1 rounded-start-pill fw-bold" data-action="click" data-confirm="Bạn có muốn buzz đề xuất này" data-url="/proposal/buzz/<?=$data['active']?>" data-alert="true"><i class="fa-solid fa-bolt me-2"></i> Buzz</button>
-                                  <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-eclo py-1 dropdown-toggle rounded-end-pill" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                    <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 shadow-lg" style="">
-                                      <li><a class="dropdown-item rounded-pill btn" data-action="modal" data-url="/proposal/buzz-views/<?=$data['active']?>"><?=$jatbi->lang("Lịch sử Buzz")?></a></li>
-                                    </ul>
-                                  </div>
-                                </div>
+                                  <button class="btn btn-sm btn-primary text-light py-1 rounded-pill fw-bold"
+                                    data-action="modal" data-url="/proposal/reality/<?=$data['active']?>">
+                                    <i class="ti ti-library me-1"></i> <?=$jatbi->lang("Bút toán")?> (<?=count($realitys ?? 0)?>)
+                                  </button>
+                                <?php } ?>
+                              <?php } ?>
+
+                              <?php if($data['status_id']==1 || $data['status_id']==10){ ?>
+                              <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-eclo py-1 rounded-start-pill fw-bold"
+                                  data-action="click" data-confirm="Bạn có muốn buzz đề xuất này"
+                                  data-url="/proposal/buzz/<?=$data['active']?>" data-alert="true">
+                                  <i class="fa-solid fa-bolt me-2"></i> Buzz
+                                </button>
+                                <button type="button" class="btn btn-sm btn-eclo py-1 dropdown-toggle rounded-end-pill"
+                                  data-bs-toggle="dropdown" aria-expanded="false"></button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 shadow-lg">
+                                  <li>
+                                    <a class="dropdown-item rounded-pill btn" data-action="modal"
+                                       data-url="/proposal/buzz-views/<?=$data['active']?>">
+                                       <?=$jatbi->lang("Lịch sử Buzz")?>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </div>
+                              <?php } ?>
+
+                              <?php if($data['status_id']==1 || $data['status_id']==2 || $data['status_id']==4 || $data['status_id']==5 || $data['status_id']==10){ ?>
+                              <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-warning text-light py-1 rounded-start-pill fw-bold"
+                                  data-action="modal" data-url="/proposal/remind/<?=$data['active']?>">
+                                  <i class="fa-solid fa-bolt me-2"></i> Nhắc nhở
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning text-light py-1 dropdown-toggle rounded-end-pill"
+                                  data-bs-toggle="dropdown" aria-expanded="false"></button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 shadow-lg">
+                                  <li>
+                                    <a class="dropdown-item rounded-pill btn" data-action="modal"
+                                       data-url="/proposal/remind-views/<?=$data['active']?>">
+                                       <?=$jatbi->lang("Lịch sử")?>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </div>
+                              <?php } ?>
+
                             </div>
-                            <?php } ?>
-                            <div class="d-inline-block ms-1">
-                                <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                  <button type="button" class="btn btn-sm btn-primary text-light py-1 rounded-start-pill fw-bold" data-action="modal" data-url="/proposal/remind/<?=$data['active']?>"><i class="fa-solid fa-bolt me-2"></i> Nhắc nhở</button>
-                                  <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-primary text-light py-1 dropdown-toggle rounded-end-pill" data-bs-toggle="dropdown" aria-expanded="false"></button>
-                                    <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 shadow-lg" style="">
-                                      <li><a class="dropdown-item rounded-pill btn" data-action="modal" data-url="/proposal/remind-views/<?=$data['active']?>"><?=$jatbi->lang("Lịch sử")?></a></li>
-                                    </ul>
-                                  </div>
-                                </div>
-                            </div>
-                        </div>
+                          </div>
+                        </nav>
+                      </div>
                     </div>
+
                     <div class="border my-4"></div>
+                    <?php if($data['status_id']==10 || $data['status_id']==20){ ?>
+                        <div class="bg-eclo text-light rounded-4 p-3 mb-3">
+                            <strong><?=$app->get("accounts","name",["id"=>$cancels[0]['account']])?></strong> Yêu cầu hủy đề xuất với lý do: <strong><?=$cancels[0]['approval_content']?></strong> lúc <?=$jatbi->datetime($cancels[0]['date'])?>
+                        </div>
+                    <?php } ?>
+
+
                     <?php if($data['status_id']==4 || $data['status_id']==5){
                         $color_reality = 'primary';
                         foreach($realitys as $reality){
@@ -73,7 +125,7 @@
                         <div class="bg-success-subtle rounded-4 p-3 mb-3 d-flex justify-content-between align-items-center">
                             <div>
                                 <p class="mb-0"><strong><?=$app->get("accounts","name",["id"=>$reality['reality_account']])?> Đã bút toán</strong></p>
-                                <p class="mb-0">Số tiền: <strong class="text-<?=$color_reality?>"><?=number_format($reality['reality'])?></strong></p>
+                                <p class="mb-0">Số tiền: <strong class="text-<?=$color_reality?>"><?=$jatbi->money($reality['reality'])?></strong></p>
                                 <p class="mb-0">Ngày: <strong><?=$jatbi->date($reality['reality_date'])?> </strong></p>
                                 <p class="mb-0">Nội dung: <strong><?=$reality['reality_content']?></strong></p>
                                 <p class="mb-0">Hình thức: <strong><?=$reality['form']?></strong></p>
@@ -113,7 +165,7 @@
                         </div>
                         <div class="col-lg-3 col-6">
                             <label class="fst-italic d-block text-muted"><?=$jatbi->lang("Số tiền")?>: </label>
-                            <strong class="<?=$color?>"><?=number_format($data['total_price'])?></strong>
+                            <strong class="<?=$color?>"><?=$jatbi->money($data['total_price'])?></strong>
                         </div>
                         <div class="col-lg-3 col-6">
                             <label class="fst-italic d-block text-muted mb-1"><?=$jatbi->lang("Tiến trình")?>: </label>
@@ -150,8 +202,8 @@
                             <?php if($data['accountants']>0){ ?>
                             <li class="py-2"><?=$jatbi->lang("Chứng từ")?>: <?=$app->get("accountants","id",["id"=>$data['accountants']])?></li>
                             <?php } ?>
-                            <?php if($data['stores']>0){ ?>
-                            <li class="py-2"><?=$jatbi->lang("Cửa hàng")?>: <?=$app->get("stores","name",["id"=>$data['stores']])?></li>
+                            <?php if($data['brands']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Chi nhánh")?>: <?=$app->get("brands","name",["id"=>$data['brands']])?></li>
                             <?php } ?>
                         </ul>
                     </div>
@@ -189,6 +241,21 @@
                                     </div>
                                 </div>
                             <?php } ?>
+                            <?php if($data['quick_purchase']>0){
+                                $getPurchase = $app->get("warehouses_quick_purchase",["id","active","date"],["id"=>$data['quick_purchase']]) ?? [];
+                            ?>
+                                <div class="col-lg-4">
+                                    <div class="btn card p-2 rounded-4 shadow border-0" data-action="modal" data-url="/warehouses/quick-purchase/views/<?=$getPurchase['active']?>">
+                                        <div class=" d-flex justify-content-start align-items-center text-start">
+                                            <span class="file-icon me-2 rounded-3 lazyload" data-bgset="/assets/icons/folder.png" style="--width:50px;--height:50px;"></span>
+                                            <div>
+                                                <strong class="w-100 d-block">Số phiếu: #<?=$getPurchase['id']?></strong>
+                                                <strong class="w-100 d-block">Ngày: <?=$jatbi->date($getPurchase['date'])?></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php } ?>
                             <?php if($data['shifts']>0){
                                 $getShifts = $app->get("shifts",["id","active","date"],["id"=>$data['shifts']]) ?? [];
                             ?>
@@ -206,12 +273,21 @@
                             <?php } ?>
                             <?php foreach($files as $file){ ?>
                                 <div class="col-lg-4">
+                                    <?php if($file['deleted']==0){ ?>
                                     <div class="btn card p-2 rounded-4 shadow border-0" data-action="modal" data-url="/files/files-views/<?=$file['active']?>">
-                                        <div class=" d-flex justify-content-start align-items-start text-start">
+                                        <div class=" d-flex justify-content-start align-items-center text-start">
                                             <span class="file-icon me-2 rounded-3 lazyload" data-bgset="<?=$jatbi->getFileIcon($file['active'])?>" style="--width:50px;--height:50px;"></span>
                                             <strong class="w-75"><?=$file['name']?></strong>
                                         </div>
                                     </div>
+                                    <?php } else { ?>
+                                    <div class="btn card p-2 rounded-4 shadow border-0 opacity-50" data-action="modal" data-url="/files/files-views/<?=$file['active']?>">
+                                        <div class=" d-flex justify-content-start align-items-center text-start">
+                                            <span class="file-icon me-2 rounded-3 lazyload" data-bgset="<?=$jatbi->getFileIcon($file['active'])?>" style="--width:50px;--height:50px;"></span>
+                                            <strong class="w-75">Đã xóa</strong>
+                                        </div>
+                                    </div>
+                                    <?php } ?>
                                 </div>
                             <?php } ?>
                         </div>
@@ -339,6 +415,60 @@
             </div>
         </div>
         <div class="col-lg-3">
+            <?php if(isset($cancels)){ ?>
+                <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 mb-4">
+                    <div class="card-body">
+                        <strong class="mb-3 d-block"><?=$jatbi->lang("Tiến trình hủy")?></strong>
+                        <?php 
+                            if(!empty($cancels) && is_array($cancels)){
+                            foreach($cancels as $key => $proces) {
+                                if (!is_array($proces)) {
+                                    continue;
+                                }
+                                $node = $app->get("proposal_workflows_nodes","*",["id"=>$proces['node']]);
+                                if($key==0){
+                                     $user = $app->get("accounts",["name","avatar"],["id"=>$data['account_id'] ]) ?? ["avatar"=>'',"name"=>''];
+                                }
+                                if($proces['account']){
+                                    $user = $app->get("accounts",["name","avatar"],["id"=>$proces['account'] ]) ?? ["avatar"=>'',"name"=>''];
+                                }
+                        ?>
+                            <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-2">
+                                <div class="w-100">
+                                    <div class="mt-2 d-flex justify-content-between align-items-center w-100">
+                                        <div class="d-flex">
+                                            <img data-src="/<?=$user['avatar']?>" class="lazyload width height rounded-2" style="--width:40px;--height:40px;">
+                                            <div class="ms-2">
+                                                <span class="badge " style="background: <?=$node['background']?>; color:<?=$node['color']?>;"><?=$node['name']?></span>
+                                                <strong class="pt-1 d-block"><?=$user['name']?></strong>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <?php if($proces['approval']==1){ ?>
+                                            <i class="ti ti-circle-check fs-2 text-success"></i>
+                                            <?php } ?>
+                                            <?php if($proces['approval']==2){ ?>
+                                            <i class="ti ti-ban fs-2 text-danger"></i>
+                                            <?php } ?>
+                                            <?php if($proces['approval']==0){ ?>
+                                                <div class="animate__animated animate__heartBeat animate__infinite">
+                                                    <i class="ti ti-player-pause fs-2 text-danger"></i>
+                                                </div>
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                    <?php if($proces['approval']!=0){ ?>
+                                        <div class="card border-0 p-2 rounded-4 mt-2">
+                                            <span class="fst-italic"><?=$proces['approval_content']?></span>
+                                            <small><?=$jatbi->datetime($proces['date'])?></small>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        <?php } } ?>
+                    </div>
+                </div>
+            <?php } ?>
             <div class="card bg-body shadow-lg border-0 bg-opacity-50 rounded-4 mb-4">
                 <div class="card-body">
                     <strong class="mb-3 d-block"><?=$jatbi->lang("Tiến trình dề xuất")?></strong>
@@ -357,7 +487,7 @@
                                 $user = $app->get("accounts",["name","avatar"],["id"=>$proces['approver_account_id'] ]) ?? ["avatar"=>'',"name"=>''];
                             }
                     ?>
-                        <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-2 <?=(!empty($getProcess))?'':'opacity-50'?> ">
+                        <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-2 <?=(!empty($getProcess) || $node_approval['node_id']==$proces['node_id'] && $data['status_id']!=3)?'':'opacity-50'?> ">
                             <div class="w-100">
                                 <div class="mt-2 d-flex justify-content-between align-items-center w-100">
                                     <div class="d-flex">
@@ -376,7 +506,13 @@
                                             <i class="ti ti-ban fs-2 text-danger"></i>
                                             <?php } ?>
                                         <?php } else { ?>
-                                        <i class="ti ti-circle-dashed fs-2 text-muted"></i>
+                                            <?php if(($node_approval['node_id'] ?? 0)==$proces['node_id'] && $data['status_id']!=3){ ?>
+                                                <div class="animate__animated animate__heartBeat animate__infinite">
+                                                    <i class="ti ti-player-pause fs-2 text-danger"></i>
+                                                </div>
+                                            <?php } else { ?>
+                                                <i class="ti ti-circle-dashed fs-2 text-muted"></i>
+                                            <?php } ?>
                                         <?php } ?>
                                     </div>
                                 </div>
@@ -419,16 +555,24 @@
             </div>
         </div>
     </div>
-    <?php if($active_approval=='true'){ ?>
+    <?php if($active_approval==true){ ?>
     <div class="position-fixed bottom-0 start-0 w-100 bg-body py-2 pb-standalone">
         <div class="text-center text-md-right">
-            <button class="btn btn-primary text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/consultation/<?=$data['active']?>">Tham vấn</button>
-            <button class="btn btn-danger text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=2">Không duyệt</button>
-            <button class="btn btn-success text-light fw-bold" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=1">Xác nhận</button>
+            <button class="btn btn-primary text-light fw-bold mx-1" data-load="this" data-action="modal" data-url="/proposal/consultation/<?=$data['active']?>">Tham vấn</button>
+            <button class="btn btn-danger text-light fw-bold mx-1" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=2">Không duyệt</button>
+            <button class="btn btn-success text-light fw-bold mx-1" data-load="this" data-action="modal" data-url="/proposal/approval/<?=$data['active']?>?type=1">Xác nhận</button>
         </div>
     </div>
     <?php } ?>
-    <?php if($edit_proposal=='true'){ ?>
+    <?php if($active_approval_cancel==true){ ?>
+    <div class="position-fixed bottom-0 start-0 w-100 bg-body py-2 pb-standalone">
+        <div class="text-center text-md-right">
+            <button class="btn btn-danger text-light fw-bold mx-1" data-load="this" data-action="modal" data-url="/proposal/cancel-approval/<?=$data['active']?>?type=2">Không duyệt</button>
+            <button class="btn btn-success text-light fw-bold mx-1" data-load="this" data-action="modal" data-url="/proposal/cancel-approval/<?=$data['active']?>?type=1">Xác nhận</button>
+        </div>
+    </div>
+    <?php } ?>
+    <?php if($edit_proposal==true){ ?>
     <div class="position-fixed bottom-0 start-0 w-100 bg-body py-2 pb-standalone">
         <div class="text-center text-md-right">
             <a class="btn btn-warning text-light fw-bold" data-pjax href="/proposal/edit/<?=$data['active']?>">Chỉnh sửa lại</a>

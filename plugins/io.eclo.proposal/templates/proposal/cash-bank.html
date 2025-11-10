@@ -61,11 +61,11 @@
                                 "attr" => 'data-width="100%" data-datepicker',
                                 "value" => $date ?? ''
                             ])?>
-                            <?=$app->component('stores',[
-                                "name"=>'stores[]',
-                                    "placeholder"=>$jatbi->lang("Cửa hàng"),
-                                    "selected" => $_GET['stores'] ?? '',
-                                "class" => 'filter-name',
+                            <?=$app->component('brands',[
+                                "name"=>'brands[]',
+                                "placeholder"=>$jatbi->lang("Chi nhánh"),
+                                "selected" => $_GET['brands'] ?? '',
+                                "class" => 'filter-name',         
                                 "multi" => "true",
                             ])?>
                         </div>
@@ -93,11 +93,6 @@
                     data-searching="true"
                     data-paging="true"
                     data-state-save='true'
-                    data-columns='[
-                        {"data":"code","orderable":true},{"data":"date","orderable":true},{"data":"category","orderable":false},
-                        {"data":"content","orderable":false},{"data":"thu","orderable":false},{"data":"chi","orderable":false},
-                        {"data":"ton","orderable":false},{"data":"form","orderable":false},{"data":"account","orderable":false}
-                    ]'
                     style="width:100%">
                 <thead>
                     <tr>
@@ -112,19 +107,21 @@
                         <th data-name="account" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th>
                     </tr>
                     <tr>
-                        <th colspan="5" data-orderable="false" class="text-end fw-bold " data-header-name="test">Đầu kỳ</th>
+                        <th colspan="4" data-orderable="false" class="text-end fw-bold " data-header-name="test">Đầu kỳ</th>
                         <th data-orderable="false" data-header-name="thu"></th>
                         <th data-orderable="false" data-header-name="chi"></th>
                         <th data-orderable="false" data-header-name="ton"></th>
+                        <th></th>
                         <th></th>
                     </tr>
                 </thead>
                 <tfoot>
                     <tr>
-                        <th colspan="5" class="text-end fw-bold">Cuối kỳ</th>
+                        <th colspan="4" class="text-end fw-bold">Cuối kỳ</th>
                         <th data-name="thu"></th>
                         <th data-name="chi"></th>
                         <th data-name="ton"></th>
+                        <th></th>
                         <th></th>
                     </tr>
                 </tfoot>

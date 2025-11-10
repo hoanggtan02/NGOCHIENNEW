@@ -10,7 +10,7 @@
     $common = $jatbi->getPluginCommon('io.eclo.proposal');
 
     $app->group("/proposal",function($app) use($setting,$jatbi, $common, $template,$account,$process) {
-        $app->router("", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$common) {
+        $app->router("", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$common,$process) {
             if($app->method()==='GET'){
                 $vars['title'] = $jatbi->lang("Đề xuất");
                 $vars['status'] = array_map(function($item) {
@@ -30,7 +30,10 @@
                 $vars['categorys'] = $app->select("proposal_target",["id (value)","name (text)"],["deleted"=>0,"status"=>"A"]);
                 $vars['workflows'] = $app->select("proposal_workflows",["id (value)","name (text)"],["deleted"=>0,"status"=>"A"]);
                 $vars['objects'] = $app->select("proposal_objects",["id (value)","name (text)"],["deleted"=>0,"status"=>"A"]);
-                $where = ["proposals.deleted" => 0];
+                $where = [
+                    "proposals.deleted" => 0,
+                    "brands_id" => $jatbi->brands(),
+                ];
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
                         "proposal_accounts.account" => $account['id'],
@@ -133,7 +136,7 @@
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
                 $status = isset($_POST['status']) ? $_POST['status'] : [0,1,2,3,4,5,10,20];
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
                 $IDProposal = isset($_POST['id']) ? $_POST['id'] : '';
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
@@ -152,6 +155,7 @@
                         ],
                         "proposals.status" => $status,
                         "proposals.deleted" => 0,
+                        "brands_id" => $jatbi->brands(),
                     ],
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -181,7 +185,7 @@
                         $from = DateTime::createFromFormat('d/m/Y', trim($dates[0]));
                         $to   = DateTime::createFromFormat('d/m/Y', trim($dates[1]));
                         if ($from && $to) {
-                            $where["proposals.date[<>]"] = [
+                            $where["AND"]["proposals.date[<>]"] = [
                                 $from->format("Y-m-d 00:00:00"),
                                 $to->format("Y-m-d 23:59:59")
                             ];
@@ -189,7 +193,7 @@
                     } else {
                         $date = DateTime::createFromFormat('d/m/Y', trim($dates[0]));
                         if ($date) {
-                            $where["proposals.date[<>]"] = [
+                            $where["AND"]["proposals.date[<>]"] = [
                                 $date->format("Y-m-d 00:00:00"),
                                 $date->format("Y-m-d 23:59:59")
                             ];
@@ -199,7 +203,7 @@
                 else {
                     $from = new DateTime("-1 year");
                     $to   = new DateTime("+1 year");
-                    $where["proposals.date[<>]"] = [
+                    $where["AND"]["proposals.date[<>]"] = [
                         $from->format("Y-m-d 00:00:00"),
                         $to->format("Y-m-d 23:59:59")
                     ];
@@ -210,7 +214,7 @@
                         $from = DateTime::createFromFormat('d/m/Y', trim($creates[0]));
                         $to   = DateTime::createFromFormat('d/m/Y', trim($creates[1]));
                         if ($from && $to) {
-                            $where["proposals.create[<>]"] = [
+                            $where["AND"]["proposals.create[<>]"] = [
                                 $from->format("Y-m-d 00:00:00"),
                                 $to->format("Y-m-d 23:59:59")
                             ];
@@ -218,7 +222,7 @@
                     } else {
                         $create = DateTime::createFromFormat('d/m/Y', trim($creates[0]));
                         if ($create) {
-                            $where["proposals.create[<>]"] = [
+                            $where["AND"]["proposals.create[<>]"] = [
                                 $create->format("Y-m-d 00:00:00"),
                                 $create->format("Y-m-d 23:59:59")
                             ];
@@ -227,7 +231,7 @@
                 } else {
                     $from = new DateTime("-1 year");
                     $to   = new DateTime("now");
-                    $where["proposals.create[<>]"] = [
+                    $where["AND"]["proposals.create[<>]"] = [
                         $from->format("Y-m-d 00:00:00"),
                         $to->format("Y-m-d 23:59:59")
                     ];
@@ -300,20 +304,41 @@
                     "proposal_workflows.name (workflows)",
                     "proposal_target.name (category)",
                     "proposal_form.name (form)",
-                ], $where, function ($data) use (&$datas, $jatbi,$app,$common,$account) {
-                    $type = $common['proposal'][$data['type']];
+                ], $where, function ($data) use (&$datas, $jatbi,$app,$common,$account,$process) {
+                    $type = $common['proposal'][$data['type']] ?? ["name"=>'',"color"=>''];
+
                     $status = $common['proposal-status'][$data['status']];
                     // if($data['status']==4 && $data['reality']!=$data['price']){
-                    //     $price = '<span class="text-muted fst-italic fw-normal text-decoration-line-through">'.number_format($data['price']).'</span> # '.number_format($data['reality']);
+                    //     $price = '<span class="text-muted fst-italic fw-normal text-decoration-line-through">'.$jatbi->money($data['price']).'</span> # '.$jatbi->money($data['reality']);
                     // }
                     // else {
-                        $price = number_format($data['price']);
+                    $price = $jatbi->money($data['price'] ?? 0);
                     // }
+                    $DataProcess = $process->workflows($data['id'],$data['account_id']);
+                    // if (isset($data['process']) ) {
+                        // $dataprocess = $DataProcess;
+                    // }
+                    $node_approval = [];
+                    foreach ($DataProcess as $key => $item) {
+                        if (is_array($item) && 
+                            ($item['node_id'] ?? null) == ($data['process'] ?? '') && 
+                            isset($DataProcess[$key + 1]) && is_array($DataProcess[$key + 1])) {
+                            $node_approval = $DataProcess[$key + 1];
+                            // break;
+                        }
+                    }
                     $status = '<span class="p-2 py-1 rounded-pill small fw-bold text-nowrap bg-'.$status['color'].'">'.$status['name'].'</span>';
                     $content  = '<a data-pjax class="text-body" href="/proposal/views/'.$data['active'].'"><div><strong class="text-'.$type['color'].'">#'.$data['id'].'  '.$type['name'].' '.$data['form'].' <br> '.$price.'</strong><br><small class="fst-italic">'.$data['content'].'</small></div></a>';
-                    if($data['process']>0){
-                        $status_process = $app->get("proposal_workflows_nodes","*",["id"=>$data['process']]);
+                    if($data['process']>0 && isset($node_approval['node_id']) && $data['status']!=10){
+                        $status_process = $app->get("proposal_workflows_nodes","*",["id"=>$node_approval['node_id']]);
                         $GetProcess = '<span class="badge  rounded-pill small fw-bold text-nowrap" style="background: '.$status_process['background'].';color:'.$status_process['color'].'">'.$status_process['name'].'</span>';
+                    }
+                    else {
+                        if($data['process']>0){
+                            $status_process = $app->get("proposal_workflows_nodes","*",["id"=>$data['process']]);
+                            $GetProcess = '<span class="badge  rounded-pill small fw-bold text-nowrap" style="background: '.$status_process['background'].';color:'.$status_process['color'].'">'.$status_process['name'].'</span>';
+                        }
+                        
                     }
                     $workflows = '<a data-pjax class="text-body" href="/proposal/views/'.$data['active'].'"><div class="mb-1">'.($GetProcess ?? '').'</div>'.($data['workflows'] ?? '').'</a>';
                     $avatar = '<img data-src="/'.$data['avatar'].'" class="rounded-circle width height lazyload" style="--width:30px;--height:30px;">';
@@ -332,7 +357,7 @@
                             'action' => ['href' => '/proposal/edit/'.$data['active'], 'data-pjax' => '']
                         ];
                     }
-                    if ($jatbi->permission(['proposal.deleted.full']) == 'true' || $data['account_id']==$account['id'] && $data['status']==0) {
+                    if ($jatbi->permission(['proposal.deleted.full']) == 'true' || $data['account_id']==$account['id'] && ($data['status']==0 || $data['status']==20)) {
                         $button[] = [
                             'type' => 'button',
                             'name' => $jatbi->lang("Xóa"),
@@ -366,6 +391,9 @@
                         "date" => '<strong>'.$jatbi->date($data['date']).'</strong><br>'.$jatbi->datetime($data['create']),
                         "status" => $status ?? '',
                         "accounts" => $avatar ?? '',
+                        'test' => $node_approval,
+                        'test2' => $DataProcess,
+                        'proce' => $data['process'],
                         "action" => $app->component("action",[
                             "button" => $button
                         ]),
@@ -392,8 +420,8 @@
                 "account" => $account['id'],
                 "status" => 0,
                 "code" => time(),
-                "stores" => $jatbi->stores('ID'),
-                "stores_id" => $jatbi->stores('ID'),
+                "brands" => $jatbi->brands('ID'),
+                "brands_id" => $jatbi->brands('ID'),
                 "active" => $jatbi->active(),
             ];
             $app->insert("proposals",$insert);
@@ -420,20 +448,25 @@
                 "account" => $account['id'],
                 "status" => 0,
                 "code" => time(),
-                "stores" => $jatbi->stores('ID'),
-                "stores_id" => $jatbi->stores('ID'),
+                "brands" => $jatbi->brands('ID'),
+                "brands_id" => $jatbi->brands('ID'),
                 "active" => $jatbi->active(),
             ];
-            $app->insert("proposals",$insert);
-            $GetID = $app->id();
-            $jatbi->logs('proposal','proposal-create',$insert);
-            $insert_accounts = [
-                "account" => $account['id'],
-                "proposal" => $GetID,
-                "date" => date("Y-m-d H:i:s"),
-            ];
-            $app->insert("proposal_accounts",$insert_accounts);
-            echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công"),'load'=>'ajax','url'=>"/proposal/edit/".$insert['active']]);
+            if($insert['brands_id']>0){
+                $app->insert("proposals",$insert);
+                $GetID = $app->id();
+                $jatbi->logs('proposal','proposal-create',$insert);
+                $insert_accounts = [
+                    "account" => $account['id'],
+                    "proposal" => $GetID,
+                    "date" => date("Y-m-d H:i:s"),
+                ];
+                $app->insert("proposal_accounts",$insert_accounts);
+                echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công"),'load'=>'ajax','url'=>"/proposal/edit/".$insert['active']]);
+            }
+            else {
+                echo json_encode(['status'=>'error','content'=>$jatbi->lang("Lỗi chọn chi nhánh"),'load'=>'ajax',]);
+            }
         })->setPermissions(['proposal.add']);
 
         $app->router("/edit/{active}", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$setting,$common) {
@@ -441,6 +474,14 @@
             if($data>1){
                 if($app->method()==='GET'){
                     $vars['data'] = $data;
+                    if($data['purchase']>0){
+                        $purchase = $app->get("warehouses_invoices",["active"],["id"=>$data['purchase']]);
+                        header("location: /warehouses/purchase/edit/".$purchase['active']);
+                    }
+                    elseif($data['quick_purchase']>0){
+                        $purchase = $app->get("warehouses_quick_purchase",["active"],["id"=>$data['quick_purchase']]);
+                        header("location: /warehouses/quick-purchase/edit/".$purchase['active']);
+                    }
                     $vars['title'] = $jatbi->lang("Đề xuất").' #'.$data['id'];
                     $vars['types'] = array_map(function($item) {
                             return [
@@ -456,13 +497,13 @@
                     $vars['accounts'][] = $app->get("accounts",["id (value)","name (text)"],["id"=>$data['accounts']]);
                     $vars['proposals'][] = $app->get("proposals",["id (value)","content (text)"],["id"=>$data['proposals']]);
                     $vars['accountants'][] = $app->get("accountants",["id (value)","name (text)"],["id"=>$data['accountants']]);
-                    $vars['stores'][] = $app->get("stores",["id (value)","name (text)"],["id"=>$data['stores']]);
+                    $vars['brands'][] = $app->get("brands",["id (value)","name (text)"],["id"=>$data['brands']]);
                     $vars['objects'][] = $app->get("proposal_objects",["id (value)","name (text)"],["id"=>$data['objects']]);
                     $files = $app->select("proposal_files",[
-                        "[>]file" => ["files"=>"id"],
+                        "[>]files" => ["files"=>"id"],
                     ],[
-                        "file.active",
-                        "file.name",
+                        "files.active",
+                        "files.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -501,13 +542,13 @@
                         $datas[] = [
                             "id" => $data['active'],
                             // data-form=\'{"type":"details","details":"'.$data['active'].'",value":"this.val","code":"edit","col":"content"}\'
-                            "content" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"content","value":"this.val"}\' class="form-control p-1 border-0 bg-transparent" value="'.($data['content'] ?? 0).'" placeholder="Nội dung">',
+                            "content" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"content","value":"this.val"}\' class="form-control py-3 rounded-4" value="'.($data['content'] ?? 0).'" placeholder="Nội dung">',
                             "type" => '',
-                            "price" => '<input type="tel" data-table-load="datatable-details" data-pjax-scrollTo="false" data-action="blur" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"price","value":"this.val"}\' data-number="money" data-currency="" data-decimals="0" data-thousands="." data-decimal="," class="form-control p-1 border-0 bg-transparent" value="'.($data['price'] ?? 0).'" placeholder="Đơn giá">',
-                            "amount" => '<input type="tel" data-table-load="datatable-details" data-pjax-scrollTo="false" data-action="blur" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"amount","value":"this.val"}\' class="form-control p-1 border-0 bg-transparent" value="'.($data['amount'] ?? 0).'" placeholder="Số lượng">',
-                            "units" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"units","value":"this.val"}\' class="form-control p-1 border-0 bg-transparent" value="'.($data['units'] ?? 0).'" placeholder="Đơn vị">',
-                            "total" => number_format($data['total'] ?? 0),
-                            "notes" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"notes","value":"this.val"}\' class="form-control p-1 border-0 bg-transparent" value="'.($data['notes'] ?? 0).'" placeholder="Ghi chú">',
+                            "price" => '<input type="tel" data-table-load="datatable-details" data-pjax-scrollTo="false" data-action="blur" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"price","value":"this.val"}\' data-number="money" data-currency="" data-decimals="2" data-thousands="," data-decimal="." class="form-control py-3 rounded-4" value="'.($data['price'] ?? 0).'" placeholder="Đơn giá">',
+                            "amount" => '<input type="tel" data-table-load="datatable-details" data-pjax-scrollTo="false" data-action="blur" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"amount","value":"this.val"}\' class="form-control py-3 rounded-4" value="'.($data['amount'] ?? 0).'" placeholder="Số lượng">',
+                            "units" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"units","value":"this.val"}\' class="form-control py-3 rounded-4" value="'.($data['units'] ?? '').'" placeholder="Đơn vị">',
+                            "total" => $jatbi->money($data['total'] ?? 0),
+                            "notes" => '<input type="text" data-action="blur" data-pjax-scrollTo="false" data-url="/proposal/update/'.$proposal.'" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"edit","col":"notes","value":"this.val"}\' class="form-control py-3 rounded-4" value="'.($data['notes'] ?? 0).'" placeholder="Ghi chú">',
                             "action" => '<button type="button" data-pjax-scrollTo="false" class="btn btn-sm p-0 text-eclo" data-action="click" data-confirm="Bạn có muốn xóa nó không?" data-url="/proposal/update/'.$proposal.'" data-toast="true" data-form=\'{"type":"details","details":"'.$data['active'].'","code":"deleted"}\' data-table-load="datatable-details" ><i class="ti ti-trash fs-4"></i></button>',
                         ];
                     });
@@ -517,8 +558,8 @@
                         "recordsFiltered" => $count ?? 0,
                         "data" => $datas ?? [],
                         "footerData" => [
-                            "total" => number_format($total ?? 0),
-                            "update" => '<button type="button" data-pjax-scrollTo="false" class="btn btn-sm p-1 rounded-pill btn-eclo" data-action="click" data-confirm="Bạn có muốn cập nhật nó lên số tiền không?" data-url="/proposal/update/'.$proposal.'" data-toast="true" data-form=\'{"type":"price","value":"'.$total.'"}\' data-table-load="datatable-details" data-selector="[data-vat-price],[data-update-price]" data-load="this">'.$jatbi->lang("Cập nhật số tiền").'</button>',
+                            "total" => $jatbi->money($total ?? 0),
+                            "update" => '<button type="button" data-pjax-scrollTo="false" class="btn btn-sm p-1 rounded-pill btn-eclo" data-action="click" data-confirm="Bạn có muốn cập nhật nó lên số tiền không?" data-url="/proposal/update/'.$proposal.'" data-toast="true" data-form=\'{"type":"price","value":"'.$total.'"}\' data-load="this">'.$jatbi->lang("Cập nhật số tiền").'</button>',
                         ],
                     ]);
                 }
@@ -634,13 +675,14 @@
                 "proposals.vendors",
                 "proposals.customers",
                 "proposals.purchase",
+                "proposals.quick_purchase",
                 "proposals.shifts",
                 "proposals.invoices",
                 "proposals.account (account_id)",
                 "proposals.accounts",
                 "proposals.proposals",
                 "proposals.accountants",
-                "proposals.stores",
+                "proposals.brands",
                 "proposal_form.name (form)",
                 "proposal_workflows.name (workflows)",
                 "proposal_target.name (category)",
@@ -664,10 +706,11 @@
                         $vars['data']['total_price'] = $data['price']+$data['vat_price'];
                     }
                     $files = $app->select("proposal_files",[
-                        "[>]file" => ["files"=>"id"],
+                        "[>]files" => ["files"=>"id"],
                     ],[
-                        "file.active",
-                        "file.name",
+                        "files.active",
+                        "files.deleted",
+                        "files.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -681,7 +724,8 @@
                     $status_process = $app->get("proposal_workflows_nodes","*",["id"=>$data['process']]);
                     $vars['data']['process'] = '<span class="p-2 py-1 rounded-pill small fw-bold text-nowrap" style="background: '.($status_process['background'] ?? '').';color:'.($status_process['color'] ?? '').'">'.($status_process['name'] ?? '').'</span>';
                     $vars['proposals_logs'] = $app->select("proposal_logs","*",["proposal"=>$data['id'],"ORDER"=>["id"=>"DESC"]]);
-                    $node_approval = null;
+                    $node_approval = [];
+                    $vars['active_approval_cancel'] = false;
                     $vars['active_approval'] = false;
                     $vars['edit_proposal'] = false;
                     if($data['type']==1){
@@ -737,6 +781,13 @@
                         "proposals_reality.deleted" => 0,
                     ]);
                     $vars['checkReality'] = (float)$app->sum("proposals_reality","reality",["deleted"=>0,"proposal"=>$data['id']]);
+                    if($data['status']==10 || $data['status']==20){
+                        $cancels = $app->get("proposal_cancel","*",["proposal"=>$data['id'],"deleted"=>0,"approval"=>0]);
+                        if($cancels['account']==$account['id'] && $data['status']==10){
+                            $vars['active_approval_cancel'] = true;
+                        }
+                        $vars['cancels'] = $app->select("proposal_cancel","*",["proposal"=>$data['id'],"deleted"=>0]);
+                    }
                     echo $app->render($template.'/proposal/proposal-views.html', $vars);
                 }
                 elseif($app->method()==='POST'){
@@ -773,10 +824,10 @@
                             "id" => $data['active'],
                             "content" => ($data['content'] ?? 0),
                             "type" => '',
-                            "price" => number_format($data['price'] ?? 0),
-                            "amount" => number_format($data['amount'] ?? 0),
+                            "price" => $jatbi->money($data['price'] ?? 0),
+                            "amount" => $jatbi->money($data['amount'] ?? 0),
                             "units" =>($data['units'] ?? 0),
-                            "total" => number_format($data['total'] ?? 0),
+                            "total" => $jatbi->money($data['total'] ?? 0),
                             "notes" => ($data['notes'] ?? 0),
                         ];
                     });
@@ -786,7 +837,7 @@
                         "recordsFiltered" => $count ?? 0,
                         "data" => $datas ?? [],
                         "footerData" => [
-                            "total" => number_format($total ?? 0),
+                            "total" => $jatbi->money($total ?? 0),
                         ],
                     ]);
                 }
@@ -821,7 +872,7 @@
                         if ($item['node_id'] == $data['process'] && isset($DataProcess[$key + 1])) {
                             $node_old = $DataProcess[$key];
                             $node_approval = $DataProcess[$key + 1];
-                            $node_next = $DataProcess[$key + 2];
+                            $node_next = $DataProcess[$key + 2] ?? $node_approval;
                             break;
                         }
                     }
@@ -896,7 +947,7 @@
                                         "proposal" => $data['id'],
                                         "form" => $data['form'],
                                         "category" => $data['category'],
-                                        "reality" => str_replace(",","", $data['price']),
+                                        "reality" => $data['price'],
                                         "reality_content" => 'Bút toán tự động',
                                         "reality_date" => $data['date'],
                                         "reality_account" => $account['id'],
@@ -908,6 +959,9 @@
                                 }
                                 if($data['purchase']>0){
                                     $app->update("warehouses_invoices",["status"=>3],["id"=>$data['purchase']]);
+                                }
+                                elseif($data['quick_purchase']>0){
+                                    $app->update("warehouses_quick_purchase",["status"=>1],["id"=>$data['quick_purchase']]);
                                 }
                             }
                         }
@@ -924,6 +978,12 @@
                             if($account_notification!=$account_notification_finish){
                                 $jatbi->notification($account['id'],$account_notification_finish,'Đề xuất #'.$data['id'],$content_notification_finish,'/proposal/views/'.$data['active'],'');
                             }
+                            if($data['purchase']>0){
+                                $app->update("warehouses_invoices",["status"=>7],["id"=>$data['purchase']]);
+                            }
+                            elseif($data['quick_purchase']>0){
+                                $app->update("warehouses_quick_purchase",["status"=>7],["id"=>$data['quick_purchase']]);
+                            }
                         }
                         // $update[] = [
                         //     "status" => $status,
@@ -931,7 +991,7 @@
                         //     "modify" => date("Y-m-d H:i:s"),
                         // ];
                         $update['status'] = $status;
-                        $update['process'] = $node_approval['node_id'];
+                        $update['process'] = $proposal_process_finish['node'] ?? $node_approval['node_id'];
                         $update['modify'] = date("Y-m-d H:i:s");
                         $app->update("proposals",$update,["id"=>$data['id']]);
                         $proposal_process_logs = [
@@ -942,6 +1002,157 @@
                             "notes" => $proposal_process['approval_content'],
                             "process" => $ProcessID,
                             "data" => json_encode($proposal_process),
+                        ];
+                        $app->insert("proposal_logs",$proposal_process_logs);
+                        echo json_encode(['status'=>'success',"content"=>$jatbi->lang("Cập nhật thành công"),"load"=>"ajax","url"=>"/proposal/views/".$data['active']]);
+                    }
+                    else {
+                        echo json_encode($error);
+                    }
+                }
+                else {
+                    echo json_encode(['status'=>'error','content'=>$jatbi->lang("Có lỗi xẩy ra")]);
+                }
+            }
+        })->setPermissions(['proposal.add']);
+
+        $app->router("/cancel/{active}", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$process,$setting) {
+            $data = $app->get("proposals","*",["active"=>$app->xss($vars['active']),"deleted"=>0]);
+            if($app->method()==='GET'){
+                if($data>1){
+                    $vars['title'] = $jatbi->lang("Yêu cầu hủy");
+                    echo $app->render($template.'/proposal/cancel.html', $vars, $jatbi->ajax());
+                }
+                else {
+                    echo $app->render($setting['template'].'/pages/error.html', $vars, $jatbi->ajax());
+                }
+            }
+            elseif($app->method()==='POST') {
+                $app->header([
+                    'Content-Type' => 'application/json',
+                ]);
+                if($data>1){
+                    
+                    $content = $app->xss($_POST['content']);
+                    if($content==''){
+                        $error = ["status"=>"error","content"=>$jatbi->lang("Vui lòng không để trống")];
+                    }
+                    if(empty($error)){
+                        $getProcess = $app->get("proposal_process","*",["proposal"=>$data['id'],"deleted"=>0,"ORDER"=>["id"=>"DESC"]]);
+                        $proposal_cancel = [
+                            "proposal" => $data['id'],
+                            "workflows" => $data['workflows'],
+                            "date" => date("Y-m-d H:i:s"),
+                            "account" => $account['id'],
+                            "node"  => $getProcess['node'],
+                            "approval" => 1,
+                            "approval_content" => $content,
+                            "approval_date" => date("Y-m-d H:i:s"),
+                            "status_proposal" => $data['status'],
+                        ];
+                        $app->insert("proposal_cancel",$proposal_cancel);
+                        $ProcessID = $app->id();
+                        $proposal_process_logs = [
+                            "proposal" => $data['id'],
+                            "date" => date("Y-m-d H:i:s"),
+                            "account" => $account['id'],
+                            "content" => 'Yêu cầu hủy đề xuất: ',
+                            "notes" => $proposal_cancel['approval_content'],
+                            "process" => $ProcessID,
+                            "data" => json_encode($proposal_cancel),
+                        ];
+                        $app->insert("proposal_logs",$proposal_process_logs);
+                        if($proposal_cancel['account']!=$getProcess['account']){
+                            $proposal_process = [
+                                "proposal" => $data['id'],
+                                "workflows" => $data['workflows'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "account" => $getProcess['account'],
+                                "node"  => $getProcess['node'],
+                                "approval" => 0,
+                                "approval_content" => '',
+                                "approval_date" => date("Y-m-d H:i:s"),
+                                "status_proposal" => $data['status'],
+                            ];
+                            $app->insert("proposal_cancel",$proposal_process);
+                            $content_notification = $account['name'].' '.$proposal_process_logs['content'];
+                            $account_notification = $proposal_process['account'];
+                            $jatbi->notification($account['id'],$account_notification,'Hủy đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
+                            $update['status'] = 10;
+                            $update['process'] = $getProcess['node'];
+                            $update['modify'] = date("Y-m-d H:i:s");
+                            $app->update("proposals",$update,["id"=>$data['id']]);
+                        }
+                        else {
+                            $update['status'] = 20;
+                            $update['process'] = $getProcess['node'];
+                            $update['modify'] = date("Y-m-d H:i:s");
+                            $app->update("proposals",$update,["id"=>$data['id']]);
+                        }
+                        echo json_encode(['status'=>'success',"content"=>$jatbi->lang("Cập nhật thành công"),"load"=>"ajax","url"=>"/proposal/views/".$data['active']]);
+                    }
+                    else {
+                        echo json_encode($error);
+                    }
+                }
+                else {
+                    echo json_encode(['status'=>'error','content'=>$jatbi->lang("Có lỗi xẩy ra")]);
+                }
+            }
+        })->setPermissions(['proposal.add']);
+
+        $app->router("/cancel-approval/{active}", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$process,$setting) {
+            $data = $app->get("proposals","*",["active"=>$app->xss($vars['active']),"deleted"=>0,"status"=>10]);
+            if($app->method()==='GET'){
+                if($data>1){
+                    $vars['title'] = $jatbi->lang("Xét duyệt hủy");
+                    echo $app->render($template.'/proposal/cancel-approval.html', $vars, $jatbi->ajax());
+                }
+                else {
+                    echo $app->render($setting['template'].'/pages/error.html', $vars, $jatbi->ajax());
+                }
+            }
+            elseif($app->method()==='POST') {
+                $app->header([
+                    'Content-Type' => 'application/json',
+                ]);
+                if($data>1){
+                    $cancel = $app->get("proposal_cancel","*",["proposal"=>$data['id'],"deleted"=>0,"approval"=>0]);
+                    $content = $app->xss($_POST['content']);
+                    $approval = $app->xss($_POST['approval']);
+                    if($content=='' || $approval==''){
+                        $error = ["status"=>"error","content"=>$jatbi->lang("Vui lòng không để trống")];
+                    }
+                    elseif($cancel['account']!=$account['id']){
+                        $error = ["status"=>"error","content"=>$jatbi->lang("Bạn không có quyền duyệt đề xuất hủy này")];
+                    }
+                    if(empty($error)){
+                        if($approval==1){
+                            $content = 'Đã duyệt hủy đề xuất';
+                            $status = 20;
+                            $content_notification = $account['name'].' '.$content;
+                            $account_notification = $data['account'];
+                            $jatbi->notification($account['id'],$account_notification,'Đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
+                        }
+                        else{
+                            $content = 'Không duyệt hủy đề xuất';
+                            $status = $cancel['status_proposal'];
+                            $content_notification = $account['name'].' '.$content;
+                            $account_notification = $data['account'];
+                            $jatbi->notification($account['id'],$account_notification,'Đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
+                        }
+                        $update['status'] = $status;
+                        $update['modify'] = date("Y-m-d H:i:s");
+                        $app->update("proposals",$update,["id"=>$data['id']]);
+                        $app->update("proposal_cancel",["approval"=>$approval,"approval_date"=>date("Y-m-d H:i:s")],["id"=>$cancel['id']]);
+                        $proposal_process_logs = [
+                            "proposal" => $data['id'],
+                            "date" => date("Y-m-d H:i:s"),
+                            "account" => $account['id'],
+                            "content" => $content,
+                            "notes" => '',
+                            "process" => $data['process'],
+                            "data" => '',
                         ];
                         $app->insert("proposal_logs",$proposal_process_logs);
                         echo json_encode(['status'=>'success',"content"=>$jatbi->lang("Cập nhật thành công"),"load"=>"ajax","url"=>"/proposal/views/".$data['active']]);
@@ -975,7 +1186,7 @@
                     'Content-Type' => 'application/json',
                 ]);
                 if($data>1){
-                    $price = (float)str_replace(",","", $app->xss($_POST['price']));
+                    $price = (float)$jatbi->money( $app->xss($_POST['price']));
                     $content = $app->xss($_POST['content']);
                     $date = $app->xss($_POST['date']);
                     $form = $app->xss($_POST['form']);
@@ -1028,7 +1239,7 @@
                         "proposal" => $data['id'],
                         "form"  => $data['form'],
                         "category"  => $data['category'],
-                        "reality" => str_replace(",","", $data['reality']),
+                        "reality" => $jatbi->money( $data['reality']),
                         "reality_content" => $data['reality_content'],
                         "reality_date" => $data['reality_date'],
                         "reality_account" => $data['reality_account'],
@@ -1151,12 +1362,11 @@
                         ],
                         "proposal_form.status" => 'A',
                         "proposal_form.deleted" => 0,
-                        "stores_linkables.stores" => $jatbi->stores(),
+                        "brands_linkables.brands" => $jatbi->brands(),
                     ]
                 ];
-                
                 $app->select("proposal_form", [
-                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_form"]]
+                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_form"]]
                 ],[
                     "@proposal_form.id",
                     "proposal_form.name",
@@ -1185,7 +1395,7 @@
                         ],
                         "proposal_workflows.status" => 'A',
                         "proposal_workflows.deleted" => 0,
-                        "stores_linkables.stores" => $jatbi->stores(),
+                        "brands_linkables.brands" => $jatbi->brands(),
                     ]
                 ];
                 if($parent){
@@ -1193,7 +1403,7 @@
                 }
                 $app->select("proposal_workflows",[
                     "[>]proposal_workflows_form" => ["id"=>"workflows"],
-                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_workflows"]]
+                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_workflows"]]
                 ],[
                     "@proposal_workflows.id",
                     "proposal_workflows.name",
@@ -1221,7 +1431,7 @@
                         ],
                         "proposal_target.status" => 'A',
                         "proposal_target.deleted" => 0,
-                        "stores_linkables.stores" => $jatbi->stores(),
+                        "brands_linkables.brands" => $jatbi->brands(),
                     ]
                 ];
                 if($parent){
@@ -1229,7 +1439,7 @@
                 }
                 $app->select("proposal_target",[
                     "[>]proposal_target_workflows" => ["id"=>"target"],
-                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_target"]]
+                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_target"]]
                 ],[
                     "@proposal_target.id",
                     "proposal_target.name",
@@ -1243,7 +1453,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/vendors", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        $app->router("/search/vendors", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1253,16 +1463,17 @@
                 $where = [
                     "AND" => [
                         "OR" => [
-                            "vendors.name[~]" => $searchValue,
+                            "customers.name[~]" => $searchValue,
                         ],
-                        "vendors.status" => 'A',
-                        "vendors.deleted" => 0,
+                        "customers.status" => 'A',
+                        "customers.deleted" => 0,
+                        "customers.form" => 1,
                     ]
                 ];
-                $app->select("vendors", [
-                    "vendors.id",
-                    "vendors.name",
-                ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $app->select("customers",[
+                    "customers.id",
+                    "customers.name",
+                ], $where, function ($data) use (&$datas,$jatbi,$app) {
                     $datas[] = [
                         "value" => $data['id'],
                         "text" => $data['name'],
@@ -1272,7 +1483,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/accounts", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        $app->router("/search/accounts", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1286,16 +1497,15 @@
                             "accounts.account[~]" => $searchValue,
                         ],
                         "accounts.deleted" => 0,
-                        "stores_linkables.stores" => $jatbi->stores(),
+                        "brands_linkables.brands" => $jatbi->brands(),
                     ]
                 ];
-                // var_dump($jatbi->stores());
-                $app->select("accounts", [
-                    "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "accounts"]]
-                ], [
+                $app->select("accounts",[
+                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"accounts"]]
+                ],[
                     "@accounts.id",
                     "accounts.name",
-                ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                ], $where, function ($data) use (&$datas,$jatbi,$app) {
                     $datas[] = [
                         "value" => $data['id'],
                         "text" => $data['name'],
@@ -1303,7 +1513,7 @@
                 });
                 echo json_encode($datas);
             }
-    })->setPermissions(['proposal']);
+        })->setPermissions(['proposal']);
 
         $app->router("/search/proposals", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
@@ -1397,7 +1607,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/stores", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        $app->router("/search/brands", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1406,16 +1616,16 @@
                 $where = [
                     "AND" => [
                         "OR" => [
-                            "stores.name[~]" => $searchValue,
+                            "brands.name[~]" => $searchValue,
                         ],
-                        "stores.status" => 'A',
-                        "stores.deleted" => 0,
+                        "brands.status" => 'A',
+                        "brands.deleted" => 0,
                     ]
                 ];
-                $app->select("stores", [
-                    "stores.id",
-                    "stores.name",
-                ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $app->select("brands",[
+                    "brands.id",
+                    "brands.name",
+                ], $where, function ($data) use (&$datas,$jatbi,$app) {
                     $datas[] = [
                         "value" => $data['id'],
                         "text" => $data['name'],
@@ -1431,23 +1641,30 @@
                 $app->header([
                     'Content-Type' => 'application/json',
                 ]);
-                $DataProcess = $process->workflows($data['id'],$data['account']);
-                $node_approval = null;
-                foreach ($DataProcess as $key => $item) {
-                    if ($item['node_id'] == $data['process'] && isset($DataProcess[$key + 1])) {
-                        $node_approval = $DataProcess[$key + 1];
-                        break;
+                if($data['status']!=10){
+                    $DataProcess = $process->workflows($data['id'],$data['account']);
+                    $node_approval = null;
+                    foreach ($DataProcess as $key => $item) {
+                        if ($item['node_id'] == $data['process'] && isset($DataProcess[$key + 1])) {
+                            $node_approval = $DataProcess[$key + 1];
+                            break;
+                        }
                     }
+                    $insert = [
+                        "proposal" => $data['id'],
+                        "account" => $account['id'],
+                        "account_buzz" => $node_approval['approver_account_id'],
+                        "date" => date("Y-m-d H:i:s"),
+                    ];
+                    $app->insert("proposal_buzz",$insert);
+                    $content_notification = $account['name'].' đã gửi thông báo nhắc nhở từ đề xuất #'.$data['id'];
+                    $account_notification = $insert['account_buzz'];
                 }
-                $insert = [
-                    "proposal" => $data['id'],
-                    "account" => $account['id'],
-                    "account_buzz" => $node_approval['approver_account_id'],
-                    "date" => date("Y-m-d H:i:s"),
-                ];
-                $app->insert("proposal_buzz",$insert);
-                $content_notification = $account['name'].' đã gửi thông báo nhắc nhở từ đề xuất #'.$data['id'];
-                $account_notification = $insert['account_buzz'];
+                else {
+                    $cancel = $app->get("proposal_cancel","*",["proposal"=>$data['id'],"deleted"=>0,"ORDER"=>["id"=>"DESC"]]);
+                    $content_notification = $account['name'].' đã gửi thông báo nhắc nhở hủy đề xuất #'.$data['id'];
+                    $account_notification = $cancel['account'];
+                }
                 $jatbi->notification($account['id'],$account_notification,'Nhắc nhở Đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
                 echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công")]);
             }
@@ -1581,11 +1798,11 @@
                             if($detail>1){
                                 $update['total'] = $detail['total'];
                                 if($col=='price'){
-                                    $value = str_replace(".","",$value);
+                                    $value = $jatbi->money($value);
                                     $update['total'] = ($detail['amount'] ?? 0)*$value;
                                 }
                                 elseif($col=='amount'){
-                                    $value = str_replace(".","",$value);
+                                    $value = $jatbi->money($value);
                                     $update['total'] = ($detail['price'] ?? 0)*$value;
                                 }
                                 $update[$col] = $value;
@@ -1604,7 +1821,7 @@
                     }
                     elseif($type=='price'){
                         $vat_price = $data['vat_price'];
-                        $update[$type] = str_replace(",","", $value);
+                        $update[$type] = $jatbi->money( $value);
                         if($data['vat_type']==0){
                             $vat_price = ($update[$type]*$data['vat_percent'])/100;
                         }
@@ -1618,7 +1835,7 @@
                     }
                     elseif($type=='vat_percent'){
                         $vat_price = $data['vat_price'];
-                        $update[$type] = str_replace(",","", $value);
+                        $update[$type] = $jatbi->money( $value);
                         if($data['vat_type']==0){
                             $vat_price = ($data['price']*$update[$type])/100;
                         }
@@ -1671,7 +1888,7 @@
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposal_comments.date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
                 $status = isset($_POST['status']) ? [$_POST['status'],$_POST['status']] : '';
-                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
+                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
                 $categorys = isset($_POST['categorys']) ? $_POST['categorys'] : '';
                 $units = isset($_POST['units']) ? $_POST['units'] : '';
                 $where = [

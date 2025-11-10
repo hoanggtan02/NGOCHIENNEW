@@ -17,7 +17,7 @@
 						</div>
 						<div class="col-lg-12">
 							<span>Tổng tiền</span>
-							<div class="py-3 rounded-4 bg-body border px-3 border-eclo"><?=number_format($data['payments'] ?? 0)?></div>
+							<div class="py-3 rounded-4 bg-body border px-3 border-eclo"><?=$jatbi->money($data['payments'] ?? 0)?></div>
 						</div>
 						<div class="col-lg-12">
 		                    <?=$app->component('select',[

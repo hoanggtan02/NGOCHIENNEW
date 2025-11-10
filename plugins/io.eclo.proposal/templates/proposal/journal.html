@@ -29,11 +29,11 @@
                                 "attr" => 'data-width="100%" data-datepicker',
                                 "value" => $date ?? ''
                             ])?>
-                            <?=$app->component('stores',[
-                                "name"=>'stores[]',
-                                "placeholder"=>$jatbi->lang("Cửa hàng"),
-                                "selected" => $_GET['stores'] ?? '',
-                                "class" => 'filter-name',
+                            <?=$app->component('brands',[
+                                "name"=>'brands[]',
+                                "placeholder"=>$jatbi->lang("Chi nhánh"),
+                                "selected" => $_GET['brands'] ?? '',
+                                "class" => 'filter-name',         
                                 "multi" => "true",
                             ])?>
                         </div>

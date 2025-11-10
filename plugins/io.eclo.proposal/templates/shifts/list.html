@@ -28,11 +28,11 @@
                                 "class" => 'filter-name',
                                 "attr" => 'data-width="100%" data-datepicker',
                             ])?>
-                            <?=$app->component('stores',[
-                                "name"=>'stores[]',
-                                "placeholder"=>$jatbi->lang("Cửa hàng"),
-                                "selected" => $_GET['stores'] ?? '',
-                                "class" => 'filter-name',
+                            <?=$app->component('brands',[
+                                "name"=>'brands[]',
+                                "placeholder"=>$jatbi->lang("Chi nhánh"),
+                                "selected" => $_GET['brands'] ?? '',
+                                "class" => 'filter-name',         
                                 "multi" => "true",
                             ])?>
                         </div>
@@ -88,7 +88,7 @@
                         <th data-name="total" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="fw-bold text-success"><?=$jatbi->lang("Tổng tiền")?></th>
                         <th data-name="total_debit" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="fw-bold text-danger"><?=$jatbi->lang("Tổng nợ")?></th>
                         <th data-name="account" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Tài khoản")?></th>
-                        <th data-name="stores" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Cửa hàng")?></th>
+                        <th data-name="brands" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="text-nowrap"><?=$jatbi->lang("Chi nhánh")?></th>
                         <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
                     </tr>
                 </thead>

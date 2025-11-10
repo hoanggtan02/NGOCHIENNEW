@@ -66,7 +66,7 @@
                 <div class="col-lg-6">
                     <div class="card shadow border-0 bg-danger text-light rounded-4 p-4">
                         <div class="">
-                            <h4 class="fw-bold"><?=number_format($total['tongchi'] ?? 0)?></h4>
+                            <h4 class="fw-bold"><?=$jatbi->money($total['tongchi'] ?? 0)?></h4>
                             <p class="mb-0">Tổng đề xuất chi</p>
                         </div>
                         <div class="d-flex align-items-center justify-content-between my-2">
@@ -78,7 +78,7 @@
                         </div>
                         
                         <div class="">
-                            <h4 class="fw-bold"><?=number_format($total['duyetchi'] ?? 0)?></h4>
+                            <h4 class="fw-bold"><?=$jatbi->money($total['duyetchi'] ?? 0)?></h4>
                             <p class="mb-0">Tổng đề xuất duyệt chi</p>
                         </div>
                         
@@ -87,7 +87,7 @@
                 <div class="col-lg-6">
                     <div class="card shadow border-0 bg-success text-light rounded-4 p-4">
                         <div class="">
-                            <h4 class="fw-bold"><?=number_format($total['tongthu'] ?? 0)?></h4>
+                            <h4 class="fw-bold"><?=$jatbi->money($total['tongthu'] ?? 0)?></h4>
                             <p class="mb-0">Tổng đề xuất thu</p>
                         </div>
                         <div class="d-flex align-items-center justify-content-between my-2">
@@ -98,7 +98,7 @@
                             <div class="bg-light rounded-2 p-2 text-success fw-bold"><?=round($phantramthu)?>%</div>
                         </div>
                         <div class="">
-                            <h4 class="fw-bold"><?=number_format($total['duyetthu'] ?? 0)?></h4>
+                            <h4 class="fw-bold"><?=$jatbi->money($total['duyetthu'] ?? 0)?></h4>
                             <p class="mb-0">Tổng đề xuất duyệt thu</p>
                         </div>
                         
@@ -381,8 +381,8 @@
                    <div class="custom-buttons d-none">
                         
                    </div>
-                   <table id="datatable" 
-                            data-table 
+                   <table id="proposals" 
+                            data-table
                             class="table align-middle" 
                             data-type="POST" 
                             data-server="true" 
@@ -391,6 +391,7 @@
                             data-searching="true"
                             data-paging="true"
                             data-state-save='true'
+                            data-dt-fixed-header="true" data-dt-fixed-header-offset="60"
                             style="width:100%">
                         <thead>
                             <tr>

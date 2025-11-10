@@ -5,13 +5,13 @@
         if($getProposal>1){
             $proposal = [
                 "proposal" => $getProposal['id'],
-                "file" => $data['id'],
+                "files" => $data['id'],
             ];
             $app->insert("proposal_files",$proposal);
         }
         $insert = [
             "account" => $data['account'],
-            "type" => 'file',
+            "type" => 'files',
             "data" => $data['id'],
             "date" => date("Y-m-d H:i:s"),
             "modify" => date("Y-m-d H:i:s"),
@@ -21,7 +21,7 @@
             "permission" => 1,
         ];
         $app->insert("files_shares",$insert);
-        $app->update("file",["permission"=>1],["id"=>$data['id']]);
+        $app->update("files",["permission"=>1],["id"=>$data['id']]);
         $jatbi->logs('proposal','proposal-files',[$data,$proposal]);
     }, 10);
  ?>

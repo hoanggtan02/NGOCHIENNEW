@@ -92,12 +92,12 @@
                                         <?php foreach ($dongtien as $date => $dayData): ?>
                                             <?php $item = $dayData[$key]; ?>
                                             <!-- Kế hoạch -->
-                                            <td class="fw-bold"><?=number_format($item['kehoach']) ?></td>
+                                            <td class="fw-bold"><?=$jatbi->money($item['kehoach']) ?></td>
                                             <!-- Thực thu/chi -->
-                                            <td class="fw-bold"><a href="/proposal/cash-bank?type=<?= urlencode($type) ?>&date=<?= date('d/m/Y', strtotime($date)) ?> - <?= date('d/m/Y', strtotime($date)) ?>" data-pjax class="text-success"><?=number_format($item['thucthu']) ?></a></td>
+                                            <td class="fw-bold"><a href="/proposal/cash-bank?type=<?= urlencode($type) ?>&date=<?= date('d/m/Y', strtotime($date)) ?> - <?= date('d/m/Y', strtotime($date)) ?>" data-pjax class="text-success"><?=$jatbi->money($item['thucthu']) ?></a></td>
                                             <!-- Tổng -->
                                             <td class="fw-bold <?= $item['tong'] < 0 ? 'text-danger' : 'text-primary' ?>">
-                                                <?=number_format($item['tong']) ?>
+                                                <?=$jatbi->money($item['tong']) ?>
                                             </td>
                                             <!-- Tỷ lệ -->
                                             <td class="fw-bold   border-primary border-end <?= $item['tile'] < 100 ? 'text-danger' : 'text-success' ?>">
