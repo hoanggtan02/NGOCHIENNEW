@@ -173,10 +173,10 @@
             ]));
 
             $vars['doituongchinhanh'] = $app->select("proposals", [
-                "[>]brands" => ["proposals.brands" => "id"]
+                "[>]stores" => ["proposals.stores" => "id"]
             ], [
                 "proposals.id",
-                "brands.name",
+                "stores.name",
                 // "name" => App::raw("CASE 
                 //    WHEN customers.name IS NULL OR customers.name = '' 
                 //    THEN 'Không xác định' 
@@ -188,10 +188,10 @@
                 "total_khac" => App::raw("SUM(CASE WHEN proposals.type = 3 THEN proposals.price ELSE 0 END)"),
                 "total"      => App::raw("SUM(proposals.price)"),
             ],array_merge($where, [
-                "GROUP" => "proposals.brands",
+                "GROUP" => "proposals.stores",
                 "ORDER" => ["count" => "DESC"],
                 "LIMIT" => 5,
-                "brands.name[!]" => "",
+                "stores.name[!]" => "",
             ]));
 
             $vars['total'] = $summary;
@@ -237,7 +237,7 @@
             ], [
                 "deleted" => 0,
                 "date[<>]" => [$startDate, $endDate], // Lọc theo ngày của proposal
-                "brands_id" => $jatbi->brands(),
+                "stores_id" => $jatbi->stores(),
                 "status" => [2, 4] // 2 = Đã duyệt, 4 = Đã hoàn thành (cũng là đã duyệt)
             ]);
 
@@ -268,7 +268,7 @@
                 "pr.deleted" => 0,
                 "p.deleted" => 0,
                 "pr.reality_date[<>]" => [$startDate, $endDate], // Lọc theo ngày THỰC TẾ
-                "p.brands_id" => $jatbi->brands(),
+                "p.stores_id" => $jatbi->stores(),
                 "p.status" => 4 // Chỉ lấy thực tế của các proposals 'Đã hoàn thành' (theo logic code gốc)
             ]);
 
@@ -378,7 +378,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -398,9 +398,9 @@
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
-                
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -455,8 +455,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -580,7 +580,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -601,8 +601,8 @@
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
                 
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -657,8 +657,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -782,7 +782,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'ASC';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
                 $workflows = isset($_POST['workflows']) ? $_POST['workflows'] : '';
@@ -802,8 +802,8 @@
                     "ORDER" => [$orderName => strtoupper($orderDir)],
                 ];
                 
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -858,8 +858,8 @@
                 if (!empty($category)) {
                     $where["AND"]["proposals.category"] = $category;
                 }
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 $joins = [
                     "[>]proposals"=>["proposal"=>"id"],
@@ -978,8 +978,8 @@
                     "ORDER" => [$orderName => strtoupper($orderDir)]
                 ];
 
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);
@@ -1060,7 +1060,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposals.id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
 
                 $where = [
                     "AND" => [
@@ -1074,8 +1074,8 @@
                     "GROUP" => "proposals.id"
                 ];
 
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);
@@ -1167,7 +1167,7 @@
                 $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposals.id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
 
                 $where = [
                     "AND" => [
@@ -1180,8 +1180,8 @@
                     "LIMIT" => [$start, $length],
                     "GROUP" => "proposals.id"
                 ];
-                if (!empty($brands)) {
-                    $where["AND"]["proposals.brands_id"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["proposals.stores_id"] = $stores;
                 }
                 if (!empty($_POST['date'])) {
                     $dates = explode(" - ", $_POST['date']);

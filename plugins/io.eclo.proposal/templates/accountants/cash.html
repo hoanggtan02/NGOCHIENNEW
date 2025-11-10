@@ -24,11 +24,11 @@
                             <?=$app->component('select-status',[
                                 "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
-                            <?=$app->component('brands',[
-                                "name"=>'brands[]',
-                                "placeholder"=>$jatbi->lang("Chi nhánh"),
-                                "selected" => $_GET['brands'] ?? '',
-                                "class" => 'filter-name',         
+                            <?=$app->component('stores',[
+                                "name"=>'stores[]',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $_GET['stores'] ?? '',
+                                "class" => 'filter-name',
                                 "multi" => "true",
                             ])?>
                         </div>

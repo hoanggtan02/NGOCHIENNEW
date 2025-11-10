@@ -24,11 +24,11 @@
                     "id" => 'diagram',
                     "name" => 'diagram',
                 ];
-                $brands = $jatbi->brands();
-                if (count($brands) > 1) {
-                    $brands[] = 0; // thêm 0 vào cuối mảng
+                $stores = $jatbi->stores();
+                if (count($stores) > 1) {
+                    $stores[] = 0; // thêm 0 vào cuối mảng
                 }
-                $selectNodes = $app->select("proposal_diagram","*",["deleted"=>0,"brands"=>$brands]);
+                $selectNodes = $app->select("proposal_diagram","*",["deleted"=>0,"stores"=>$stores]);
                 foreach($selectNodes as $node){
                     $SelectAccounts = $app->select("proposal_diagram_accounts",[
                         "[>]accounts" => ["account"=>"id"],
@@ -131,11 +131,11 @@
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
-            if(count($jatbi->brands())==1){
-                $brands = $jatbi->brands()[0];
+            if(count($jatbi->stores())==1){
+                $stores = $jatbi->stores()[0];
             }
             else {
-                $brands = 0;
+                $stores = 0;
             }
             $insert = [
                 "name"          => '',
@@ -144,7 +144,7 @@
                 "position_top"  => '100',
                 "position_left"  => '100',
                 "active"        => $jatbi->active(),
-                'brands'        => $brands,
+                'stores'        => $stores,
             ];
             $app->insert("proposal_diagram",$insert);
             $getID = $app->id();

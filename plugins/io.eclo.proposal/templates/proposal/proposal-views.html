@@ -202,8 +202,8 @@
                             <?php if($data['accountants']>0){ ?>
                             <li class="py-2"><?=$jatbi->lang("Chứng từ")?>: <?=$app->get("accountants","id",["id"=>$data['accountants']])?></li>
                             <?php } ?>
-                            <?php if($data['brands']>0){ ?>
-                            <li class="py-2"><?=$jatbi->lang("Chi nhánh")?>: <?=$app->get("brands","name",["id"=>$data['brands']])?></li>
+                            <?php if($data['stores']>0){ ?>
+                            <li class="py-2"><?=$jatbi->lang("Cửa hàng")?>: <?=$app->get("stores","name",["id"=>$data['stores']])?></li>
                             <?php } ?>
                         </ul>
                     </div>
