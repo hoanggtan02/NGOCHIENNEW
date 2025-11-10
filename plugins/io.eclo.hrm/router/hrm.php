@@ -2215,7 +2215,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
                 ],
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)],
-                "GROUP" => ["personnels_contract.personnels "]
+                "GROUP" => ["personnels_contract.personnels"]
             ];
 
             if (!empty($personnels))

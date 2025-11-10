@@ -1256,6 +1256,7 @@ $app->group($setting['manager'] . "/drivers", function ($app) use ($jatbi, $sett
         $vars['data'] = $data;
 
         echo $app->render($template . '/drivers/other-commission-costs-post.html', $vars, $jatbi->ajax());
+        
     })->setPermissions(['other_commission_costs.add']);
 
     $app->router('/other_commission_costs-deleted', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {

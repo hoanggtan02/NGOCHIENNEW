@@ -40,7 +40,7 @@
                     </div>
                     <div class="row g-3 mt-1">
                         <div class="col-lg-6">
-                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                            <a href="/reports/revenue?date=<?=date('d/m/Y')?> - <?=date('d/m/Y')?>" class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center justify-content-between w-100">
                                         <div>
@@ -54,10 +54,10 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                         <div class="col-lg-6">
-                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                            <a href="/invoices/invoices?date=<?=date('d/m/Y')?> - <?=date('d/m/Y')?>" class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center justify-content-between w-100">
                                         <div>
@@ -71,12 +71,12 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                     <div class="row g-3 mt-1">
                         <div class="col-lg-6">
-                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                            <a href="/invoices/invoices?date=<?=date('d/m/Y', strtotime('monday this week'))?> - <?=date('d/m/Y', strtotime('sunday this week'))?>" class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center justify-content-between w-100">
                                         <div>
@@ -90,10 +90,10 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                         <div class="col-lg-6">
-                            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
+                            <a href="/invoices/invoices?date=<?=date('01/m/Y')?> - <?=date('t/m/Y')?>" class="card shadow border-0 bg-body bg-opacity-50 rounded-4">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center justify-content-between w-100">
                                         <div>
@@ -107,7 +107,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
