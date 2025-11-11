@@ -1573,12 +1573,18 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
                     return;
                 }
             }
+            $content = trim($data['content'] ?? ''); 
+            
+            if (empty($content)) {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Nội dung phiếu nhập không được để trống.')]);
+                return;
+            }
 
             $insert = [
                 "code" => 'PN',
                 "type" => 'import',
                 "data" => 'ingredient',
-                "content" => $app->xss($data['content']),
+                "content" => $app->xss($content),
                 "user" => $app->getSession("accounts")['id'] ?? 0,
                 "date" => $data['date'] ?? date("Y-m-d H:i:s"),
                 "date_poster" => date("Y-m-d H:i:s"),
