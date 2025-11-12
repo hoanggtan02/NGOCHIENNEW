@@ -695,7 +695,7 @@ class Jatbi
 			foreach ($PostStore as $option) {
 				if (isset($existing_map[$option])) {
 					// Cập nhật nếu cần (có thể mở rộng logic)
-					$current_brands[] = $option;
+					$current_stores[] = $option;
 				} else {
 					$this->app->insert("stores_linkables", [
 						"stores" => $option,
