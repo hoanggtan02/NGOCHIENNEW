@@ -18,7 +18,7 @@ $app->setComponent('sidebar', function ($vars) use ($app, $setting, $jatbi) {
         $SelectMenu = $app->getValueData('menu');
         $account = $app->get("accounts", "*", ["id" => $app->getSession("accounts")['id'], "status" => "A"]);
         $getsetting = $app->get("settings", "*", ["account" => $account['id']]);
-        $notification = $app->count("notifications", "id", ["account" => $account['id'], "views" => 0]);
+        $notification = $app->count("notification", "id", ["accounts" => $account['id'], "views" => 0]);
         $account = $app->get("accounts", "*", [
             "id" => $app->getSession("accounts")['id'] ?? 0,
             "deleted" => 0,

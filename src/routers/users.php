@@ -23,7 +23,7 @@ if (isset($session['id'])) {
 $app->router($setting['manager'] . "/notification", 'GET', function ($vars) use ($app, $jatbi, $setting) {
     $vars['templates'] = 'notification';
     $user = $app->getSession("accounts");
-    $vars['datas'] = $app->select("notifications", "*", ["account" => $user['id'], "deleted" => 0, "ORDER" => ["date" => "DESC"], "LIMIT" => 20]);
+    $vars['datas'] = $app->select("notification", "*", ["accounts" => $user['id'], "deleted" => 0, "ORDER" => ["date" => "DESC"], "LIMIT" => 20]);
     echo $app->render($setting['template'] . '/users/notification.html', $vars, $jatbi->ajax());
 })->middleware('login');
 
@@ -52,37 +52,37 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'desc';
             $where = [
                 "OR" => [
-                    "notifications.title[~]" => $searchValue,
-                    "notifications.content[~]" => $searchValue,
+                    "notification.title[~]" => $searchValue,
+                    "notification.content[~]" => $searchValue,
                     "accounts.name[~]" => $searchValue,
                 ],
-                "notifications.account" => $app->getSession("accounts")['id'],
-                "notifications.deleted" => 0,
+                "notification.accounts" => $app->getSession("accounts")['id'],
+                "notification.deleted" => 0,
                 "LIMIT" => [$start, $length],
                 "ORDER" => [$orderName => strtoupper($orderDir)]
             ];
-            $count = $app->count("notifications", [
+            $count = $app->count("notification", [
                 "OR" => [
-                    "notifications.title[~]" => $searchValue,
-                    "notifications.content[~]" => $searchValue,
+                    "notification.title[~]" => $searchValue,
+                    "notification.content[~]" => $searchValue,
                 ],
-                "notifications.account" => $app->getSession("accounts")['id'],
-                "notifications.deleted" => 0,
+                "notification.accounts" => $app->getSession("accounts")['id'],
+                "notification.deleted" => 0,
             ]);
             $app->select(
-                "notifications",
+                "notification",
                 [
                     "[>]accounts" => ["user" => "id"]
                 ],
                 [
-                    'notifications.id',
-                    'notifications.template',
-                    'notifications.date',
-                    'notifications.title',
-                    'notifications.active',
-                    'notifications.views',
-                    'notifications.content',
-                    'notifications.user',
+                    'notification.id',
+                    'notification.template',
+                    'notification.date',
+                    'notification.title',
+                    'notification.active',
+                    'notification.views',
+                    'notification.content',
+                    'notification.user',
                     'accounts.name',
                     'accounts.avatar',
                 ],
@@ -324,8 +324,8 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
     // accounts-partner end
 
     $app->router("/notification/{active}", 'GET', function ($vars) use ($app, $jatbi, $setting) {
-        $data = $app->get("notifications", "*", ["active" => $app->xss($vars['active']), "deleted" => 0,]);
-        $app->update("notifications", ["views" => $data['views'] + 1], ["id" => $data['id']]);
+        $data = $app->get("notification", "*", ["active" => $app->xss($vars['active']), "deleted" => 0,]);
+        $app->update("notification", ["views" => $data['views'] + 1], ["id" => $data['id']]);
         if ($data['template'] == 'url') {
             $parsedUrl = parse_url($data['url']);
             $queryExists = isset($parsedUrl['query']);
@@ -344,7 +344,7 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
         ]);
         $account = $app->get("accounts", "*", ["id" => $app->getSession("accounts")['id']]);
         if ($account > 1) {
-            $app->update("notifications", ["views" => 1], ["account" => $account['id'], "views" => 0]);
+            $app->update("notification", ["views" => 1], ["accounts" => $account['id'], "views" => 0]);
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
         } else {
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
@@ -360,10 +360,10 @@ $app->group($setting['manager'] . "/users", function ($app) use ($jatbi, $settin
                 'Content-Type' => 'application/json',
             ]);
             $boxid = explode(',', $app->xss($_GET['box']));
-            $datas = $app->select("notifications", "*", ["id" => $boxid, "deleted" => 0]);
+            $datas = $app->select("notification", "*", ["id" => $boxid, "deleted" => 0]);
             if (count($datas) > 0) {
                 foreach ($datas as $data) {
-                    $app->update("notifications", ["deleted" => 1], ["id" => $data['id']]);
+                    $app->update("notification", ["deleted" => 1], ["id" => $data['id']]);
                 }
                 $jatbi->logs('accounts', 'notifications-deleted', $datas);
                 echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);

@@ -1399,6 +1399,34 @@ class Jatbi
 		}
 		return count(array_intersect((array) $permissions, $userPermissions)) > 0;
 	}
+	private function sendNotification($insert) {
+		global $setting;
+		$url = $setting['url'] . '/users/notification-send';
+		$payload = json_encode(['data' => $insert]);
+
+		$parsed = parse_url($setting['url']);
+		$host = $parsed['host'];
+		$scheme = $parsed['scheme'] ?? 'https';
+		$protocol = ($scheme === 'https') ? 'ssl://' : '';
+		$port = ($scheme === 'https') ? 443 : 80;
+
+		$fp = @fsockopen($protocol . $host, $port, $errno, $errstr, 3);
+		if ($fp) {
+			$path = '/users/notification-send';
+			$out  = "POST $path HTTP/1.1\r\n";
+			$out .= "Host: $host\r\n";
+			$out .= "Content-Type: application/json\r\n";
+			$out .= "Content-Length: " . strlen($payload) . "\r\n";
+			$out .= "Connection: Close\r\n\r\n";
+			$out .= $payload;
+
+			stream_set_blocking($fp, false); // <--- Quan trọng: không chờ phản hồi
+			fwrite($fp, $out);
+			fclose($fp);
+		} else {
+			file_put_contents('notification_error_log.txt', "[ERROR] Không thể mở kết nối: $errstr ($errno)\n", FILE_APPEND);
+		}
+	}
 	public function notification($user, $account, $title, $body, $click_action, $template = null, $type = null, $data = null)
 	{
 		global $setting;
@@ -1407,7 +1435,7 @@ class Jatbi
 		}
 		$insert = [
 			"user" => $user,
-			"account" => $account,
+			"accounts" => $account,
 			"title" => $title,
 			"content" => $body,
 			"url" => $click_action,
@@ -1417,7 +1445,8 @@ class Jatbi
 			"type" =>  $type ?? 'content',
 			"data" => $data,
 		];
-		$this->app->insert("notifications", $insert);
+		$this->app->insert("notification", $insert);
+		$this->sendNotification($insert);
 		// $getsetting = $this->app->get("settings","*",["account"=>$account]);
 		// if($getsetting['notification']==1){
 		// $cmd = 'php /www/wwwroot/ellm.io/dev/run/notification.php ' . escapeshellarg(json_encode($insert));

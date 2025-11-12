@@ -1453,7 +1453,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/vendors", ['GET','POST'], function($vars) use ($app, $jatbi) {
+        $app->router("/search/vendors", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1463,17 +1463,16 @@
                 $where = [
                     "AND" => [
                         "OR" => [
-                            "customers.name[~]" => $searchValue,
+                            "vendors.name[~]" => $searchValue,
                         ],
-                        "customers.status" => 'A',
-                        "customers.deleted" => 0,
-                        "customers.form" => 1,
+                        "vendors.status" => 'A',
+                        "vendors.deleted" => 0,
                     ]
                 ];
-                $app->select("customers",[
-                    "customers.id",
-                    "customers.name",
-                ], $where, function ($data) use (&$datas,$jatbi,$app) {
+                $app->select("vendors", [
+                    "vendors.id",
+                    "vendors.name",
+                ], $where, function ($data) use (&$datas, $jatbi, $app) {
                     $datas[] = [
                         "value" => $data['id'],
                         "text" => $data['name'],

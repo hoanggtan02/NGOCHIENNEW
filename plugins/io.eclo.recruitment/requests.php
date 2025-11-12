@@ -34,6 +34,7 @@ return [
                 "permission" => [
                     // Quyền cho Tin tuyển dụng
                     'job_postings' => $jatbi->lang("Xem danh sách tin tuyển dụng"),
+                    'job_postings.full' => $jatbi->lang("Xem tất cả danh sách tin tuyển dụng"),
                     'job_postings.add' => $jatbi->lang("Thêm tuyển tin dụng"),
                     'job_postings.edit' => $jatbi->lang("Sửa tuyển tin dụng"),
                     'job_postings.deleted' => $jatbi->lang("Xóa tin tuyển dụng"),

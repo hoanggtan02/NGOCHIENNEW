@@ -2054,7 +2054,8 @@ $app->group($setting['manager'] . "/customers", function ($app) use ($setting, $
                     "customers.status" => 'A',
                     "customers.deleted" => 0,
                     "customers.form" => 0,
-                ]
+                ],
+                "LIMIT" => 40,
             ];
             $app->select("customers", "*", $where, function ($data) use (&$datas,$jatbi,$app) {
                 $datas[] = [

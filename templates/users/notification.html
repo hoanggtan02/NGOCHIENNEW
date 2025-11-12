@@ -17,13 +17,10 @@
 				<div class="d-flex justify-content-between align-items-start">
 					<div class="w-100">
 						<div class="row">
-							<div class="col-6 text-truncate fw-bold">
+							<div class="col-12 text-truncate fw-bold">
 								<div class="width height bg-<?=$data['views']>0?'secondary':'danger'?> rounded-circle d-inline-block me-2" style="--width:10px;--height:10px"></div>
-								<a <?=$data['template']=='url'?'href="/admin/notification/'.$data['active'].'"':'data-action="modal" data-url="/admin/notification/'.$data['active'].'"'?> class="btn p-0 border-0 bg-transparent stretched-link text-capitalize" <?=$data['template']=='url'?'data-pjax':''?>>
+								<a <?=$data['template']=='url'?'href="/users/notification/'.$data['active'].'"':'data-action="modal" data-url="/users/notification/'.$data['active'].'"'?> class="btn p-0 border-0 bg-transparent stretched-link text-capitalize" <?=$data['template']=='url'?'data-pjax':''?> data-dismiss="offcanvas">
 									<span class="text-body fw-bold"><?=$jatbi->lang($data['title'])?></span></a>
-							</div>
-							<div class="col-6 text-end">
-								<span class="small text-secondary"><?=$data['date']?></span>
 							</div>
 						</div>
 						<div class="col-12 text-truncate text-secondary">
@@ -43,6 +40,9 @@
 								}
 								echo $content;
 							?>
+						</div>
+						<div class="col-12 text-start">
+							<span class="small text-muted"><?=$data['date']?></span>
 						</div>
 					</div>
 				</div>

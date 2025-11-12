@@ -29,10 +29,10 @@ if (isset($session['id'])) {
     }
 }
 
-$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $account, $template, $accStore, $stores, $getprocess) {
+$app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $setting, $account, $template, $accStore, $stores, $getprocess, $common) {
 
     // Route: Danh sách tin tuyển dụng
-    $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores) {
+    $app->router("/job_postings", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $accStore, $stores, $common, $account) {
         $vars['title'] = $jatbi->lang("Tin tuyển dụng");
         if ($app->method() === 'GET') {
             if (count($stores) > 1) {
@@ -76,10 +76,6 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
 
             $where = [
                 "AND" => [
-                    "OR" => [
-                        "job_postings.title[~]" => $searchValue,
-                        "job_postings.description[~]" => $searchValue,
-                    ],
                     "job_postings.deleted" => 0,
                     "job_postings.created_date[<>]" => [$date_from, $date_to],
                 ],
@@ -96,12 +92,26 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
             if (!empty($stores)) {
                 $where["AND"]["job_postings.stores"] = $stores;
             }
-
+            
+            if ($jatbi->permission(['job_postings.full']) != 'true') {
+                $where["AND"]["OR"] = [
+                    "proposal_accounts.account" => $account['id'],
+                    "proposals.account" => $account['id'],
+                ];
+            }
+            if (!empty($searchValue)) {
+                $where["AND"]["OR"] = [
+                    "job_postings.title[~]" => $searchValue,
+                    "job_postings.description[~]" => $searchValue,
+                ];
+            }
             $count = $app->count("job_postings", ["AND" => $where['AND']]);
 
             $joins = [
                 "[>]accounts" => ["user" => "id"],
                 "[>]stores" => ["stores" => "id"],
+                "[>]proposals" => ["job_postings.id" => "job_posting_id"],
+                "[>]proposal_accounts"=>["id"=>"proposal"],
             ];
 
             $columns = [
@@ -115,10 +125,12 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                 "job_postings.active",
                 "job_postings.created_date",
                 "accounts.name(user_name)",
-                "stores.name(store_name)"
+                "stores.name(store_name)",
+                "proposals.status(proposal_status)",
+                "proposals.active(proposal_active)"
             ];
             $datas = [];
-            $app->select("job_postings", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $app) {
+            $app->select("job_postings", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $app, $common, $account, $setting) {
                 $job_names_html = '';
                 $job_ids = @unserialize($data['jobs']);
                 if (is_array($job_ids) && !empty($job_ids)) {
@@ -136,6 +148,13 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                         $job_names_html = implode(' ', $badges);
                     }
                 }
+                $proposal_status = '—';
+                $proposal_button = [];
+
+                if (!empty($data['proposal_status']) && isset($common['proposal-status'][$data['proposal_status']])) {
+                    $st = $common['proposal-status'][$data['proposal_status']];
+                    $proposal_status = '<span class="p-2 py-1 rounded-pill small fw-bold text-nowrap bg-' . $st['color'] . '">' . $st['name'] . '</span>';
+                }
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['active']]),
                     "title" => $data['title'],
@@ -151,6 +170,9 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                         "data" => $data['status'],
                         "permission" => ['job_postings.edit']
                     ]),
+                    "proposal_status" => $proposal_status,
+
+                    
                     "action" => $app->component("action", [
                         "button" => [
                             [
@@ -160,6 +182,15 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                                 'action' => [
                                     'data-url' => '/recruitment/job_postings-views/' . $data['active'],
                                     'data-action' => 'modal'
+                                ]
+                            ],
+                            [
+                                'type' => 'link',
+                                'name' => 'Xem đề xuất',
+                                'permission' => ['proposal'],
+                                'action' => [
+                                    'href' => '/proposal/views/' . $data['proposal_active'],
+                                    'data-pjax' => ''
                                 ]
                             ],
                             [
@@ -298,8 +329,8 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
                         "create"     => date("Y-m-d H:i:s"),
                         "account"    => $app->getSession("accounts")['id'],
                         "status"     => 0,
-                        "stores"     => $jatbi->stores('ID'),
-                        "stores_id"  => $jatbi->stores('ID'),
+                        "stores"     => $_POST['stores'] ?? 0,
+                        "stores_id"  => $_POST['stores'] ?? 0,
                         "active"     => $jatbi->active(),
                         "content"    => 'Đề xuất tuyển dụng: '.$insert['title'],
                         "job_posting_id"=> $job_id,
