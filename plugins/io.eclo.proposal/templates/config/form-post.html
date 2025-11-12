@@ -53,10 +53,10 @@
 							<?=$app->component('select-status',[
                                 "value" => $data['status'] ?? '',
                             ])?>
-							<?=$app->component('brands',[
-                                "name"=>'brands',
-                                "placeholder"=>$jatbi->lang("Chi nhánh"),
-                                "selected" => $data['brands'],   
+							<?=$app->component('stores',[
+                                "name"=>'stores',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $data['stores'] ?? '',
                                 "multi" => "true",
                                 "required" => "true",
                             ])?>

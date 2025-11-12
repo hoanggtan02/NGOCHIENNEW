@@ -125,12 +125,12 @@
                                 "options" => $accountants,
                             ])?>
                             <?=$app->component('select',[
-                                "name"=>'brands',
-                                "placeholder"=>$jatbi->lang("Chi nhánh"),
-                                "selected" => $data['brands'] ?? $app->getCookie('brands'),
-                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/brands" data-method="POST" data-keyword="keyword" data-action="change" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"brands","value":"this.val"}\'',
-                                "id" => "brands",
-                                "options" => $brands,
+                                "name"=>'stores',
+                                "placeholder"=>$jatbi->lang("Cửa hàng"),
+                                "selected" => $data['stores'] ?? $app->getCookie('stores'),
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/proposal/search/stores" data-method="POST" data-keyword="keyword" data-action="change" data-url="/proposal/update/'.$data['active'].'" data-form=\'{"type":"stores","value":"this.val"}\'',
+                                "id" => "stores",
+                                "options" => $stores,
                             ])?>
                         </div>
                     </div>

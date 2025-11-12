@@ -32,7 +32,7 @@
                 $vars['objects'] = $app->select("proposal_objects",["id (value)","name (text)"],["deleted"=>0,"status"=>"A"]);
                 $where = [
                     "proposals.deleted" => 0,
-                    "brands_id" => $jatbi->brands(),
+                    "stores_id" => $jatbi->stores(),
                 ];
                 if ($jatbi->permission(['proposal.full']) != 'true') {
                     $where["AND"]["OR"] = [
@@ -136,7 +136,7 @@
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'id';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
                 $status = isset($_POST['status']) ? $_POST['status'] : [0,1,2,3,4,5,10,20];
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $IDProposal = isset($_POST['id']) ? $_POST['id'] : '';
                 $category = isset($_POST['category']) ? $_POST['category'] : '';
                 $type = isset($_POST['type']) ? $_POST['type'] : '';
@@ -155,7 +155,7 @@
                         ],
                         "proposals.status" => $status,
                         "proposals.deleted" => 0,
-                        "brands_id" => $jatbi->brands(),
+                        "stores_id" => $jatbi->stores(),
                     ],
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)],
@@ -420,8 +420,8 @@
                 "account" => $account['id'],
                 "status" => 0,
                 "code" => time(),
-                "brands" => $jatbi->brands('ID'),
-                "brands_id" => $jatbi->brands('ID'),
+                "stores" => $jatbi->stores('ID'),
+                "stores_id" => $jatbi->stores('ID'),
                 "active" => $jatbi->active(),
             ];
             $app->insert("proposals",$insert);
@@ -448,11 +448,11 @@
                 "account" => $account['id'],
                 "status" => 0,
                 "code" => time(),
-                "brands" => $jatbi->brands('ID'),
-                "brands_id" => $jatbi->brands('ID'),
+                "stores" => $jatbi->stores('ID'),
+                "stores_id" => $jatbi->stores('ID'),
                 "active" => $jatbi->active(),
             ];
-            if($insert['brands_id']>0){
+            if($insert['stores_id']>0){
                 $app->insert("proposals",$insert);
                 $GetID = $app->id();
                 $jatbi->logs('proposal','proposal-create',$insert);
@@ -465,7 +465,7 @@
                 echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công"),'load'=>'ajax','url'=>"/proposal/edit/".$insert['active']]);
             }
             else {
-                echo json_encode(['status'=>'error','content'=>$jatbi->lang("Lỗi chọn chi nhánh"),'load'=>'ajax',]);
+                echo json_encode(['status'=>'error','content'=>$jatbi->lang("Lỗi chọn cửa hàng"),'load'=>'ajax',]);
             }
         })->setPermissions(['proposal.add']);
 
@@ -497,13 +497,13 @@
                     $vars['accounts'][] = $app->get("accounts",["id (value)","name (text)"],["id"=>$data['accounts']]);
                     $vars['proposals'][] = $app->get("proposals",["id (value)","content (text)"],["id"=>$data['proposals']]);
                     $vars['accountants'][] = $app->get("accountants",["id (value)","name (text)"],["id"=>$data['accountants']]);
-                    $vars['brands'][] = $app->get("brands",["id (value)","name (text)"],["id"=>$data['brands']]);
+                    $vars['stores'][] = $app->get("stores",["id (value)","name (text)"],["id"=>$data['stores']]);
                     $vars['objects'][] = $app->get("proposal_objects",["id (value)","name (text)"],["id"=>$data['objects']]);
                     $files = $app->select("proposal_files",[
-                        "[>]files" => ["files"=>"id"],
+                        "[>]file" => ["files"=>"id"],
                     ],[
-                        "files.active",
-                        "files.name",
+                        "file.active",
+                        "file.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -682,7 +682,7 @@
                 "proposals.accounts",
                 "proposals.proposals",
                 "proposals.accountants",
-                "proposals.brands",
+                "proposals.stores",
                 "proposal_form.name (form)",
                 "proposal_workflows.name (workflows)",
                 "proposal_target.name (category)",
@@ -706,11 +706,11 @@
                         $vars['data']['total_price'] = $data['price']+$data['vat_price'];
                     }
                     $files = $app->select("proposal_files",[
-                        "[>]files" => ["files"=>"id"],
+                        "[>]file" => ["files"=>"id"],
                     ],[
-                        "files.active",
-                        "files.deleted",
-                        "files.name",
+                        "file.active",
+                        "file.deleted",
+                        "file.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -1362,11 +1362,11 @@
                         ],
                         "proposal_form.status" => 'A',
                         "proposal_form.deleted" => 0,
-                        "brands_linkables.brands" => $jatbi->brands(),
+                        "stores_linkables.stores" => $jatbi->stores(),
                     ]
                 ];
                 $app->select("proposal_form", [
-                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_form"]]
+                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_form"]]
                 ],[
                     "@proposal_form.id",
                     "proposal_form.name",
@@ -1395,7 +1395,7 @@
                         ],
                         "proposal_workflows.status" => 'A',
                         "proposal_workflows.deleted" => 0,
-                        "brands_linkables.brands" => $jatbi->brands(),
+                        "stores_linkables.stores" => $jatbi->stores(),
                     ]
                 ];
                 if($parent){
@@ -1403,7 +1403,7 @@
                 }
                 $app->select("proposal_workflows",[
                     "[>]proposal_workflows_form" => ["id"=>"workflows"],
-                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_workflows"]]
+                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_workflows"]]
                 ],[
                     "@proposal_workflows.id",
                     "proposal_workflows.name",
@@ -1431,7 +1431,7 @@
                         ],
                         "proposal_target.status" => 'A',
                         "proposal_target.deleted" => 0,
-                        "brands_linkables.brands" => $jatbi->brands(),
+                        "stores_linkables.stores" => $jatbi->stores(),
                     ]
                 ];
                 if($parent){
@@ -1439,7 +1439,7 @@
                 }
                 $app->select("proposal_target",[
                     "[>]proposal_target_workflows" => ["id"=>"target"],
-                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"proposal_target"]]
+                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"proposal_target"]]
                 ],[
                     "@proposal_target.id",
                     "proposal_target.name",
@@ -1497,11 +1497,11 @@
                             "accounts.account[~]" => $searchValue,
                         ],
                         "accounts.deleted" => 0,
-                        "brands_linkables.brands" => $jatbi->brands(),
+                        "stores_linkables.stores" => $jatbi->stores(),
                     ]
                 ];
                 $app->select("accounts",[
-                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"accounts"]]
+                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"accounts"]]
                 ],[
                     "@accounts.id",
                     "accounts.name",
@@ -1607,7 +1607,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/brands", ['GET','POST'], function($vars) use ($app, $jatbi) {
+        $app->router("/search/stores", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1616,15 +1616,15 @@
                 $where = [
                     "AND" => [
                         "OR" => [
-                            "brands.name[~]" => $searchValue,
+                            "stores.name[~]" => $searchValue,
                         ],
-                        "brands.status" => 'A',
-                        "brands.deleted" => 0,
+                        "stores.status" => 'A',
+                        "stores.deleted" => 0,
                     ]
                 ];
-                $app->select("brands",[
-                    "brands.id",
-                    "brands.name",
+                $app->select("stores",[
+                    "stores.id",
+                    "stores.name",
                 ], $where, function ($data) use (&$datas,$jatbi,$app) {
                     $datas[] = [
                         "value" => $data['id'],
@@ -1888,7 +1888,7 @@
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'proposal_comments.date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
                 $status = isset($_POST['status']) ? [$_POST['status'],$_POST['status']] : '';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $categorys = isset($_POST['categorys']) ? $_POST['categorys'] : '';
                 $units = isset($_POST['units']) ? $_POST['units'] : '';
                 $where = [

@@ -1895,4 +1895,50 @@ class Jatbi
 			}
 		}
 	}
+
+	public function money($value) {
+		// Nếu không phải số hoặc chuỗi, trả nguyên giá trị
+		if (!is_numeric($value) && !is_string($value)) {
+			return $value;
+		}
+
+		// Nếu là chuỗi, kiểm tra nội dung
+		if (is_string($value)) {
+			$trimmed = trim($value);
+
+			// Nếu chuỗi chứa dấu phẩy ngăn cách hàng nghìn → parse
+			if (strpos($trimmed, ',') !== false && preg_match('/\d,\d{3}/', $trimmed)) {
+				$trimmed = str_replace(',', '', $trimmed);
+				return (float)$trimmed;
+			}
+
+			// Nếu chuỗi chỉ gồm chữ số và dấu chấm → coi như số thật để format
+			if (preg_match('/^[0-9]+(\.[0-9]+)?$/', $trimmed)) {
+				$value = (float)$trimmed;
+			} else {
+				// Chuỗi không rõ dạng → trả lại nguyên gốc
+				return $value;
+			}
+		}
+
+		// Đến đây đảm bảo $value là số
+		$so = round((float)$value, 2);
+
+		// Nếu là số nguyên
+		if (abs($so - round($so)) < 0.00001) {
+			return number_format((int)round($so), 0, '.', ',');
+		}
+
+		// Dùng fmod tránh cảnh báo float→int
+		$phanThapPhan  = fmod($so * 10, 10);
+		$phanThapPhan2 = fmod($so * 100, 10);
+
+		// Nếu chỉ có 1 chữ số thập phân
+		if ($phanThapPhan2 == 0) {
+			return number_format($so, 1, '.', ',');
+		}
+
+		// Giữ nguyên 2 chữ số thập phân
+		return number_format($so, 2, '.', ',');
+	}
 }

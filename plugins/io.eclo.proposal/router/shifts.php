@@ -28,7 +28,7 @@
                 $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'date';
                 $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
                 $status = isset($_POST['status']) ? [$_POST['status'],$_POST['status']] : '';
-                $brands = isset($_POST['brands']) ? $_POST['brands'] : $jatbi->brands();
+                $stores = isset($_POST['stores']) ? $_POST['stores'] : $jatbi->stores();
                 $booking = isset($_POST['booking']) ? $_POST['booking'] : '';
                 $account = isset($_POST['account']) ? $_POST['account'] : '';
                 $customers = isset($_POST['customers']) ? $_POST['customers'] : '';
@@ -50,8 +50,8 @@
                     "LIMIT" => [$start, $length],
                     "ORDER" => [$orderName => strtoupper($orderDir)]
                 ];
-                if (!empty($brands)) {
-                    $where["AND"]["shifts.brands"] = $brands;
+                if (!empty($stores)) {
+                    $where["AND"]["shifts.stores"] = $stores;
                 }
                 if (!empty($account)) {
                     $where["AND"]["shifts.account"] = $account;
@@ -61,13 +61,13 @@
                 }
                 $count = $app->count("shifts",[
                     "[>]accounts" => ["account" => "id"],
-                    "[>]brands" => ["brands" => "id"]
+                    "[>]stores" => ["stores" => "id"]
                 ],["@shifts.id",],["AND" => $where['AND']]);
 
                 $total = [];
                 $app->select("shifts", [
                     "[>]accounts" => ["account" => "id"],
-                    "[>]brands" => ["brands" => "id"]
+                    "[>]stores" => ["stores" => "id"]
                 ],[
                     "shifts.id",
                     "shifts.notes",
@@ -78,8 +78,8 @@
                     "shifts.count_bill",
                     "shifts.count_debit",
                     "accounts.name (account)",
-                    "brands.name (brands_name)",
-                    "brands.id (brands)",
+                    "stores.name (stores_name)",
+                    "stores.id (stores)",
                 ], $where, function ($data) use (&$datas, &$total, $jatbi,$app,$common) {
                     $buttons[] =  [
                             'type' => 'button',
@@ -95,7 +95,7 @@
                         "count_bill" => $jatbi->money($data['count_bill'] ?? 0),
                         "count_debit" => $jatbi->money($data['count_debit'] ?? 0),
                         "account" => $data['account'],
-                        "brands" => $data['brands_name'],
+                        "stores" => $data['stores_name'],
                         "action" => $app->component("action",["button" =>$buttons]),
                     ];
                 });
@@ -112,17 +112,17 @@
             $vars['title'] = $jatbi->lang("Thêm kết ca");
             if($app->method()==='GET'){
                 $vars['data'] = [
-                    "brands" => '',
+                    "stores" => '',
                 ];
                 $vars['payments'] = $app->select("payments", [
-                    "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"payments"]]
+                    "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"payments"]]
                 ],[
                     "@payments.id",
                     "payments.name"
                 ], [
                     "payments.deleted"=>0,
                     "payments.status"=> "A",
-                    "brands_linkables.brands" => $jatbi->brands(),
+                    "stores_linkables.stores" => $jatbi->stores(),
                 ]);
                 [$start_date_1, $end_date_1] = $jatbi->parseDateRange();
                 $summary = $app->get("invoices", [
@@ -132,7 +132,7 @@
                     "tongno"         => App::raw("SUM(CASE WHEN status IN (20) THEN payments ELSE 0 END)"),
                 ],[
                     "date_start[<>]" => [$start_date_1,$end_date_1],
-                    "brands" => $jatbi->brands('ID'),
+                    "stores" => $jatbi->stores('ID'),
                     "deleted" => 0
                 ]);
                 $vars['summary'] = $summary;
@@ -147,12 +147,12 @@
                             "invoices.status" => [2,20],
                             "invoices.deleted" => 0,
                             "invoices.date_start[<>]" => [$start_date_1, $end_date_1],
-                            "invoices.brands" => $jatbi->brands('ID'),
+                            "invoices.stores" => $jatbi->stores('ID'),
                             "invoices_payments.payment" => $payment['id'],
                             "invoices_payments.deleted" => 0,
                             "invoices_payments.status" => 2,
                             "invoices_payments.total[>]" => 0,
-                            "invoices_payments.brands" => $jatbi->brands('ID'),
+                            "invoices_payments.stores" => $jatbi->stores('ID'),
                         ]
                     ) ?? 0;
                 }
@@ -165,7 +165,7 @@
                     'Content-Type' => 'application/json',
                 ]);
                 [$start_date_1, $end_date_1] = $jatbi->parseDateRange();
-                $checker = $app->get("shifts","id",["deleted"=>0,"brands"=>$jatbi->brands("ID"),"date"=>$start_date_1]);
+                $checker = $app->get("shifts","id",["deleted"=>0,"stores"=>$jatbi->stores("ID"),"date"=>$start_date_1]);
                 $checkAccount = $app->count("proposal_diagram_accounts","*",["account"=>$account['id'],"deleted"=>0]);
                 if($app->xss($_POST['date'])==''){
                     $error = ["status"=>"error","content"=>$jatbi->lang("Vui lòng không để trống")];
@@ -178,7 +178,7 @@
                 }
                 if(empty($error)){
                     $payments = $app->select("payments", [
-                        "[>]brands_linkables" => ["id" => "data","AND"=>["brands_linkables.type"=>"payments"]]
+                        "[>]stores_linkables" => ["id" => "data","AND"=>["stores_linkables.type"=>"payments"]]
                     ],[
                         "@payments.id",
                         "payments.name",
@@ -188,7 +188,7 @@
                     ], [
                         "payments.deleted"=>0,
                         "payments.status"=> "A",
-                        "brands_linkables.brands" => $jatbi->brands(),
+                        "stores_linkables.stores" => $jatbi->stores(),
                     ]);
                     $summary = $app->get("invoices", [
                         "tongbill"      => App::raw("COUNT(CASE WHEN status IN (2,20) THEN id ELSE NULL END)"),
@@ -197,7 +197,7 @@
                         "tongno"         => App::raw("SUM(CASE WHEN status IN (20) THEN payments ELSE 0 END)"),
                     ],[
                         "date_start[<>]" => [$start_date_1,$end_date_1],
-                        "brands" => $jatbi->brands('ID'),
+                        "stores" => $jatbi->stores('ID'),
                         "deleted" => 0
                     ]);
                     $payments_total = [];
@@ -209,7 +209,7 @@
                         "count_debit"   => $summary['tongbillno'],
                         "notes"         => $app->xss($_POST['notes']),
                         "account"       => $account['id'],
-                        "brands"        => $jatbi->brands('ID'),
+                        "stores"        => $jatbi->stores('ID'),
                         "modify"        => date("Y-m-d H:i:s"),
                         "active"        => $jatbi->active(),
                     ];
@@ -225,12 +225,12 @@
                                 "invoices.status" => [2,20],
                                 "invoices.deleted" => 0,
                                 "invoices.date_start[<>]" => [$start_date_1, $end_date_1],
-                                "invoices.brands" => $jatbi->brands('ID'),
+                                "invoices.stores" => $jatbi->stores('ID'),
                                 "invoices_payments.payment" => $payment['id'],
                                 "invoices_payments.deleted" => 0,
                                 "invoices_payments.status" => 2,
                                 "invoices_payments.total[>]" => 0,
-                                "invoices_payments.brands" => $jatbi->brands('ID'),
+                                "invoices_payments.stores" => $jatbi->stores('ID'),
                             ]
                         ) ?? 0;
                         $details = [
@@ -257,8 +257,8 @@
                                 "vat_type" => 1,
                                 "status" => 0,
                                 "code" => time(),
-                                "brands" => $jatbi->brands('ID'),
-                                "brands_id" => $jatbi->brands('ID'),
+                                "stores" => $jatbi->stores('ID'),
+                                "stores_id" => $jatbi->stores('ID'),
                                 "active" => $jatbi->active(),
                                 "auto" => 1,
                                 "shifts" => $details['shifts'],
@@ -360,8 +360,8 @@
                     "form" => $app->xss($_POST['form']),
                     "workflows" => $app->xss($_POST['workflows']),
                     "category" => $app->xss($_POST['category']),
-                    "brands" => $data['brands'],
-                    "brands" => $data['brands'],
+                    "stores" => $data['stores'],
+                    "stores" => $data['stores'],
                 ];
             }
             $app->header([
@@ -376,7 +376,7 @@
                 $form = $app->xss($insert['form']);
                 $workflows = $app->xss($insert['workflows']);
                 $category = $app->xss($insert['category']);
-                $brands = $app->xss($insert['brands']);
+                $stores = $app->xss($insert['stores']);
                 if(isset($account['id'])){
                     $account = $account;
                 }
@@ -399,8 +399,8 @@
                         "vat_type" => 1,
                         "status" => 0,
                         "code" => time(),
-                        "brands" => $brands,
-                        "brands_id" => $brands,
+                        "stores" => $stores,
+                        "stores_id" => $stores,
                         "active" => $jatbi->active(),
                         "auto" => 0,
                         "invoices" => $data['id'],
