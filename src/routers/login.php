@@ -26,7 +26,7 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
             $data = $app->get("accounts", [
                 "[>]permission" => ["permission" => "id"],
                 "[>]personnels" => ["id" => "account"],
-            ],[
+            ], [
                 "permission.your_self",
                 "accounts.id",
                 "accounts.type",
@@ -94,6 +94,7 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
                         "date"  => date("Y-m-d H:i:s"),
                     ]);
                 }
+                
                 $app->setSession('accounts', [
                     "id" => $data['id'],
                     "name" => $data['name'],
@@ -147,6 +148,7 @@ $app->group(($setting['manager'] == '' ? '' : $setting['manager']), function ($a
             echo json_encode(['status' => 'error', 'content' => $jatbi->lang('Vui lòng không để trống')]);
         }
     });
+
     $app->router('/change-stores/{id}', 'GET', function ($vars) use ($app, $jatbi, $setting) {
         // Lấy ID cửa hàng từ vars
         $id = $vars['id'] ?? '0';
