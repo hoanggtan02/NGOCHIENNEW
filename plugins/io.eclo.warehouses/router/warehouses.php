@@ -3987,15 +3987,13 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             );
 
             // Mặc định khoảng thời gian
-            $date_from = date('Y-m-d 00:00:00', strtotime('first day of this month'));
-            $date_to = date('Y-m-d 23:59:59', strtotime('last day of this month'));
-
+           
             // Chuẩn bị dữ liệu cho template
             $vars['data'] = $data;
             $vars['stores'] = $stores;
             $vars['title'] = $jatbi->lang("Chi tiết sản phẩm") . ': ' . $data['name'];
-            $vars['date_from'] = $date_from;
-            $vars['date_to'] = $date_to;
+            $vars['date_from'] = date('Y-m-d 00:00:00');
+            $vars['date_to'] = date('Y-m-d 23:59:59');
 
             echo $app->render($template . '/warehouses/products-details.html', $vars);
         } elseif ($app->method() === 'POST') {
@@ -4010,25 +4008,18 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
 
             // Lấy giá trị từ bộ lọc
-            $filter_date = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
+            $date_string = isset($_POST['date']) ? $app->xss($_POST['date']) : '';
 
 
             $filter_stores = isset($_POST['stores']) ? $app->xss($_POST['stores']) : $accStore;
 
-            // Xử lý bộ lọc ngày
-            $date_from = date('2020-05-06 00:00:00', strtotime('first day of this month'));
-            $date_to = date('2025-05-22 23:59:59', strtotime('last day of this month'));
-            if (!empty($filter_date)) {
-                $date_parts = explode(' - ', $filter_date);
-                if (count($date_parts) == 2) {
-                    $from = trim($date_parts[0]);
-                    $to = trim($date_parts[1]);
-                    // Kiểm tra định dạng ngày hợp lệ
-                    if (strtotime(str_replace('/', '-', $from)) && strtotime(str_replace('/', '-', $to))) {
-                        $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', $from)));
-                        $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', $to)));
-                    }
-                }
+    if ($date_string) {
+                $date = explode(' - ', $date_string);
+                $date_from = date('Y-m-d 00:00:00', strtotime(str_replace('/', '-', trim($date[0]))));
+                $date_to = date('Y-m-d 23:59:59', strtotime(str_replace('/', '-', trim($date[1]))));
+            } else {
+                $date_from = date('Y-m-d 00:00:00');
+                $date_to = date('Y-m-d 23:59:59');
             }
 
             // Điều kiện WHERE cơ bản
@@ -7474,7 +7465,8 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
         echo $app->render($template . '/warehouses/import.html', $vars);
     })->setPermissions(['warehouses-import']);
 
-    $app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
+
+$app->router('/warehouses-update/{action}/{product}/{do}/{id}', 'POST', function ($vars) use ($app, $jatbi, $setting, $stores, $accStore) {
         $app->header(['Content-Type' => 'application/json; charset=utf-8']);
 
         $action = $vars['action'] ?? '';
@@ -8238,6 +8230,17 @@ $app->group($setting['manager'] . "/warehouses", function ($app) use ($jatbi, $s
             }
         }
     });
+
+
+
+
+
+
+
+
+
+
+
 
     $app->router('/products-import-crafting', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
         $vars['title'] = $jatbi->lang("Nhập hàng từ chế tác");
