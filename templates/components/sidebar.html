@@ -26,9 +26,8 @@
       // Xác định cửa hàng đang chọn (dựa trên cookie hoặc mặc định là 0)
       $selected_store = isset($_COOKIE['selected_store']) ? $_COOKIE['selected_store'] : '0';
 
-      $default_logo_path = "assets/img/eclo.png"; 
+      $default_logo_path = "/assets/img/eclo.png"; 
 
-      // Kiểm tra xem $account['avatar'] có tồn tại và không rỗng không
       $avatar_src = (!empty($account['avatar'])) 
                     ? "/" . $account['avatar'] . "?type=thumb" 
                     : $default_logo_path;
@@ -61,7 +60,7 @@
       </div>
       <div class="dropdown">
         <button class="btn border-0 bg-body bg-opacity-10 text-muted fs-4 d-flex align-items-center justify-content-center btn-light rounded-circle p-2 width height" style="--width:40px;--height:40px" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasUser" aria-controls="offcanvasUser" aria-label="<?=$jatbi->lang('Tài khoản')?>">
-           <img data-src="/<?=$avatar_src?>?type=thumb" alt="<?=$account['name']?>" class="rounded-circle lazyload width height" style="--width:45px;height:40px">
+           <img data-src="<?=$avatar_src?>?type=thumb" alt="<?=$account['name']?>" class="rounded-circle lazyload width height" style="--width:45px;height:40px">
         </button>
       </div>
     </div>
@@ -129,7 +128,7 @@
     <div class="offcanvas-header p-1">
       <div class="d-flex px-2 pt-3 pb-0 align-items-center w-100">
         <div class="flex-shrink-0">
-          <img data-src="/<?=$avatar_src?>?type=thumb" alt="<?=$account['name']?>" class="rounded-circle lazyload  width height" style="--width:50px;--height:50px">
+          <img data-src="<?=$avatar_src?>?type=thumb" alt="<?=$account['name']?>" class="rounded-circle lazyload  width height" style="--width:50px;--height:50px">
         </div>
         <div class="flex-grow-1 ms-2">
           <h6 class="mb-0"><?=$account['name']?></h6>
