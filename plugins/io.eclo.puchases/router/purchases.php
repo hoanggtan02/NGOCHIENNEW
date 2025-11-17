@@ -773,7 +773,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
     })->setPermissions(['purchase']);
 
 
-    $app->router('/purchase-add', 'GET', function ($vars) use ($app, $jatbi, $setting, $template) {
+    $app->router('/purchase-add', 'GET', function ($vars) use ($accStore, $app, $jatbi, $setting, $template) {
         $action = 'add';
         $vars['action'] = $action;
         $vars['title'] = $jatbi->lang("Tạo Đề xuất mua hàng");
@@ -809,7 +809,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
 
         // --- LẤY DỮ LIỆU CHO CÁC DROPDOWN ---
         $vars['vendors'] = $app->select("vendors", ["id(value)", "name(text)"], ["deleted" => 0]);
-        $vars['storess'] = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0]);
+        $vars['storess'] = $accStore;
 
         echo $app->render($template . '/purchases/purchase-post.html', $vars);
     })->setPermissions(['purchase.add']);

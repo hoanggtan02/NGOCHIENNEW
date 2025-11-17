@@ -4,7 +4,6 @@ $jatbi = $app->getValueData('jatbi');
 $setting = $app->getValueData('setting');
 return [
     "content" => [
-        "name" => $jatbi->lang("Quản trị"),
         "item" => [
             'purchases' => [
                 "menu" => $jatbi->lang("Mua hàng"),
