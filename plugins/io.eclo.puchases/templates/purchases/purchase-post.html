@@ -1,12 +1,17 @@
 <div class="container-fluid">
     <nav class="d-flex justify-content-between align-items-center mb-3" aria-label="breadcrumb">
         <div>
-            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$title?>
+            </h4>
             <ul class="breadcrumb small mb-0 bg-transparent p-0">
                 <li class="breadcrumb-item"><a href="/"><?=$jatbi->lang('Trang chủ')?></a></li>
-                <li class="breadcrumb-item"><a href="/purchases/purchase/"><?=$jatbi->lang('Đề xuất mua hàng')?></a></li>
-                <li class="breadcrumb-item active" aria-current="page"><?=$title?></li>
-            </ol>
+                <li class="breadcrumb-item"><a href="/purchases/purchase/"><?=$jatbi->lang('Đề xuất mua hàng')?></a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    <?=$title?>
+                </li>
+                </ol>
         </div>
     </nav>
     <div class="row justify-content-center align-items-start">
@@ -16,16 +21,60 @@
                     <h5 class="fw-bold mb-3"><?=$jatbi->lang('Thông tin chung')?></h5>
                     <div class="row">
                         <div class="col-md-3">
-                            <?=$app->component('select', ["name" => 'type', "placeholder" => $jatbi->lang("Loại đề xuất"), "selected" => $data['type'], "required" => true, "attr" => 'data-field="type" data-reload="true"', "options" => [["value" => 1, "text" => $jatbi->lang("Mua hàng")], ["value" => 2, "text" => $jatbi->lang("Mua nguyên liệu")]]])?>
+                            <?=$app->component('select', [
+                            "name" => 'type', 
+                            "placeholder" => $jatbi->lang("Loại đề xuất"), 
+                            "selected" => $data['type'], 
+                            "required" => true, 
+                            "options" => [["value" => 1, "text" => $jatbi->lang("Mua hàng")], ["value" => 2, "text" => $jatbi->lang("Mua nguyên liệu")]],
+                            "class" => "change-update", 
+                            "attr" => 'data-action="change"
+                            data-load="this" 
+                                    data-url="/purchases/purchase-update/edit/type" 
+                                    data-form=\'{"value": "this.val"}\''
+                        ])?>
                         </div>
                         <div class="col-md-3">
-                             <?=$app->component('select', ["name" => 'vendor', "placeholder" => $jatbi->lang("Nhà cung cấp"), "options" => $vendors ?? [], "selected" => $data['vendor']['id'] ?? '', "required" => true, "attr" => 'data-field="vendor"'])?>
+                            <?=$app->component('select', [
+                            "name" => 'vendor', 
+                            "placeholder" => $jatbi->lang("Nhà cung cấp"), 
+                            "options" => $vendors ?? [], 
+                            "selected" => $data['vendor']['id'] ?? '', 
+                            "required" => true, 
+                            "class" => "change-update", // Script của bạn sẽ tìm class này
+                            "attr" => 'data-action="change" 
+                                    data-url="/purchases/purchase-update/edit/vendor" 
+                                    data-form=\'{"value": "this.val"}\''
+                        ])?>
                         </div>
                         <div class="col-md-3">
-                            <?=$app->component('select', ["name" => 'stores', "placeholder" => $jatbi->lang("Cửa hàng"), "options" => $storess ?? [], "selected" => $data['stores']['id'] ?? '', "required" => true, "attr" => 'data-field="stores"'])?>
+                            <?=
+
+                        $app->component('select', [
+                            "name" => 'stores', 
+                            "placeholder" => $jatbi->lang("Cửa hàng"), 
+                            "options" => $stores ?? [], 
+                            "selected" => $data['stores']['id'] ?? '', 
+                            "required" => true, 
+                            "class" => "change-update",
+                            "attr" => 'data-action="change" 
+                            data-load="this"
+                                    data-url="/purchases/purchase-update/edit/stores" 
+                                    data-form=\'{"value": "this.val"}\''
+                        ])?>
                         </div>
                         <div class="col-md-3">
-                            <?=$app->component('input', ["name" => 'date', "placeholder" => $jatbi->lang("Ngày"), "type" => "date", "value" => $data['date'], "required" => true, "attr" => 'data-field="date"'])?>
+                            <?=$app->component('input', [
+                            "name" => 'date', 
+                            "placeholder" => $jatbi->lang("Ngày"), 
+                            "type" => "date", 
+                            "value" => $data['date'] ?? "", 
+                            "required" => true, 
+                            "class" => "change-update", 
+                            "attr" => 'data-action="change" 
+                                    data-url="/purchases/purchase-update/edit/date" 
+                                    data-form=\'{"value": "this.val"}\''
+                        ])?>
                         </div>
                     </div>
                 </div>
@@ -34,27 +83,263 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <?php if($data['type'] == 1): ?>
-                                <?=$app->component('select', ["name" => 'products_add', "placeholder" => $jatbi->lang("Tìm và thêm Sản phẩm..."), "attr" => 'data-ajax-url="/api/products-search"'])?>
+                            <div class="bg-body rounded-pill p-2 d-flex justify-content-center align-items-center"
+                                data-error>
+                                <i class="ti ti-search fs-3 ms-2"></i>
+                                <div class="w-100" data-search="true" data-url="/api/products-search-purchase"
+                                    data-form='{}'> <input type="text"
+                                        class="form-control bg-transparent border-0 shadow-none py-3 w-100"
+                                        placeholder="Tìm kiếm nguyên liệu theo mã hoặc tên">
+                                    <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3"
+                                        style="--max-height:300px;"></div>
+
+                                    <template class="search-item-template">
+                                        <div
+                                            class="search-item border-0 py-2 btn text-start position-relative d-flex align-items-center gap-2">
+                                            <div data-attr-products="value"> <strong data-name="text"></strong>
+                                                <a data-action="click" data-load="this"
+                                                    data-attr-url="url" data-alert="true" class="stretched-link"
+                                                    href="#!"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                             <?php else: ?>
-                                <?=$app->component('select', ["name" => 'ingredient_add', "placeholder" => $jatbi->lang("Tìm và thêm Nguyên liệu..."), "options" => $ingredient ?? []])?>
+                            <div class="bg-body rounded-pill p-2 d-flex justify-content-center align-items-center"
+                                data-error>
+                                <i class="ti ti-search fs-3 ms-2"></i>
+                                <div class="w-100" data-search="true" data-url="/api/ingredient-search-2"
+                                    data-form='{}'> <input type="text"
+                                        class="form-control bg-transparent border-0 shadow-none py-3 w-100"
+                                        placeholder="Tìm kiếm nguyên liệu theo mã hoặc tên">
+                                    <div class="search-results-box rounded-4 shadow bg-body border-0 position-absolute max-height scroll-y w-100 z-3"
+                                        style="--max-height:300px;"></div>
+
+                                    <template class="search-item-template">
+                                        <div
+                                            class="search-item border-0 py-2 btn text-start position-relative d-flex align-items-center gap-2">
+                                            <div data-attr-products="value"> <strong data-name="text"></strong>
+                                                <a data-action="click" data-load="this"
+                                                    data-attr-url="url" data-alert="true" class="stretched-link"
+                                                    href="#!"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                             <?php endif; ?>
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover table-bordered align-middle">
+                        <table class="table table-hover table-striped table-bordered align-middle">
                             <thead class="table-light">
-                                </thead>
+                                <?php if($data['type'] == 1): // Loại: Sản phẩm ?>
+                                <tr>
+                                    <th width="4%"></th>
+                                    <th><?=$jatbi->lang('Sản phẩm')?></th>
+                                    <th width="10%"><?=$jatbi->lang('Số lượng')?></th>
+                                    <th><?=$jatbi->lang('Đơn vị')?></th>
+                                    <th><?=$jatbi->lang('Nhà cung cấp')?></th>
+                                    <th><?=$jatbi->lang('Đơn giá')?></th>
+                                    <th><?=$jatbi->lang('Thành tiền')?></th>
+                                    <th width="4%"></th>
+                                </tr>
+                                <?php else: // Loại: Nguyên liệu ?>
+                                <tr>
+                                    <th><?=$jatbi->lang('Loại')?></th>
+                                    <th><?=$jatbi->lang('Mã nguyên liệu')?></th>
+                                    <th width="10%"><?=$jatbi->lang('Số lượng')?></th>
+                                    <th><?=$jatbi->lang('Đơn vị')?></th>
+                                    <th><?=$jatbi->lang('Đơn giá')?></th>
+                                    <th><?=$jatbi->lang('Thành tiền')?></th>
+                                    <th width="4%"></th>
+                                </tr>
+                                <?php endif; ?>
+                            </thead>
                             <tbody>
-                                </tbody>
+                                <?php if($data['type'] == 1):?>
+                                <?php foreach ($selected_items as $key => $item): ?>
+                                <?php
+                                        $detail = $details_map[$item['products']] ?? null;
+                                        if (!$detail) continue;
+                                        $total_price = $item['amount'] * $item['price'];
+                                    ?>
+                                <tr>
+                                    <td class="p-0"><img
+                                            src="/<?=$upload['images']['products']['url'].'thumb/'.$detail['images']?>"
+                                            class="border border-light rounded shadow-sm w-100"></td>
+                                    <td class="p-1">
+                                        <?=$detail['name']?>
+                                    </td>
+                                    <td class="p-0">
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="."
+                                            class="form-control form-control-sm text-center"
+                                            value="<?=$item['amount']?>"
+                                            data-url="/purchases/purchase-update/edit/products/amount/<?=$key?>"
+                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    </td>
+                                    <td class="p-1">
+                                        <?=$detail['unit_name']?>
+                                    </td>
+                                    <td class="p-1">
+                                        <?=$detail['vendor_name']?>
+                                    </td>
+                                    <td class="p-0">
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="."
+                                            class="form-control form-control-sm text-end" value="<?=$item['price']?>"
+                                            data-url="/purchases/purchase-update/edit/products/price/<?=$key?>"
+                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?=number_format($total_price)?>
+                                    </td>
+                                    <td class="text-center">
+                                        <a class="click-update text-danger" role="button" data-action="click"
+                                            data-load="this"
+                                            data-url="/purchases/purchase-update/edit/products/deleted/<?=$key?>">
+                                            <i class="ti ti-trash fs-5"></i> </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+
+                                <?php else:  ?>
+                                <?php foreach ($selected_items as $key => $item): ?>
+                                <?php
+                                    $detail = $details_map[$item['ingredient']] ?? null;
+                                    if (!$detail) continue;
+                                    $total_pri = $item['amount'] * $item['price'];
+                                    $type_text = $type_map[$detail['type']] ?? 'Khác'; 
+                                ?>
+                                <tr>
+                                    <td>
+                                        <?=$type_text?>
+                                    </td>
+                                    <td class="p-1">
+                                        <?=$detail['code']?>
+                                    </td>
+                                    <td class="p-0">
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="."
+                                            class="form-control form-control-sm text-center"
+                                            value="<?=$item['amount']?>"
+                                            data-url="/purchases/purchase-update/edit/ingredient/amount/<?=$key?>"
+                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    </td>
+                                    <td class="p-1">
+                                        <?=$detail['unit_name']?>
+                                    </td>
+                                    <td class="p-0">
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="."
+                                            class="form-control form-control-sm text-end" value="<?=$item['price']?>"
+                                            data-url="/purchases/purchase-update/edit/ingredient/price/<?=$key?>"
+                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?=number_format($total_pri)?>
+                                    </td>
+                                    <td class="text-center">
+                                        <a class="click-update text-danger" role="button" data-action="click"
+                                            data-load="this"
+                                            data-url="/purchases/purchase-update/edit/ingredient/deleted/<?=$key?>">
+                                            <i class="ti ti-trash fs-5"></i> </a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
                             <tfoot>
-                                </tfoot>
+                                <?php 
+                                    $colspan = ($data['type'] == 1) ? 6 : 5; 
+                                    ?>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold"><?=$jatbi->lang('Tổng tiền')?>
+                                    </td>
+                                    <td class="text-end fw-bold text-primary">
+                                        <?=number_format($total)?>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold"><?=$jatbi->lang('Giảm trừ')?>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?=number_format($minu)?>
+                                    </td>
+                                    <td class="text-center"><a class="modal-url"
+                                            data-url="/purchases/purchase-update/edit/details/minus/"><i
+                                                class="ti ti-plus"></i></a></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold">
+                                        <?=$jatbi->lang('Giảm giá')?>
+                                        (
+                                        <?=number_format($discount_amount)?>)
+                                    </td>
+                                    <td class="text-end fw-bold p-0">
+                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
+                                            data-thousands="," data-decimal="."
+                                            class="form-control form-control-sm text-end" value="<?=$data['discount'] ?? 0?>"
+                                            data-url="/purchases/purchase-update/edit/discount"
+                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    </td>
+                                    <td class="text-center"></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold"><?=$jatbi->lang('Phụ thu')?>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <?=number_format($surcharge)?>
+                                    </td>
+                                    <td class="text-center"><a class="modal-url"
+                                            data-url="/purchases/purchase-update/edit/details/surcharge/"><i
+                                                class="ti ti-plus"></i></a></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold"><?=$jatbi->lang('Thanh toán')?>
+                                    </td>
+                                    <td class="text-end fw-bold text-success">
+                                        <?=number_format($payment)?>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr class="table-light">
+                                    <td colspan="<?=$colspan?>" class="text-end fw-bold">
+                                        <?=$jatbi->lang('Yêu cầu trả trước')?></td>
+                                    <td classs="text-end fw-bold text-warning">
+                                        <?=number_format($prepay_req)?>
+                                    </td>
+                                    <td class="text-center"><a class="modal-url"
+                                            data-url="/purchases/purchase-update/edit/details/prepay_req/"><i
+                                                class="ti ti-plus"></i></a></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-                     <?=$app->component('textarea', ["name" => 'content', "placeholder" => $jatbi->lang('Nội dung đề xuất'), "value" => $data['content'] ?? '', "attr" => 'data-field="content"'])?>
+                    <?=$app->component('textarea', [
+                        "name" => 'content', 
+                        "placeholder" => $jatbi->lang('Nội dung đề xuất'), 
+                        "value" => $data['content'] ?? '', 
+                        "class" => "change-update", // Thêm class để script của bạn nhận diện
+                        "attr" => 'data-field="content" 
+                                data-action="change" 
+                                data-url="/purchases/purchase-update/edit/content" 
+                                data-form=\'{"value": "this.val"}\''
+                    ])?>
                 </div>
                 <div class="card-footer text-end bg-transparent border-0 py-3">
-                    <button class="btn btn-light rounded-pill px-4" id="cancel-purchase"><?=$jatbi->lang('Hủy')?></button>
-                    <button class="btn btn-eclo rounded-pill px-5" id="complete-purchase"><?=$jatbi->lang('Hoàn tất')?></button>
+                    <button class="btn btn-light rounded-pill px-4" id="cancel-purchase" data-action="modal"
+                        data-url="/purchases/purchase-update/edit/cancel">
+                        <?=$jatbi->lang('Hủy')?>
+                    </button>
+
+                    <button class="btn btn-eclo rounded-pill px-5" id="complete-purchase" data-action="modal"
+                        data-url="/purchases/purchase-update/edit/completed">
+                        <?=$jatbi->lang('Hoàn tất')?>
+                    </button>
                 </div>
             </div>
         </div>

@@ -743,7 +743,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             "purchase" => $vars['id'],
             "deleted" => 0
         ]);
-        $var['Status_purchase']=$setting['Status_purchase']??[];
+        $var['Status_purchase'] = $setting['Status_purchase'] ?? [];
 
         // Lấy thông tin đơn hàng
         $purchase = $app->get("purchase", "*", [
@@ -773,17 +773,14 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
     })->setPermissions(['purchase']);
 
 
-    $app->router('/purchase-add', 'GET', function ($vars) use ($accStore, $app, $jatbi, $setting, $template) {
-        $action = 'add';
+    $app->router('/purchase-add', 'GET', function ($vars) use ($accStore, $app, $jatbi, $setting, $stores, $template) {
+        $action = 'edit';
         $vars['action'] = $action;
         $vars['title'] = $jatbi->lang("Tạo Đề xuất mua hàng");
 
-        // --- KHỞI TẠO HOẶC LẤY DỮ LIỆU TỪ SESSION ---
         $sessionData = &$_SESSION['purchase'][$action];
         if (empty($sessionData)) {
             $sessionData = ['status' => 1, 'type' => 1, 'date' => date("Y-m-d"), 'stores' => []];
-            if (count($app->select("stores", "id")) == 1) {
-            }
         }
         $vars['data'] = $sessionData;
         $selected_items = [];
@@ -793,27 +790,88 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $selected_items = $sessionData['ingredient'] ?? [];
         $vars['selected_items'] = $selected_items;
 
-        // --- TỐI ƯU: LẤY TẤT CẢ DỮ LIỆU LIÊN QUAN TRONG VÀI CÂU TRUY VẤN ---
-        $item_ids = array_keys($selected_items);
         $details_map = [];
-        if (!empty($item_ids)) {
-            if ($sessionData['type'] == 1) { // Products
-                $details_db = $app->select("products", ["[<]units" => ["units" => "id"], "[<]vendors" => ["vendor" => "id"]], ["products.id", "products.name", "products.images", "unit_name" => "units.name", "vendor_name" => "vendors.name"], ["products.id" => $item_ids]);
+        if (!empty($selected_items)) {
+            if ($sessionData['type'] == 1) {
+                $item_ids = array_column($selected_items, 'products');
+
+                $details_db = $app->select(
+                    "products",
+                    [
+                        "[>]units" => ["units" => "id"],
+                        "[>]vendors" => ["vendor" => "id"]
+                    ],
+                    [
+                        "products.id",
+                        "products.name",
+                        "products.images",
+                        "units.name(unit_name)",
+                        "vendors.name(vendor_name)"
+                    ],
+                    ["products.id" => $item_ids]
+                );
                 $details_map = array_column($details_db, null, 'id');
-            } else { // Ingredients
-                $details_db = $app->select("ingredient", ["[<]units" => ["units" => "id"]], ["ingredient.id", "ingredient.code", "ingredient.type", "unit_name" => "units.name"], ["ingredient.id" => $item_ids]);
+            } else {
+
+                $item_ids = array_column($selected_items, 'ingredient');
+
+                $details_db = $app->select(
+                    "ingredient",
+                    [
+                        "[>]units" => ["units" => "id"]
+                    ],
+                    [
+                        "ingredient.id",
+                        "ingredient.code",
+                        "ingredient.type",
+                        "units.name(unit_name)"
+                    ],
+                    ["ingredient.id" => $item_ids]
+                );
                 $details_map = array_column($details_db, null, 'id');
             }
         }
         $vars['details_map'] = $details_map;
 
-        // --- LẤY DỮ LIỆU CHO CÁC DROPDOWN ---
         $vars['vendors'] = $app->select("vendors", ["id(value)", "name(text)"], ["deleted" => 0]);
-        $vars['storess'] = $accStore;
+        $vars['stores'] = $stores;
+        $store_placeholder = ["value" => "", "text" => $jatbi->lang("Chọn cửa hàng") ?? "--- Chọn kho ---"];
+        array_unshift($vars['stores'], $store_placeholder);
+        $vendor_placeholder = ["value" => "", "text" => $jatbi->lang("Chọn NCC") ?? "--- Chọn NCC ---"];
+        array_unshift($vars['vendors'], $vendor_placeholder);
+
+        $total = 0;
+        $minu = 0;
+        $surcharge = 0;
+        $prepay_req = 0;
+        $vars['type_map'] = [
+            1 => $jatbi->lang('Đai'),
+            2 => $jatbi->lang('Ngọc'),
+            3 => 'Khác'
+        ];
+        foreach ($selected_items as $item) {
+            $total += ($item['amount'] * $item['price']);
+        }
+        foreach ($sessionData['minus'] ?? [] as $minus) {
+            $minu += $minus['price'];
+        }
+        foreach ($sessionData['surcharge'] ?? [] as $s) {
+            $surcharge += $s['price'];
+        }
+        foreach ($sessionData['prepay_req'] ?? [] as $prepay) {
+            $prepay_req += $prepay['price'];
+        }
+        $discount_amount = ($sessionData['discount'] ?? 0 * $total / 100);
+        $payment = (($total - $minu - $discount_amount) + $surcharge);
+        $vars['total'] = $total;
+        $vars['minu'] = $minu;
+        $vars['surcharge'] = $surcharge;
+        $vars['prepay_req'] = $prepay_req;
+        $vars['discount_amount'] = $discount_amount;
+        $vars['payment'] = $payment;
 
         echo $app->render($template . '/purchases/purchase-post.html', $vars);
     })->setPermissions(['purchase.add']);
-
 
     $app->router('/purchase-prepay/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $id = (int) ($vars['id'] ?? 0);
@@ -945,8 +1003,6 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             echo json_encode(['status' => 'success', 'content' => $jatbi->lang('cap-nhat-thanh-cong')]);
         }
     });
-
-
 
     $app->router("/purchase-edit/{id}", ['GET'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
         $vars['title'] = $jatbi->lang("Sửa đề xuất");
@@ -1154,6 +1210,37 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         }
     });
 
+    $app->router('/purchase-update/edit/products/add/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $id = $app->xss($vars['id']);
+        $action = "edit";
+
+        $data = $app->get("products", "*", [
+            "id" => $id,
+            "status" => "A",
+            "deleted" => 0
+        ]);
+
+        if ($data > 1) {
+            $_SESSION['purchase'][$action]['products'][] = [
+                "products" => $data['id'],
+                "amount" => 1,
+                "price" => $data['price'],
+                "vendor" => $data['vendor'],
+                "images" => $data['images'],
+                "code" => $data['code'],
+                "name" => $data['name'],
+                "categorys" => $data['categorys'],
+                "units" => $data['units'],
+                "notes" => $data['notes'],
+            ];
+
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } else {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Cập nhật thất bại")]);
+        }
+    });
+
     $app->router('/purchase-update/edit/products/{req}/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
         $action = "edit";
@@ -1226,14 +1313,15 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
-    $app->router('/purchase-update/edit/ingredient/add', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router('/purchase-update/edit/ingredient/add/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
         $app->header(['Content-Type' => 'application/json']);
+        $id = $app->xss($vars['id']);
         $action = "edit";
-        $data = $app->get("ingredient", "*", ["id" => $app->xss($_POST['value'])]);
+        $data = $app->get("ingredient", "*", ["id" => $id]);
         if ($data > 1) {
             $_SESSION['purchase'][$action]['ingredient'][] = [
                 "ingredient" => $data['id'],
-                "price" => '',
+                // "price" => '',
                 "amount" => 1,
                 "vendor" => $data['vendor'],
                 "pearl" => $data['pearl'],
@@ -1470,4 +1558,87 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             }
         }
     });
+
+    $app->router('/purchase-update/edit/products/deleted/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+        $key = $vars['id'];
+        unset($_SESSION['purchase'][$action]['products'][$key]);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/edit/products/price/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+
+        $key = $vars['id'];
+        $field = 'price';
+
+        $value = $app->xss(str_replace([','], '', $_POST['value']));
+
+        $_SESSION['purchase'][$action]['products'][$key][$field] = $value;
+
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/edit/products/amount/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+
+        $key = $vars['id'];
+        $field = 'amount';
+
+        $value = $app->xss(str_replace([','], '', $_POST['value']));
+
+        $_SESSION['purchase'][$action]['products'][$key][$field] = $value;
+
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/edit/ingredient/deleted/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+        $key = $vars['id'];
+        unset($_SESSION['purchase'][$action]['ingredient'][$key]);
+
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/edit/ingredient/price/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+
+        $key = $vars['id'];
+        $field = 'price';
+
+        $value = $app->xss(str_replace([','], '', $_POST['value']));
+
+        $_SESSION['purchase'][$action]['ingredient'][$key][$field] = $value;
+
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/edit/ingredient/amount/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $action = "edit";
+
+        $key = $vars['id']; 
+        $field = 'amount'; 
+        $value = $app->xss(str_replace([','], '', $_POST['value']));
+
+        if ($value < 0) {
+            echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Số lượng không được âm")]);
+        } else {
+            $_SESSION['purchase'][$action]['ingredient'][$key][$field] = $value;
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        }
+    });
+
+
+    
 })->middleware('login');
