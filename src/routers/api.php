@@ -3903,4 +3903,37 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
 
         echo json_encode($datas);
     });
+    $app->router("/search/form-type-3", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        if ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $searchValue = isset($_POST['keyword']) ? $_POST['keyword'] : '';
+            $parent = isset($_POST['parent']) ? $_POST['parent'] : '';
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        "proposal_form.name[~]" => $searchValue,
+                    ],
+                    "proposal_form.status" => 'A',
+                    "proposal_form.deleted" => 0,
+                    "stores_linkables.stores" => $jatbi->stores(),
+                    "proposal_form.form" => 3, 
+                ]
+            ];
+            $app->select("proposal_form", [
+                "[>]stores_linkables" => ["id" => "data", "AND" => ["stores_linkables.type" => "proposal_form"]]
+            ], [
+                "@proposal_form.id",
+                "proposal_form.name",
+
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "value" => $data['id'],
+                    "text" => $data['name'],
+                ];
+            });
+            echo json_encode($datas);
+        }
+    })->setPermissions(['proposal']);
 })->middleware(names: 'login');
