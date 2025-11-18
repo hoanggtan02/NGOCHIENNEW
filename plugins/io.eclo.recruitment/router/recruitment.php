@@ -284,8 +284,17 @@ $app->group($setting['manager'] . "/recruitment", function ($app) use ($jatbi, $
         } elseif ($app->method() === 'POST') {
             $app->header(['Content-Type' => 'application/json']);
             $error = [];
-            if (empty($app->xss($_POST['title'])) || empty($app->xss($_POST['description'])) || empty($app->xss($_POST['requirements']))) {
-                $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")];
+            if (
+                empty($app->xss($_POST['title'])) || 
+                empty($app->xss($_POST['description'])) || 
+                empty($app->xss($_POST['requirements'])) ||
+                empty($app->xss($_POST['interest'])) || 
+                empty($_POST['jobs']) || 
+                empty($app->xss($_POST['form'])) || 
+                empty($app->xss($_POST['workflows'])) || 
+                empty($app->xss($_POST['category'])) 
+            ) {
+                $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống các trường bắt buộc")];
             } elseif (count($stores) > 1 && empty($app->xss($_POST['stores']))) {
                 $error = ["status" => "error", "content" => $jatbi->lang("Vui lòng chọn cửa hàng")];
             }

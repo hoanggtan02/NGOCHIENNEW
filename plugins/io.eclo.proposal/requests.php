@@ -64,11 +64,11 @@
                             "router"=> '/proposal/journal',
                             "icon"  => '<i class="ti ti-file-invoice"></i>',
                         ],
-                        'shifts'    =>[
-                            "name"  => $jatbi->lang("Kết ca"),
-                            "router"=> '/shifts/list',
-                            "icon"  => '<i class="fas fa-universal-access"></i>',
-                        ],
+                        // 'shifts'    =>[
+                        //     "name"  => $jatbi->lang("Kết ca"),
+                        //     "router"=> '/shifts/list',
+                        //     "icon"  => '<i class="fas fa-universal-access"></i>',
+                        // ],
                         'proposal.config'      =>[
                             "name"  => $jatbi->lang("Cấu hình"),
                             "router"=> '/proposal/config',
@@ -98,8 +98,8 @@
                         'proposal.receivable'=> $jatbi->lang("Phải thu"),
                         'proposal.payable'=> $jatbi->lang("Phải trả"),
                         'proposal.journal'=> $jatbi->lang("Đối soát định khoản"),
-                        'shifts'=> $jatbi->lang("Kết ca"),
-                        'shifts.add'=> $jatbi->lang("Tạo Kết ca"),
+                        // 'shifts'=> $jatbi->lang("Kết ca"),
+                        // 'shifts.add'=> $jatbi->lang("Tạo Kết ca"),
                     ]
                 ],
             ],
