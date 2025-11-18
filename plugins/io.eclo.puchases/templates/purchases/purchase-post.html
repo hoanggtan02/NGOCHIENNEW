@@ -30,7 +30,7 @@
                             "class" => "change-update", 
                             "attr" => 'data-action="change"
                             data-load="this" 
-                                    data-url="/purchases/purchase-update/edit/type" 
+                                    data-url="/purchases/purchase-update/add/type" 
                                     data-form=\'{"value": "this.val"}\''
                         ])?>
                         </div>
@@ -43,7 +43,7 @@
                             "required" => true, 
                             "class" => "change-update", // Script của bạn sẽ tìm class này
                             "attr" => 'data-action="change" 
-                                    data-url="/purchases/purchase-update/edit/vendor" 
+                                    data-url="/purchases/purchase-update/add/vendor" 
                                     data-form=\'{"value": "this.val"}\''
                         ])?>
                         </div>
@@ -59,7 +59,7 @@
                             "class" => "change-update",
                             "attr" => 'data-action="change" 
                             data-load="this"
-                                    data-url="/purchases/purchase-update/edit/stores" 
+                                    data-url="/purchases/purchase-update/add/stores" 
                                     data-form=\'{"value": "this.val"}\''
                         ])?>
                         </div>
@@ -72,7 +72,7 @@
                             "required" => true, 
                             "class" => "change-update", 
                             "attr" => 'data-action="change" 
-                                    data-url="/purchases/purchase-update/edit/date" 
+                                    data-url="/purchases/purchase-update/add/date" 
                                     data-form=\'{"value": "this.val"}\''
                         ])?>
                         </div>
@@ -177,7 +177,7 @@
                                             data-thousands="," data-decimal="."
                                             class="form-control form-control-sm text-center"
                                             value="<?=$item['amount']?>"
-                                            data-url="/purchases/purchase-update/edit/products/amount/<?=$key?>"
+                                            data-url="/purchases/purchase-update/add/products/amount/<?=$key?>"
                                             data-form='{"value": "this.val"}' data-action="blur" data-load="this">
                                     </td>
                                     <td class="p-1">
@@ -190,7 +190,7 @@
                                         <input type="tel" data-number="money" data-currency="" data-decimals="0"
                                             data-thousands="," data-decimal="."
                                             class="form-control form-control-sm text-end" value="<?=$item['price']?>"
-                                            data-url="/purchases/purchase-update/edit/products/price/<?=$key?>"
+                                            data-url="/purchases/purchase-update/add/products/price/<?=$key?>"
                                             data-form='{"value": "this.val"}' data-action="blur" data-load="this">
                                     </td>
                                     <td class="text-end fw-bold">
@@ -199,7 +199,7 @@
                                     <td class="text-center">
                                         <a class="click-update text-danger" role="button" data-action="click"
                                             data-load="this"
-                                            data-url="/purchases/purchase-update/edit/products/deleted/<?=$key?>">
+                                            data-url="/purchases/purchase-update/add/products/deleted/<?=$key?>">
                                             <i class="ti ti-trash fs-5"></i> </a>
                                     </td>
                                 </tr>
@@ -225,7 +225,7 @@
                                             data-thousands="," data-decimal="."
                                             class="form-control form-control-sm text-center"
                                             value="<?=$item['amount']?>"
-                                            data-url="/purchases/purchase-update/edit/ingredient/amount/<?=$key?>"
+                                            data-url="/purchases/purchase-update/add/ingredient/amount/<?=$key?>"
                                             data-form='{"value": "this.val"}' data-action="blur" data-load="this">
                                     </td>
                                     <td class="p-1">
@@ -235,7 +235,7 @@
                                         <input type="tel" data-number="money" data-currency="" data-decimals="0"
                                             data-thousands="," data-decimal="."
                                             class="form-control form-control-sm text-end" value="<?=$item['price']?>"
-                                            data-url="/purchases/purchase-update/edit/ingredient/price/<?=$key?>"
+                                            data-url="/purchases/purchase-update/add/ingredient/price/<?=$key?>"
                                             data-form='{"value": "this.val"}' data-action="blur" data-load="this">
                                     </td>
                                     <td class="text-end fw-bold">
@@ -244,7 +244,7 @@
                                     <td class="text-center">
                                         <a class="click-update text-danger" role="button" data-action="click"
                                             data-load="this"
-                                            data-url="/purchases/purchase-update/edit/ingredient/deleted/<?=$key?>">
+                                            data-url="/purchases/purchase-update/add/ingredient/deleted/<?=$key?>">
                                             <i class="ti ti-trash fs-5"></i> </a>
                                     </td>
                                 </tr>
@@ -269,8 +269,8 @@
                                     <td class="text-end fw-bold">
                                         <?=number_format($minu)?>
                                     </td>
-                                    <td class="text-center"><a class="modal-url"
-                                            data-url="/purchases/purchase-update/edit/details/minus/"><i
+                                    <td class="text-center"><a class="modal-url" data-action="modal"
+                                            data-url="/purchases/purchase-update/add/details/minus"><i
                                                 class="ti ti-plus"></i></a></td>
                                 </tr>
                                 <tr class="table-light">
@@ -283,7 +283,7 @@
                                         <input type="tel" data-number="money" data-currency="" data-decimals="0"
                                             data-thousands="," data-decimal="."
                                             class="form-control form-control-sm text-end" value="<?=$data['discount'] ?? 0?>"
-                                            data-url="/purchases/purchase-update/edit/discount"
+                                            data-url="/purchases/purchase-update/add/discount"
                                             data-form='{"value": "this.val"}' data-action="blur" data-load="this">
                                     </td>
                                     <td class="text-center"></td>
@@ -294,8 +294,8 @@
                                     <td class="text-end fw-bold">
                                         <?=number_format($surcharge)?>
                                     </td>
-                                    <td class="text-center"><a class="modal-url"
-                                            data-url="/purchases/purchase-update/edit/details/surcharge/"><i
+                                    <td class="text-center"><a class="modal-url" data-action="modal"
+                                            data-url="/purchases/purchase-update/add/details/surcharge"><i
                                                 class="ti ti-plus"></i></a></td>
                                 </tr>
                                 <tr class="table-light">
@@ -312,8 +312,8 @@
                                     <td classs="text-end fw-bold text-warning">
                                         <?=number_format($prepay_req)?>
                                     </td>
-                                    <td class="text-center"><a class="modal-url"
-                                            data-url="/purchases/purchase-update/edit/details/prepay_req/"><i
+                                    <td class="text-center"><a class="modal-url" data-action="modal"
+                                            data-url="/purchases/purchase-update/add/details/prepay_req"><i
                                                 class="ti ti-plus"></i></a></td>
                                 </tr>
                             </tfoot>
@@ -323,21 +323,22 @@
                         "name" => 'content', 
                         "placeholder" => $jatbi->lang('Nội dung đề xuất'), 
                         "value" => $data['content'] ?? '', 
-                        "class" => "change-update", // Thêm class để script của bạn nhận diện
+                        "class" => "change-update", 
+                        "required" => true,
                         "attr" => 'data-field="content" 
                                 data-action="change" 
-                                data-url="/purchases/purchase-update/edit/content" 
+                                data-url="/purchases/purchase-update/add/content" 
                                 data-form=\'{"value": "this.val"}\''
                     ])?>
                 </div>
                 <div class="card-footer text-end bg-transparent border-0 py-3">
                     <button class="btn btn-light rounded-pill px-4" id="cancel-purchase" data-action="modal"
-                        data-url="/purchases/purchase-update/edit/cancel">
+                        data-url="/purchases/purchase-update/add/cancel">
                         <?=$jatbi->lang('Hủy')?>
                     </button>
 
                     <button class="btn btn-eclo rounded-pill px-5" id="complete-purchase" data-action="modal"
-                        data-url="/purchases/purchase-update/edit/completed">
+                        data-url="/purchases/purchase-update/add/completed">
                         <?=$jatbi->lang('Hoàn tất')?>
                     </button>
                 </div>
