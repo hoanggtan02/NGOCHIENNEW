@@ -3859,7 +3859,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
             $datas[] = [
                 "value" => $data['id'],
                 "text" => $data['code'] . '-' . $data['name'] . '-' . $data['store_name'] . '-' . $data['branch_name'],
-                'url' => '/purchases/purchase-update/edit/products/add/' . $data['id']
+                'url' => '/purchases/purchase-update/add/products/add/' . $data['id']
 
             ];
         });
@@ -3897,7 +3897,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
             $datas[] = [
                 'id' => $data['id'],
                 'text' => $data['code'] . ' - ' . $type_text,
-                'url' => '/purchases/purchase-update/edit/ingredient/add/' . $data['id']
+                'url' => '/purchases/purchase-update/add/ingredient/add/' . $data['id']
             ];
         });
 
