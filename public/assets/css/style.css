@@ -412,6 +412,9 @@ body[data-sidebar=small] .sidebar:hover .collapse.show {
     background: var(--eclo);
     color:var(--bs-light);
 }
+table.table.dataTable {
+        border-spacing: 1px !important;
+}
 table.table.dataTable>:not(caption)>*>* {
     background-color: transparent;
 }
@@ -1437,4 +1440,53 @@ table.dataTable thead>tr>th.dt-orderable-asc:hover, table.dataTable thead>tr>th.
 
 .btn-link:hover {
     color: var(--bs-btn-hover-color)
+}
+table.dataTable tbody tr>.dtfc-fixed-start, table.dataTable tbody tr>.dtfc-fixed-end {
+    background-color: var(--bs-body-bg) !important; 
+}
+table.dataTable thead tr>.dtfc-fixed-start, table.dataTable thead tr>.dtfc-fixed-end, table.dataTable tfoot tr>.dtfc-fixed-start, table.dataTable tfoot tr>.dtfc-fixed-end {
+    background-color: var(--bs-body-bg) !important; 
+}
+css/* Ngăn scroll anchor của trình duyệt */
+* {
+    overflow-anchor: none !important;
+}
+
+html {
+    scroll-behavior: auto !important;
+}
+
+/* Khi DataTable đang xử lý, khóa scroll */
+.dataTables_processing {
+    position: fixed !important;
+}
+
+/* Ngăn DataTable tự scroll */
+.dataTables_wrapper,
+.dataTables_scroll,
+.dataTables_scrollBody {
+    overflow-anchor: none !important;
+    scroll-behavior: auto !important;
+}
+/* Đảm bảo các node đủ rộng để chứa 2 chấm */
+.workflow-node[data-type="decision"] {
+    width: 200px; /* Tăng chiều rộng để có không gian */
+}
+
+/* Kiểu dáng cho Endpoints (tùy chọn) */
+.jtk-endpoint {
+    z-index: 10;
+}
+
+/* Đảm bảo nhãn của endpoint nổi lên */
+.endpoint-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 5px;
+    background: #444;
+    color: white;
+    border-radius: 3px;
+    z-index: 15;
+    white-space: nowrap; /* Giữ nhãn trên một dòng */
 }
