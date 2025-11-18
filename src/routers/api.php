@@ -3818,7 +3818,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
         $app->header(['Content-Type' => 'application/json']);
         $datas = [];
         $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
-        $action = $_POST['action'] ?? 'edit';
+        $action = $_POST['action'] ?? 'add';
 
         $SearchStoreId = $_SESSION['purchase'][$action]['stores']['id'] ?? null;
 

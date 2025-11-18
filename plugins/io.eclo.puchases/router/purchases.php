@@ -3,11 +3,14 @@ if (!defined('ECLO'))
     die("Hacking attempt");
 
 use ECLO\App;
-
+$ClassProposals = new Proposal($app);
+$app->setValueData('process',$ClassProposals);
+$getprocess = $app->getValueData('process');
 $template = __DIR__ . '/../templates';
 $jatbi = $app->getValueData('jatbi');
 $common = $jatbi->getPluginCommon('io.eclo.proposal');
 $setting = $app->getValueData('setting');
+$account = $app->getValueData('account');
 
 $stores_json = $app->getCookie('stores') ?? json_encode([]);
 $stores = json_decode($stores_json, true);
@@ -27,7 +30,7 @@ if (isset($session['id'])) {
         $accStore[$itemStore['value']] = $itemStore['value'];
     }
 }
-$app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $setting, $accStore, $stores, $template) {
+$app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $setting, $accStore, $stores, $template, $account, $common, $getprocess) {
 
     $app->router('/vendors', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template) {
         $vars['title'] = $jatbi->lang("Nhà cung cấp");
@@ -499,7 +502,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         }
     })->setPermissions(['vendors-types.add']);
 
-    $app->router('/purchase', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template) {
+    $app->router('/purchase', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $stores, $template, $common) {
 
         $vars['title'] = $jatbi->lang("Đề xuất mua hàng");
 
@@ -575,7 +578,9 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $joins = [
                 "[>]vendors" => ["vendor" => "id"],
                 "[>]accounts" => ["user" => "id"],
-                "[>]stores" => ["stores" => "id"]
+                "[>]stores" => ["stores" => "id"],
+                "[>]proposals" => ["purchase.id" => "purchase_id"],
+                "[>]proposal_accounts"=>["id"=>"proposal"],
             ];
 
             // Khởi tạo điều kiện WHERE
@@ -646,10 +651,12 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                 'purchase.date_poster',
                 'vendors.name(vendor_name)',
                 'accounts.name(user_name)',
-                'stores.name(store_name)'
+                'stores.name(store_name)',
+                "proposals.status(proposal_status)",
+                "proposals.active(proposal_active)"
             ];
 
-            $app->select("purchase", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $vars, $app, $setting) {
+            $app->select("purchase", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $vars, $app, $setting, $common) {
                 $status_pay_info = $setting['Status_invoices'][$data['status_pay']] ?? ['name' => 'Không rõ', 'color' => 'dark'];
                 $status_purchase_info = $setting['Status_purchase'][$data['status']] ?? ['name' => 'Không rõ', 'color' => 'secondary'];
 
@@ -683,7 +690,13 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                             href="/purchases/purchase-edit/' . $data['id'] . '">
                             <i class="ti ti-edit"></i></a>';
                 }
+                $proposal_status = '—';
+                $proposal_button = [];
 
+                if (!empty($data['proposal_status']) && isset($common['proposal-status'][$data['proposal_status']])) {
+                    $st = $common['proposal-status'][$data['proposal_status']];
+                    $proposal_status = '<span class="p-2 py-1 rounded-pill small fw-bold text-nowrap bg-' . $st['color'] . '">' . $st['name'] . '</span>';
+                }
                 $datas[] = [
                     "checkbox" => $app->component("box", ["data" => $data['id']]),
                     "ma_don_hang" => '<button data-action="modal" class="modal-url btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" data-url="/purchases/purchase-views/' . $data['id'] . '">#' . ($setting['ballot_code']['purchase']) . '-' . $data['code'] . '</button>',
@@ -697,6 +710,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                     "con_lai" => number_format(($data['payments'] ?? 0) - ($data['prepay'] ?? 0)),
                     "trang_thai" => '<span class="fw-bold text-' . $status_pay_info['color'] . '">' . $status_pay_info['name'] . '</span>',
                     "tien_trinh" => '<span class="fw-bold p-1 rounded-3 small btn-' . $status_purchase_info['color'] . '">' . $status_purchase_info['name'] . '</span>',
+                    "proposal_status" => $proposal_status,
                     "ngay" => $jatbi->datetime($data['date_poster'] ?? ''),
                     "tai_khoan" => $data['user_name'],
                     "cua_hang" => $data['store_name'],
@@ -1356,7 +1370,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         }
     });
 
-    $app->router('/purchase-update/{type}/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router('/purchase-update/{type}/completed', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $template, $account, $common, $getprocess) {
         if ($app->method() === 'GET') {
             $vars['url'] = "/purchases/purchase";
             echo $app->render($setting['template'] . '/common/comfirm-modal.html', $vars, $jatbi->ajax());
@@ -1449,6 +1463,87 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                         "status"     => $app->xss($insert['status']),
                         "date"        => date('Y-m-d H:i:s'),
                     ]);
+                    $purchase_proposal = [
+                        "purchase_id" => $orderId,
+                        "form" => $_SESSION['purchase'][$action]['form'] ?? 0,
+                        "target" => $_SESSION['purchase'][$action]['category'] ?? 0,
+                        "workflows" => $_SESSION['purchase'][$action]['workflows'] ?? 0,
+                        "active" => $jatbi->active(),
+                        "status" => 1,
+                    ];
+                    $app->insert("purchase_proposal", $purchase_proposal);
+                    if (($purchase_proposal['form'] > 0) && ($purchase_proposal['target'] > 0) && ($purchase_proposal['workflows'] > 0)) {
+                        $proposal = [
+                            "type"       => 3, // 3 = Đề xuất nghiệp vụ khác
+                            "form"       => $purchase_proposal['form'],
+                            "workflows"  => $purchase_proposal['workflows'],
+                            "category"   => $purchase_proposal['target'],
+                            "price"      => 0, // có thể bỏ qua, vì tuyển dụng không có chi phí
+                            "reality"    => 0,
+                            "date"       => date("Y-m-d"),
+                            "modify"     => date("Y-m-d H:i:s"),
+                            "create"     => date("Y-m-d H:i:s"),
+                            "account"    => $app->getSession("accounts")['id'],
+                            "status"     => 0,
+                            "stores"     => $_SESSION['purchase'][$action]['stores']['id'] ?? 0,
+                            "stores_id"  => $_SESSION['purchase'][$action]['stores']['id'] ?? 0,
+                            "active"     => $jatbi->active(),
+                            "content"    => 'Đề xuất mua hàng: '.$insert['content'],
+                            "purchase_id"=> $orderId,
+                        ];
+                        $proposal['create'] = date("Y-m-d H:i:s");
+                        $proposal['code'] = time();
+                        $proposal['active'] = $jatbi->active();
+                        $app->insert("proposals",$proposal);
+                        $ProposalID = $app->id();
+                        $jatbi->logs('proposal','proposal-create',$proposal);
+
+                        $insert_accounts = [
+                            "account" => $app->getSession("accounts")['id'],
+                            "proposal" => $ProposalID,
+                            "date" => date("Y-m-d H:i:s"),
+                        ];
+                        $app->insert("proposal_accounts",$insert_accounts);
+                        $process = $getprocess->workflows($ProposalID,$proposal['account']);
+
+                        if($process[0]){
+                            $app->update("proposal_process",["deleted"=>1],["proposal"=>$ProposalID,"workflows"=>$proposal['workflows']]);
+                            $proposal_process = [
+                                "proposal" => $ProposalID,
+                                "workflows" => $proposal['workflows'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "account" => $app->getSession("accounts")['id'],
+                                "node"  => $process[0]['node_id'],
+                                "approval" => 1,
+                                "approval_date" => date("Y-m-d H:i:s"),
+                            ];
+                            $app->insert("proposal_process",$proposal_process);
+                            $proposal_process_ID = $app->id();
+                            $proposal_process_logs = [
+                                "proposal" => $ProposalID,
+                                "date" => date("Y-m-d H:i:s"),
+                                "account" => $app->getSession("accounts")['id'],
+                                "content" => 'Gửi đề xuất',
+                                "process" => $proposal_process_ID,
+                                "data" => json_encode($proposal_process),
+                            ];
+                            $app->insert("proposal_logs",$proposal_process_logs);
+                            $update = [
+                                "status" => 1,
+                                "process" => $process[0]['node_id'],
+                                "modify" => date("Y-m-d H:i:s"),
+                            ];
+                            $app->update("proposals",$update,["id"=>$ProposalID]);
+                            $content_notification = $account['name'].' đề xuất: '.$proposal['content'];
+                            $jatbi->notification($app->getSession("accounts")['id'],$process[1]['approver_account_id'],'Đề xuất #'.$ProposalID,$content_notification,'/proposal/views/'.$proposal['active'],'');
+                            $insert_accounts = [
+                                "account" => $process[1]['approver_account_id'],
+                                "proposal" => $ProposalID,
+                                "date" => date("Y-m-d H:i:s"),
+                            ];
+                            $app->insert("proposal_accounts",$insert_accounts);
+                        } 
+                    }
                 }
                 if ($action == "edit") {
                     $app->update("purchase", $insert, ["id" => $_SESSION['purchase'][$action]['order'] ?? 0]);
@@ -1548,6 +1643,27 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                 echo json_encode(['status' => 'error', 'content' => $error['content']]);
             }
         }
+    });
+
+    $app->router('/purchase-update/{type}/form', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = $vars['type'];
+        $_SESSION['purchase'][$action]["form"] = $app->xss($_POST['value']);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/{type}/workflows', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = $vars['type'];
+        $_SESSION['purchase'][$action]["workflows"] = $app->xss($_POST['value']);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+    });
+
+    $app->router('/purchase-update/{type}/category', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $app->header(['Content-Type' => 'application/json']);
+        $action = $vars['type'];
+        $_SESSION['purchase'][$action]["category"] = $app->xss($_POST['value']);
+        echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
     });
 
     $app->router('/purchase-update/edit/products/deleted/{id}', ['POST'], function ($vars) use ($app, $jatbi, $setting) {
