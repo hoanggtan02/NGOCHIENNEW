@@ -33,7 +33,7 @@
                                 "name"=>'stores[]',
                                 "placeholder"=>$jatbi->lang("Cửa hàng"),
                                 "selected" => $_GET['stores'] ?? '',
-                                "class" => 'filter-name',
+                                "class" => 'filter-name',         
                                 "multi" => "true",
                             ])?>
                         </div>
@@ -71,6 +71,7 @@
                         <th data-name="amount" data-orderable="false" class="text-nowrap text-end"><?=$jatbi->lang("Số tiền")?></th>
                         <th data-name="paid" data-orderable="false" class="text-nowrap text-end"><?=$jatbi->lang("Đã trả")?></th>
                         <th data-name="remaining" data-orderable="false" class="text-nowrap text-end"><?=$jatbi->lang("Còn lại")?></th>
+                        <th data-name="stores" data-orderable="false" class="text-nowrap text-end"><?=$jatbi->lang("Cửa hàng")?></th>
                     </tr>
                 </thead>
                 <tfoot>
@@ -79,6 +80,7 @@
                         <th data-name="amount"></th>
                         <th data-name="paid"></th>
                         <th data-name="remaining"></th>
+                        <th></th>
                     </tr>
                 </tfoot>
             </table>

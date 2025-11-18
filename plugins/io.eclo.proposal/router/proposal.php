@@ -465,12 +465,21 @@
                 echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công"),'load'=>'ajax','url'=>"/proposal/edit/".$insert['active']]);
             }
             else {
-                echo json_encode(['status'=>'error','content'=>$jatbi->lang("Lỗi chọn cửa hàng"),'load'=>'ajax',]);
+                echo json_encode(['status'=>'error','content'=>$jatbi->lang("Lỗi chọn chi nhánh"),'load'=>'ajax',]);
             }
         })->setPermissions(['proposal.add']);
 
         $app->router("/edit/{active}", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$setting,$common) {
-            $data = $app->get("proposals","*",["active"=>$app->xss($vars['active']),"status"=>[0,3],"deleted"=>0,"account"=>$account['id']]);
+            $data = $app->get("proposals","*",[
+                "active"=>$app->xss($vars['active']),
+                "status"=>[0,3],
+                "deleted"=>0,
+                "OR" => [
+                    "account"=>$account['id'],
+                    "rollback_edit"=>$account['id'],
+                ]
+                
+            ]);
             if($data>1){
                 if($app->method()==='GET'){
                     $vars['data'] = $data;
@@ -500,10 +509,10 @@
                     $vars['stores'][] = $app->get("stores",["id (value)","name (text)"],["id"=>$data['stores']]);
                     $vars['objects'][] = $app->get("proposal_objects",["id (value)","name (text)"],["id"=>$data['objects']]);
                     $files = $app->select("proposal_files",[
-                        "[>]file" => ["files"=>"id"],
+                        "[>]files" => ["files"=>"id"],
                     ],[
-                        "file.active",
-                        "file.name",
+                        "files.active",
+                        "files.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -589,6 +598,9 @@
                     foreach($datas as $data){
                         $app->update("proposals",["deleted"=> 1],["id"=>$data['id']]);
                         $app->update("proposals_reality",["deleted"=> 1],["proposal"=>$data['id']]);
+                        if($data['purchase']>0){
+                            $app->update("warehouses_invoices",["deleted"=> 1],["type"=>"purchase","id"=>$data['purchase']]);
+                        }
                         $name[] = $data['id'];
                     }
                     $jatbi->logs('proposals','proposals-deleted',$datas);
@@ -619,9 +631,12 @@
                 if($trash>1){
                     $datas = json_decode($trash['data']);
                     foreach($datas->data as $active) {
-                        $data = $app->get("proposals","id",["active"=>$active]);
-                        $app->update("proposals",["deleted"=>0],["id"=>$data]);
-                        $app->update("proposals_reality",["deleted"=> 0],["proposal"=>$data]);
+                        $data = $app->get("proposals","*",["active"=>$active]);
+                        $app->update("proposals",["deleted"=>0],["id"=>$data['id']]);
+                        $app->update("proposals_reality",["deleted"=> 0],["proposal"=>$data['id']]);
+                        if($data['purchase']>0){
+                            $app->update("warehouses_invoices",["deleted"=> 0],["type"=>"purchase","id"=>$data['purchase']]);
+                        }
                     }
                     $app->delete("trashs",["id"=>$trash['id']]);
                     $jatbi->logs('form','form-restore',$datas);
@@ -670,6 +685,8 @@
                 "proposals.reality",
                 "proposals.reality_content",
                 "proposals.reality_date",
+                "proposals.rollback_edit",
+                "proposals.rollback",
                 "proposals.reality_account",
                 "proposals.process",
                 "proposals.vendors",
@@ -706,11 +723,11 @@
                         $vars['data']['total_price'] = $data['price']+$data['vat_price'];
                     }
                     $files = $app->select("proposal_files",[
-                        "[>]file" => ["files"=>"id"],
+                        "[>]files" => ["files"=>"id"],
                     ],[
-                        "file.active",
-                        "file.deleted",
-                        "file.name",
+                        "files.active",
+                        "files.deleted",
+                        "files.name",
                     ],[
                         "proposal_files.deleted"=>0,
                         "proposal_files.proposal"=>$data['id']
@@ -755,7 +772,7 @@
                             $vars['node_approval'] = $node_approval;
                         }
                     }
-                    if(($data['status']==0 || $data['status']==3) && $data['account_id']==$account['id']){
+                    if(($data['status']==0 || $data['status']==3) && (($data['account_id']==$account['id'] && $data['rollback_edit']==0) || ($data['rollback_edit']==$account['id'] && $data['rollback_edit']>0))  ){
                         $vars['edit_proposal'] = true;
                     }
                     $vars['consultations'] = $app->select("proposal_consultation", "*", [
@@ -890,6 +907,11 @@
                         $error = ["status"=>"error","content"=>$jatbi->lang("Bạn không có quyền duyệt đề xuất này")];
                     }
                     if(empty($error)){
+                        $maxNumber = $this->app->max("proposal_process", "number", [
+                            "proposal" => $data['id'],
+                            "workflows" => $data['workflows'],
+                            "deleted" => 0,
+                        ]);
                         $proposal_process = [
                             "proposal" => $data['id'],
                             "workflows" => $data['workflows'],
@@ -900,6 +922,7 @@
                             "approval_content" => $content,
                             "approval_date" => date("Y-m-d H:i:s"),
                         ];
+                        $proposal_process['number'] = ($maxNumber ?? 0) + 1;
                         $app->insert("proposal_process",$proposal_process);
                         $ProcessID = $app->id();
                         if($approval==1){
@@ -942,7 +965,6 @@
                                     // $update['reality_content'] = 'Bút toán tự động';
                                     // $update['reality_date'] = $data['date'];
                                     // $update['reality_account'] = $account['id'];
-
                                     $reality = [
                                         "proposal" => $data['id'],
                                         "form" => $data['form'],
@@ -964,6 +986,15 @@
                                     $app->update("warehouses_quick_purchase",["status"=>1],["id"=>$data['quick_purchase']]);
                                 }
                             }
+                            foreach($node_next['follows'] as $follow){
+                                $jatbi->notification($account['id'],$follow,'Theo dõi đề xuất #'.$data['id'],$content_notification_next,'/proposal/views/'.$data['active'],'');
+                                $insert_accounts_follow = [
+                                    "account" => $follow,
+                                    "proposal" => $data['id'],
+                                    "date" => date("Y-m-d H:i:s"),
+                                ];
+                                $app->insert("proposal_accounts",$insert_accounts_follow);
+                            }
                         }
                         else{
                             $content = 'Không duyệt đề xuất';
@@ -984,6 +1015,17 @@
                             elseif($data['quick_purchase']>0){
                                 $app->update("warehouses_quick_purchase",["status"=>7],["id"=>$data['quick_purchase']]);
                             }
+                            if($node_approval['condition']==1){
+                                $update['rollback'] = $node_approval['rollback'];
+                                $getProcess = $app->get("proposal_process","*",[
+                                    "proposal"=>$data['id'],
+                                    "workflows"=>$data['workflows'],
+                                    "node"=>$node_approval['rollback'],
+                                    "deleted"=>0,
+                                    "ORDER" => ["id"=>"DESC"],
+                                ]);
+                                $update['rollback_edit'] = $getProcess['account'];
+                            }
                         }
                         // $update[] = [
                         //     "status" => $status,
@@ -991,7 +1033,7 @@
                         //     "modify" => date("Y-m-d H:i:s"),
                         // ];
                         $update['status'] = $status;
-                        $update['process'] = $proposal_process_finish['node'] ?? $node_approval['node_id'];
+                        $update['process'] = $proposal_process_finish['node'] ?? $update_Process;
                         $update['modify'] = date("Y-m-d H:i:s");
                         $app->update("proposals",$update,["id"=>$data['id']]);
                         $proposal_process_logs = [
@@ -1001,7 +1043,7 @@
                             "content" => $content,
                             "notes" => $proposal_process['approval_content'],
                             "process" => $ProcessID,
-                            "data" => json_encode($proposal_process),
+                            "data" => json_encode([$proposal_process,$node_old,$node_approval,$node_next]),
                         ];
                         $app->insert("proposal_logs",$proposal_process_logs);
                         echo json_encode(['status'=>'success',"content"=>$jatbi->lang("Cập nhật thành công"),"load"=>"ajax","url"=>"/proposal/views/".$data['active']]);
@@ -1276,7 +1318,15 @@
         })->setPermissions(['proposal.config.deleted']);
 
         $app->router("/completed/{active}", ['GET','POST'], function($vars) use ($app, $jatbi, $template,$account,$process,$setting) {
-            $data = $app->get("proposals","*",["active"=>$app->xss($vars['active']),"status"=>[0,3],"deleted"=>0,"account"=>$account['id']]);
+            $data = $app->get("proposals","*",[
+                "active"=>$app->xss($vars['active']),
+                "status"=>[0,3],
+                "deleted"=>0,
+                "OR" => [
+                    "account"=>$account['id'],
+                    "rollback_edit"=>$account['id'],
+                ]
+            ]);
             if($app->method()==='GET'){
                 if($data>1){
                     echo $app->render($template.'/proposal/completed.html', $vars, $jatbi->ajax());
@@ -1298,17 +1348,31 @@
                         $error = ["status"=>"error","content"=>$jatbi->lang("Tài khoản của bạn không thuộc sơ đồ tổ tài khoản, không thể gửi đề xuất")];
                     }
                     if(empty($error)){
-                        $process = $process->workflows($data['id'],$data['account']);
-                        if($process[0]){
+                        if($data['rollback']>0){
+                            $process = $process->resolveApproverByNodeId($data['rollback'],$data['workflows']);
+                            $getProcess = $app->get("proposal_process","*",[
+                                "proposal"=>$data['id'],
+                                "workflows"=>$data['workflows'],
+                                "node"=>$data['rollback'],
+                                "deleted"=>0,
+                                "ORDER" => ["id"=>"DESC"]
+                            ]);
+                            $app->update("proposal_process",["deleted"=>1],["proposal"=>$data['id'],"workflows"=>$data['workflows'],"number[>=]"=>$getProcess['number']]);
+                        }
+                        else {
+                            $process = $process->workflows($data['id'],$data['account']);
                             $app->update("proposal_process",["deleted"=>1],["proposal"=>$data['id'],"workflows"=>$data['workflows']]);
+                        }
+                        if($process[0]){
                             $proposal_process = [
                                 "proposal" => $data['id'],
                                 "workflows" => $data['workflows'],
                                 "date" => date("Y-m-d H:i:s"),
-                                "account" => $account['id'],
+                                "account" => $getProcess['account'] ?? $account['id'],
                                 "node"  => $process[0]['node_id'],
                                 "approval" => 1,
                                 "approval_date" => date("Y-m-d H:i:s"),
+                                "number" => $getProcess['number'] ?? 0
                             ];
                             $app->insert("proposal_process",$proposal_process);
                             $ProcessID = $app->id();
@@ -1325,6 +1389,8 @@
                                 "status" => 1,
                                 "process" => $process[0]['node_id'],
                                 "modify" => date("Y-m-d H:i:s"),
+                                "rollback" => 0,
+                                "rollback_edit" => 0,
                             ];
                             $app->update("proposals",$update,["id"=>$data['id']]);
                             $content_notification = $account['name'].' đề xuất: '.$data['content'];
@@ -1335,6 +1401,15 @@
                                 "date" => date("Y-m-d H:i:s"),
                             ];
                             $app->insert("proposal_accounts",$insert_accounts);
+                            foreach($process[1]['follows'] as $follow){
+                                $jatbi->notification($account['id'],$follow,'Theo dõi đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
+                                $insert_accounts_follow = [
+                                    "account" => $follow,
+                                    "proposal" => $data['id'],
+                                    "date" => date("Y-m-d H:i:s"),
+                                ];
+                                $app->insert("proposal_accounts",$insert_accounts_follow);
+                            }
                         }
                         echo json_encode(['status'=>'success',"content"=>$jatbi->lang("Cập nhật thành công"),"load"=>"ajax","url"=>"/proposal/views/".$data['active']]);
                     }
@@ -1453,7 +1528,7 @@
             }
         })->setPermissions(['proposal']);
 
-        $app->router("/search/vendors", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
+        $app->router("/search/vendors", ['GET','POST'], function($vars) use ($app, $jatbi) {
             if ($app->method() === 'POST') {
                 $app->header([
                     'Content-Type' => 'application/json',
@@ -1463,16 +1538,17 @@
                 $where = [
                     "AND" => [
                         "OR" => [
-                            "vendors.name[~]" => $searchValue,
+                            "customers.name[~]" => $searchValue,
                         ],
-                        "vendors.status" => 'A',
-                        "vendors.deleted" => 0,
+                        "customers.status" => 'A',
+                        "customers.deleted" => 0,
+                        "customers.form" => 1,
                     ]
                 ];
-                $app->select("vendors", [
-                    "vendors.id",
-                    "vendors.name",
-                ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $app->select("customers",[
+                    "customers.id",
+                    "customers.name",
+                ], $where, function ($data) use (&$datas,$jatbi,$app) {
                     $datas[] = [
                         "value" => $data['id'],
                         "text" => $data['name'],

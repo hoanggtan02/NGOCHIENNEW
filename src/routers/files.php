@@ -1021,25 +1021,27 @@ $app->group($setting['manager'] . "/files", function ($vars) use ($app, $jatbi, 
         }
     });
 
-    $app->router("/upload/{active}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $account, $setting) {
-        if ($app->method() === 'GET') {
+    $app->router("/upload/{active}", ['GET','POST'], function($vars) use ($app, $jatbi,$account,$setting) {
+        if($app->method()==='GET'){
             $vars['title'] = $jatbi->lang("Tải tệp lên");
             $getType = $app->xss($_GET['type'] ?? '');
-            if ($getType == 'assets') {
-                $vars['assets'] = 'data-load="/files/assets?type=images&folder=' . $vars['active'] . '" data-selector="[modal-move-load]" data-pjax-history="false" data-pjax-scrollTo="false"';
-            } else {
+            if($getType=='assets'){
+                $vars['assets'] = 'data-load="/files/assets?type=images&folder='.$vars['active'].'" data-selector="[modal-move-load]" data-pjax-history="false" data-pjax-scrollTo="false"';
+            }
+            else {
                 $vars['assets'] = 'data-load="this"';
             }
-            echo $app->render($setting['template'] . '/files/files-upload.html', $vars, $jatbi->ajax());
-        } elseif ($app->method() === 'POST') {
+            echo $app->render($setting['template'].'/files/files-upload.html', $vars, $jatbi->ajax());
+        }
+        elseif($app->method()==='POST'){
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
 
-            $data = $app->get("files_folders", "*", ["active" => $vars['active'], "account" => $account['id'], "deleted" => 0]);
+            $data = $app->get("files_folders","*",["active"=>$vars['active'],"account"=>$account['id'],"deleted"=>0]);
             $relative_path = $_POST['path'] ?? '';
             $file_info = pathinfo($relative_path);
-            $folder_path = $setting['uploads'] . '/' . $account['active'];
+            $folder_path = $setting['uploads'].'/'.$account['active']; 
             $dirname = $file_info['dirname'] === '.' ? '' : $file_info['dirname'];
             $path_parts = $dirname ? explode('/', trim($dirname, '/')) : [];
             $parent_id = $data['id'] ?? 0;
@@ -1067,7 +1069,7 @@ $app->group($setting['manager'] . "/files", function ($vars) use ($app, $jatbi, 
             $handle = $app->upload($_FILES['file']);
             $newimages = $jatbi->active();
             if ($handle->uploaded) {
-                $handle->allowed = ['application/*', 'image/*'];
+                $handle->allowed = ['application/*','image/*'];
                 $handle->file_new_name_body = $newimages;
                 $handle->file_max_size = '31457280';
                 $handle->Process($folder_path);
@@ -1098,9 +1100,14 @@ $app->group($setting['manager'] . "/files", function ($vars) use ($app, $jatbi, 
                     "mime" => $data['file_src_mime'],
                     "data" => json_encode($data),
                 ];
+                $app->doHook('POST-upload-file-before-insert',$insert_file);
                 $app->insert("files", $insert_file);
+                $getID = $app->id();
+                $insert_file['id'] = $getID;
+                $app->doHook('POST-upload-file-after-insert',$insert_file);
                 echo json_encode(['status' => "success", "content" => $jatbi->lang("Tải lên thành công")]);
-            } else {
+            }
+            else {
                 echo json_encode(['status' => "error", "content" => $handle->error ?? $jatbi->lang("Tải lên thất bại")]);
             }
         }

@@ -65,7 +65,7 @@
                                 "name"=>'stores[]',
                                 "placeholder"=>$jatbi->lang("Cửa hàng"),
                                 "selected" => $_GET['stores'] ?? '',
-                                "class" => 'filter-name',
+                                "class" => 'filter-name',         
                                 "multi" => "true",
                             ])?>
                         </div>
@@ -93,21 +93,17 @@
                     data-searching="true"
                     data-paging="true"
                     data-state-save='true'
-                    data-columns='[
-                        {"data":"code","orderable":true},{"data":"date","orderable":true},{"data":"category","orderable":false},
-                        {"data":"content","orderable":false},{"data":"thu","orderable":false},{"data":"chi","orderable":false},
-                        {"data":"ton","orderable":false},{"data":"form","orderable":false},{"data":"account","orderable":false}
-                    ]'
                     style="width:100%">
                 <thead>
                     <tr>
-                        <th data-name="code" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class="fw-bold"><?=$jatbi->lang("Mã")?></th>
+                        <th data-name="stt" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class="fw-bold text-center"><?=$jatbi->lang("STT")?></th>
                         <th data-name="date" data-orderable="true" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Ngày")?></th>
                         <th data-name="category" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Hạng mục")?></th>
                         <th data-name="content" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Nội dung")?></th>
                         <th data-name="thu" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class="text-success fw-bold"><?=$jatbi->lang("Thu")?></th>
                         <th data-name="chi" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class="text-danger fw-bold"><?=$jatbi->lang("Chi")?></th>
                         <th data-name="ton" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class="fw-bold"><?=$jatbi->lang("Tồn")?></th>
+                        <th data-name="code" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class="fw-bold"><?=$jatbi->lang("Mã ĐX")?></th>
                         <th data-name="form" data-orderable="false" class="text-nowrap text-start" data-visible="true" data-class=""><?=$jatbi->lang("Hình thức")?></th>
                         <th data-name="account" data-orderable="false" class="text-nowrap " data-visible="true" data-class="text-center"><?=$jatbi->lang("Tài khoản")?></th>
                     </tr>
@@ -118,6 +114,7 @@
                         <th data-orderable="false" data-header-name="ton"></th>
                         <th></th>
                         <th></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tfoot>
@@ -126,6 +123,7 @@
                         <th data-name="thu"></th>
                         <th data-name="chi"></th>
                         <th data-name="ton"></th>
+                        <th></th>
                         <th></th>
                         <th></th>
                     </tr>

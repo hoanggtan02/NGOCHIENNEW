@@ -653,8 +653,11 @@
                 if($workflows>1){
                     $vars['data'] = [
                         "type" => '',
-                        "approval" => '',
+                        "approval" => '1',
+                        "condition" => 0,
+                        "workflows" => $workflows['id'],
                     ];
+                    $vars['rollback'] = $app->select("proposal_workflows_nodes",["id (value)","name (text)"],["workflows"=>$workflows['id'],"deleted"=>0]);
                     echo $app->render($template.'/config/workflows-config-post.html', $vars, $jatbi->ajax());
                 }
                 else {
@@ -674,6 +677,8 @@
                 $status = $app->xss($_POST['status'] ?? '');
                 $approval = $app->xss($_POST['approval'] ?? '');
                 $account = $app->xss($_POST['account'] ?? '');
+                $condition = $app->xss($_POST['condition'] ?? '');
+                $rollback = $app->xss($_POST['rollback'] ?? '');
                 $follows = json_encode($_POST['follows'] ?? []);
                 if($name == '' || $code == '' || $background == '' || $color == '' || $status == ''  || $approval==''){
                     $error = ["status" => "error","content"=>$jatbi->lang("Vui lòng không để trống")];
@@ -709,6 +714,8 @@
                         "approval"=>$approval,
                         "account"=>$account,
                         "follows"=>$follows,
+                        "condition"=>$condition,
+                        "rollback"=>$rollback,
                     ];
                     $app->insert("proposal_workflows_nodes",$insert);
                     $getID = $app->id();
@@ -762,6 +769,7 @@
                     $vars['accounts'][] = $app->get("accounts",["id (value)","name (text)"],["id"=>$data['account']]);
                     $vars['data']['follows'] = json_decode($data['follows']);
                     $vars['follows'] = $app->select("accounts",["id (value)","name (text)"],["id"=>$vars['data']['follows']]);
+                    $vars['rollback'] = $app->select("proposal_workflows_nodes",["id (value)","name (text)"],["workflows"=>$data['workflows'],"id[!]"=>$data['id'],"deleted"=>0]);
                     echo $app->render($template.'/config/workflows-config-post.html', $vars, $jatbi->ajax());
                 }
                 else {
@@ -781,6 +789,8 @@
                 $status = $app->xss($_POST['status'] ?? '');
                 $approval = $app->xss($_POST['approval'] ?? '');
                 $account = $app->xss($_POST['account'] ?? '');
+                $condition = $app->xss($_POST['condition'] ?? '');
+                $rollback = $app->xss($_POST['rollback'] ?? '');
                 $follows = json_encode($_POST['follows'] ?? []);
                 if($name == '' || $code == '' || $background == '' || $color == '' || $status == ''  || $approval==''){
                     $error = ["status" => "error","content"=>$jatbi->lang("Vui lòng không để trống")];
@@ -810,6 +820,8 @@
                         "approval"=>$approval,
                         "account"=>$account,
                         "follows"=>$follows,
+                        "condition"=>$condition,
+                        "rollback"=>$rollback,
                     ];
                     $app->update("proposal_workflows_nodes",$insert,["id"=>$data['id']]);
                     $htmlaccount = '';
@@ -869,24 +881,51 @@
                     $selectNodes = $app->select("proposal_workflows_nodes","*",["workflows"=>$data['id'],"deleted"=>0]);
                     foreach($selectNodes as $node){
                         $htmlaccount = '';
-                        switch ($node['approval']) {
-                            case '2':
-                                $approval = $jatbi->lang("Cấp quản lý");
-                                break;
-                            default:
-                                 $approval = $jatbi->lang("Tài khoản");
-                                 $user = $app->get("accounts",["name","avatar"],["id"=>$node['account']]);
-                                 if(!empty($user)){
-                                         $htmlaccount = '<div class="d-flex justify-content-start align-items-center">
-                                            <div class="me-2"><img data-src="/'.$user['avatar'].'" class="lazyload width height rounded-circle" style="--widht:30px;--height:30px;"></div>
-                                            <strong>'.$user['name'].'</strong>
-                                        </div>';
-                                    }
-                                break;
+                        $follows = '';
+                        $htmlFollow = '';
+                        $condition = '';
+                        if($node['follows']){
+                            $getFollows = json_decode($node['follows']);
+                            $followUser = $app->select("accounts",["name","avatar"],["id"=>$getFollows]);
+                             if(!empty($followUser)){
+                                foreach($followUser as $followUse){
+                                     $htmlFollow .= '<div class="d-flex justify-content-start align-items-center mb-2">
+                                        <div class="me-2"><img data-src="/'.$followUse['avatar'].'" class="lazyload width height rounded-circle" style="--widht:30px;--height:30px;"></div>
+                                        <strong>'.$followUse['name'].'</strong>
+                                    </div>';
+                                }
+                                $follows = '<div class="border-top mt-2 pt-2 mb-3">Người theo dõi</div>'.$htmlFollow;
+                            }
+                        }
+                        if($node['type']=='start'){
+                            $approval = '<strong>Tài khoản đề xuất</strong>';
+                        }
+                        if($node['condition']=='1'){
+                            $condition = '<div class="mt-2"><strong>Kích hoạt xử lý từ chối</strong></div> Quay lại điểm: '.$app->get("proposal_workflows_nodes","name",["id"=>$node['rollback']]);
+                        }
+                        if($node['type']=='approval'){
+                            switch ($node['approval']) {
+                                case '2':
+                                    $approval = '<i>'.$jatbi->lang("Loại xét duyệt").'</i>: <strong>'.$jatbi->lang("Cấp quản lý").'</strong>';
+                                    break;
+                                default:
+                                     $approval = '<i>'.$jatbi->lang("Loại xét duyệt").'</i>: <strong>'.$jatbi->lang("Tài khoản").'</strong>';
+                                     $user = $app->get("accounts",["name","avatar"],["id"=>$node['account']]);
+                                     if(!empty($user)){
+                                             $htmlaccount = '<div class="d-flex justify-content-start align-items-center">
+                                                <div class="me-2"><img data-src="/'.$user['avatar'].'" class="lazyload width height rounded-circle" style="--widht:30px;--height:30px;"></div>
+                                                <strong>'.$user['name'].'</strong>
+                                            </div>';
+                                        }
+                                    break;
+                            }
+                        }
+                        if($node['type']=='finish'){
+                            $approval = '<strong>Kết thúc quy trình</strong>';
                         }
                         $header = '<div class="p-1 w-100 fw-bold px-2 py-3 rounded-top-4" style="background:'.$node['background'].';color:'.$node['color'].'">'.$node['name'].'</div>';
                         
-                        $body = '<div class="mb-2"><i>'.$jatbi->lang("Loại xét duyệt").'</i>: <strong>'.$approval.'</strong></div>'.$htmlaccount;
+                        $body = '<div class="mb-2">'.$approval.'</div>'.$htmlaccount.$follows.$condition;
                         $footer = '<div><button class="btn btn-sm p-2" data-action="offcanvas" data-url="/proposal/config/workflows-config-edit/'.$node['active'].'"><i class="ti ti-edit"></i></button></div>';
                         $content = [ 
                             "header" => $header,

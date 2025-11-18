@@ -310,6 +310,15 @@
                                     "date" => date("Y-m-d H:i:s"),
                                 ];
                                 $app->insert("proposal_accounts",$insert_accounts);
+                                foreach($process[1]['follows'] as $follow){
+                                    $jatbi->notification($account['id'],$follow,'Theo dõi đề xuất #'.$data['id'],$content_notification,'/proposal/views/'.$data['active'],'');
+                                    $insert_accounts_follow = [
+                                        "account" => $follow,
+                                        "proposal" => $data['id'],
+                                        "date" => date("Y-m-d H:i:s"),
+                                    ];
+                                    $app->insert("proposal_accounts",$insert_accounts_follow);
+                                }
                             }
                         }
                     }
@@ -454,6 +463,15 @@
                             "date" => date("Y-m-d H:i:s"),
                         ];
                         $app->insert("proposal_accounts",$insert_accounts);
+                        foreach($process[1]['follows'] as $follow){
+                            $jatbi->notification($account['id'],$follow,'Theo dõi đề xuất #'.$ProposalID,$content_notification,'/proposal/views/'.$data['active'],'');
+                            $insert_accounts_follow = [
+                                "account" => $follow,
+                                "proposal" => $data['id'],
+                                "date" => date("Y-m-d H:i:s"),
+                            ];
+                            $app->insert("proposal_accounts",$insert_accounts_follow);
+                        }
                     }
                 }
                 echo json_encode(['status'=>'success','content'=>$jatbi->lang("Cập nhật thành công")]);

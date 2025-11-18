@@ -24,6 +24,16 @@
                             "router"=> '/proposal/cash-flow',
                             "icon"  => '<i class="ti ti-user"></i>',
                         ],
+                        'proposal.report-cash-flow'      =>[
+                            "name"  => $jatbi->lang("Báo cáo dòng tiền"),
+                            "router"=> '/proposal/report-cash-flow',
+                            "icon"  => '<i class="ti ti-user"></i>',
+                        ],
+                        'proposal.overview-cash-flow'      =>[
+                            "name"  => $jatbi->lang("Tổng quan dòng tiền"),
+                            "router"=> '/proposal/overview-cash-flow',
+                            "icon"  => '<i class="ti ti-user"></i>',
+                        ],
                         'proposal.cash'      =>[
                             "name"  => $jatbi->lang("Số tiền mặt"),
                             "router"=> '/proposal/cash',
@@ -76,6 +86,8 @@
                         'proposal.reality'=> $jatbi->lang("Bút toán Đề xuất"),
                         'proposal.statistics'=> $jatbi->lang("Thống kê"),
                         'proposal.cash-flow'=> $jatbi->lang("Dòng tiền"),
+                        'proposal.report-cash-flow'=> $jatbi->lang("Báo cáo dòng tiền"),
+                        'proposal.overview-cash-flow'=> $jatbi->lang("Tổng quan dòng tiền"),
                         'proposal.config'=> $jatbi->lang("Cấu hình"),
                         'proposal.config.add'=> $jatbi->lang("Thêm Cấu hình"),
                         'proposal.config.edit'=> $jatbi->lang("Sửa Cấu hình"),

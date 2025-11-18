@@ -1,0 +1,233 @@
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a data-pjax href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+                <div class="d-flex align-items-center justify-content-end">
+                    <div class="dropdown">
+                        <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
+                            <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 min-width bg-blur" style="--min-width:300px;--min-width-xs:100vw">
+                            <div class="fw-semibold py-2 px-3">
+                                <?=$jatbi->lang("Điều kiện lọc")?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3">
+                                <?=$app->component('input',[
+                                    "name"=>'date',
+                                    "placeholder"=>$jatbi->lang("Ngày dự kiến"),
+                                    "selected" => $app->xss($_GET['date'] ?? ''),
+                                    "class" => 'filter-name',
+                                    "attr" => 'data-width="100%" data-datepicker',
+                                    // Cập nhật value để hiển thị ngày đã chọn hoặc mặc định
+                                    "value" => $dateRange ?? '' 
+                                ])?>
+                            </div>
+                            <hr class="border-secondary border-opacity-50 my-2">
+                            <div class="px-3 py-2 text-end w-100">
+                                <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                                <button type="submit" class="btn btn-eclo px-3 rounded-pill py-2"><?=$jatbi->lang("Tìm")?></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4 mb-4">
+               
+                <div class="table-responsive">
+                    <table class="table table-hover" id="cashflow-report-table">
+                        <thead class="table-info" style="position: sticky; top: 0; z-index: 10;">
+                            <tr>
+                                <th class="fw-bold">Ngày</th>
+                                <th class="fw-bold text-end">Tổng Thu</th>
+                                <th class="fw-bold text-end">Tổng Chi</th>
+                                <th class="fw-bold text-end">Lợi Nhuận</th>
+                                <th class="fw-bold text-center">Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody class="align-middle">
+                            <?php if (empty($reportData)): ?>
+                                <tr>
+                                    <td colspan="5" class="text-center text-body py-5">
+                                        <?=$jatbi->lang("Không tìm thấy dữ liệu")?>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($reportData as $date => $data): ?>
+                                    <?php $collapseId = "details-" . str_replace('-', '', $date); ?>
+                                   
+                                    <tr class="fw-semibold position-sticky" data-bs-toggle="collapse" href="#<?=$collapseId?>" role="button" aria-expanded="false" aria-controls="<?=$collapseId?>" style="cursor: pointer; top: 50px; z-index: 9; background-color: var(--bs-body-bg, #fff);">
+                                        <td>
+                                            <i class="ti ti-chevron-right small me-1 toggle-icon"></i>
+                                            <?=$data['date_formatted']?>
+                                        </td>
+                                        <td class="text-end text-success">
+                                            <?=number_format($data['summary']['thu'])?>
+                                        </td>
+                                        <td class="text-end text-danger">
+                                            <?=number_format($data['summary']['chi'])?>
+                                        </td>
+                                        <td class="text-end fw-bold <?= $data['summary']['profit'] >= 0 ? 'text-info' : 'text-danger' ?>">
+                                            <?=number_format($data['summary']['profit'])?>
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="btn btn-sm py-1 px-2" data-bs-toggle="collapse" href="#<?=$collapseId?>" role="button">
+                                                <i class="ti ti-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="collapse" id="<?=$collapseId?>">
+                                        <td colspan="5" class="p-0 border-0">
+                                            <div class="p-3 bg-body bg-opacity-50">
+                                                <div class="row g-4">
+                                                   
+                                                    <div class="col-md-6">
+                                                        <h6 class="text-success fw-bold d-flex justify-content-between">
+                                                            <span>TỔNG THU</span>
+                                                            <span><?=number_format($data['summary']['thu'])?></span>
+                                                        </h6>
+                                                        <hr class="my-2">
+                                                       
+                                                        <strong class="small d-block mb-2">Theo Hạng Mục</strong>
+                                                        <?php if (empty($data['details']['thu']['by_target'])): ?>
+                                                            <p class="small text-body fst-italic ms-2">Không có dữ liệu</p>
+                                                        <?php else: ?>
+                                                            <?php foreach ($data['details']['thu']['by_target'] as $groupName => $groupData): ?>
+                                                                <div class="ms-2 mb-2">
+                                                                    <div class="d-flex justify-content-between fw-bold small text-success">
+                                                                        <span><?=$groupName?></span>
+                                                                        <span><?=number_format($groupData['total'])?></span>
+                                                                    </div>
+                                                                    <ul class="list-unstyled ms-3 small mb-0">
+                                                                        <?php foreach ($groupData['items'] as $itemId => $itemData): ?>
+                                                                            <li class="d-flex justify-content-between text-body">
+                                                                                <span>- 
+                                                                                    <a data-pjax href="/proposal/cash-bank?type=1&category=<?=$itemId?>&date=<?=$data['date_formatted']?>%20-%20<?=$data['date_formatted']?>" class="pjax-load link-secondary text-body"><?=$itemData['name']?></a>
+                                                                                </span>
+                                                                                <span><?=number_format($itemData['total'])?></span>
+                                                                            </li>
+                                                                        <?php endforeach; ?>
+                                                                    </ul>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+
+                                                        <strong class="small d-block mb-2 mt-3">Theo Hình Thức</strong>
+                                                        <?php if (empty($data['details']['thu']['by_form'])): ?>
+                                                            <p class="small text-body fst-italic ms-2">Không có dữ liệu</p>
+                                                        <?php else: ?>
+                                                            <?php foreach ($data['details']['thu']['by_form'] as $groupName => $groupData): ?>
+                                                                <div class="ms-2 mb-2">
+                                                                    <div class="d-flex justify-content-between fw-bold small text-success">
+                                                                        <span><?=$groupName?></span>
+                                                                        <span><?=number_format($groupData['total'])?></span>
+                                                                    </div>
+                                                                    <ul class="list-unstyled ms-3 small mb-0">
+                                                                        <?php foreach ($groupData['items'] as $itemId => $itemData): ?>
+                                                                            <li class="d-flex justify-content-between text-body">
+                                                                                <span>- 
+                                                                                    <a data-pjax href="/proposal/cash-bank?type=1&form=<?=$itemId?>&date=<?=$data['date_formatted']?>%20-%20<?=$data['date_formatted']?>" class="pjax-load link-secondary text-body"><?=$itemData['name']?></a>
+                                                                                </span>
+                                                                                <span><?=number_format($itemData['total'])?></span>
+                                                                            </li>
+                                                                        <?php endforeach; ?>
+                                                                    </ul>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <h6 class="text-danger fw-bold d-flex justify-content-between">
+                                                            <span>TỔNG CHI</span>
+                                                            <span><?=number_format($data['summary']['chi'])?></span>
+                                                        </h6>
+                                                        <hr class="my-2">
+
+                                                        <strong class="small d-block mb-2">Theo Hạng Mục</strong>
+                                                        <?php if (empty($data['details']['chi']['by_target'])): ?>
+                                                            <p class="small text-body fst-italic ms-2">Không có dữ liệu</p>
+                                                        <?php else: ?>
+                                                            <?php foreach ($data['details']['chi']['by_target'] as $groupName => $groupData): ?>
+                                                                <div class="ms-2 mb-2">
+                                                                    <div class="d-flex justify-content-between fw-bold small text-danger">
+                                                                        <span><?=$groupName?></span>
+                                                                        <span><?=number_format($groupData['total'])?></span>
+                                                                    </div>
+                                                                    <ul class="list-unstyled ms-3 small mb-0">
+                                                                        <?php foreach ($groupData['items'] as $itemId => $itemData): ?>
+                                                                            <li class="d-flex justify-content-between text-body">
+                                                                                <span>- 
+                                                                                    <a data-pjax href="/proposal/cash-bank?type=2&category=<?=$itemId?>&date=<?=$data['date_formatted']?>%20-%20<?=$data['date_formatted']?>" class="pjax-load link-secondary text-body"><?=$itemData['name']?></a>
+                                                                                </span>
+                                                                                <span><?=number_format($itemData['total'])?></span>
+                                                                            </li>
+                                                                        <?php endforeach; ?>
+                                                                    </ul>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+
+                                                        <strong class="small d-block mb-2 mt-3">Theo Hình Thức</strong>
+                                                        <?php if (empty($data['details']['chi']['by_form'])): ?>
+                                                            <p class="small text-body fst-italic ms-2">Không có dữ liệu</p>
+                                                        <?php else: ?>
+                                                            <?php foreach ($data['details']['chi']['by_form'] as $groupName => $groupData): ?>
+                                                                <div class="ms-2 mb-2">
+                                                                    <div class="d-flex justify-content-between fw-bold small text-danger">
+                                                                        <span><?=$groupName?></span>
+                                                                        <span><?=number_format($groupData['total'])?></span>
+                                                                    </div>
+                                                                    <ul class="list-unstyled ms-3 small mb-0">
+                                                                        <?php foreach ($groupData['items'] as $itemId => $itemData): ?>
+                                                                            <li class="d-flex justify-content-between text-body">
+                                                                                <span>- 
+                                                                                    <a data-pjax href="/proposal/cash-bank?type=2&form=<?=$itemId?>&date=<?=$data['date_formatted']?>%20-%20<?=$data['date_formatted']?>" class="pjax-load link-secondary text-body"><?=$itemData['name']?></a>
+                                                                                </span>
+                                                                                <span><?=number_format($itemData['total'])?></span>
+                                                                            </li>
+                                                                        <?php endforeach; ?>
+                                                                    </ul>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    [data-bs-toggle="collapse"][aria-expanded="true"] .toggle-icon {
+        transform: rotate(90deg);
+        transition: transform 0.2s ease-in-out;
+    }
+    [data-bs-toggle="collapse"][aria-expanded="false"] .toggle-icon {
+        transform: rotate(0deg);
+        transition: transform 0.2s ease-in-out;
+    }
+</style>

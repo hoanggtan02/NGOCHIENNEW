@@ -122,7 +122,10 @@ class Proposal {
                 'node_id' => (int)$current_node['id'],
                 'node_name' => $current_node['name'],
                 'type' => $current_node['type'],
+                'follows' => json_decode($current_node['follows']),
                 'approval_type' => (int)$current_node['approval'],
+                'condition' => (int)$current_node['condition'],
+                'rollback' => (int)$current_node['rollback'],
                 'approver_account_id' => $approver_id ?? $requester_account_id,
                 'note' => $approver_type
             ];
@@ -133,6 +136,148 @@ class Proposal {
         }
         return $final_path;
     }
+    public function resolveApproverByNodeId($node_id, $workflow_id){
+        // ---- LẤY NODE THEO ID ----
+        $node = $this->app->get("proposal_workflows_nodes", "*", [
+            "id" => $node_id,
+            "workflows" => $workflow_id,
+            "deleted" => 0
+        ]);
+
+        if (!$node) {
+            return ["error" => "Node not found in workflow"];
+        }
+
+        // ---- LẤY TOÀN BỘ NODE CỦA WORKFLOW ----
+        $all_nodes = $this->app->select("proposal_workflows_nodes", "*", [
+            "workflows" => $workflow_id,
+            "deleted" => 0
+        ]);
+
+        // ---- LẤY CONNECTIONS ----
+        $connections = $this->app->select("proposal_workflows_connections", "*", [
+            "workflows" => $workflow_id,
+            "deleted" => 0
+        ]);
+
+        // MAP source_node → target_node
+        $connections_map = [];
+        foreach ($connections as $conn) {
+            $connections_map[$conn['source_node']] = $conn['target_node'];
+        }
+
+        // Chuẩn hóa thành map id → node
+        $nodes_by_id = [];
+        foreach ($all_nodes as $n) {
+            $nodes_by_id[$n['id']] = $n;
+        }
+
+        // ---- MAP APPROVER CỐ ĐỊNH ----
+        $specific_approver_map = [];
+        foreach ($all_nodes as $n) {
+            if ((int)$n['approval'] === 1 && (int)$n['account'] > 0) {
+                $specific_approver_map[(int)$n['account']] = (int)$n['id'];
+            }
+        }
+
+        // ---- LẤY REQUESTER TỪ PROPOSAL ----
+        $proposal = $this->app->get("proposals", "*", [
+            "workflows" => $workflow_id,
+            "deleted" => 0
+        ]);
+
+        if (!$proposal) {
+            return ["error" => "Proposal not found for this workflow"];
+        }
+
+        $requester_account_id = (int)$proposal['account'];
+        $current_account_lookup = $requester_account_id;
+
+
+        // =====================================================
+        // BẮT ĐẦU XÂY DỰNG FINAL PATH TỪ NODE ĐƯỢC TRUYỀN VÀO
+        // =====================================================
+
+        $final_path = [];
+        $current_node = $node;
+        $visited = [];
+
+        while ($current_node && !isset($visited[$current_node['id']])) {
+            $visited[$current_node['id']] = true;
+
+            $approver_id = null;
+            $approver_type = "system";
+
+            // -----------------------
+            // XỬ LÝ LOẠI PHÊ DUYỆT
+            // -----------------------
+            if ($current_node['type'] === 'approval') {
+
+                // CASE 1: PHÊ DUYỆT CỐ ĐỊNH
+                if ((int)$current_node['approval'] === 1) {
+
+                    if ((int)$current_node['account'] === $requester_account_id) {
+                        // Skip, bỏ qua node này
+                        goto NEXT_NODE;
+                    }
+
+                    $approver_id = (int)$current_node['account'];
+                    $approver_type = "specific";
+                }
+
+                // CASE 2: PHÊ DUYỆT THEO MANAGER
+                elseif ((int)$current_node['approval'] === 2) {
+
+                    $manager = $this->findManagerAccountId($current_account_lookup);
+
+                    if ($manager === null) {
+                        return ["error" => "Manager not found"];
+                    }
+
+                    if (isset($specific_approver_map[$manager])) {
+                        $approver_id = $manager;
+                        $approver_type = "specific_manager";
+                    } else {
+                        $approver_id = $manager;
+                        $approver_type = "manager";
+                    }
+                }
+            }
+
+            // ===============================
+            // ADD NODE VÀO FINAL PATH
+            // ===============================
+            $final_path[] = [
+                'node_id' => (int)$current_node['id'],
+                'node_name' => $current_node['name'],
+                'type' => $current_node['type'],
+                'follows' => json_decode($current_node['follows']),
+                'approval_type' => (int)$current_node['approval'],
+                'condition' => (int)$current_node['condition'],
+                'rollback' => (int)$current_node['rollback'],
+                'approver_account_id' => $approver_id ?? $current_account_lookup,
+                'note' => $approver_type
+            ];
+
+            if ($approver_id !== null) {
+                $current_account_lookup = $approver_id;
+            }
+
+            // =====================================
+            // MOVE TO NEXT NODE
+            // =====================================
+            NEXT_NODE:
+
+            if (!isset($connections_map[$current_node['id']])) break;
+
+            $next_id = $connections_map[$current_node['id']];
+            $current_node = $nodes_by_id[$next_id] ?? null;
+        }
+
+        return $final_path;
+    }
+
+
 }
 
 ?>

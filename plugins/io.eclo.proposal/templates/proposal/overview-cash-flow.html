@@ -1,0 +1,387 @@
+<?php
+// ================== BỔ SUNG HÀM HELPER ==================
+function format_vnd($number) {
+    if ($number == 0) return '...';
+    return number_format($number, 0, ',', '.');
+}
+
+// Hàm print_cols không thay đổi
+function print_cols($kh, $tt, $isExpense = false) {
+    $kh = (float)$kh;
+    $tt = (float)$tt;
+    $chenhLech = $tt - $kh;
+
+    $color = 'text-muted';
+    if ($chenhLech > 0) $color = $isExpense ? 'text-danger' : 'text-success'; // Chi vượt KH là xấu
+    if ($chenhLech < 0) $color = $isExpense ? 'text-success' : 'text-danger'; // Chi ít hơn KH là tốt
+
+    // Cột 1: Kế hoạch
+    echo '<td class="text-end">' . format_vnd($kh) . '</td>';
+    
+    // Cột 2: Thực tế
+    echo '<td class="text-end">' . format_vnd($tt) . '</td>';
+    
+    // Cột 3: Chênh lệch
+    $percentText = '';
+    if ($kh != 0) {
+        $percent = round(($tt / $kh) * 100);
+        $percentText = $percent . '%';
+    } elseif ($tt != 0) {
+        $percentText = 'Mới'; // Phát sinh ngoài KH
+    }
+    
+    if ($chenhLech == 0) $color = 'text-muted';
+
+    echo '<td class="text-end small ' . $color . '">';
+    echo '<span>' . format_vnd($chenhLech) .'</span>';
+    // echo '<span>' .$percentText.'</span>';
+    echo '</td>';
+}
+?>
+<style>
+    /* 1. Bật chế độ cuộn cho div bọc ngoài */
+    .table-responsive {
+        overflow: auto;
+        max-height: 75vh; /* Bạn có thể đổi chiều cao này để test cuộn dọc */
+    }
+
+    /* 2. Dính Hàng Header 1 (Hàng có "Hạng mục", "stores 1", "stores 2"...) */
+    #datatable thead tr:first-child th {
+        position: sticky;
+        top: 0;
+        z-index: 11;
+    }
+
+    /* 3. Dính Hàng Header 2 (Hàng có "Kế hoạch", "Thực tế", "CL %"...) */
+    #datatable thead tr:nth-child(2) th {
+        position: sticky;
+        /* * QUAN TRỌNG: 
+         * Bạn phải đo chiều cao của HÀNG 1 (tr:first-child) và đặt vào đây.
+         * Tôi đoán là 54px, nhưng bạn cần tự kiểm tra.
+         */
+        top: 54px; 
+        z-index: 11;
+    }
+
+    /* 4. Dính Cột 1 (Cột "Hạng mục / Nhóm") */
+    /* :first-child sẽ chọn <th> đầu tiên và <td> đầu tiên của MỌI HÀNG */
+    #datatable thead th:first-child,
+    #datatable tbody td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 10; 
+    }
+
+    /* 5. Ô GÓC (Ô "Hạng mục / Nhóm" ở góc trên bên trái) */
+    #datatable thead tr:first-child th:first-child {
+        z-index: 12; /* Phải cao nhất để đè lên tất cả */
+    }
+
+    /* Đảm bảo nền cho các ô bị dính */
+    #datatable thead th { background-color: #d1e7dd; } /* Màu của table-success */
+    #datatable tbody td:first-child { background-color: var(--bs-body-bg, #fff); }
+    #datatable tbody tr.bg-body-tertiary td:first-child { background-color: var(--bs-body-tertiary, #f8f9fa); }
+
+</style>
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body"><?=$title?></h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small"><a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a></li>
+                <li class="breadcrumb-item small text-body" aria-current="page"><?=$title?></li>
+            </ul>
+        </div>
+        <div class="filter-search">
+            <form method="GET" data-pjax>
+            <div class="d-flex align-items-center justify-content-end">
+                <div class="dropdown">
+                    <button class="btn btn-eclo-light fw-semibold border-0 rounded-pill small d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="false" >
+                        <i class="ti ti-filter fs-5 me-2"></i> <?=$jatbi->lang("Điều kiện lọc")?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 min-width bg-blur" style="--min-width:300px;--min-width-xs:100vw">
+                        <div class="fw-semibold py-2 px-3"><?=$jatbi->lang("Điều kiện lọc")?></div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3">
+                            <?=$app->component('input',[
+                                "name"=>'date', "placeholder"=>$jatbi->lang("Ngày dự kiến"),
+                                // "selected" => $app->xss($_POST['date'] ?? ''), // Sửa thành GET
+                                "class" => 'filter-name',
+                                "attr" => 'data-width="100%" data-datepicker', 
+                                "value" => $date ?? '' // $date được truyền từ controller
+                            ])?>
+                        </div>
+                        <hr class="border-secondary border-opacity-50 my-2">
+                        <div class="px-3 py-2 text-end w-100">
+                            <button type="button" class="btn btn-light px-3 rounded-pill py-2 reset-filter"><?=$jatbi->lang("Làm mới")?></button>
+                            <button type="submit" class="btn btn-eclo px-3 rounded-pill py-2"><?=$jatbi->lang("Tìm")?></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4"><h5 class="fw-bold mb-0">Dòng tiền ròng theo Hình thức (Thực tế)</h5></div>
+                <div class="card-body px-4 pt-0"><div class="table-responsive" style="max-height: 400px;"> <table class="table align-middle">
+                        <thead class="table-success" style="position: sticky; top: 0; z-index: 5;"><tr>
+                            <th>Hình thức / Nguồn tiền</th><th class="text-end">Tổng Thu</th>
+                            <th class="text-end">Tổng Chi</th><th class="text-end">Dòng tiền ròng</th>
+                        </tr></thead>
+                        <tbody>
+                            <?php foreach($formNetFlow as $formId => $data): ?>
+                                <?php $formName = $data['name']; ?>
+                                <?php $net = $data['Thu'] - $data['Chi']; ?>
+                                <tr>
+                                    <td>
+                                        <a href="/proposal/cash-bank?form=<?=$formId?>&date=<?=urlencode($date)?>" class="pjax-load link-dark fw-semibold">
+                                            <?=$formName?>
+                                        </a>
+                                    </td>
+                                    <td class="text-end text-success"><?=format_vnd($data['Thu'])?></td>
+                                    <td class="text-end text-danger"><?=format_vnd($data['Chi'])?></td>
+                                    <td class="text-end fw-bold text-<?=($net >= 0) ? 'success' : 'danger'?>"><?=format_vnd($net)?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4"><h5 class="fw-bold mb-0">Top 10 Hạng mục Chi (Thực tế)</h5></div>
+                <div class="card-body px-4 pt-0" style="overflow-y: auto; max-height: 360px;"><ul class="list-group list-group-flush">
+                    <?php foreach($topSpending as $targetId => $data): ?>
+                        <?php $name = $data['name']; $total = $data['total']; ?>
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-2">
+                            <span>
+                                <a href="/proposal/cash-bank?type=2&category=<?=$targetId?>&date=<?=urlencode($date)?>" class="pjax-load link-dark">
+                                    <?=$name?>
+                                </a>
+                            </span>
+                            <strong class="text-danger"><?=format_vnd($total)?></strong>
+                        </li>
+                    <?php endforeach; ?>
+                </ul></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow border-0 bg-body bg-opacity-50 rounded-4 p-4 mb-4">
+                <div class="table-responsive"> <table id="datatable" class="table align-middle table-bordered" >
+                        <thead class="table-success">
+                            <tr>
+                                <th rowspan="2" class="align-middle" style="min-width:250px" data-name="category">Hạng mục / Nhóm</th>
+                                
+                                <?php foreach ($stores as $storeId => $storeName): ?>
+                                    <th colspan="3" class="text-center"><?=$storeName?></th>
+                                <?php endforeach; ?>
+                                <th colspan="3" class="text-center text-danger">TỔNG CỘNG</th>
+                            </tr>
+                            <tr>
+                                <?php foreach ($stores as $storeId => $storeName): ?>
+                                    <th class="text-end" style="min-width: 100px;" data-name="store_<?=$storeId?>_plan">Kế hoạch</th>
+                                    <th class="text-end" style="min-width: 100px;" data-name="store_<?=$storeId?>_actual">Thực tế</th>
+                                    <th class="text-end" style="min-width: 80px;" data-name="store_<?=$storeId?>_diff">CL (%)</th>
+                                <?php endforeach; ?>
+                                
+                                <th class="text-end" style="min-width: 100px;" data-name="total_plan">Kế hoạch</th>
+                                <th class="text-end" style="min-width: 100px;" data-name="total_actual">Thực tế</th>
+                                <th class="text-end" style="min-width: 80px;" data-name="total_diff">CL (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            // Chuẩn bị mảng tổng (dùng ID)
+                            $storeTotals = [];
+                            foreach ($stores as $storeId => $storeName) {
+                                $storeTotals[$storeId] = ['Thu_KH'=>0, 'Thu_TT'=>0, 'Chi_KH'=>0, 'Chi_TT'=>0, 'Net_TT'=>0];
+                            }
+                            $storeTotals['Tổng'] = ['Thu_KH'=>0, 'Thu_TT'=>0, 'Chi_KH'=>0, 'Chi_TT'=>0, 'Net_TT'=>0];
+                            $totalColspan = 1 + (count($stores) + 1) * 3;
+                            ?>
+
+                            <tr class="fw-bold ">
+                                <td class="bg-body-tertiary">TỒN ĐẦU KỲ</td>
+                                <?php
+                                $totalOB = 0;
+                                // ================== THAY ĐỔI: Lặp qua $stores[id => name] ==================
+                                foreach ($stores as $storeId => $storeName):
+                                    $ob = $openingBalances[$storeId] ?? 0;
+                                    $totalOB += $ob;
+                                ?>
+                                <td class="text-end bg-body-tertiary" colspan="3"><?=format_vnd($ob)?></td>
+                                <?php endforeach; ?>
+                                <td class="text-end bg-body-tertiary" colspan="3"><?=format_vnd($totalOB)?></td>
+                            </tr>
+
+                            <?php foreach ($summary as $type => $groups): ?>
+                                <?php $isExpense = ($type == 'Chi'); ?>
+                                <?php $typeNum = $isExpense ? 2 : 1; ?>
+                                <tr class=" fw-bold text-primary">
+                                    <td colspan="<?=$totalColspan?>">
+                                        <?=($type == 'Thu') ? '1. DOANH THU / THU TIỀN' : '2. CHI PHÍ / CHI TIỀN'?>
+                                    </td>
+                                </tr>
+
+                                <?php foreach ($groups as $groupId => $groupData): ?>
+                                    <?php $groupName = $groupData['name']; $forms = $groupData['forms']; ?>
+                                    <tr class="fw-bold bg-body-tertiary">
+                                        <td>
+                                            <a href="/proposal/cash-bank?type=<?=$typeNum?>&date=<?=urlencode($date)?>" class="pjax-load link-dark">
+                                                <?=$groupName?>
+                                            </a>
+                                        </td>
+                                        <?php
+                                        $groupTotals_KH = array_fill_keys(array_keys($stores), 0);
+                                        $groupTotals_TT = array_fill_keys(array_keys($stores), 0);
+                                        foreach ($forms as $formId => $formData) {
+                                            foreach ($formData['targets'] as $targetId => $targetData) {
+                                                foreach ($targetData['stores'] as $storeId => $v) {
+                                                    // Đảm bảo storeId tồn tại (cho trường hợp "Không xác định")
+                                                    if (!isset($groupTotals_KH[$storeId])) $groupTotals_KH[$storeId] = 0;
+                                                    if (!isset($groupTotals_TT[$storeId])) $groupTotals_TT[$storeId] = 0;
+                                                    
+                                                    $groupTotals_KH[$storeId] += $v['KH'] ?? 0;
+                                                    $groupTotals_TT[$storeId] += $v['TT'] ?? 0;
+                                                }
+                                            }
+                                        }
+                                        $groupSum_KH = array_sum($groupTotals_KH);
+                                        $groupSum_TT = array_sum($groupTotals_TT);
+                                        ?>
+                                        <?php foreach ($stores as $storeId => $storeName): ?>
+                                            <?php print_cols($groupTotals_KH[$storeId] ?? 0, $groupTotals_TT[$storeId] ?? 0, $isExpense); ?>
+                                        <?php endforeach; ?>
+                                        <?php print_cols($groupSum_KH, $groupSum_TT, $isExpense); ?>
+                                    </tr>
+
+                                    <?php foreach ($forms as $formId => $formData): ?>
+                                        <?php $formName = $formData['name']; $targets = $formData['targets']; ?>
+                                        <tr class="fw-semibold">
+                                            <td class="ps-4">
+                                                <a href="/proposal/cash-bank?type=<?=$typeNum?>&form=<?=$formId?>&date=<?=urlencode($date)?>" class="pjax-load link-dark">
+                                                    <?=$formName?>
+                                                </a>
+                                            </td>
+                                            <?php
+                                            $formTotals_KH = array_fill_keys(array_keys($stores), 0);
+                                            $formTotals_TT = array_fill_keys(array_keys($stores), 0);
+                                            foreach ($targets as $targetId => $targetData) {
+                                                foreach ($targetData['stores'] as $storeId => $v) {
+                                                    if (!isset($formTotals_KH[$storeId])) $formTotals_KH[$storeId] = 0;
+                                                    if (!isset($formTotals_TT[$storeId])) $formTotals_TT[$storeId] = 0;
+                                                    $formTotals_KH[$storeId] += $v['KH'] ?? 0;
+                                                    $formTotals_TT[$storeId] += $v['TT'] ?? 0;
+                                                }
+                                            }
+                                            $formSum_KH = array_sum($formTotals_KH);
+                                            $formSum_TT = array_sum($formTotals_TT);
+                                            ?>
+                                            <?php foreach ($stores as $storeId => $storeName): ?>
+                                                <?php print_cols($formTotals_KH[$storeId] ?? 0, $formTotals_TT[$storeId] ?? 0, $isExpense); ?>
+                                            <?php endforeach; ?>
+                                            <?php print_cols($formSum_KH, $formSum_TT, $isExpense); ?>
+                                        </tr>
+
+                                        <?php foreach ($targets as $targetId => $targetData): ?>
+                                            <?php $targetName = $targetData['name']; $vals = $targetData['stores']; ?>
+                                            <tr>
+                                                <td class="ps-5">
+                                                    <a href="/proposal/cash-bank?type=<?=$typeNum?>&category=<?=$targetId?>&date=<?=urlencode($date)?>" class="pjax-load link-dark">
+                                                        <?=$targetName?>
+                                                    </a>
+                                                </td>
+                                                <?php
+                                                $rowTotal_KH = 0; $rowTotal_TT = 0;
+                                                foreach ($stores as $storeId => $storeName):
+                                                    $v_kh = $vals[$storeId]['KH'] ?? 0;
+                                                    $v_tt = $vals[$storeId]['TT'] ?? 0;
+                                                    $rowTotal_KH += $v_kh;
+                                                    $rowTotal_TT += $v_tt;
+                                                    
+                                                    $storeTotals[$storeId][$type."_KH"] += $v_kh ?? 0;
+                                                    $storeTotals[$storeId][$type."_TT"] += $v_tt ?? 0;
+                                                endforeach;
+                                                $storeTotals['Tổng'][$type."_KH"] += $rowTotal_KH;
+                                                $storeTotals['Tổng'][$type."_TT"] += $rowTotal_TT;
+                                                ?>
+                                                <?php foreach ($stores as $storeId => $storeName): ?>
+                                                    <?php print_cols($vals[$storeId]['KH'] ?? 0, $vals[$storeId]['TT'] ?? 0, $isExpense); ?>
+                                                <?php endforeach; ?>
+                                                <?php print_cols($rowTotal_KH, $rowTotal_TT, $isExpense); ?>
+                                            </tr>
+                                        <?php endforeach; // targets ?>
+                                    <?php endforeach; // forms ?>
+                                <?php endforeach; // groups ?>
+                            <?php endforeach; // summary ?>
+
+                            <tr class="fw-bold ">
+                                <td class="bg-body-tertiary">TỔNG THU (TRONG KỲ)</td>
+                                <?php foreach ($stores as $storeId => $storeName): ?>
+                                    <?php print_cols($storeTotals[$storeId]['Thu_KH'], $storeTotals[$storeId]['Thu_TT'], false); ?>
+                                <?php endforeach; ?>
+                                <?php print_cols($storeTotals['Tổng']['Thu_KH'], $storeTotals['Tổng']['Thu_TT'], false); ?>
+                            </tr>
+                            
+                            <tr class="fw-bold ">
+                                <td class="bg-body-tertiary">TỔNG CHI (TRONG KỲ)</td>
+                                <?php foreach ($stores as $storeId => $storeName): ?>
+                                    <?php print_cols($storeTotals[$storeId]['Chi_KH'], $storeTotals[$storeId]['Chi_TT'], true); ?>
+                                <?php endforeach; ?>
+                                <?php print_cols($storeTotals['Tổng']['Chi_KH'], $storeTotals['Tổng']['Chi_TT'], true); ?>
+                            </tr>
+
+                            <tr class="fw-bold table-info">
+                                <td>DÒNG TIỀN RÒNG (Thu - Chi)</td>
+                                <?php
+                                $totalNet_KH = 0; $totalNet_TT = 0;
+                                foreach ($stores as $storeId => $storeName):
+                                    $net_kh = $storeTotals[$storeId]['Thu_KH'] - $storeTotals[$storeId]['Chi_KH'];
+                                    $net_tt = $storeTotals[$storeId]['Thu_TT'] - $storeTotals[$storeId]['Chi_TT'];
+                                    $storeTotals[$storeId]['Net_TT'] = $net_tt; // Lưu lại để tính Tồn cuối kỳ
+                                    $totalNet_KH += $net_kh;
+                                    $totalNet_TT += $net_tt;
+                                    
+                                    print_cols($net_kh, $net_tt, ($net_tt < 0)); // Dùng isExpense để tô màu
+                                endforeach;
+                                $storeTotals['Tổng']['Net_TT'] = $totalNet_TT;
+                                ?>
+                                <?php print_cols($totalNet_KH, $totalNet_TT, ($totalNet_TT < 0)); ?>
+                            </tr>
+
+                            <tr class="fw-bold table-primary">
+                                <td>TỒN CUỐI KỲ (Thực tế)</td>
+                                <?php
+                                $totalCB = 0;
+                                foreach ($stores as $storeId => $storeName):
+                                    $ob = $openingBalances[$storeId] ?? 0;
+                                    $net_tt = $storeTotals[$storeId]['Net_TT'];
+                                    // ================== SỬA LỖI LOGIC: $net_t không tồn tại ==================
+                                    $cb = $ob + ($net_tt ?? 0); // Tồn đầu + Dòng tiền ròng TT
+                                    $totalCB += $cb;
+                                ?>
+                                <td class="text-end" colspan="3"><?=format_vnd($cb)?></td>
+                                <?php endforeach; ?>
+                                <?php
+                                // Tính tổng tồn cuối kỳ
+                                $totalOB_Final = array_sum($openingBalances);
+                                $totalNet_TT_Final = $storeTotals['Tổng']['Net_TT'];
+                                $totalCB_Final = $totalOB_Final + $totalNet_TT_Final;
+                                ?>
+                                <td class="text-end" colspan="3"><?=format_vnd($totalCB_Final)?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

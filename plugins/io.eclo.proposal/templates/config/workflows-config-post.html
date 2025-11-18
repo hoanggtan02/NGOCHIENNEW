@@ -66,7 +66,7 @@
 	            "name"=>'approval',
 	            "placeholder"=>$jatbi->lang("Loại xét duyệt"),
 	            "selected" => $data['approval'],
-	            "attr" => 'data-width="100%"',
+	            "attr" => 'data-width="100%" data-action="show-hide" data-show-hide-target="#account-box" data-show-hide-value="1"',
 	            "required" => "true",
 	            "id" => "approval",
 	            "options" => [
@@ -75,6 +75,7 @@
 	            	["value" => 3,"text"=>$jatbi->lang("Không xét duyệt")],
 	           	],
 	        ])?>
+	        <div id="account-box" style="<?=$data['approval']==1?'':'display:none'?>">
 			<?=$app->component('select',[
 	            "name"=>'account',
 	            "placeholder"=>$jatbi->lang("Tài khoản xét duyệt"),
@@ -83,6 +84,7 @@
 	            "id" => "account",
 	            "options" => $accounts ?? [],
 	        ])?>
+	        </div>
 			<?=$app->component('select',[
 	            "name"=>'follows[]',
 	            "placeholder"=>$jatbi->lang("Tài khoản theo dõi"),
@@ -91,6 +93,28 @@
 	            "id" => "follows",
 	            "options" => $follows ?? [],
 	        ])?>
+			<?=$app->component('select',[
+	            "name"=>'condition',
+	            "placeholder"=>$jatbi->lang("Xử lý khi từ chối"),
+	            "selected" => $data['condition'] ?? 0,
+	            "attr" => 'data-width="100%" data-action="show-hide" data-show-hide-target="#condition-box" data-show-hide-value="1"',
+	            "required" => "true",
+	            "id" => "condition",
+	            "options" => [
+	            	["value" => 0,"text"=>$jatbi->lang("Không kích hoạt")],
+	            	["value" => 1,"text"=>$jatbi->lang("Kích hoạt")],
+	           	],
+	        ])?>
+	        <div id="condition-box" style="<?=$data['condition']==1?'':'display:none'?>">
+			<?=$app->component('select',[
+	            "name"=>'rollback',
+	            "placeholder"=>$jatbi->lang("Điểm quay lại"),
+	            "selected" => $data['rollback'] ?? '',
+	            "attr" => 'data-width="100%"',
+	            "id" => "rollback",
+	            "options" => $rollback ?? [],
+	        ])?>
+	        </div>
 			<?=$app->component('textarea',[
 	            "name"=>'notes',
 	            "placeholder"=>$jatbi->lang("Ghi chú"),
