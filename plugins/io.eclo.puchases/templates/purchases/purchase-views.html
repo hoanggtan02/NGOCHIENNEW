@@ -2,9 +2,9 @@
   <div class="modal-dialog modal-lg pt-standalone">
     <div class="modal-content rounded-5 border-0 shadow-lg">
       <div class="d-flex w-100 justify-content-end align-items-center position-relative">
-        <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center"
-                data-bs-dismiss="modal" aria-label="Close"
-                style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+        <button type="button"
+          class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center"
+          data-bs-dismiss="modal" aria-label="Close" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
           <i class="ti ti-x fs-4"></i>
         </button>
       </div>
@@ -14,14 +14,25 @@
         <!-- PHẦN THÔNG TIN CHUNG -->
         <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
           <div class="card-body">
-            <h5 class="card-title mb-3">#<?=($setting['ballot_code']['purchase'])?>-<?=$data['code']?></h5>
+            <h5 class="card-title mb-3">#
+              <?=($setting['ballot_code']['purchase'])?>-
+              <?=$data['code']?>
+            </h5>
             <div class="mb-3">
-              <strong><?=$jatbi->lang('Nhà cung cấp')?>:</strong> <?=$app->get("vendors", "name", ["id" => $data['vendor']])?><br>
-              <strong><?=$jatbi->lang('Điện thoại')?>:</strong> <?=$app->get("vendors", "phone", ["id" => $data['vendor']])?><br>
-              <strong><?=$jatbi->lang('Mã hóa đơn')?>:</strong> #<?=($setting['ballot_code']['purchase'])?>-<?=$data['code']?><br>
-              <strong><?=$jatbi->lang('Ngày')?>:</strong> <?=date('d/m/Y', strtotime($data['date']))?> (<?=date('d/m/Y H:i:s', strtotime($data['date_poster']))?>)<br>
-              <strong><?=$jatbi->lang('Trạng thái')?>:</strong> <?=$Status_purchase[$data['status']]['name'] ?? ''?><br>
-              <strong><?=$jatbi->lang('Ghi chú')?>:</strong> <?=htmlspecialchars($data['notes'])?>
+              <strong><?=$jatbi->lang('Nhà cung cấp')?>:</strong>
+              <?=$app->get("vendors", "name", ["id" => $data['vendor']])?><br>
+              <strong><?=$jatbi->lang('Điện thoại')?>:</strong>
+              <?=$app->get("vendors", "phone", ["id" => $data['vendor']])?><br>
+              <strong><?=$jatbi->lang('Mã hóa đơn')?>:</strong> #
+              <?=($setting['ballot_code']['purchase'])?>-
+              <?=$data['code']?><br>
+              <strong><?=$jatbi->lang('Ngày')?>:</strong>
+              <?=date('d/m/Y', strtotime($data['date']))?> (
+              <?=date('d/m/Y H:i:s', strtotime($data['date_poster']))?>)<br>
+              <strong><?=$jatbi->lang('Trạng thái')?>:</strong>
+              <?=$Status_purchase[$data['status']]['name'] ?? ''?><br>
+              <strong><?=$jatbi->lang('Ghi chú')?>:</strong>
+              <?=htmlspecialchars($data['notes'])?>
             </div>
 
             <!-- DANH SÁCH SẢN PHẨM -->
@@ -57,39 +68,60 @@
                         $getIng = $app->get("ingredient", "*", ["id" => $SelectProduct['ingredient']]);
                   ?>
                   <tr>
-                    <td><?=$getIng['code']?></td>
+                    <td>
+                      <?=$getIng['code']?>
+                    </td>
                     <td>
                       <?php if ($getIng['type'] == 2) { ?>
-                        <?=$app->get("pearl", "name", ["id" => $getIng['pearl']])?>
+                      <?=$app->get("pearl", "name", ["id" => $getIng['pearl']])?>
                       <?php } elseif ($getIng['type'] == 1) { ?>
-                        <?=$app->get("categorys", "name", ["id" => $getIng['categorys']])?>
+                      <?=$app->get("categorys", "name", ["id" => $getIng['categorys']])?>
                       <?php } else { ?>
-                        <?=$getIng['name_ingredient']?>
+                      <?=$getIng['name_ingredient']?>
                       <?php } ?>
                     </td>
-                    <td><?=$SelectProduct['amount']?></td>
+                    <td>
+                      <?=$SelectProduct['amount']?>
+                    </td>
                     <td><?=$app->get("units", "name", ["id" => $getIng['units']])?></td>
-                    <td><?=number_format($SelectProduct['price'])?></td>
-                    <td class="text-end fw-bold"><?=number_format($price)?></td>
+                    <td>
+                      <?=number_format($SelectProduct['price'])?>
+                    </td>
+                    <td class="text-end fw-bold">
+                      <?=number_format($price)?>
+                    </td>
                   </tr>
                   <?php } else {
                     $getPro = $app->get("products", "*", ["id" => $SelectProduct['products']]);
                   ?>
                   <tr>
-                    <td><img src="/<?=$upload['images']['products']['url'].'thumb/'.$getPro['images']?>" class="border rounded shadow-sm w-100"></td>
-                    <td><?=$getPro['code']?></td>
-                    <td><?=$getPro['name']?></td>
-                    <td><?=$SelectProduct['amount']?></td>
+                    <td><img src="/<?=$upload['images']['products']['url'].'thumb/'.$getPro['images']?>"
+                        class="border rounded shadow-sm w-100"></td>
+                    <td>
+                      <?=$getPro['code']?>
+                    </td>
+                    <td>
+                      <?=$getPro['name']?>
+                    </td>
+                    <td>
+                      <?=$SelectProduct['amount']?>
+                    </td>
                     <td><?=$app->get("units", "name", ["id" => $getPro['units']])?></td>
-                    <td><?=number_format($SelectProduct['price'])?></td>
-                    <td class="text-end fw-bold"><?=number_format($price)?></td>
+                    <td>
+                      <?=number_format($SelectProduct['price'])?>
+                    </td>
+                    <td class="text-end fw-bold">
+                      <?=number_format($price)?>
+                    </td>
                   </tr>
                   <?php }}} else { ?>
-                  <tr><td colspan="<?=($data['type'] == 2) ? 6 : 7?>" class="text-center">No products found.</td></tr>
+                  <tr>
+                    <td colspan="<?=($data['type'] == 2) ? 6 : 7?>" class="text-center">No products found.</td>
+                  </tr>
                   <?php } ?>
                 </tbody>
-                    <tfoot>
-                    <?php
+                <tfoot>
+                  <?php
                         $colspan = ($data['type'] == 2) ? 5 : 6;
 
                         function rowTotal($label, $value, $color = '', $colspan = 6) {
@@ -108,44 +140,12 @@
                         echo rowTotal($jatbi->lang('Đã thanh toán'), $data['prepay'], 'text-success', $colspan);
                         echo rowTotal($jatbi->lang('Còn lại'), $data['payments'] - $data['prepay'], 'text-success', $colspan);
                     ?>
-                    </tfoot>
+                </tfoot>
 
               </table>
             </div>
 
-            <!-- FORM XÁC NHẬN -->
-            <?php if ($data['status'] == 1) { ?>
-              <form method="POST" enctype="multipart/form-data" class="ajax-form">
-                <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mb-4">
-                  <div class="card-header"><?=$jatbi->lang('Xác nhận')?></div>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-lg-12">
-                        <label><?=$jatbi->lang('Trạng thái')?> <span class="text-danger">*</span></label>
-                        <select name="status" class="select2 form-control">
-                          <option value="3"><?=$jatbi->lang('Đã duyệt')?></option>
-                          <option value="4"><?=$jatbi->lang('Không duyệt')?></option>
-                        </select>
-                      </div>
-                      <div class="col-lg-12">
-                        <label><?=$jatbi->lang('Nội dung')?> <span class="text-danger">*</span></label>
-                        <textarea name="content" class="form-control" style="height: 100px;"></textarea>
-                      </div>
-                      <div class="col-lg-12 text-end">
-                        <input type="hidden" name="token" value="<?=$_SESSION['csrf-token']?>">
-                        <button type="submit" class="btn btn-primary ajax-submit">
-                          <div class="spinner-button" style="display: none">
-                            <span class="spinner-border spinner-border-sm"></span>
-                            <span class="me-1"><?=$jatbi->lang('Đăng tải')?></span>
-                          </div>
-                          <span class="name-button"><?=$jatbi->lang('Hoàn tất')?></span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            <?php } ?>
+           
 
             <!-- LỊCH SỬ THANH TOÁN -->
             <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4 mb-4">
@@ -165,15 +165,25 @@
                     <?php if (!empty($details)) {
                       foreach ($details as $detail) {
                         if ($detail['type'] == 'prepay') { ?>
-                          <tr>
-                            <td>#<?=$detail['code']?></td>
-                            <td><?=number_format($detail['price'])?></td>
-                            <td><?=htmlspecialchars($detail['content'])?></td>
-                            <td><?=date('d/m/Y', strtotime($detail['date']))?></td>
-                            <td><?=$app->get("accounts", "name", ["id" => $detail['user']])?></td>
-                          </tr>
+                    <tr>
+                      <td>#
+                        <?=$detail['code']?>
+                      </td>
+                      <td>
+                        <?=number_format($detail['price'])?>
+                      </td>
+                      <td>
+                        <?=htmlspecialchars($detail['content'])?>
+                      </td>
+                      <td>
+                        <?=date('d/m/Y', strtotime($detail['date']))?>
+                      </td>
+                      <td><?=$app->get("accounts", "name", ["id" => $detail['user']])?></td>
+                    </tr>
                     <?php }}} else { ?>
-                      <tr><td colspan="5" class="text-center">No payment history found.</td></tr>
+                    <tr>
+                      <td colspan="5" class="text-center">No payment history found.</td>
+                    </tr>
                     <?php } ?>
                   </tbody>
                 </table>
@@ -196,17 +206,23 @@
                   <tbody>
                     <?php if (!empty($logs)) {
                       foreach ($logs as $log) { ?>
-                      <tr>
-                        <td><?=$app->get("accounts", "name", ["id" => $log['user']])?></td>
-                        <td><?=date('d/m/Y H:i:s', strtotime($log['date']))?></td>
-                        <td class="fw-bold text-<?=$Status_purchase[$log['status']]['color'] ?? 'dark'?>">
-                          <?=$Status_purchase[$log['status']]['name'] ?? ''?>
-                        </td>
+                    <tr>
+                      <td><?=$app->get("accounts", "name", ["id" => $log['user']])?></td>
+                      <td>
+                        <?=date('d/m/Y H:i:s', strtotime($log['date']))?>
+                      </td>
+                      <td class="fw-bold text-<?=$Status_purchase[$log['status']]['color'] ?? 'dark'?>">
+                        <?=$Status_purchase[$log['status']]['name'] ?? ''?>
+                      </td>
 
-                        <td><?=htmlspecialchars($log['content'])?></td>
-                      </tr>
+                      <td>
+                        <?=htmlspecialchars($log['content'])?>
+                      </td>
+                    </tr>
                     <?php }} else { ?>
-                      <tr><td colspan="4" class="text-center">No activity logs found.</td></tr>
+                    <tr>
+                      <td colspan="4" class="text-center">No activity logs found.</td>
+                    </tr>
                     <?php } ?>
                   </tbody>
                 </table>

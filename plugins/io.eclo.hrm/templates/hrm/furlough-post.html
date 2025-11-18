@@ -2,7 +2,9 @@
     <div class="modal-dialog modal-lg pt-standalone">
         <div class="modal-content rounded-5">
             <div class="d-flex w-100 justify-content-end align-items-center position-relative">
-                <button type="button" class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right" data-bs-dismiss="modal" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
+                <button type="button"
+                    class="btn btn-eclo position-absolute z-1 rounded-circle d-flex align-items-center justify-content-center width height top right"
+                    data-bs-dismiss="modal" style="--width:50px;--height:50px;--top:-5px;--right:-5px">
                     <i class="ti ti-x fs-4"></i>
                 </button>
             </div>
@@ -15,46 +17,97 @@
                         <div class="col-lg-6">
                             <?=$app->component('select', ['name' => 'furlough_id', 'placeholder' => $jatbi->lang("Chọn loại nghỉ phép"), 'selected' => $data['furlough_id'] ?? '', 'options' => $furloughs ?? []])?>
                         </div>
+                        <div class="col-lg-4">
+                            <?=$app->component('select',[
+                                "name"=>'form',
+                                "placeholder"=>$jatbi->lang("Hình thức"),
+                                "selected" => $data['form'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true" data-select-url="/api/search/form-type-3" data-method="POST" data-keyword="keyword"',
+                                "id" => "form",
+                                "options" => $forms ?? [],
+                                "required" => 'true',
+                            ])?>
+                        </div>
 
+                        <div class="col-lg-4">
+                            <?=$app->component('select',[
+                                "name"=>'workflows',
+                                "placeholder"=>$jatbi->lang("Quy trình"),
+                                "selected" => $data['workflows'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true"  data-parent="#form" data-select-url="/proposal/search/workflows" data-method="POST" data-keyword="keyword"',
+                                "id" => "workflows",
+                                "options" => $workflows ?? [],
+                                "required" => 'true',
+                            ])?>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <?=$app->component('select',[
+                                "name"=>'category',
+                                "placeholder"=>$jatbi->lang("Hạng mục"),
+                                "selected" => $data['category'] ?? '',
+                                "attr" => 'data-width="100%" data-select-load="true"  data-parent="#workflows" data-select-url="/proposal/search/categorys" data-method="POST" data-keyword="keyword"',
+                                "id" => "category",
+                                "options" => $categorys ?? [],
+                                "required" => 'true',
+                            ])?>
+                        </div>
                         <div class="col-12">
                             <div class="card rounded-4 mb-3">
-                                <div class="card-header bg-body-tertiary fw-bold py-3 d-flex justify-content-between align-items-center">
+                                <div
+                                    class="card-header bg-body-tertiary fw-bold py-3 d-flex justify-content-between align-items-center">
                                     <?=$jatbi->lang("Chi tiết các ngày nghỉ")?>
-                                    <button type="button" class="btn btn-sm btn-eclo rounded-circle" data-action="clone" data-target=".data-leave-items" data-clone=".leave-items">
+                                    <button type="button" class="btn btn-sm btn-eclo rounded-circle" data-action="clone"
+                                        data-target=".data-leave-items" data-clone=".leave-items">
                                         <i class="ti ti-plus"></i>
                                     </button>
                                 </div>
                                 <div class="card-body data-leave-items p-2">
                                     <?php if(!empty($leave_details)): ?>
-                                        <?php foreach ($leave_details as $detail): ?>
-                                            <div class="row g-2 align-items-center leave-items mb-2">
-                                                <div class="col-6"><input type="date" name="leave_date[]" class="form-control py-3 bg-body rounded-4" value="<?=$detail['leave_date']?>"></div>
-                                                <div class="col-5">
-                                                    <select name="leave_session[]" data-select data-style="form-select bg-body-tertiary py-3 rounded-4 w-100">
-                                                        <option value="full_day" <?=$detail['leave_session'] == 'full_day' ? 'selected' : ''?>>Nguyên ngày (1.0)</option>
-                                                        <option value="morning" <?=$detail['leave_session'] == 'morning' ? 'selected' : ''?>>Nửa buổi sáng (0.5)</option>
-                                                        <option value="afternoon" <?=$detail['leave_session'] == 'afternoon' ? 'selected' : ''?>>Nửa buổi chiều (0.5)</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-1 text-center">
-                                                    <button type="button" class="btn btn-sm p-1 text-danger"  data-action="deleted-clone" data-target="this" data-closest=".leave-items" data-target="this" data-remove="remove"><i class="ti ti-trash fs-5"></i></button>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <div class="row g-2 align-items-center leave-items mb-2">
-                                            <div class="col-6"><input type="date" name="leave_date[]" class="form-control py-3 bg-body rounded-4" value="<?=date("Y-m-d")?>"></div>
-                                            <div class="col-5">
-                                                <select name="leave_session[]" data-select data-style="form-select bg-body-tertiary py-3 rounded-4 w-100">
-                                                    <option value="full_day">Nguyên ngày (1.0)</option>
-                                                    <option value="morning">Nửa buổi sáng (0.5)</option>
-                                                    <option value="afternoon">Nửa buổi chiều (0.5)</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-1 text-center">
-                                                <button type="button" class="btn btn-sm p-1 text-danger"  data-action="deleted-clone" data-target="this" data-closest=".leave-items" data-target="this" data-remove="remove"><i class="ti ti-trash fs-5"></i></button>
-                                            </div>
+                                    <?php foreach ($leave_details as $detail): ?>
+                                    <div class="row g-2 align-items-center leave-items mb-2">
+                                        <div class="col-6"><input type="date" name="leave_date[]"
+                                                class="form-control py-3 bg-body rounded-4"
+                                                value="<?=$detail['leave_date']?>"></div>
+                                        <div class="col-5">
+                                            <select name="leave_session[]" data-select
+                                                data-style="form-select bg-body-tertiary py-3 rounded-4 w-100">
+                                                <option value="full_day" <?=$detail['leave_session']=='full_day'
+                                                    ? 'selected' : '' ?>>Nguyên ngày (1.0)</option>
+                                                <option value="morning" <?=$detail['leave_session']=='morning'
+                                                    ? 'selected' : '' ?>>Nửa buổi sáng (0.5)</option>
+                                                <option value="afternoon" <?=$detail['leave_session']=='afternoon'
+                                                    ? 'selected' : '' ?>>Nửa buổi chiều (0.5)</option>
+                                            </select>
                                         </div>
+                                        <div class="col-1 text-center">
+                                            <button type="button" class="btn btn-sm p-1 text-danger"
+                                                data-action="deleted-clone" data-target="this"
+                                                data-closest=".leave-items" data-target="this" data-remove="remove"><i
+                                                    class="ti ti-trash fs-5"></i></button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                    <?php else: ?>
+                                    <div class="row g-2 align-items-center leave-items mb-2">
+                                        <div class="col-6"><input type="date" name="leave_date[]"
+                                                class="form-control py-3 bg-body rounded-4" value="<?=date(" Y-m-d")?>">
+                                        </div>
+                                        <div class="col-5">
+                                            <select name="leave_session[]" data-select
+                                                data-style="form-select bg-body-tertiary py-3 rounded-4 w-100">
+                                                <option value="full_day">Nguyên ngày (1.0)</option>
+                                                <option value="morning">Nửa buổi sáng (0.5)</option>
+                                                <option value="afternoon">Nửa buổi chiều (0.5)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-1 text-center">
+                                            <button type="button" class="btn btn-sm p-1 text-danger"
+                                                data-action="deleted-clone" data-target="this"
+                                                data-closest=".leave-items" data-target="this" data-remove="remove"><i
+                                                    class="ti ti-trash fs-5"></i></button>
+                                        </div>
+                                    </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -66,7 +119,9 @@
                             <?=$app->component('textarea', ['name' => 'reason', 'rows' => 3, 'value' => $data['reason'] ?? ''])?>
                         </div>
                         <div class="col-lg-12 mt-3">
-                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit" data-alert="true" data-load="this"><?=$jatbi->lang("Gửi đơn")?></button>
+                            <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold"
+                                data-action="submit" data-alert="true"
+                                data-load="this"><?=$jatbi->lang("Gửi đơn")?></button>
                         </div>
                     </div>
                 </form>
