@@ -1020,7 +1020,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             if (($_SESSION['purchase'][$action]['order'] ?? null) != ($invoices['id'] ?? null)) {
                 unset($_SESSION['purchase'][$action]);
                 $_SESSION['purchase'][$action]['status'] = $invoices['status'];
-                $_SESSION['purchase'][$action]['stores'] = $invoices['stores'];
+                $_SESSION['purchase'][$action]['stores'] = ["id" => $invoices['stores']];
                 $_SESSION['purchase'][$action]['status_pay'] = $invoices['status_pay'];
                 $_SESSION['purchase'][$action]['discount'] = $invoices['discount'];
                 $_SESSION['purchase'][$action]['code'] = $invoices['code'];
@@ -1128,7 +1128,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $vendors = $app->select("vendors", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A',]);
             array_unshift($vendors, ["value" => "", "text" => $jatbi->lang("Chọn nhà cung cấp")]);
             $vars['vendors'] = $vendors;
-            $storess = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A', "id" => $accStore]);
+            $storess = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
             array_unshift($storess, ["value" => "", "text" => $jatbi->lang("Chọn cửa hàng")]);
             $vars['storess'] = $storess;
             echo $app->render($template . '/purchases/purchase-edit.html', $vars);

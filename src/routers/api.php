@@ -3903,6 +3903,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
 
         echo json_encode($datas);
     });
+
     $app->router("/search/form-type-3", ['GET', 'POST'], function ($vars) use ($app, $jatbi) {
         if ($app->method() === 'POST') {
             $app->header([
@@ -3936,4 +3937,101 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
             echo json_encode($datas);
         }
     })->setPermissions(['proposal']);
+
+
+
+
+
+
+      $app->router("/products-search-purchase-edit", ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+
+        $app->header(['Content-Type' => 'application/json']);
+        $datas = [];
+        $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
+        $action = $_POST['action'] ?? 'edit';
+
+        $SearchStoreId = $_SESSION['purchase'][$action]['stores']['id'] ?? null;
+
+        if (empty($SearchStoreId)) {
+            echo json_encode([]);
+            return;
+        }
+
+        $joins = [
+            "[<]stores" => ["stores" => "id"],
+            "[<]branch" => ["branch" => "id"]
+        ];
+
+        $fields = [
+            "products.id",
+            "products.code",
+            "products.name",
+            "stores.name(store_name)",
+            "branch.name(branch_name)",
+        ];
+
+
+        $where = [
+            "AND" => [
+                "OR" => [
+                    "products.name[~]" => $searchValue,
+                    "products.code[~]" => $searchValue,
+                ],
+                "products.status" => 'A',
+                "products.deleted" => 0,
+                "products.stores" => $SearchStoreId
+            ],
+            "LIMIT" => 15
+
+        ];
+
+        $app->select("products", $joins, $fields, $where, function ($data) use (&$datas) {
+            $datas[] = [
+                "value" => $data['id'],
+                "text" => $data['code'] . '-' . $data['name'] . '-' . $data['store_name'] . '-' . $data['branch_name'],
+                'url' => '/purchases/purchase-update/edit/products/add/' . $data['id']
+
+            ];
+        });
+
+        echo json_encode($datas);
+    });
+
+    $app->router("/ingredient-search-2-edit", ['POST'], function ($vars) use ($app) {
+        $app->header(['Content-Type' => 'application/json']);
+        $searchValue = isset($_POST['search']) ? $app->xss($_POST['search']) : '';
+
+        // Mảng này ở đúng vị trí
+        $type_map = [
+            1 => 'Đai',
+            2 => 'Ngọc',
+            3 => 'Khác',
+        ];
+
+        $where = [
+            "AND" => ["OR" => [
+                "code[~]" => $searchValue,
+
+            ], "status" => 'A', "deleted" => 0],
+            "LIMIT" => 15
+        ];
+
+        $datas = [];
+
+        // SỬA 1: Phải thêm $type_map vào 'use'
+        $app->select("ingredient", ["id", "code", "type"], $where, function ($data) use (&$datas, $type_map) {
+
+            // SỬA 2: Sửa lại cú pháp gán 'text'
+            $type_text = $type_map[$data['type']] ?? 'Khác';
+
+            $datas[] = [
+                'id' => $data['id'],
+                'text' => $data['code'] . ' - ' . $type_text,
+                'url' => '/purchases/purchase-update/edit/ingredient/add/' . $data['id']
+            ];
+        });
+
+        echo json_encode($datas);
+    });
+
 })->middleware(names: 'login');
