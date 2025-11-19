@@ -138,6 +138,7 @@
                                                 <a data-action="click" data-load="this" data-selector="[data-pos-item]"
                                                     data-attr-url="url" data-alert="true" class="stretched-link"
                                                     href="#!"></a>
+
                                             </div>
                                         </div>
                                     </template>
@@ -158,9 +159,8 @@
                                         <div
                                             class="search-item border-0 py-2 btn text-start position-relative d-flex align-items-center gap-2">
                                             <div data-attr-products="value"> <strong data-name="text"></strong>
-                                                <a data-action="click" data-load="this"
-                                                    data-attr-url="url" data-alert="true" class="stretched-link"
-                                                    href="#!"></a>
+                                                <a data-action="click" data-load="this" data-attr-url="url"
+                                                    data-alert="true" class="stretched-link" href="#!"></a>
                                             </div>
                                         </div>
                                     </template>
@@ -312,17 +312,25 @@
                                                 class="ti ti-plus"></i></a></td>
                                 </tr>
                                 <tr class="table-light">
-                                    <td colspan="<?=$colspan?>" class="text-end fw-bold">
-                                        <?=$jatbi->lang('Giảm giá')?>
-                                        (
-                                        <?=number_format($discount_amount)?>)
+                                    <td colspan="<?=$colspan?>" class="text-end align-middle">
+                                        <span class="fw-bold"><?=$jatbi->lang('Giảm giá')?></span>
+                                        <small class="text-danger ms-2 fw-bold">
+                                            (-
+                                            <?=number_format($discount_amount)?>)
+                                        </small>
                                     </td>
-                                    <td class="text-end fw-bold p-0">
-                                        <input type="tel" data-number="money" data-currency="" data-decimals="0"
-                                            data-thousands="," data-decimal="."
-                                            class="form-control form-control-sm text-end" value="<?=$data['discount'] ?? 0?>"
-                                            data-url="/purchases/purchase-update/add/discount"
-                                            data-form='{"value": "this.val"}' data-action="blur" data-load="this">
+                                    <td class="p-1">
+                                        <div class="d-flex justify-content-end">
+                                            <div class="input-group input-group-sm" style="width: 120px;"> <input
+                                                    type="tel" class="form-control text-end fw-bold"
+                                                    value="<?=$data['discount'] ?? 0?>" data-number="float" data-min="0" data-max="100" data-decimals="2"
+                                                    data-url="/purchases/purchase-update/<?=$action?>/discount"
+                                                    data-form='{"value": "this.val"}' data-action="blur"
+                                                    data-load="this" placeholder="0">
+
+                                                <span class="input-group-text bg-white text-secondary">%</span>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="text-center"></td>
                                 </tr>

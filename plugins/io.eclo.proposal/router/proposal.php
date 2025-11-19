@@ -985,6 +985,45 @@
                                 elseif($data['quick_purchase']>0){
                                     $app->update("warehouses_quick_purchase",["status"=>1],["id"=>$data['quick_purchase']]);
                                 }
+                                if ($data['furlough_id'] > 0) {
+                                    $app->update("hrm_leave_requests", ["status" => 'A'], ["id" => $data['furlough_id']]);
+                                    
+                                    $leave_request = $app->get("hrm_leave_requests", "*", ["id" => $data['furlough_id']]);
+                                    if ($leave_request) {
+                                        $getfurloughCat = $app->get("furlough_categorys", ["code"], ["id" => $leave_request['furlough_id']]);
+                                        
+                                        if ($getfurloughCat && $getfurloughCat['code'] == 'NPN') {
+                                            $year = date('Y', strtotime($leave_request['date']));
+                                            $profile_id = $leave_request['profile_id'];
+                                            $days_to_add = $leave_request['total_days']; 
+
+                                            $existing = $app->get("annual_leave", "*", [
+                                                "year" => $year,
+                                                "profile_id" => $profile_id
+                                            ]);
+
+                                            if ($existing) {
+                                                $app->update("annual_leave", [
+                                                    "days_used" => $existing['days_used'] + $days_to_add
+                                                ], [
+                                                    "year" => $year,
+                                                    "profile_id" => $profile_id
+                                                ]);
+                                            } else {
+                                                $app->insert("annual_leave", [
+                                                    "year" => $year,
+                                                    "days_used" => $days_to_add,
+                                                    "profile_id" => $profile_id,
+                                                    "total_accrued" => 0, 
+                                                    "carried_over" => 0,
+                                                    "account" => $account['id'],
+                                                    "date" => date("Y-m-d H:i:s"),
+                                                    "active" => $jatbi->active(32)
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             foreach($node_next['follows'] as $follow){
                                 $jatbi->notification($account['id'],$follow,'Theo dõi đề xuất #'.$data['id'],$content_notification_next,'/proposal/views/'.$data['active'],'');
