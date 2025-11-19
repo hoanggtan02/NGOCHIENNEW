@@ -865,7 +865,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         foreach ($sessionData['prepay_req'] ?? [] as $prepay) {
             $prepay_req += $prepay['price'];
         }
-        $discount_amount = ($sessionData['discount'] ?? 0 * $total / 100);
+        $discount_amount = (($sessionData['discount'] ?? 0) * $total / 100);
         $payment = (($total - $minu - $discount_amount) + $surcharge);
         $vars['total'] = $total;
         $vars['minu'] = $minu;

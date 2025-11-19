@@ -3756,7 +3756,6 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
                     "proposal_target.deleted" => 0,
                     // "brands_linkables.brands" => $jatbi->brands(),
                     // "stores_linkables.stores" => $stores[0]['value'],
-
                 ]
             ];
             if ($parent) {
@@ -3919,7 +3918,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
                     "proposal_form.status" => 'A',
                     "proposal_form.deleted" => 0,
                     "stores_linkables.stores" => $jatbi->stores(),
-                    "proposal_form.form" => 3, 
+                    "proposal_form.form" => 3,
                 ]
             ];
             $app->select("proposal_form", [
@@ -3938,12 +3937,7 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
         }
     })->setPermissions(['proposal']);
 
-
-
-
-
-
-      $app->router("/products-search-purchase-edit", ['POST'], function ($vars) use ($app, $jatbi, $setting) {
+    $app->router("/products-search-purchase-edit", ['POST'], function ($vars) use ($app, $jatbi, $setting) {
 
         $app->header(['Content-Type' => 'application/json']);
         $datas = [];
@@ -4033,5 +4027,4 @@ $app->group($setting['manager'] . "/api", function ($app) use ($jatbi, $stores, 
 
         echo json_encode($datas);
     });
-
 })->middleware(names: 'login');
