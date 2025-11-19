@@ -659,33 +659,37 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $app->select("purchase", $joins, $columns, $where, function ($data) use (&$datas, $jatbi, $vars, $app, $setting, $common) {
                 $status_pay_info = $setting['Status_invoices'][$data['status_pay']] ?? ['name' => 'Không rõ', 'color' => 'dark'];
                 $status_purchase_info = $setting['Status_purchase'][$data['status']] ?? ['name' => 'Không rõ', 'color' => 'secondary'];
-
+                if ($data['proposal_status'] == 2){
+                    $app->update("purchase", ["status" => 3], ["id" => $data['id']] );
+                }
 
 
 
                 $prepayButton = '';
 
                 // Điều kiện hiển thị nút prepay (giống code cũ)
-                if ($data['status_pay'] == 2 && ($data['status'] == 3 || $data['status'] == 5)) {
-                    $prepayButton = '<button data-action="modal" data-url="/purchases/purchase-prepay/' . $data['id'] . '" 
-                            " class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Trả trước') . '"><i class="ti ti-cash-banknote"></i>
-                         </button>';
+                if ($data['status_pay'] == 2 ){
+                    if ($data['proposal_status'] == 2 || $data['status'] == 5) {
+                        $prepayButton = '<button data-action="modal" data-url="/purchases/purchase-prepay/' . $data['id'] . '" 
+                                " class="btn btn-eclo-light btn-sm border-0 py-1 px-2 rounded-3" aria-label="' . $jatbi->lang('Trả trước') . '"><i class="ti ti-cash-banknote"></i>
+                            </button>';
+                    }
                 }
 
                 $importButton = '';
-                if ($data['status'] == 3 && $data['type'] == 1) {
+                if ($data['proposal_status'] == 2 && $data['type'] == 1) {
                     // import hàng hóa
                     $importButton = '<a class="btn btn-sm btn-eclo-light pjax-load border-0 py-1 px-2 rounded-3" 
                             href="/warehouses/warehouses-import/purchase/' . $data['id'] . '">
                             <i class="ti ti-file-import"></i></a>';
-                } elseif ($data['status'] == 3 && $data['type'] == 2) {
+                } elseif ($data['proposal_status'] == 2 && $data['type'] == 2) {
                     // import nguyên liệu
                     $importButton = '<a class="btn btn-sm btn-eclo-light pjax-load border-0 py-1 px-2 rounded-3" 
                             href="/warehouses/ingredient-import/purchase/' . $data['id'] . '">
                             <i class="ti ti-file-import"></i></a>';
                 }
                 $editButton = '';
-                if ($data['status'] == 1 || $data['status'] == 4) {
+                if ($data['proposal_status'] == 1 || $data['proposal_status'] == 3) {
                     $editButton = '<a class="btn btn-sm btn-eclo-light pjax-load border-0 py-1 px-2 rounded-3" 
                             href="/purchases/purchase-edit/' . $data['id'] . '">
                             <i class="ti ti-edit"></i></a>';
@@ -884,7 +888,6 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         $data = $app->get("purchase", "*", [
             "id" => $id,
             "deleted" => 0,
-            "status" => [3, 5]
         ]);
 
         // Nếu không tìm thấy đơn hàng, trả về lỗi 404
@@ -1017,10 +1020,14 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $Cus = $app->get("vendors", "*", ["id" => $invoices['vendor']]);
             $Pros = $app->select("purchase_products", "*", ["purchase" => $invoices['id'], "deleted" => 0]);
             $Details = $app->select("purchase_details", "*", ["purchase" => $invoices['id'], "deleted" => 0]);
+            $GetPurchase = $app->get("purchase_proposal", "*", ["purchase_id" => $vars['id'], "deleted" => 0]);
             if (($_SESSION['purchase'][$action]['order'] ?? null) != ($invoices['id'] ?? null)) {
                 unset($_SESSION['purchase'][$action]);
                 $_SESSION['purchase'][$action]['status'] = $invoices['status'];
-                $_SESSION['purchase'][$action]['stores'] = ["id" => $invoices['stores']];
+                $_SESSION['purchase'][$action]['form'] = $GetPurchase['form'];
+                $_SESSION['purchase'][$action]['workflows'] = $GetPurchase['workflows'];
+                $_SESSION['purchase'][$action]['category'] = $GetPurchase['target'];
+                $_SESSION['purchase'][$action]['stores']['id'] = $invoices['stores'];
                 $_SESSION['purchase'][$action]['status_pay'] = $invoices['status_pay'];
                 $_SESSION['purchase'][$action]['discount'] = $invoices['discount'];
                 $_SESSION['purchase'][$action]['code'] = $invoices['code'];
@@ -1046,7 +1053,7 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                             "amount" => $value['amount'],
                             "price" => $value['price'],
                             "units" => $GetPro['units'],
-                            "notes" => $value['notes'],
+                            "notes" => $value['notes'] ?? "",
                             "status" => $value['status'],
                         ];
                     } elseif ($invoices['type'] == 2) {
@@ -1131,6 +1138,9 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $storess = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
             array_unshift($storess, ["value" => "", "text" => $jatbi->lang("Chọn cửa hàng")]);
             $vars['storess'] = $storess;
+            $vars['forms'][] = $app->get("proposal_form", ["id (value)", "name (text)"], ["id" => $GetPurchase['form'] ?? 0]);
+            $vars['workflows'][] = $app->get("proposal_workflows", ["id (value)", "name (text)"], ["id" => $GetPurchase['workflows'] ?? 0]);
+            $vars['categorys'][] = $app->get("proposal_target", ["id (value)", "name (text)"], ["id" => $GetPurchase['target'] ?? 0]);
             echo $app->render($template . '/purchases/purchase-edit.html', $vars);
         } else {
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
@@ -1546,8 +1556,122 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                     }
                 }
                 if ($action == "edit") {
-                    $app->update("purchase", $insert, ["id" => $_SESSION['purchase'][$action]['order'] ?? 0]);
-                    $orderId = $_SESSION['purchase'][$action]['order'] ?? null;
+                    $id_purchase = $_SESSION['purchase'][$action]['order'] ?? 0;
+                    $app->update("purchase", $insert, ["id" => $id_purchase]);
+                    $purchase_proposal = [
+                        "form" => $_SESSION['purchase'][$action]['form'] ?? 0,
+                        "target" => $_SESSION['purchase'][$action]['category'] ?? 0,
+                        "workflows" => $_SESSION['purchase'][$action]['workflows'] ?? 0,
+                        "active" => $GetRecruit['active'] ?? $jatbi->active(),
+                        "status" => 1,
+                    ];
+                    $Getpurchase_proposal = $app->get("purchase_proposal", "*", ["purchase_id" => $id_purchase]);
+                    if ($Getpurchase_proposal && !empty($Getpurchase_proposal['id'])) {
+                        // Update đúng 1 record liên kết với job
+                        $app->update("purchase_proposal", $purchase_proposal, ["id" => $Getpurchase_proposal['id']]);
+                        $purchase_proposal_id = $Getpurchase_proposal['id'];
+                    } else {
+                        $purchase_proposal["purchase_id"] = $id_purchase;
+                        $app->insert("purchase_proposal", $purchase_proposal);
+                        $purchase_proposal_id = $app->id();
+                    }
+                    if ($recruitment_proposal['form'] > 0 && $recruitment_proposal['target'] > 0 && $recruitment_proposal['workflows'] > 0) {
+                        // Kiểm tra proposal đã tồn tại cho job này chưa
+                        $checkProposal = $app->get("proposals", ["id", "active", "workflows", "account"], ["purchase_id" => $id_purchase, "deleted" => 0]);
+
+                        $user_id = $app->getSession("accounts")['id'];
+                        $user_name = $app->getSession("accounts")['name'] ?? '';
+
+                        // Chuẩn dữ liệu proposal
+                        $proposalData = [
+                            "type" => 3,
+                            "form" => $recruitment_proposal['form'],
+                            "workflows" => $recruitment_proposal['workflows'],
+                            "category" => $recruitment_proposal['target'],
+                            "price" => 0,
+                            "reality" => 0,
+                            "date" => date("Y-m-d"),
+                            "modify" => date("Y-m-d H:i:s"),
+                            "account" => $user_id,
+                            "status" => 0,
+                            "stores" => $jatbi->stores('ID'),
+                            "stores_id" => $jatbi->stores('ID'),
+                            "active" => $jatbi->active(),
+                            "content" => 'Đề xuất mua hàng: '.$insert['content'],
+                            "purchase_id" => $id_purchase,
+                        ];
+
+                        if ($checkProposal && !empty($checkProposal['id'])) {
+                            // Update existing
+                            $app->update("proposals", $proposalData, ["id" => $checkProposal['id']]);
+                            $ProposalID = $checkProposal['id'];
+                            $proposalData['active'] = $checkProposal['active'];
+                            $jatbi->logs('proposal', 'proposal-update', $proposalData);
+                        } else {
+                            // Insert new
+                            $proposalData['create'] = date("Y-m-d H:i:s");
+                            $proposalData['code'] = time();
+                            $proposalData['active'] = $proposalData['active']; // giữ giá trị active đã sinh
+                            $app->insert("proposals", $proposalData);
+                            $ProposalID = $app->id();
+                            $jatbi->logs('proposal', 'proposal-create', $proposalData);
+                        }
+
+                        // Ghi người tạo (nếu chưa có)
+                        $app->insert("proposal_accounts", [
+                            "account" => $user_id,
+                            "proposal" => $ProposalID,
+                            "date" => date("Y-m-d H:i:s"),
+                        ]);
+
+                        // Lấy process và tạo bước đầu nếu có
+                        $process = $getprocess->workflows($ProposalID, $proposalData['account']);
+
+                        if (!empty($process[0])) {
+                            $app->update("proposal_process", ["deleted" => 1], ["proposal" => $ProposalID, "workflows" => $proposalData['workflows']]);
+
+                            $proposal_process = [
+                                "proposal" => $ProposalID,
+                                "workflows" => $proposalData['workflows'],
+                                "date" => date("Y-m-d H:i:s"),
+                                "account" => $user_id,
+                                "node" => $process[0]['node_id'],
+                                "approval" => 1,
+                                "approval_date" => date("Y-m-d H:i:s"),
+                            ];
+                            $app->insert("proposal_process", $proposal_process);
+                            $proposal_process_ID = $app->id();
+
+                            $app->insert("proposal_logs", [
+                                "proposal" => $ProposalID,
+                                "date" => date("Y-m-d H:i:s"),
+                                "account" => $user_id,
+                                "content" => 'Gửi đề xuất',
+                                "process" => $proposal_process_ID,
+                                "data" => json_encode($proposal_process),
+                            ]);
+
+                            $app->update("proposals", [
+                                "status" => 1,
+                                "process" => $process[0]['node_id'],
+                                "modify" => date("Y-m-d H:i:s"),
+                            ], ["id" => $ProposalID]);
+
+                            // Gửi notification nếu có approver tiếp theo
+                            if (!empty($process[1]['approver_account_id'])) {
+                                $content_notification = $user_name . ' đề xuất: ' . $proposalData['content'];
+                                $jatbi->notification($user_id, $process[1]['approver_account_id'], 'Đề xuất #' . $ProposalID, $content_notification, '/proposal/views/' . $proposalData['active'], '');
+
+                                // Ghi đề tài khoản người duyệt
+                                $app->insert("proposal_accounts", [
+                                    "account" => $process[1]['approver_account_id'],
+                                    "proposal" => $ProposalID,
+                                    "date" => date("Y-m-d H:i:s"),
+                                ]);
+                            }
+                        }
+                    }
+                    $orderId = $id_purchase;
                     $app->insert("purchase_logs", [
                         "purchase"     => $orderId,
                         "user"        => $app->getSession("accounts")['id'] ?? 0,
