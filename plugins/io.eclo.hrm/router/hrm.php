@@ -10729,4 +10729,755 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             }
         }
     })->setPermissions(['contract']);
+
+    $app->router('/reports-work', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Báo cáo công việc");
+            $vars['sub_title'] = $jatbi->lang("Hạng mục");
+            echo $app->render($template . '/hrm/reports_work.html', $vars);
+        }
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'report_categories.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
+
+            // $joins = [
+            //     "[>]report_items" => ["id" => "category_id"],
+            // ];
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        'report_categories.name[~]' => $searchValue,
+                        'report_categories.code[~]' => $searchValue,
+                    ],
+                    'report_categories.status[<>]' => $status,
+                    'report_categories.deleted' => 0,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+                // "GROUP" => "report_categories.id",
+            ];
+
+            $count = $app->count("report_categories", "report_categories.id", $where);
+            $datas = [];
+            // $items_html = '';
+            $app->select("report_categories", [
+                'report_categories.id',
+                'report_categories.name',
+                'report_categories.code ',
+                'report_categories.status',
+                'report_categories.deleted',
+                // 'report_items.name(items_string)',
+                // 'items_string' =>$app->raw('GROUP_CONCAT(report_items.name SEPARATOR ", ")'),
+            ], $where, function ($data) use (&$datas, $jatbi, &$items_html, $app) {
+
+                $datas[] = [
+                    "checkbox" => $app->component("box", ["data" => $data['id']]),
+                    "name" => $data['name'],
+                    "code" => $data['code'],
+                    "status" => $app->component("status", [
+                        "url" => "/hrm/reports-work-status/" . $data['id'],
+                        "data" => $data['status'],
+                        "permission" => ['reports-work.edit']
+                    ]),
+                    "action" => $app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['reports-work.edit'],
+                                'action' => ['data-url' => '/hrm/reports-work-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['reports-work.deleted'],
+                                'action' => ['data-url' => '/hrm/reports-work-deteted?box=' . $data['id'], 'data-action' => 'modal']
+                            ],
+
+                        ]
+                    ]),
+                ];
+            });
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas
+            ]);
+        }
+    })->setPermissions(['reports-work']);
+
+    $app->router("/reports-work-status/{id}", 'POST', function ($vars) use ($app, $jatbi) {
+        $app->header([
+            'Content-Type' => 'application/json',
+        ]);
+        $data = $app->get("report_categories", "*", ["id" => $vars['id'], "deleted" => 0]);
+        if ($data > 1) {
+            if ($data['status'] === 'A') {
+                $status = "D";
+            } elseif ($data['status'] === 'D') {
+                $status = "A";
+            }
+            $app->update("report_categories", ["status" => $status], ["id" => $data['id']]);
+            $jatbi->logs('hrm', 'report_categories-status', $data);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } else {
+            echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+        }
+    })->setPermissions(['reports-work.edit']);
+
+
+    $app->router("/reports-work-deteted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $vars['title'] = $jatbi->lang("Xóa Hạng mục Báo cáo công việc");
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $boxid = explode(',', $app->xss($_GET['box']));
+            $datas = $app->select("report_categories", "*", ["id" => $boxid, "deleted" => 0]);
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $app->update("report_categories", ["deleted" => 1], ["id" => $data['id']]);
+                }
+                $jatbi->logs('hrm', 'report_categories-deleted', $datas);
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+            }
+        }
+    })->setPermissions(['reports-work.deleted']);
+
+    $app->router("/reports-work-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        if ($app->method() === 'GET') {
+            $vars['data'] = [
+                "status" => 'A',
+            ];
+            $vars['title'] = $jatbi->lang("Thêm hạng mục Báo cáo công việc");
+            echo $app->render($template . '/hrm/report_categories-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            if ($app->xss($_POST['name']) == '') {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+            } else {
+                $insert = [
+                    "code" => $app->xss($_POST['code']),
+                    "name" => $app->xss($_POST['name']),
+                    "status" => $app->xss($_POST['status']),
+                ];
+                $app->insert("report_categories", $insert);
+                $jatbi->logs('hrm', 'report_categories-add', [$insert]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        }
+    })->setPermissions(['reports-work.add']);
+
+    $app->router("/reports-work-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Sửa hạng mục Báo cáo công việc");
+        if ($app->method() === 'GET') {
+            $vars['data'] = $app->get("report_categories", "*", ["id" => $vars['id'], "deleted" => 0]);
+            if (!empty($vars['data'])) {
+                echo $app->render($template . '/hrm/report_categories-post.html', $vars, $jatbi->ajax());
+            } else {
+                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
+            }
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $data = $app->get("report_categories", "*", ["id" => $vars['id'], "deleted" => 0]);
+            if (!empty($data)) {
+                if ($app->xss($_POST['code']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['status']) == '') {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+                } else {
+                    $insert = [
+                        "code" => $app->xss($_POST['code']),
+                        "name" => $app->xss($_POST['name']),
+                        "status" => $app->xss($_POST['status']),
+                    ];
+                    $app->update("report_categories", $insert, ["id" => $data['id']]);
+                    $jatbi->logs('hrm', 'report_categories-edit', [$insert]);
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                }
+            } else {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+            }
+        }
+    })->setPermissions(['reports-work.edit']);
+
+    $app->router('/reports-work/small', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Báo cáo công việc");
+            $vars['sub_title'] = $jatbi->lang("Hạng mục nhỏ");
+            echo $app->render($template . '/hrm/reports_work_small.html', $vars);
+        }
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'report_categories.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
+
+            $joins = [
+                "[>]report_categories" => ["category_id" => "id"],
+            ];
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        'report_items.name[~]' => $searchValue,
+                    ],
+                    'report_items.status[<>]' => $status,
+                    'report_items.deleted' => 0,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+            ];
+
+            $count = $app->count("report_items", $joins, "report_items.id", $where);
+            $datas = [];
+            $app->select("report_items", $joins, [
+                'report_items.id',
+                'report_items.name',
+                'report_items.status',
+                'report_categories.name(category_name)',
+                // 'report_items.name(items_string)',
+                // 'items_string' =>$app->raw('GROUP_CONCAT(report_items.name SEPARATOR ", ")'),
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+
+                $datas[] = [
+                    "checkbox" => $app->component("box", ["data" => $data['id']]),
+                    "name" => $data['name'],
+                    "category_name" => $data['category_name'],
+                    "status" => $app->component("status", [
+                        "url" => "/hrm/reports-work-small-status/" . $data['id'],
+                        "data" => $data['status'],
+                        "permission" => ['reports-work.edit']
+                    ]),
+                    "action" => $app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['reports-work.edit'],
+                                'action' => ['data-url' => '/hrm/reports-work-small-edit/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['reports-work.deleted'],
+                                'action' => ['data-url' => '/hrm/reports-work-small-deteted?box=' . $data['id'], 'data-action' => 'modal']
+                            ],
+
+                        ]
+                    ]),
+                ];
+            });
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas
+            ]);
+        }
+    })->setPermissions(['reports-work']);
+
+    $app->router("/reports-work-small-status/{id}", 'POST', function ($vars) use ($app, $jatbi) {
+        $app->header([
+            'Content-Type' => 'application/json',
+        ]);
+        $data = $app->get("report_items", "*", ["id" => $vars['id'], "deleted" => 0]);
+        if ($data > 1) {
+            if ($data['status'] === 'A') {
+                $status = "D";
+            } elseif ($data['status'] === 'D') {
+                $status = "A";
+            }
+            $app->update("report_items", ["status" => $status], ["id" => $data['id']]);
+            $jatbi->logs('hrm', 'report_items-status', $data);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } else {
+            echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+        }
+    })->setPermissions(['reports-work.edit']);
+
+    $app->router("/reports-work-small-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        if ($app->method() === 'GET') {
+            $vars['data'] = [
+                "status" => 'A',
+            ];
+            $vars['title'] = $jatbi->lang("Thêm hạng mục Báo cáo công việc");
+            $vars['categories'] = $app->select("report_categories", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            echo $app->render($template . '/hrm/report_item-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            if ($app->xss($_POST['name']) == '' || $app->xss($_POST['category_id']) == '') {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+            } else {
+                $insert = [
+                    "category_id" => $app->xss($_POST['category_id']),
+                    "name" => $app->xss($_POST['name']),
+                    "status" => $app->xss($_POST['status']),
+                ];
+                $app->insert("report_items", $insert);
+                $jatbi->logs('hrm', 'report_items-add', [$insert]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        }
+    })->setPermissions(['reports-work.add']);
+
+    $app->router("/reports-work-small-deteted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $vars['title'] = $jatbi->lang("Xóa Hạng mục Báo cáo công việc");
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $boxid = explode(',', $app->xss($_GET['box']));
+            $datas = $app->select("report_items", "*", ["id" => $boxid, "deleted" => 0]);
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $app->update("report_items", ["deleted" => 1], ["id" => $data['id']]);
+                }
+                $jatbi->logs('hrm', 'report_items-deleted', $datas);
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+            }
+        }
+    })->setPermissions(['reports-work.deleted']);
+
+    $app->router("/reports-work-small-edit/{id}", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        $vars['title'] = $jatbi->lang("Sửa hạng mục Báo cáo công việc");
+        if ($app->method() === 'GET') {
+            $vars['data'] = $app->get("report_items", "*", ["id" => $vars['id'], "deleted" => 0]);
+            $vars['categories'] = $app->select("report_categories", ["id(value)", "name(text)"], ["deleted" => 0, "status" => "A"]);
+            if (!empty($vars['data'])) {
+                echo $app->render($template . '/hrm/report_item-post.html', $vars, $jatbi->ajax());
+            } else {
+                echo $app->render($template . '/error.html', $vars, $jatbi->ajax());
+            }
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $data = $app->get("report_items", "*", ["id" => $vars['id'], "deleted" => 0]);
+            if (!empty($data)) {
+                if ($app->xss($_POST['category_id']) == '' || $app->xss($_POST['name']) == '' || $app->xss($_POST['status']) == '') {
+                    echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+                } else {
+                    $insert = [
+                        "category_id" => $app->xss($_POST['category_id']),
+                        "name" => $app->xss($_POST['name']),
+                        "status" => $app->xss($_POST['status']),
+                    ];
+                    $app->update("report_items", $insert, ["id" => $data['id']]);
+                    $jatbi->logs('hrm', 'report_items-edit', [$insert]);
+                    echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+                }
+            } else {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+            }
+        }
+    })->setPermissions(['reports-work.edit']);
+
+    $app->router('/reports-work/report', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting, $accStore, $template) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Báo cáo công việc");
+            $vars['sub_title'] = $jatbi->lang("Hạng mục nhỏ");
+            echo $app->render($template . '/hrm/reports_work_report.html', $vars);
+        }
+        if ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+            $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+            $length = isset($_POST['length']) ? intval($_POST['length']) : $setting['site_page'] ?? 10;
+            $searchValue = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+            $orderName = isset($_POST['order'][0]['name']) ? $_POST['order'][0]['name'] : 'reports.id';
+            $orderDir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'DESC';
+            $status = (isset($_POST['status']) && in_array($_POST['status'], ['A', 'D'])) ? [$_POST['status'], $_POST['status']] : '';
+
+            $joins = [
+                // "[>]report_details" => ["id" => "report_id"],
+                "[>]accounts" => ["reports.user_id" => "id"],
+            ];
+
+            $where = [
+                "AND" => [
+                    "OR" => [
+                        'reports.name[~]' => $searchValue,
+                    ],
+                    'reports.status[<>]' => $status,
+                    'reports.deleted' => 0,
+                ],
+                "LIMIT" => [$start, $length],
+                "ORDER" => [$orderName => strtoupper($orderDir)],
+            ];
+
+            $count = $app->count("reports", $joins, "reports.id", $where);
+            $datas = [];
+            $app->select("reports", $joins, [
+                'reports.id',
+                'reports.name',
+                'reports.created_at',
+                'reports.note',
+                'reports.status',
+                'accounts.name(user_name)',
+            ], $where, function ($data) use (&$datas, $jatbi, $app) {
+                $datas[] = [
+                    "checkbox" => $app->component("box", ["data" => $data['id']]),
+                    "name" => $data['name'],
+                    "status" => $app->component("status", [
+                        "url" => "/hrm/reports-work-report-status/" . $data['id'],
+                        "data" => $data['status'],
+                        "permission" => ['reports-work.edit']
+                    ]),
+                    "note" => $data['note'],
+                    "user_name" => $data['user_name'],
+                    "created_at" => date($data['created_at']),
+                    "action" => $app->component("action", [
+                        "button" => [
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xem"),
+                                'permission' => ['reports-work'],
+                                'action' => ['data-url' => '/hrm/reports-work-report-view/' . ($data['id'] ?? ''), 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'link',
+                                'name' => $jatbi->lang("Sửa"),
+                                'permission' => ['reports-work.edit'],
+                                'action' => [
+                                    'href' => '/hrm/reports-work-report-edit/' . ($data['id'] ?? '')
+                                ]
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Xóa"),
+                                'permission' => ['reports-work.deleted'],
+                                'action' => ['data-url' => '/hrm/reports-work-report-deteted?box=' . $data['id'], 'data-action' => 'modal']
+                            ],
+                            [
+                                'type' => 'button',
+                                'name' => $jatbi->lang("Upfile"),
+                                'permission' => ['reports-work.edit'],
+                                'action' => ['data-url' => '/hrm/reports-work-report-upfile/' . $data['id'], 'data-action' => 'modal']
+                            ],
+                        ]
+                    ]),
+                ];
+            });
+            echo json_encode([
+                "draw" => $draw,
+                "recordsTotal" => $count,
+                "recordsFiltered" => $count,
+                "data" => $datas
+            ]);
+        }
+    })->setPermissions(['reports-work']);
+
+    $app->router("/reports-work-report-status/{id}", 'POST', function ($vars) use ($app, $jatbi) {
+        $app->header([
+            'Content-Type' => 'application/json',
+        ]);
+        $data = $app->get("reports", "*", ["id" => $vars['id'], "deleted" => 0]);
+        if ($data > 1) {
+            if ($data['status'] === 'A') {
+                $status = "D";
+            } elseif ($data['status'] === 'D') {
+                $status = "A";
+            }
+            $app->update("reports", ["status" => $status], ["id" => $data['id']]);
+            $jatbi->logs('hrm', 'reports-status', $data);
+            echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+        } else {
+            echo json_encode(["status" => "error", "content" => $jatbi->lang("Không tìm thấy dữ liệu")]);
+        }
+    })->setPermissions(['reports-work.edit']);
+
+    $app->router("/reports-work-report-add", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template) {
+        if ($app->method() === 'GET') {
+            $vars['title'] = $jatbi->lang("Thêm hạng mục Báo cáo công việc");
+            echo $app->render($template . '/hrm/report_report-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            if ($app->xss($_POST['name']) == '') {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
+            } else {
+                $insert = [
+                    "code" => $app->xss($_POST['code']),
+                    "name" => $app->xss($_POST['name']),
+                    "status" => $app->xss($_POST['status']),
+                ];
+                $app->insert("report_categories", $insert);
+                $jatbi->logs('hrm', 'report_categories-add', [$insert]);
+                echo json_encode(['status' => 'success', 'content' => $jatbi->lang("Cập nhật thành công")]);
+            }
+        }
+    })->setPermissions(['reports-work.add']);
+
+    $app->router('/reports-work-report-add', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        $vars['title'] = $jatbi->lang("Tạo báo cáo công việc");
+        if ($app->method() === 'GET') {
+            $categories = $app->select("report_categories", "*", [
+                "status" => "A",
+                "deleted" => 0,
+            ]);
+
+            $all_items = $app->select("report_items", "*", [
+                "status" => "A",
+                "deleted" => 0,
+            ]);
+            foreach ($categories as $key => $cat) {
+                $categories[$key]['children'] = [];
+                foreach ($all_items as $item) {
+                    if ($item['category_id'] == $cat['id']) {
+                        $categories[$key]['children'][] = $item;
+                    }
+                }
+            }
+            $vars['report_tree'] = $categories;
+            echo $app->render($template . '/hrm/report_report-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $contents = $_POST['content'] ?? [];
+            $general_note = $app->xss($_POST['general_note'] ?? '');
+
+            $filled_content = array_filter($contents, function ($value) {
+                return !empty(trim($value));
+            });
+            if (empty($_POST['name'])) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng nhập tên báo cáo")]);
+                return;
+            }
+
+            if (empty($filled_content) && empty(trim($general_note))) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng nhập ít nhất một nội dung báo cáo")]);
+                return;
+            }
+
+            $app->action(function () use ($app, $jatbi, $contents, $general_note) {
+                $current_user_id = $app->getSession("accounts")['id'] ?? 0;
+
+                $app->insert("reports", [
+                    "user_id"     => $current_user_id,
+                    "name"        => $app->xss($_POST['name'] ?? 'Báo cáo công việc'),
+                    "created_at"  => date("Y-m-d H:i:s"),
+                    "status"      => "A",
+                    "deleted"     => 0
+                ]);
+                $report_id = $app->id();
+
+                foreach ($contents as $item_id => $val) {
+                    if (!empty(trim($val))) {
+                        $app->insert("report_details", [
+                            "report_id" => $report_id,
+                            "item_id"   => $item_id,
+                            "content"   => $app->xss($val)
+                        ]);
+                    }
+                }
+
+                $jatbi->logs('report', 'add', ["id" => $report_id]);
+            });
+
+            echo json_encode([
+                'status'  => 'success',
+                'content' => $jatbi->lang("Gửi báo cáo thành công"),
+            ]);
+        }
+    })->setPermissions(['reports-work.add']);
+
+    $app->router('/reports-work-report-edit/{id}', ['GET', 'POST'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        $report_id = $app->xss($vars['id']);
+        $vars['title'] = $jatbi->lang("Chỉnh sửa báo cáo công việc");
+
+        $report = $app->get("reports", "*", [
+            "id" => $report_id,
+            "deleted" => 0
+        ]);
+
+        if (!$report) {
+            if ($app->method() === 'POST') {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Báo cáo không tồn tại")]);
+            } else {
+                echo $app->render($setting['template'] . '/pages/error.html', $vars);
+            }
+            return;
+        }
+
+        if ($app->method() === 'GET') {
+            $categories = $app->select("report_categories", "*", [
+                "status" => "A",
+                "deleted" => 0,
+            ]);
+            $all_items = $app->select("report_items", "*", [
+                "status" => "A",
+                "deleted" => 0,
+            ]);
+            $details_db = $app->select("report_details", ["item_id", "content"], [
+                "report_id" => $report_id
+            ]);
+            $old_content = [];
+            foreach ($details_db as $det) {
+                $old_content[$det['item_id']] = $det['content'];
+            }
+
+            foreach ($categories as $key => $cat) {
+                $categories[$key]['children'] = [];
+                foreach ($all_items as $item) {
+                    if ($item['category_id'] == $cat['id']) {
+                        $item['saved_content'] = $old_content[$item['id']] ?? '';
+                        $categories[$key]['children'][] = $item;
+                    }
+                }
+            }
+
+            $vars['report_tree'] = $categories;
+            $vars['data'] = $report;
+
+            echo $app->render($template . '/hrm/report_report-post.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header(['Content-Type' => 'application/json']);
+
+            $contents = $_POST['content'] ?? [];
+            $name = $app->xss($_POST['name'] ?? '');
+
+            if (empty($name)) {
+                echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng nhập tên báo cáo")]);
+                return;
+            }
+
+            $app->action(function () use ($app, $jatbi, $contents, $name, $report_id) {
+
+                $app->update("reports", [
+                    "name" => $name,
+                ], ["id" => $report_id]);
+
+                $app->delete("report_details", ["report_id" => $report_id]);
+                foreach ($contents as $item_id => $val) {
+                    if (!empty(trim($val))) {
+                        $app->insert("report_details", [
+                            "report_id" => $report_id,
+                            "item_id"   => $item_id,
+                            "content"   => $app->xss($val)
+                        ]);
+                    }
+                }
+
+                $jatbi->logs('report', 'edit', ["id" => $report_id]);
+            });
+
+            echo json_encode([
+                'status'  => 'success',
+                'content' => $jatbi->lang("Cập nhật báo cáo thành công"),
+            ]);
+        }
+    })->setPermissions(['reports-work.edit']);
+
+    $app->router("/reports-work-report-deteted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
+        $vars['title'] = $jatbi->lang("Xóa Hạng mục Báo cáo công việc");
+        if ($app->method() === 'GET') {
+            echo $app->render($setting['template'] . '/common/deleted.html', $vars, $jatbi->ajax());
+        } elseif ($app->method() === 'POST') {
+            $app->header([
+                'Content-Type' => 'application/json',
+            ]);
+            $boxid = explode(',', $app->xss($_GET['box']));
+            $datas = $app->select("reports", "*", ["id" => $boxid, "deleted" => 0]);
+            if (count($datas) > 0) {
+                foreach ($datas as $data) {
+                    $app->update("reports", ["deleted" => 1], ["id" => $data['id']]);
+                }
+                $jatbi->logs('hrm', 'reports-deleted', $datas);
+                echo json_encode(['status' => 'success', "content" => $jatbi->lang("Cập nhật thành công")]);
+            } else {
+                echo json_encode(['status' => 'error', 'content' => $jatbi->lang("Có lỗi xẩy ra")]);
+            }
+        }
+    })->setPermissions(['reports-work.deleted']);
+
+
+    $app->router('/reports-work-report-view/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template, $setting) {
+        $report_id = $app->xss($vars['id']);
+        $vars['title'] = $jatbi->lang("Chi tiết báo cáo");
+
+        $report = $app->get("reports", [
+            "[>]accounts" => ["user_id" => "id"],
+            // "[>]personnels" => ["accounts.personnels_id" => "id"]
+        ], [
+            "reports.id",
+            "reports.created_at",
+            "reports.note",
+            "reports.name",
+            "accounts.name(staff_name)",
+            // "personnels.name(staff_name)",
+            // "personnels.position(staff_position)", // Giả sử có cột này
+            // "personnels.department(staff_department)" // Giả sử có cột này
+        ], [
+            "reports.id" => $report_id,
+            "reports.deleted" => 0
+        ]);
+
+        if (!$report) {
+            echo $app->render($setting['template'] . '/common/error-modal.html', $vars);
+            return;
+        }
+
+        $categories = $app->select("report_categories", "*", [
+            "status" => "A",
+            "deleted" => 0,
+        ]);
+        $all_items = $app->select("report_items", "*", [
+            "status" => "A",
+            "deleted" => 0,
+        ]);
+
+        $details_db = $app->select("report_details", ["item_id", "content"], [
+            "report_id" => $report_id
+        ]);
+
+        $content_map = [];
+        foreach ($details_db as $det) {
+            $content_map[$det['item_id']] = $det['content'];
+        }
+
+        foreach ($categories as $key => $cat) {
+            $categories[$key]['children'] = [];
+            foreach ($all_items as $item) {
+                if ($item['category_id'] == $cat['id']) {
+                    $item['report_content'] = $content_map[$item['id']] ?? '';
+                    $categories[$key]['children'][] = $item;
+                }
+            }
+        }
+
+        $vars['report_tree'] = $categories;
+
+        $vars['data'] = $report;
+
+        echo $app->render($template . '/hrm/report_report-view.html', $vars, $jatbi->ajax());
+    })->setPermissions(['reports-work']);
 })->middleware('login');

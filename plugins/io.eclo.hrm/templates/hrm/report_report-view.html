@@ -1,0 +1,158 @@
+<div class="modal fade modal-load" tabindex="-1">
+    <div class="modal-dialog modal-xl"> <div class="modal-content">
+            
+            <div class="modal-header d-print-none bg-light">
+                <h5 class="modal-title fw-bold text-uppercase">
+                    <i class="ti ti-printer me-2"></i>Xem trước khi in
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                
+                <div id="printable-report" class="report-paper">
+                    
+                    <style>
+                        /* Cấu hình khổ giấy A4 */
+                        .report-paper {
+                            background: #fff;
+                            padding: 20mm; /* Lề chuẩn văn bản */
+                            margin: 0 auto;
+                            font-family: 'Times New Roman', Times, serif;
+                            color: #000;
+                            font-size: 13pt;
+                            line-height: 1.5;
+                        }
+
+                        /* Header Quốc hiệu - Tiêu ngữ */
+                        .report-header-top { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                        .company-info h4 { font-size: 11pt; font-weight: bold; margin: 0; text-transform: uppercase; }
+                        .national-motto h4 { font-size: 12pt; font-weight: bold; margin: 0; text-transform: uppercase; }
+                        .national-motto p { font-size: 12pt; font-weight: bold; margin: 0; text-decoration: underline; }
+
+                        /* Tiêu đề */
+                        .report-title { text-align: center; color: #d60b0b; font-weight: bold; font-size: 16pt; text-transform: uppercase; margin: 20px 0; }
+
+                        /* Bảng */
+                        .main-table { width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 12pt; margin-top: 15px; }
+                        .main-table th, .main-table td { border: 1px solid #000; padding: 5px 8px; vertical-align: middle; }
+                        .th-yellow { background-color: #ffe699 !important; text-align: center; font-weight: bold; -webkit-print-color-adjust: exact; }
+                        .col-center { text-align: center; }
+                        .row-parent td { font-weight: bold; background-color: #f9f9f9; -webkit-print-color-adjust: exact; }
+
+                        /* Ảnh đính kèm */
+                        .img-attachment { max-width: 80px; max-height: 80px; border: 1px solid #ccc; margin-top: 5px; }
+                        .link-attachment { font-size: 10pt; font-style: italic; }
+                    </style>
+
+                    <div class="row report-header-top align-items-center">
+                        <div class="col-5 company-info d-flex align-items-center">
+                            <img src="/assets/images/logo-icon.png" style="height: 45px; margin-right: 10px;">
+                            <div>
+                                <h4>CÔNG TY TNHH MTV</h4>
+                                <h4>NGỌC TRAI NGỌC HIỀN PHÚ QUỐC</h4>
+                            </div>
+                        </div>
+                        <div class="col-7 text-center national-motto">
+                            <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
+                            <p>Độc lập - Tự do - Hạnh phúc</p>
+                        </div>
+                    </div>
+
+                    <div class="report-title">
+                        <?=$data['name1'] ?? 'BÁO CÁO TÌNH HÌNH TRONG CA PHỤ TRÁCH'?>
+                    </div>
+
+                    <table style="width: 100%; margin-bottom: 15px;">
+                        <tr>
+                            <td style="font-weight: bold; width: 150px;">Tên Phụ trách ca:</td>
+                            <td style="font-weight: bold; text-transform: uppercase;">
+                                <?=$data['staff_name'] ?? ''?>
+                            </td>
+                            <td style="text-align: right; font-weight: bold; width: 80px;">Bộ phận:</td>
+                            <td style="font-weight: bold; padding-left: 10px;">
+                                <?=$data['staff_department'] ?? ''?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Chức vụ:</td>
+                            <td><?=$data['staff_position'] ?? ''?></td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Ngày lập:</td>
+                            <td style="font-style: italic; font-weight: bold;">
+                                <?=date('d/m/Y', strtotime($data['created_at']))?>
+                            </td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </table>
+
+                    <table class="main-table">
+                        <thead>
+                            <tr>
+                                <th class="th-yellow" style="width: 50px;">#</th>
+                                <th class="th-yellow" style="width: 35%;">NỘI DUNG</th>
+                                <th class="th-yellow">BÁO CÁO TÌNH HÌNH TRONG CA</th>
+                            </tr>
+                        </thead>
+                            <tbody>
+                                <?php 
+                                    $indexCat = 1; 
+                                    foreach ($report_tree as $cat): 
+                                ?>
+                                    <tr class="row-parent">
+                                        <td class="col-center"><?=$indexCat?></td>
+                                        <td><?=$cat['name']?></td>
+                                        <td></td>
+                                    </tr>
+
+                                    <?php 
+                                        $indexItem = 1;
+                                        // Kiểm tra xem có children không
+                                        if (!empty($cat['children'])):
+                                            foreach ($cat['children'] as $item): 
+                                    ?>
+                                            <tr>
+                                                <td class="col-center" style="font-weight: normal;">
+                                                    <?=$indexCat?>.<?=$indexItem?>
+                                                </td>
+                                                <td><?=$item['name']?></td>
+                                                <td>
+                                                    <?= isset($item['report_content']) ? nl2br($item['report_content']) : '' ?>
+                                                </td>
+                                            </tr>
+                                    <?php 
+                                            $indexItem++;
+                                            endforeach; 
+                                        endif;
+                                    ?>
+
+                                <?php 
+                                    $indexCat++;
+                                    endforeach; 
+                                ?>
+                            </tbody>
+                        
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 40px; text-align: center;">
+                        <div style="width: 45%;"></div>
+                        <div style="width: 45%;">
+                            <p style="font-weight: bold; margin-bottom: 80px;">Người lập báo cáo</p>
+                            <p style="font-weight: bold; text-transform: uppercase;">
+                                <?=$data['staff_name'] ?? ''?>
+                            </p>
+                        </div>
+                    </div>
+
+                </div> </div>
+
+            <div class="modal-footer d-print-none mt-4">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary btn-print">In đơn</button>
+            </div>
+
+        </div>
+    </div>
+</div>

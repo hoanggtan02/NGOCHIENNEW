@@ -1,0 +1,117 @@
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-12 col-lg-11">
+
+            <form method="POST" action="<?=$_SERVER['REQUEST_URI']?>" class="ajax-form">
+
+                <div class="card shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+                    <div class="card-header bg-white border-0 pt-5 pb-3 text-center">
+
+                        <h3 class="fw-bold text-primary text-uppercase mb-3" style="letter-spacing: 1px;">
+                            <i class="ti ti-file-description me-2"></i>Báo Cáo Công Việc
+                        </h3>
+
+                        <div class="row justify-content-center mb-3">
+                            <div class="col-md-8">
+                                <?=$app->component('input', [
+                                    "name" => "name", 
+                                    "placeholder" => $jatbi->lang("Tên báo cáo"),
+                                    "value" => $data['name'] ?? '',
+                                    "required" => true,
+                                ])?>
+                            </div>
+                        </div>
+
+                        <div class="d-inline-block px-3 py-1 rounded-pill border" style="background-color: #f8f9fa;">
+                            <span class="text-muted small me-1">Ngày lập:</span>
+                            <strong class="text-dark fs-6">
+                                <?=date('d/m/Y')?>
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+
+                        <div class="table-responsive">
+                            <table class="table w-100 mb-0" style="border: 2px solid #555;">
+                                <thead>
+                                    <tr class="text-center"
+                                        style="background-color: #fff3cd; color: #5c4504; border-bottom: 2px solid #999;">
+                                        <th
+                                            style="width: 60px; border: 1px solid #b0b0b0; vertical-align: middle; padding: 10px;">
+                                            STT</th>
+                                        <th
+                                            style="width: 35%; border: 1px solid #b0b0b0; vertical-align: middle; padding: 10px;">
+                                            NỘI DUNG</th>
+                                        <th style="border: 1px solid #b0b0b0; vertical-align: middle; padding: 10px;">
+                                            CHI TIẾT TÌNH HÌNH TRONG CA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php 
+                                        $indexCat = 1; 
+                                        foreach ($report_tree as $cat): 
+                                    ?>
+                                    <tr style="background-color: #f4f6f8;">
+                                        <td class="text-center"
+                                            style="font-weight: 800; color: #2c3e50; border: 1px solid #b0b0b0; vertical-align: middle;">
+                                            <?=$indexCat?>
+                                        </td>
+                                        <td
+                                            style="font-weight: 800; color: #2c3e50; text-transform: uppercase; border: 1px solid #b0b0b0; vertical-align: middle;">
+                                            <?=$cat['name']?>
+                                        </td>
+                                        <td
+                                            style="border: 1px solid #b0b0b0; background-color: #e9ecef; background-image: linear-gradient(45deg, #dee2e6 25%, transparent 25%, transparent 50%, #dee2e6 50%, #dee2e6 75%, transparent 75%, transparent); background-size: 10px 10px;">
+                                        </td>
+                                    </tr>
+
+                                    <?php 
+                                            $indexItem = 1;
+                                            foreach ($cat['children'] as $item): 
+                                        ?>
+                                    <tr>
+                                        <td class="text-center small"
+                                            style="color: #6c757d; font-weight: 600; border: 1px solid #b0b0b0; vertical-align: middle;">
+                                            <?=$indexCat?>.
+                                            <?=$indexItem?>
+                                        </td>
+                                        <td class="ps-4 fw-medium"
+                                            style="border: 1px solid #b0b0b0; vertical-align: middle;">
+                                            <?=$item['name']?>
+                                        </td>
+                                        <td class="p-1 bg-white"
+                                            style="border: 1px solid #b0b0b0; vertical-align: middle;">
+                                            <?=$app->component('textarea', [
+                                                        "name" => "content[{$item['id']}]",
+                                                        "class" => "change-update",
+                                                        "rows" => 1,
+                                                        "value" => $item['saved_content'] ?? '',
+                                                    ])?>
+                                        </td>
+                                    </tr>
+                                    <?php 
+                                            $indexItem++;
+                                            endforeach; 
+                                        ?>
+
+                                    <?php 
+                                        $indexCat++;
+                                        endforeach; 
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer text-end bg-transparent border-0 py-3">
+                        <button type="submit" class="btn btn-eclo w-100 py-3 rounded-pill fw-bold" data-action="submit"
+                            data-alert="true" data-load="this"><?=$jatbi->lang("Hoàn thành")?></button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
