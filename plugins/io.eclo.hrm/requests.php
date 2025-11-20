@@ -125,6 +125,11 @@ return [
                         "router" => '/hrm/reports',
                         "icon" => '<i class="ti ti-clock"></i>',
                     ],
+                    'reports-work' => [
+                        "name" => $jatbi->lang("Báo cáo công việc"),
+                        "router" => '/hrm/reports-work',
+                        "icon" => '<i class="ti ti-clock"></i>',
+                    ],
                     'decided' => [
                         "name" => $jatbi->lang("Quyết định thôi việc"),
                         "router" => '/hrm/decided',
@@ -146,6 +151,11 @@ return [
                 "permission" => [
                     'reports' => $jatbi->lang("Báo cáo nhân sự"),
 
+                    'reports-work' => $jatbi->lang("Báo cáo công việc"),
+                    'reports-work.view' => $jatbi->lang("Xem báo cáo công việc"),
+                    'reports-work.add' => $jatbi->lang("Thêm báo cáo công việc"),
+                    'reports-work.edit' => $jatbi->lang("Sửa báo cáo công việc"),
+                    'reports-work.deleted' => $jatbi->lang("Xóa báo cáo công việc"),
 
 
                     'positions' => $jatbi->lang("Chức vụ"),
@@ -196,7 +206,7 @@ return [
                     'contract.edit' => $jatbi->lang("Sửa hợp đồng"),
                     'contract.deleted' => $jatbi->lang("Xóa hợp đồng"),
                     'contract-salary' => $jatbi->lang("Xem lịch sử lương hợp đồng"),
-                    
+
 
                     // Quyền cho Bảo hiểm
                     'insurrance' => $jatbi->lang("Xem thông tin bảo hiểm"),

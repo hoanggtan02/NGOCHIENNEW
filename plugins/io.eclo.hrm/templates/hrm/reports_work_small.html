@@ -1,0 +1,99 @@
+<div class="container">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0 fw-bold text-body">
+                <?=$sub_title?>
+            </h4>
+            <ul class="breadcrumb small mb-0">
+                <li class="breadcrumb-item small">
+                    <a href="/" class="pjax-load link-secondary"><?=$jatbi->lang("Trang chủ")?></a>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$title?>
+                </li>
+                <li class="breadcrumb-item small text-body" aria-current="page">
+                    <?=$sub_title?>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <?php if($jatbi->permission(['reports-work.add']) == 'true' || $jatbi->permission(['reports-work.deleted']) == 'true'){ ?>
+    <div class="position-fixed bottom right z-3 dropup-center dropup" style="--bottom:40px;--right:20px">
+        <button class="btn btn-eclo rounded-circle width height d-flex align-items-center justify-content-center "
+            style="--width:70px;--height:70px;" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="ti ti-menu-2 fs-2" aria-hidden="true"></i>
+        </button>
+        <ul class="dropdown-menu min-width bg-transparent border-0 justify-content-center p-2" style="--min-width:100%">
+            <?php if($jatbi->permission(['reports-work.deleted']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-checkbox="input.checker" data-url="/hrm/reports-work-small-deleted"
+                    style="--width:50px;--height:50px;">
+                    <i class="ti ti-trash fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+            <?php if($jatbi->permission(['reports-work.add']) == 'true'){ ?>
+            <li class="my-2">
+                <a class="btn rounded-circle btn-warning width height d-flex justify-content-center align-items-center p-1"
+                    data-action="modal" data-url="/hrm/reports-work-small-add" style="--width:50px;--height:50px;">
+                    <i class="ti ti-plus fs-3" aria-hidden="true"></i>
+                </a>
+            </li>
+            <?php } ?>
+        </ul>
+    </div>
+    <?php } ?>
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <div class="list-group ">
+                        <a href="<?=$jatbi->url('/hrm/reports-work')?>" data-pjax
+                            class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-forms me-2 btn btn-sm "></i><?=$jatbi->lang("Hạng mục lớn")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/hrm/reports-work/small')?>" data-pjax
+                            class="p-2 d-block bg-transparent list-group-item text-eclo fw-bold">
+                            <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Hạng mục nhỏ")?>
+                        </a>
+                        <a href="<?=$jatbi->url('/hrm/reports-work/report')?>" data-pjax
+                            class="p-2 d-block bg-transparent list-group-item">
+                            <i class="ti ti-route-x me-2 btn btn-sm "></i><?=$jatbi->lang("Báo cáo")?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9">
+            <div class="card bg-body bg-opacity-50 shadow border-0 rounded-4">
+                <div class="card-body">
+                    <div class="custom-buttons d-none"></div>
+                    <table id="datatable" data-table class="table align-middle" data-type="POST" data-server="true"
+                        data-processing="true" data-page-length="10" data-searching="true" data-paging="true"
+                        data-state-save='true' style="width:100%">
+                        <thead>
+                            <tr>
+                                <th data-name="checkbox" data-orderable="false" class="text-nowrap " data-visible="true"
+                                    data-class="text-center">
+                                    <div class="form-check"><input class="form-check-input checkall" type="checkbox"
+                                            value="" data-checkbox="input.checker"></div>
+                                </th>
+                                <th data-name="category_name" data-orderable="true" class="text-nowrap text-start"
+                                    data-visible="true" data-class=""><?=$jatbi->lang("Thuộc hạng mục")?></th>
+                                <th data-name="name" data-orderable="true" class="text-nowrap text-start"
+                                    data-visible="true" data-class="text-center"><?=$jatbi->lang("Tên")?></th>
+                                <!-- <th data-name="items" data-orderable="true" class="text-nowrap text-start"
+                                    data-visible="true" data-class=""><?=$jatbi->lang("Mục nhỏ")?></th> -->
+                                <th data-name="status" data-orderable="false" class="text-nowrap " data-visible="true"
+                                    data-class="text-center"><?=$jatbi->lang("Trạng thái")?></th>
+                                <th data-name="action" data-orderable="false" class="text-nowrap " data-visible="true"
+                                    data-class="text-end"><?=$jatbi->lang("Tùy chọn")?></th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
