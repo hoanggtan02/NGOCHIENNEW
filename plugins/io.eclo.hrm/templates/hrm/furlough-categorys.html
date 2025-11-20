@@ -27,23 +27,8 @@
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
                         <div class="px-3">
-                            <?=$app->component('select',[
-                                "name"=>'personnels',
-                                "options"=>$personnels,
-                                "selected" => $data['personnels'] ?? '',
-                                "placeholder"=>$jatbi->lang("Nhân viên"),
-                            ])?>
-                            <?=$app->component('select',[
-                                "name"=>'type',
-                                "options"=>$contract_type,
-                                "selected" => $data['type'] ?? '',
-                                "placeholder"=>$jatbi->lang("Loại hợp đồng"),
-                            ])?>
-                            <?=$app->component('select',[
-                                "name"=>'offices',
-                                "options"=>$offices,
-                                "selected" => $data['offices'] ?? '',
-                                "placeholder"=>$jatbi->lang("Công việc"),
+                            <?=$app->component('select-status',[
+                                "value" => $app->xss($_GET['status'] ?? ''),
                             ])?>
                         </div>
                         <hr class="border-secondary border-opacity-50 my-2">
@@ -104,7 +89,8 @@
                         <th data-name="notes"><?=$jatbi->lang("Ghi chú")?></th>
                         <th data-name="status"><?=$jatbi->lang("Trạng thái")?></th>
                         <th data-name="action" data-orderable="false" data-class="text-end">
-                            <?=$jatbi->lang("Tùy chọn")?></th>
+                            <?=$jatbi->lang("Tùy chọn")?>
+                        </th>
                     </tr>
                 </thead>
             </table>
