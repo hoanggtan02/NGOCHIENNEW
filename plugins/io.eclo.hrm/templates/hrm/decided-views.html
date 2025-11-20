@@ -5,21 +5,21 @@
                 <h5 class="modal-title">QUYẾT ĐỊNH KỶ LUẬT SA THẢI</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body invoices-print "
-                style="font-family:'Times New Roman', Times, serif; font-size:14pt; color:#000;line-height:1.5; text-align:justify;">
+            <div class="modal-body invoices-print px-4"
+                style="font-family:'Times New Roman', Times, serif; font-size:13pt; color:#000;line-height:1.5; text-align:justify;">
                 <div class="row mb-4">
                     <div class="col-6">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                        <div style="display:flex; align-items:center; white-space: nowrap; ">
                             <img src="<?$setting['url']?>/assets/img/logonh.png" alt="Logo"
-                                style="height:60px; margin-right:10px;">
-                            <div style="text-align:center;">
+                                style="height:55px; margin-right:10px;">
+                            <div style="text-align:center; font-size: 12pt;">
                                 <p style="font-weight:bold; margin:0; text-transform: uppercase;">
                                     CÔNG TY TNHH MTV NGỌC TRAI
                                 </p>
                                 <p style="font-weight:bold; margin:0; text-transform: uppercase;">
                                     NGỌC HIỀN PHÚ QUỐC
                                 </p>
-                                <p style="text-decoration: underline; margin-top: 5px;">
+                                <p style="text-decoration: underline; margin-top: 5px; font-size:12pt">
                                     <span>Số:</span>
                                     <span>
                                         <?=$data['code']?>
@@ -32,15 +32,14 @@
                     </div>
 
 
-                    <!-- Cột bên phải: Quốc hiệu -->
-                    <div class="col-6 text-center">
+                    <div class="col-6 text-center" style="font-size: 12pt; white-space: nowrap;">
                         <p style="font-weight:bold; margin:0;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                         <p style="margin:0;"><strong>Độc lập – Tự do – Hạnh phúc</strong></p>
                         <p style="margin:0;">-----------o0o-----------</p>
                         <p style="margin:0;"><em>Phú Quốc, ngày
-                                <?=date('d')?> tháng
-                                <?=date('m')?> năm
-                                <?=date('Y')?>
+                                <?=date('d', strtotime($data['date']))?> tháng
+                                <?=date('m', strtotime($data['date']))?> năm
+                                <?=date('Y', strtotime($data['date']))?>
                             </em></p>
                     </div>
                 </div>
@@ -57,36 +56,41 @@
                     </tbody>
                 </table>
 
-                <p style="margin-top: 20px;"><b>Căn cứ:</b></p>
-                <p style="margin-left: 20px;"><i>- Căn cứ Luật doanh nghiệp số 59/2020/QH14 ngày 17 tháng 6 năm 2020 của
+                <p style="margin-top: 18px; font-size: 13pt;"><b>Căn cứ:</b></p>
+                <p style="margin-left: 20px; font-size: 13pt; "><i>- Căn cứ Luật doanh nghiệp số 59/2020/QH14 ngày 17
+                        tháng 6 năm 2020 của
                         Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam;</i></p>
-                <p style="margin-left: 20px;"><i>- Căn cứ Luật lao động số 45/2019/QH14 ngày ngày 20 tháng 11 năm 2019
+                <p style="margin-left: 20px; font-size: 13pt;"><i>- Căn cứ Luật lao động số 45/2019/QH14 ngày ngày 20
+                        tháng 11 năm 2019
                         của Quốc hội nước Cộng hòa xã hội chủ nghĩa Việt Nam;</i></p>
-                <p style="margin-left: 20px;"><i>- Căn cứ vào đơn xin nghỉ việc của ông/bà: <span
+                <div style="margin-left: 20px; font-size: 13pt; "><i>- Căn cứ vào đơn xin nghỉ việc của ông/bà: <span
                             style="font-weight: bold; ">
                             <?=$per['name']?>
-                        </span>;</i></p>
-                <!-- <p style="margin-left: 20px;"><i>- Căn cứ Biên bản họp xử lý kỷ luật lao động ngày .... tháng .... năm ....
-                        tại Công ty ............................................;</i></p>
-                <p style="margin-left: 20px;"><i>- Xét tính chất, mức độ vi phạm của người lao động.</i></p> -->
-
-                <table style="font-weight: bold; width: 100%; margin-top: 10px!important;">
+                        </span>;</i></div>
+                <!-- <table style="font-weight: bold; width: 100%; margin-top: 0px!important;">
                     <tbody>
-                        <tr style="border:none!important;">
-                            <td class="text-center" style="font-weight: bold;  border: none!important;"><br>GIÁM
-                                ĐỐC CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC<br>QUYẾT ĐỊNH: <br>-------------
-                            </td>
-                        </tr>
+                        <tr style="border:none!important;"> -->
+                <div class="text-center mt-1" style="font-weight: bold;  font-size: 13pt;">GIÁM
+                    ĐỐC CÔNG TY TNHH MTV NGỌC TRAI NGỌC HIỀN PHÚ QUỐC
+                </div>
+                <div class="text-center mt-3" style="font-weight: bold;  border: none!important; font-size: 13pt;">QUYẾT
+                    ĐỊNH:
+                </div>
+                <div class="text-center" style="font-weight: bold;  border: none!important; font-size: 13pt;">
+                    -------------
+                </div>
+                <!-- </tr>
                     </tbody>
-                </table>
+                </table> -->
 
-                <p style="margin-top: 15px;"><span style="font-weight: bold; " class="underline">Điều 1.</span> Nay chấm
+                <div style="margin-top: 15px; font-size: 13pt;"><span style="font-weight: bold; ">Điều
+                        1.</span> Nay chấm
                     dứt hợp đồng lao động với ông/bà: <span class="fw-bold" style="font-weight: bold;">
                         <?=$per['name']?>
-                    </span></p>
-                </p>
+                    </span>
+                </div>
 
-                <div style="display: flex; width: 100%;">
+                <div style="display: flex; width: 100%; font-size: 13pt;">
                     <div style="width: 50%;">
                         <?php
               
@@ -99,50 +103,62 @@
                     $position_id = $latest_contract['position'] ?? null; // Sửa "positions" -> "position"
                     $position_name = $database->get("hrm_positions", "name", ["id" => $position_id]);
                 ?>
-                        <p>- Giữ chức vụ : <span class="fw-bold">
+                        <div>- Giữ chức vụ : <span class="fw-bold">
                                 <?= $position_name ?? '' ?>
-                            </span></p>
+                            </span></div>
                     </div>
                     <div style="width: 50%;">
-                        <p>- Thôi việc kể từ ngày:
+                        <div>- Thôi việc kể từ ngày:
                             <?=date("d/m/Y",strtotime($data['date']))?>
-                        </p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- <p >- Lý do:
-                    <?=$data['content']?>
-                </p> -->
-                <p> Ông/bà: <span class="fw-bold" style="font-weight: bold;">
+                <div style="font-size: 13pt;"> Ông/bà: <span class="fw-bold" style="font-weight: bold; ">
                         <?=$per['name']?>
                     </span> có trách nhiệm bàn giao tài sản, công việc đang làm cho người tiếp nhận, thanh toán dứt điểm
-                    các khoản nợ (nếu có) với Công ty TNHH MTV Ngọc trai Ngọc Hiền Phú Quốc.</p>
+                    các khoản nợ (nếu có) với Công ty TNHH MTV Ngọc trai Ngọc Hiền Phú Quốc.</div>
 
 
-                <p><span style="font-weight: bold; " class="underline">Điều 2.</span>
-                Lương và các khoản phụ cấp (nếu có) của ông/bà: <span style="font-weight: bold; ">
+                <div style="font-size: 13pt;"><span style="font-weight: bold; ">Điều 2.</span>
+                    Lương và các khoản phụ cấp (nếu có) của ông/bà: <span style="font-weight: bold; ">
                         <?=$per['name']?>
                     </span> được chi trả đến ngày chấm dứt hợp đồng lao động.
+                </div>
+                <div style="font-size: 13pt;"><span style="font-weight: bold; font-size: 13pt;">Điều
+                        3.</span>
+                    Các Ông/bà Trưởng phòng Hành chính nhân sự, trưởng các phòng ban liên quan và ông/bà: <span
+                        style="font-weight: bold; ">
+                        <?=$per['name']?>
+                    </span> căn cứ theo quyết định thi hành.<br>
+                    Quyết định này có hiệu lực từ ngày ký./.</div>
 
-                <p><span style="font-weight: bold; " class="underline">Điều 3.</span>
-                Các Ông/bà Trưởng phòng Hành chính nhân sự, trưởng các phòng ban liên quan và ông/bà:  <span style="font-weight: bold; "><?=$per['name']?></span> căn cứ theo quyết định thi hành.<br> 
-                Quyết định này có hiệu lực từ ngày ký./.</p>
-
-                <div class="row" style="margin-top:2rem; font-weight:bold;">
-                    <div class="col-6">
+                <div class="row" style="margin-top:1rem; font-weight:bold;">
+                    <div class="col-7">
                         <p style="margin-bottom:0; font-weight: bold; font-size: 13pt;">Nơi nhận:</p>
                         <p style="margin-bottom:0; font-style: italic;">- Như Điều 3;</p>
                         <p style="margin-bottom:0; font-style: italic;">- Phòng HCNS;</p>
                         <p style="margin-bottom:0; font-style: italic;">- Lưu VT.</p>
                     </div>
-                    <div class="col-6" style="text-align:center;">
+                    <div class="col-5" style="text-align:center;">
                         <p style="margin-bottom:0; font-weight: bold; font-size: 13pt;">GIÁM ĐỐC</p>
                         <p style="height: 100px;"></p>
-                         <p style="margin-top:0; font-weight: bold; font-size: 13pt;">Hồ Phi Thủy</p>
+                        <p style="margin-top:0; font-weight: bold; font-size: 13pt;">Hồ Phi Thủy</p>
 
                     </div>
                 </div>
 
+                <div class="fixed-bottom">
+                    <div style="border-top: 1px solid #999; width: 70%; margin: 10px auto 5px auto;"></div>
+
+
+                    <div class="footer-print "
+                        style="margin-top: 2px; text-align: center; font-size: 9pt; line-height: 1.2; font-style: italic; color: #999;">
+                        <p style="margin: 0;">Địa chỉ: Tổ 1, ấp Dương Tơ, xã Dương Tơ, Thành phố Phú Quốc, tỉnh Kiên
+                            Giang</p>
+                        <p style="margin: 0;">Điện thoại: 02976.259.259 - 0933.221.221 | Website: ngocnhienpearl.com</p>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer d-print-none">
                 <button type="button" class="btn btn-secondary"
