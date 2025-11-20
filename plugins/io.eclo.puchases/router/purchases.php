@@ -877,7 +877,9 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
         $vars['prepay_req'] = $prepay_req;
         $vars['discount_amount'] = $discount_amount;
         $vars['payment'] = $payment;
-
+        $vars['forms'][] = $app->get("proposal_form", ["id (value)", "name (text)"], ["id" => $sessionData['form'] ?? 0]);
+        $vars['workflows'][] = $app->get("proposal_workflows", ["id (value)", "name (text)"], ["id" => $sessionData['workflows'] ?? 0]);
+        $vars['categorys'][] = $app->get("proposal_target", ["id (value)", "name (text)"], ["id" => $sessionData['category'] ?? 0]);
         echo $app->render($template . '/purchases/purchase-post.html', $vars);
     })->setPermissions(['purchase.add']);
 
@@ -1138,9 +1140,9 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
             $storess = $app->select("stores", ["id(value)", "name(text)"], ["deleted" => 0, "status" => 'A']);
             array_unshift($storess, ["value" => "", "text" => $jatbi->lang("Chọn cửa hàng")]);
             $vars['storess'] = $storess;
-            $vars['forms'][] = $app->get("proposal_form", ["id (value)", "name (text)"], ["id" => $GetPurchase['form'] ?? 0]);
-            $vars['workflows'][] = $app->get("proposal_workflows", ["id (value)", "name (text)"], ["id" => $GetPurchase['workflows'] ?? 0]);
-            $vars['categorys'][] = $app->get("proposal_target", ["id (value)", "name (text)"], ["id" => $GetPurchase['target'] ?? 0]);
+            $vars['forms'][] = $app->get("proposal_form", ["id (value)", "name (text)"], ["id" => $_SESSION['purchase'][$action]['form'] ?? 0]);
+            $vars['workflows'][] = $app->get("proposal_workflows", ["id (value)", "name (text)"], ["id" => $_SESSION['purchase'][$action]['workflows'] ?? 0]);
+            $vars['categorys'][] = $app->get("proposal_target", ["id (value)", "name (text)"], ["id" => $_SESSION['purchase'][$action]['category'] ?? 0]);
             echo $app->render($template . '/purchases/purchase-edit.html', $vars);
         } else {
             echo $app->render($setting['template'] . '/error.html', $vars, $jatbi->ajax());
@@ -1575,19 +1577,18 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                         $app->insert("purchase_proposal", $purchase_proposal);
                         $purchase_proposal_id = $app->id();
                     }
-                    if ($recruitment_proposal['form'] > 0 && $recruitment_proposal['target'] > 0 && $recruitment_proposal['workflows'] > 0) {
+                    if ($purchase_proposal['form'] > 0 && $purchase_proposal['target'] > 0 && $purchase_proposal['workflows'] > 0) {
                         // Kiểm tra proposal đã tồn tại cho job này chưa
                         $checkProposal = $app->get("proposals", ["id", "active", "workflows", "account"], ["purchase_id" => $id_purchase, "deleted" => 0]);
 
                         $user_id = $app->getSession("accounts")['id'];
                         $user_name = $app->getSession("accounts")['name'] ?? '';
-
                         // Chuẩn dữ liệu proposal
                         $proposalData = [
                             "type" => 3,
-                            "form" => $recruitment_proposal['form'],
-                            "workflows" => $recruitment_proposal['workflows'],
-                            "category" => $recruitment_proposal['target'],
+                            "form" => $purchase_proposal['form'],
+                            "workflows" => $purchase_proposal['workflows'],
+                            "category" => $purchase_proposal['target'],
                             "price" => 0,
                             "reality" => 0,
                             "date" => date("Y-m-d"),
@@ -1680,12 +1681,13 @@ $app->group($setting['manager'] . "/purchases", function ($app) use ($jatbi, $se
                         "date"        => date('Y-m-d H:i:s'),
                     ]);
                 }
+                
                 if ($_SESSION['purchase'][$action]['type'] == 1) {
                     foreach ($_SESSION['purchase'][$action]['products'] as $key => $value) {
                         $getProducts = $app->get("products", "*", ["id" => $value['products']]);
                         $pro = [
                             "purchase" => $orderId,
-                            "vendor" => $value['vendor'],
+                            "vendor" => $value['vendor']['id'] ?? 0,
                             "products" => $value['products'],
                             "categorys" => $value['categorys'],
                             "amount" => $value['amount'],
