@@ -10834,7 +10834,6 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reports-work.edit']);
 
-
     $app->router("/reports-work-deteted", ['GET', 'POST'], function ($vars) use ($app, $jatbi, $setting) {
         $vars['title'] = $jatbi->lang("Xóa Hạng mục Báo cáo công việc");
         if ($app->method() === 'GET') {
@@ -11028,7 +11027,7 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
             $app->header([
                 'Content-Type' => 'application/json',
             ]);
-            if ($app->xss($_POST['name']) == '' || $app->xss($_POST['category_id']) == '') {
+            if ($app->xss($_POST['category_id']) == '') {
                 echo json_encode(["status" => "error", "content" => $jatbi->lang("Vui lòng không để trống")]);
             } else {
                 $insert = [
@@ -11419,23 +11418,24 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
         }
     })->setPermissions(['reports-work.deleted']);
 
-
     $app->router('/reports-work-report-view/{id}', ['GET'], function ($vars) use ($app, $jatbi, $template, $setting) {
         $report_id = $app->xss($vars['id']);
         $vars['title'] = $jatbi->lang("Chi tiết báo cáo");
 
         $report = $app->get("reports", [
-            "[>]accounts" => ["user_id" => "id"],
-            // "[>]personnels" => ["accounts.personnels_id" => "id"]
+            "[>]accounts" => ["reports.user_id" => "id"],
+            "[>]personnels" => ["accounts.id" => "account"],
+            "[>]offices" => ["personnels.office" => "id"],
+            "[>]personnels_contract" => ["personnels.id" => "personnels"],
         ], [
             "reports.id",
             "reports.created_at",
             "reports.note",
             "reports.name",
-            "accounts.name(staff_name)",
-            // "personnels.name(staff_name)",
-            // "personnels.position(staff_position)", // Giả sử có cột này
-            // "personnels.department(staff_department)" // Giả sử có cột này
+            // "accounts.name(staff_name)",
+            "personnels.name(staff_name)",
+            "personnels_contract.position(staff_position)",
+            "offices.name(staff_department)",
         ], [
             "reports.id" => $report_id,
             "reports.deleted" => 0
@@ -11480,4 +11480,5 @@ $app->group($setting['manager'] . "/hrm", function ($app) use ($jatbi, $setting,
 
         echo $app->render($template . '/hrm/report_report-view.html', $vars, $jatbi->ajax());
     })->setPermissions(['reports-work']);
+
 })->middleware('login');
