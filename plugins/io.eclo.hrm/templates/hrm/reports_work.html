@@ -27,7 +27,7 @@
             <?php if($jatbi->permission(['reports-work.deleted']) == 'true'){ ?>
             <li class="my-2">
                 <a class="btn rounded-circle btn-danger width height d-flex justify-content-center align-items-center p-1"
-                    data-action="modal" data-checkbox="input.checker" data-url="/hrm/reports-work-deleted"
+                    data-action="modal" data-checkbox="input.checker" data-url="/hrm/reports-work-deteted"
                     style="--width:50px;--height:50px;">
                     <i class="ti ti-trash fs-3" aria-hidden="true"></i>
                 </a>
@@ -79,7 +79,7 @@
                                     <div class="form-check"><input class="form-check-input checkall" type="checkbox"
                                             value="" data-checkbox="input.checker"></div>
                                 </th>
-                                <th data-name="name" data-orderable="true" class="text-nowrap text-start"
+                                <th data-name="code" data-orderable="true" class="text-nowrap text-start"
                                     data-visible="true" data-class="text-center"><?=$jatbi->lang("Mã")?></th>
                                 <th data-name="name" data-orderable="true" class="text-nowrap text-start"
                                     data-visible="true" data-class=""><?=$jatbi->lang("Tên")?></th>
